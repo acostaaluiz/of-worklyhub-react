@@ -27,6 +27,7 @@ module.exports = {
     scopes: [
       "auth",
       "users",
+      "billing",
       "schedule",
       "company",
       "core",
