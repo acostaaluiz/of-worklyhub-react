@@ -1,0 +1,309 @@
+@use "./tokens.scss";
+
+:root {
+  --color-primary: #1e70ff;
+  --color-secondary: #00d6a0;
+  --color-tertiary: #7a2cff;
+
+  --on-primary: #ffffff;
+  --on-secondary: #0b1b16;
+  --on-tertiary: #ffffff;
+
+  --color-background: #f6f8fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f4ff;
+  --color-surface-elevated: #ffffff;
+
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+
+  --color-border: rgba(15, 23, 42, 0.12);
+  --color-divider: rgba(15, 23, 42, 0.08);
+
+  --color-link: rgba(15, 23, 42, 0.72);
+  --color-link-hover: rgba(15, 23, 42, 0.92);
+
+  --icon-color: currentColor;
+  --icon-color-muted: var(--color-text-muted);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.12);
+  --shadow-elevated: 0 18px 60px rgba(15, 23, 42, 0.16);
+
+  --focus-ring: 0 0 0 4px rgba(30, 112, 255, 0.25);
+
+  --gradient-app-bg: none;
+  --gradient-auth-hero: none;
+  --color-glass-surface: rgba(15, 23, 42, 0.03);
+}
+
+:root[data-theme="light"] {
+  --color-primary: #1e70ff;
+  --color-secondary: #00d6a0;
+  --color-tertiary: #7a2cff;
+
+  --on-primary: #ffffff;
+  --on-secondary: #0b1b16;
+  --on-tertiary: #ffffff;
+
+  --color-background: #f6f8fb;
+
+  --color-surface: #ffffff;
+  --color-surface-2: #f0f4ff;
+  --color-surface-elevated: #ffffff;
+
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+
+  --color-border: rgba(15, 23, 42, 0.12);
+  --color-divider: rgba(15, 23, 42, 0.08);
+
+  --color-link: rgba(15, 23, 42, 0.72);
+  --color-link-hover: rgba(15, 23, 42, 0.92);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.12);
+  --shadow-elevated: 0 18px 60px rgba(15, 23, 42, 0.16);
+
+  --focus-ring: 0 0 0 4px rgba(30, 112, 255, 0.25);
+
+  --gradient-app-bg:
+    radial-gradient(
+      1200px 700px at 18% 12%,
+      rgba(122, 44, 255, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      1200px 700px at 78% 82%,
+      rgba(0, 214, 160, 0.1),
+      transparent 55%
+    );
+
+  --gradient-auth-hero:
+    radial-gradient(
+      900px 520px at 25% 20%,
+      rgba(122, 44, 255, 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 520px at 65% 75%,
+      rgba(0, 214, 160, 0.12),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-surface-2) 100%
+    );
+
+  --color-glass-surface: rgba(15, 23, 42, 0.03);
+}
+
+:root[data-theme="dark"] {
+  --color-primary: #4de6d3;
+  --color-secondary: #2dd4bf;
+  --color-tertiary: #7a2cff;
+
+  --on-primary: #071318;
+  --on-secondary: #071318;
+  --on-tertiary: #ffffff;
+
+  --color-background: #0f1f26;
+
+  --color-surface: #132a33;
+  --color-surface-2: #173642;
+  --color-surface-elevated: #1b3c4a;
+
+  --color-text: #e6f1f4;
+  --color-text-muted: rgba(230, 241, 244, 0.72);
+
+  --color-border: rgba(230, 241, 244, 0.14);
+  --color-divider: rgba(230, 241, 244, 0.1);
+
+  --color-link: rgba(230, 241, 244, 0.78);
+  --color-link-hover: rgba(230, 241, 244, 0.95);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --shadow-elevated: 0 22px 70px rgba(0, 0, 0, 0.58);
+
+  --focus-ring: 0 0 0 4px rgba(77, 230, 211, 0.22);
+
+  --gradient-app-bg:
+    radial-gradient(
+      1200px 700px at 14% 12%,
+      rgba(0, 214, 160, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      1200px 700px at 82% 82%,
+      rgba(122, 44, 255, 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 520px at 55% 20%,
+      rgba(30, 112, 255, 0.12),
+      transparent 55%
+    );
+
+  --gradient-auth-hero:
+    radial-gradient(
+      900px 520px at 25% 18%,
+      rgba(0, 214, 160, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      900px 520px at 70% 70%,
+      rgba(122, 44, 255, 0.18),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-surface) 0%,
+      var(--color-surface-2) 100%
+    );
+
+  --color-glass-surface: rgba(230, 241, 244, 0.05);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+  background: var(--gradient-app-bg), var(--color-background);
+  color: var(--color-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--color-link);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-xs);
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+.surface {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@for $i from 1 through 12 {
+  .col-span-#{$i} {
+    grid-column: span #{$i} / span #{$i};
+  }
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+.text-md {
+  font-size: var(--font-size-md);
+}
+.text-lg {
+  font-size: var(--font-size-lg);
+}
+.text-xl {
+  font-size: var(--font-size-xl);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.p-1 {
+  padding: var(--space-1);
+}
+.p-2 {
+  padding: var(--space-2);
+}
+.p-3 {
+  padding: var(--space-3);
+}
+.p-4 {
+  padding: var(--space-4);
+}
+.p-5 {
+  padding: var(--space-5);
+}
+.p-6 {
+  padding: var(--space-6);
+}
+
+.mt-2 {
+  margin-top: var(--space-2);
+}
+.mt-4 {
+  margin-top: var(--space-4);
+}
+.mt-6 {
+  margin-top: var(--space-6);
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}

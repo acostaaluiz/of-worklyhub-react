@@ -19,5 +19,35 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+    },
+  },
+
+  {
+    files: [
+      'src/core/http/base-http.service.ts',
+      'src/core/http/http-client.ts',
+      'src/core/http/http-error-mapper.ts',
+      'src/shared/base/base.component.ts',
+      'src/shared/ui/components/form-step/form-step.component.tsx',
+    ],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
+  {
+    files: ['src/app/router/routes.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])
