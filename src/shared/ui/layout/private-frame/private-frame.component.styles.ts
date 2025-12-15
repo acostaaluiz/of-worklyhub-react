@@ -2,13 +2,22 @@ import styled from "styled-components";
 
 export const PrivatePageShell = styled.div`
   min-height: 100vh;
+  width: 100%;
+
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-8) 0;
+  flex-direction: column;
+  align-items: stretch;
+
+  padding: 0;
+`;
+
+export const ContentShell = styled.main`
+  width: 100%;
+  padding: var(--space-6) 0 var(--space-8);
+  flex: 1;
 
   @media (max-width: 768px) {
-    padding: var(--space-6) 0;
+    padding: var(--space-5) 0 var(--space-7);
   }
 `;
 
@@ -25,7 +34,10 @@ export const PrivateFrame = styled.div`
   padding: var(--space-4);
   overflow: hidden;
 
+  margin-top: var(--space-2);
+
   @media (max-width: 768px) {
     padding: var(--space-3);
+    margin-top: var(--space-2);
   }
 `;
