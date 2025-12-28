@@ -6,6 +6,9 @@ import type { AppError } from "@core/errors/app-error";
 import {
   TemplateShell,
   TemplateCard,
+  HeadRow,
+  IconWrap,
+  TextBlock,
   Actions,
   Details,
 } from "./error.template.styles";
@@ -33,39 +36,20 @@ export function ErrorTemplate({
   return (
     <TemplateShell>
       <TemplateCard className="surface">
-        <div
-          style={{
-            display: "flex",
-            gap: "var(--space-3)",
-            alignItems: "flex-start",
-          }}
-        >
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--color-border)",
-              background: "var(--color-glass-surface)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flex: "0 0 auto",
-            }}
-            aria-hidden
-          >
+        <HeadRow>
+          <IconWrap aria-hidden>
             <AlertCircle size={22} />
-          </div>
+          </IconWrap>
 
-          <div style={{ minWidth: 0 }}>
+          <TextBlock>
             <Typography.Title level={3} style={{ margin: 0 }}>
               {resolvedTitle}
             </Typography.Title>
             <Typography.Text type="secondary">
               {resolvedDescription}
             </Typography.Text>
-          </div>
-        </div>
+          </TextBlock>
+        </HeadRow>
 
         {(error?.correlationId ||
           typeof error?.statusCode === "number" ||
@@ -98,22 +82,13 @@ export function ErrorTemplate({
 
         <Actions>
           {onBack && (
-            <Button
-              size="large"
-              style={{ borderRadius: "var(--radius-sm)" }}
-              onClick={onBack}
-            >
+            <Button size="large" onClick={onBack}>
               Back
             </Button>
           )}
 
           {onRetry && (
-            <Button
-              size="large"
-              type="primary"
-              style={{ borderRadius: "var(--radius-sm)" }}
-              onClick={onRetry}
-            >
+            <Button size="large" type="primary" onClick={onRetry}>
               Try again
             </Button>
           )}

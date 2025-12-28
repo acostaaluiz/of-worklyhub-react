@@ -7,11 +7,12 @@ import type { ErrorSeverity } from "@shared/providers/error/error.types";
 import {
   ModalRoot,
   ModalContent,
-  TitleRow,
+  HeadRow,
   IconWrap,
   TextBlock,
   DetailsBox,
   FooterRow,
+  Buttons,
 } from "./error-modal.component.styles";
 
 type Props = {
@@ -57,16 +58,19 @@ export function ErrorModal({
     >
       <ModalRoot>
         <ModalContent>
-          <TitleRow>
-            <IconWrap aria-hidden>{pickIcon(severity, error?.kind)}</IconWrap>
+          <HeadRow>
+            <IconWrap data-severity={severity} aria-hidden>
+              {pickIcon(severity, error?.kind)}
+            </IconWrap>
 
             <TextBlock>
               <Typography.Title level={4} style={{ margin: 0 }}>
                 {title}
               </Typography.Title>
+
               <Typography.Text type="secondary">{description}</Typography.Text>
             </TextBlock>
-          </TitleRow>
+          </HeadRow>
 
           {showDetails && error && (
             <DetailsBox>
@@ -96,22 +100,20 @@ export function ErrorModal({
           )}
 
           <FooterRow>
-            <Button
-              size="large"
-              style={{ borderRadius: "var(--radius-sm)" }}
-              onClick={onClose}
-            >
-              Close
-            </Button>
+            <Buttons>
+              <Button size="large" className="secondary" onClick={onClose}>
+                Close
+              </Button>
 
-            <Button
-              size="large"
-              type="primary"
-              onClick={onPrimary}
-              style={{ borderRadius: "var(--radius-sm)" }}
-            >
-              {actionLabel}
-            </Button>
+              <Button
+                size="large"
+                type="primary"
+                className="primary"
+                onClick={onPrimary}
+              >
+                {actionLabel}
+              </Button>
+            </Buttons>
           </FooterRow>
         </ModalContent>
       </ModalRoot>

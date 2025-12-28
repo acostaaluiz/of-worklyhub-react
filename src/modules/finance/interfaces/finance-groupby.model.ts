@@ -1,0 +1,1 @@
+export type FinanceGroupBy = "day" | "week" | "month";

@@ -1,60 +1,31 @@
 import styled from "styled-components";
 
-export const ModalRoot = styled.div`
-  .ant-modal-content {
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-md);
-    padding: var(--space-6);
-  }
+import {
+  ModalRoot as BaseModalRoot,
+  ModalContent,
+  HeadRow,
+  IconWrap as BaseIconWrap,
+  TextBlock,
+  FooterRow,
+  Buttons,
+} from "@shared/styles/modal/modal.styles";
 
-  .ant-modal-close {
-    border-radius: var(--radius-sm);
-  }
+export { ModalContent, HeadRow, TextBlock, FooterRow, Buttons };
 
-  .ant-modal-header {
-    background: transparent;
-  }
+export const ModalRoot = BaseModalRoot;
 
-  .ant-modal-body {
-    padding: 0;
-  }
-`;
-
-export const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-`;
-
-export const TitleRow = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-`;
-
-export const IconWrap = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-glass-surface);
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
+export const IconWrap = styled(BaseIconWrap)`
   svg {
     color: var(--color-primary);
   }
-`;
 
-export const TextBlock = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
+  &[data-severity="warning"] svg {
+    color: var(--color-secondary);
+  }
+
+  &[data-severity="error"] svg {
+    color: var(--color-tertiary);
+  }
 `;
 
 export const DetailsBox = styled.div`
@@ -75,11 +46,4 @@ export const DetailsBox = styled.div`
     color: var(--color-text);
     word-break: break-word;
   }
-`;
-
-export const FooterRow = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
-  flex-wrap: wrap;
 `;

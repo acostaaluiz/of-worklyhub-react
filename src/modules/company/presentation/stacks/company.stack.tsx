@@ -8,6 +8,11 @@ const CompanyIntroductionPage = lazy(
     )
 );
 
+const CompanyProfilePage = lazy(
+  () => import("@modules/company/presentation/pages/profile/profile.page")
+);
+const CompanyServicesAdminPage = lazy(() => import('@modules/company/presentation/pages/services/services.page'));
+
 export const companyStackRoutes: RouteObject[] = [
   {
     id: "company",
@@ -19,6 +24,24 @@ export const companyStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <CompanyIntroductionPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "company.profile",
+        path: "profile/:id",
+        element: (
+          <React.Suspense fallback={null}>
+            <CompanyProfilePage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "company.services",
+        path: "services",
+        element: (
+          <React.Suspense fallback={null}>
+            <CompanyServicesAdminPage />
           </React.Suspense>
         ),
       },

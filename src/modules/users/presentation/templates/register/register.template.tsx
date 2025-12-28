@@ -18,7 +18,11 @@ import {
 
 import { RegisterForm } from "../../components/register-form/register-form.component";
 
-export function RegisterTemplate() {
+type Props = {
+  onSubmit?: (values: { name: string; email: string; password: string }) => Promise<void>;
+};
+
+export function RegisterTemplate({ onSubmit }: Props) {
   return (
     <BaseTemplate
       content={
@@ -57,7 +61,7 @@ export function RegisterTemplate() {
             </LeftPanel>
 
             <RightPanel>
-              <RegisterForm />
+              <RegisterForm onSubmit={onSubmit} />
             </RightPanel>
           </Grid>
         </PublicFrameLayout>

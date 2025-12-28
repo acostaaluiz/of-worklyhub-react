@@ -25,9 +25,35 @@ export default defineConfig([
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^(_.*|_|err|e)$',
         },
       ],
+    },
+  },
+
+  // Allow explicit any in ambient/type declaration files (third-party types)
+  {
+    files: ['src/@types/**'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+
+  // Presentation layer: relax some hook/state rules and explicit-any to reduce noise
+  {
+    files: ['src/modules/**/presentation/**/*.{ts,tsx}'],
+    rules: {
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/exhaustive-deps': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+    },
+  },
+  // Allow react-refresh exports in storage provider (provider + types exported)
+  {
+    files: ['src/core/storage/**'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 

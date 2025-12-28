@@ -1,0 +1,57 @@
+import React from "react";
+import { List, Card, Button, Typography } from "antd";
+import { FinanceService } from "@modules/finance/services/finance.service";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import { useEffect, useState } from "react";
+
+type Props = {
+  onSelect?: (svc: CompanyServiceModel, suggestedCents: number) => void;
+};
+
+export function ServicesFinanceList({ onSelect }: Props) {
+  const svc = new FinanceService();
+  const [items, setItems] = useState<(CompanyServiceModel & { suggestedCents: number })[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const data = await svc.listServicesWithSuggestions();
+      setItems(data);
+    })();
+  }, []);
+
+  return (
+    <List
+      grid={{ gutter: 12, column: 2 }}
+      dataSource={items}
+      renderItem={(it) => (
+        <List.Item>
+          <Card className="surface" style={{ minHeight: 110 }}>
+            <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100%" }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+                    <Typography.Title level={5} style={{ margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{it.title}</Typography.Title>
+                  </div>
+
+                  <div style={{ marginLeft: 12 }}>
+                    <Typography.Text type="secondary">R$ {(it.priceCents ?? 0) / 100}</Typography.Text>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontWeight: 600 }}>Sugestão: R$ {(it.suggestedCents ?? 0) / 100}</div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                <Button size="small" onClick={() => onSelect?.(it, it.suggestedCents)}>Adicionar como despesa</Button>
+              </div>
+            </div>
+          </Card>
+        </List.Item>
+      )}
+    />
+  );
+}
+
+export default ServicesFinanceList;

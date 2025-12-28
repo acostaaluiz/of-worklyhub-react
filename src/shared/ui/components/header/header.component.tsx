@@ -1,15 +1,8 @@
-import {
-  Avatar,
-  Input,
-  Menu,
-  Button,
-  Space,
-  Dropdown,
-  type MenuProps,
-} from "antd";
+import React from "react";
+import { Avatar, Input, Menu, Button, Space, Dropdown, type MenuProps } from "antd";
 import { Search } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
-
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import { BaseComponent } from "@shared/base/base.component";
 import { FieldIcon } from "@shared/styles/global";
 
 import {
@@ -23,90 +16,97 @@ import {
   SearchWrap,
 } from "./header.component.styles";
 
-const menuItems: MenuProps["items"] = [
-  { key: "/company/introduction", label: "Company setup" },
-  { key: "/billing/plans", label: "Billing" },
-  { key: "/users", label: "Users" },
-];
+// menu items are provided by parent via props
 
-export function AppHeader() {
-  const navigate = useNavigate();
-  const location = useLocation();
+type Props = BaseProps & {
+  onNavigate?: (path: string) => void;
+  onLogout?: () => void;
+  onUpgrade?: () => void;
+  selectedPath?: string;
+  menuItems?: MenuProps["items"];
+  userMenuItems?: MenuProps["items"];
+};
 
-  const selectedKeys = menuItems
-    ?.map((i) => (typeof i?.key === "string" ? i.key : ""))
-    .filter(Boolean)
-    .filter((key) => location.pathname.startsWith(key));
+export class AppHeader extends BaseComponent<Props> {
+  protected override renderView(): React.ReactNode {
+    const { selectedPath, menuItems } = this.props;
 
-  const userMenu: MenuProps = {
-    items: [
-      { key: "profile", label: "Profile" },
-      { key: "settings", label: "Settings" },
-      { type: "divider" },
-      { key: "logout", label: "Sign out" },
-    ],
-    onClick: ({ key }) => {
-      if (key === "logout") return;
-    },
-  };
+    const selectedKeys = menuItems
+      ?.map((i) => (typeof i?.key === "string" ? i.key : ""))
+      .filter(Boolean)
+      .filter((key) => selectedPath?.startsWith(key));
 
-  return (
-    <HeaderShell>
-      <div className="container">
-        <HeaderInner>
-          <Left>
-            <Brand onClick={() => navigate("/")} role="button" tabIndex={0}>
-              WorklyHub
-            </Brand>
-          </Left>
+    const handleMenuClick: MenuProps["onClick"] = ({ key }) => {
+      const k = String(key);
+      if (k === "logout") {
+        this.props.onLogout?.();
+        return;
+      }
+      this.props.onNavigate?.(k);
+    };
 
-          <Nav>
-            <Menu
-              mode="horizontal"
-              selectedKeys={
-                selectedKeys?.length ? selectedKeys : [location.pathname]
-              }
-              items={menuItems}
-              onClick={({ key }) => navigate(String(key))}
-            />
-          </Nav>
+    const userMenu: MenuProps = {
+      items: this.props.userMenuItems,
+      onClick: handleMenuClick,
+    };
 
-          <Center>
-            <SearchWrap>
-              <Input
-                placeholder="Search"
-                allowClear
-                prefix={
-                  <FieldIcon aria-hidden>
-                    <Search size={18} />
-                  </FieldIcon>
-                }
+    return (
+      <HeaderShell>
+        <div className="container">
+          <HeaderInner>
+            <Left>
+              <Brand onClick={() => this.props.onNavigate?.("/")} role="button" tabIndex={0}>
+                WorklyHub
+              </Brand>
+            </Left>
+
+            <Nav>
+              <Menu
+                mode="horizontal"
+                selectedKeys={selectedKeys?.length ? selectedKeys : [selectedPath ?? "/"]}
+                items={menuItems}
+                onClick={({ key }) => this.props.onNavigate?.(String(key))}
               />
-            </SearchWrap>
-          </Center>
+            </Nav>
 
-          <Right>
-            <Space size="small">
-              <Button
-                style={{ borderRadius: "999px" }}
-                onClick={() => navigate("/billing/plans")}
-              >
-                Upgrade
-              </Button>
+            <Center>
+              <SearchWrap>
+                <Input
+                  placeholder="Search"
+                  allowClear
+                  prefix={
+                    <FieldIcon aria-hidden>
+                      <Search size={18} />
+                    </FieldIcon>
+                  }
+                />
+              </SearchWrap>
+            </Center>
 
-              <Dropdown
-                menu={userMenu}
-                placement="bottomRight"
-                trigger={["click"]}
-              >
-                <Avatar shape="circle" style={{ cursor: "pointer" }}>
-                  U
-                </Avatar>
-              </Dropdown>
-            </Space>
-          </Right>
-        </HeaderInner>
-      </div>
-    </HeaderShell>
-  );
+            <Right>
+              <Space size="small">
+                <Button style={{ borderRadius: "999px" }} onClick={() => this.props.onUpgrade?.()}>
+                  Upgrade
+                </Button>
+
+                <Dropdown
+                  menu={userMenu}
+                  placement="bottomRight"
+                  trigger={["click"]}
+                  getPopupContainer={() => document.body}
+                  overlayStyle={{ zIndex: 2000 }}
+                >
+                  <Avatar shape="circle" style={{ cursor: "pointer" }}>
+                    U
+                  </Avatar>
+                </Dropdown>
+              </Space>
+            </Right>
+          </HeaderInner>
+        </div>
+      </HeaderShell>
+    );
+  }
 }
+
+export default AppHeader;

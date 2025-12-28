@@ -4,14 +4,15 @@ import type { BasePageOptions } from "./interfaces/base-page.interface";
 import type { BasePageState } from "./interfaces/base-page.state.interface";
 import type { BaseProps } from "./interfaces/base-props.interface";
 
-export abstract class BasePage<P extends BaseProps = BaseProps> extends BaseComponent<P, BasePageState> {
+export abstract class BasePage<P extends BaseProps = BaseProps, S extends BasePageState = BasePageState> extends BaseComponent<P, S> {
   protected options: BasePageOptions = { requiresAuth: false };
 
-  state: BasePageState = {
+  // default base state; subclasses can extend S with extra properties
+  public state: S = ({
     isLoading: false,
     initialized: false,
     error: undefined,
-  };
+  } as unknown) as S;
 
   protected abstract renderPage(): React.ReactNode;
 
