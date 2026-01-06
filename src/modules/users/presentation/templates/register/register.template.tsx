@@ -17,12 +17,27 @@ import {
 } from "./register.template.styles";
 
 import { RegisterForm } from "../../components/register-form/register-form.component";
+import ResponseModal, { type ResponseVariant } from "@shared/ui/components/response-modal/response-modal.component";
+
+type ResponseModalProps =
+  | {
+      open: boolean;
+      variant?: ResponseVariant;
+      title: string;
+      description?: string;
+      primaryLabel?: string;
+      secondaryLabel?: string;
+      onClose: () => void;
+      onPrimary: () => void;
+    }
+  | undefined;
 
 type Props = {
   onSubmit?: (values: { name: string; email: string; password: string }) => Promise<void>;
+  responseModal?: ResponseModalProps;
 };
 
-export function RegisterTemplate({ onSubmit }: Props) {
+export function RegisterTemplate({ onSubmit, responseModal }: Props) {
   return (
     <BaseTemplate
       content={
@@ -64,6 +79,20 @@ export function RegisterTemplate({ onSubmit }: Props) {
               <RegisterForm onSubmit={onSubmit} />
             </RightPanel>
           </Grid>
+
+          {/* Response modal is rendered inside the template so pages can control it */}
+          {responseModal ? (
+            <ResponseModal
+              open={responseModal.open}
+              variant={responseModal.variant}
+              title={responseModal.title}
+              description={responseModal.description}
+              primaryLabel={responseModal.primaryLabel}
+              secondaryLabel={responseModal.secondaryLabel}
+              onClose={responseModal.onClose}
+              onPrimary={responseModal.onPrimary}
+            />
+          ) : null}
         </PublicFrameLayout>
       }
     />

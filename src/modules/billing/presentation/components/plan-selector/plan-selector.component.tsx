@@ -30,8 +30,11 @@ type Plan = {
   features: string[];
 };
 
-export class PlanSelector extends BaseComponent<{}, { interval: BillingInterval }> {
-  protected override state = { interval: "monthly" as BillingInterval };
+import type { ApplicationPlanItem } from "@core/application/application-api";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+
+export class PlanSelector extends BaseComponent<BaseProps & { plans?: ApplicationPlanItem[] }, { isLoading: boolean; error?: unknown; interval: BillingInterval; selectedPlanId?: string }> {
+  public override state = { isLoading: false, error: undefined, interval: "monthly" as BillingInterval, selectedPlanId: undefined };
 
   private plans: Plan[] = [
     {
@@ -82,6 +85,21 @@ export class PlanSelector extends BaseComponent<{}, { interval: BillingInterval 
     },
   ];
 
+  private mapExternalPlans(plans?: ApplicationPlanItem[]): Plan[] | undefined {
+    if (!plans || plans.length === 0) return undefined;
+
+    return plans.map((p) => ({
+      id: String(p.id),
+      name: p.title,
+      description: p.subtitle ?? "",
+      monthlyPrice: p.monthly_amount,
+      yearlyPrice: p.yearly_amount,
+      highlight: !!(p as any).highlight,
+      cta: `Choose ${p.title}`,
+      features: p.supports ?? [],
+    }));
+  }
+
   private formatPrice(value: number) {
     return value.toLocaleString("en-US", {
       style: "currency",
@@ -93,11 +111,40 @@ export class PlanSelector extends BaseComponent<{}, { interval: BillingInterval 
   private discountLabel = "Save 15%";
 
   private handleSelectPlan = (planId: string) => {
+    this.setState({ selectedPlanId: planId });
     console.log("Selected plan:", planId, "interval:", this.state.interval);
   };
 
+  override componentDidUpdate(prevProps: Readonly<BaseProps & { plans?: ApplicationPlanItem[] }>): void {
+    if (prevProps.plans !== this.props.plans) {
+      const external = this.mapExternalPlans(this.props.plans);
+      if (external && external.length > 0) {
+        const highlighted = external.find((p) => !!p.highlight) ?? external[0];
+        if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
+      } else {
+        const highlighted = this.plans.find((p) => !!p.highlight) ?? this.plans[0];
+        if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
+      }
+    }
+  }
+
+  override componentDidMount(): void {
+    super.componentDidMount();
+    const external = this.mapExternalPlans(this.props.plans);
+    if (external && external.length > 0) {
+      const highlighted = external.find((p) => !!p.highlight) ?? external[0];
+      if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
+    } else {
+      const highlighted = this.plans.find((p) => !!p.highlight) ?? this.plans[0];
+      if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
+    }
+  }
+
   protected override renderView(): React.ReactNode {
     const { interval } = this.state;
+
+    const external = this.mapExternalPlans(this.props.plans);
+    const renderPlans = external && external.length > 0 ? external : this.plans;
 
     return (
       <div>
@@ -127,13 +174,14 @@ export class PlanSelector extends BaseComponent<{}, { interval: BillingInterval 
         </HeaderRow>
 
         <PlanGrid>
-          {this.plans.map((plan) => {
+          {renderPlans.map((plan) => {
             const price = interval === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
+            const isSelected = plan.id === this.state.selectedPlanId;
 
             return (
-              <PlanCard key={plan.id} className="surface" $highlight={!!plan.highlight}>
+              <PlanCard key={plan.id} className="surface" $highlight={!!isSelected}>
                 <CardTop>
-                  {plan.highlight ? (
+                  {isSelected ? (
                     <RecommendedBadge>
                       <Sparkles size={14} />
                       Recommended
@@ -165,7 +213,7 @@ export class PlanSelector extends BaseComponent<{}, { interval: BillingInterval 
 
                 <CardFooter>
                   <Space direction="vertical" size={10} style={{ width: "100%" }}>
-                    <Button type={plan.highlight ? "primary" : "default"} size="large" block onClick={() => this.handleSelectPlan(plan.id)}>
+                    <Button type={isSelected ? "primary" : "default"} size="large" block onClick={() => this.handleSelectPlan(plan.id)}>
                       {plan.cta}
                     </Button>
 

@@ -1,89 +1,59 @@
 import React from "react";
-import { Card, Button, Modal, message } from "antd";
-import { CompanyServicesService } from "@modules/company/services/company-services.service";
+import { Card, Button, Modal } from "antd";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import ServiceListComponent from "./service-list.component";
 import ServiceFormComponent from "./service-form.component";
-import { BaseComponent } from "@shared/base/base.component";
+import { ModalOverrides } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
+import { X } from "lucide-react";
 
-type State = {
-  items: CompanyServiceModel[];
-  loading: boolean;
-  editing: CompanyServiceModel | null;
-  showForm: boolean;
+type Props = {
+  services: CompanyServiceModel[];
+  loading?: boolean;
+  onCreate: (p: Omit<CompanyServiceModel, "id" | "createdAt">) => Promise<void> | void;
+  onUpdate: (id: string, patch: Partial<CompanyServiceModel>) => Promise<void> | void;
+  onDeactivate: (s: CompanyServiceModel) => Promise<void> | void;
 };
 
-export class ServiceManagerComponent extends BaseComponent<{}, State> {
-  private service = new CompanyServicesService();
+export function ServiceManagerComponent({ services, loading, onCreate, onUpdate, onDeactivate }: Props) {
+  const [editing, setEditing] = React.useState<CompanyServiceModel | null>(null);
+  const [showForm, setShowForm] = React.useState(false);
 
-  public override state: State = { items: [], loading: false, editing: null, showForm: false };
+  return (
+    <Card bordered={false} loading={loading} style={{ marginTop: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <h3>Services</h3>
+        <Button type="primary" onClick={() => { setEditing(null); setShowForm(true); }}>New service</Button>
+      </div>
 
-  componentDidMount() {
-    this.load();
-  }
+      <ServiceListComponent services={services} onEdit={(s) => { setEditing(s); setShowForm(true); }} onDeactivate={onDeactivate} />
 
-  private load = async () => {
-    this.setState({ loading: true });
-    try {
-      const res = await this.service.list();
-      this.setState({ items: res });
-    } catch (e) {
-      // ignore
-    } finally {
-      this.setState({ loading: false });
-    }
-  };
-
-  private handleCreate = async (payload: Omit<CompanyServiceModel, "id" | "createdAt">) => {
-    try {
-      await this.service.create(payload);
-      message.success("Serviço criado");
-      this.setState({ showForm: false });
-      this.load();
-    } catch (e) {
-      message.error("Erro ao criar serviço");
-    }
-  };
-
-  private handleUpdate = async (id: string, patch: Partial<CompanyServiceModel>) => {
-    try {
-      await this.service.update(id, patch);
-      message.success("Serviço atualizado");
-      this.setState({ editing: null, showForm: false });
-      this.load();
-    } catch (e) {
-      message.error("Erro ao atualizar serviço");
-    }
-  };
-
-  private handleDeactivate = async (s: CompanyServiceModel) => {
-    try {
-      await this.service.deactivate(s.id);
-      message.success("Serviço inativado");
-      this.load();
-    } catch (e) {
-      message.error("Erro ao inativar");
-    }
-  };
-
-  protected override renderView(): React.ReactNode {
-    const { items, editing, showForm } = this.state;
-
-    return (
-      <Card bordered={false} style={{ marginTop: 12 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h3>Serviços</h3>
-          <Button type="primary" onClick={() => { this.setState({ editing: null, showForm: true }); }}>Novo serviço</Button>
-        </div>
-
-        <ServiceListComponent services={items} onEdit={(s) => { this.setState({ editing: s, showForm: true }); }} onDeactivate={this.handleDeactivate} />
-
-        <Modal title={editing ? "Editar serviço" : "Novo serviço"} open={showForm} onCancel={() => this.setState({ showForm: false })} footer={null} destroyOnClose>
-          <ServiceFormComponent initial={editing ?? undefined} onSubmit={(d) => (editing ? this.handleUpdate(editing.id, d as any) : this.handleCreate(d))} />
+      <ModalOverrides>
+        <Modal
+          title={editing ? "Edit service" : "New service"}
+          open={showForm}
+          onCancel={() => setShowForm(false)}
+          footer={null}
+          destroyOnClose
+          centered
+          width={760}
+          closeIcon={<X size={18} />}
+          className="wh-service-modal"
+        >
+          <ServiceFormComponent
+          initial={editing ?? undefined}
+          onSubmit={(d) => {
+            if (editing) {
+              onUpdate(editing.id, d as any);
+            } else {
+              onCreate(d as any);
+            }
+            setShowForm(false);
+          }}
+          />
         </Modal>
-      </Card>
-    );
-  }
+      </ModalOverrides>
+    </Card>
+  );
 }
 
 export default ServiceManagerComponent;

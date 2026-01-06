@@ -5,6 +5,8 @@ import AppHeader from "@shared/ui/components/header/header.component";
 import type { MenuProps } from "antd";
 import { AppFooter } from "@shared/ui/components/footer/footer.component";
 import { usersAuthService } from "@modules/users/services/auth.service";
+import { companyService } from "@modules/company/services/company.service";
+import { useEffect, useState } from "react";
 
 import {
   PrivateFrame,
@@ -15,6 +17,15 @@ import {
 export function PrivateFrameLayout({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [hasWorkspace, setHasWorkspace] = useState<boolean>(() => {
+    return !!companyService.getWorkspaceValue();
+  });
+
+  useEffect(() => {
+    const sub = companyService.getWorkspace$().subscribe((w) => setHasWorkspace(!!w));
+    return () => sub.unsubscribe();
+  }, []);
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -28,7 +39,8 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   };
 
   const menuItems: MenuProps["items"] = [
-    { key: "/company/introduction", label: "Company setup" },
+    // Show Company setup only when user does NOT have a workspace yet
+    ...(hasWorkspace ? [] : [{ key: "/company/introduction", label: "Company setup" }]),
     { key: "/billing/plans", label: "Billing" },
     { key: "/users", label: "Users" },
   ];

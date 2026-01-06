@@ -5,7 +5,6 @@ import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-fram
 import { CompanyOverview } from "@modules/company/presentation/components/company-overview/company-overview.component";
 import { CompanyServices } from "@modules/company/presentation/components/company-services/company-services.component";
 import { CompanyReviews } from "@modules/company/presentation/components/company-reviews/company-reviews.component";
-import { getCompanyProfile } from "@modules/company/services/company.service";
 import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
 import { useParams } from "react-router-dom";
 import TemplateShell from "./company-profile.template.styles";

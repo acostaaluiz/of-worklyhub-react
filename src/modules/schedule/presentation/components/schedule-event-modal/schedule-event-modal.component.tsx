@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, Input, Modal, Select, Segmented, Typography } from "antd";
+import DurationTimeSelector from "@shared/ui/components/duration-time-selector/duration-time-selector.component";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 
@@ -340,14 +341,12 @@ export function ScheduleEventModal(props: ScheduleEventModalProps) {
                   }))}
                 />
 
-                <Select
+                <DurationTimeSelector
+                  mode="duration"
                   size="large"
                   value={durationMinutes}
                   onChange={(v) => setDurationMinutes(Number(v))}
-                  options={DURATION_OPTIONS.map((d) => ({
-                    value: d.minutes,
-                    label: d.label,
-                  }))}
+                  durations={DURATION_OPTIONS.map((d) => d.minutes)}
                 />
 
                 <Select

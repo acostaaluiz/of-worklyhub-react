@@ -1,5 +1,6 @@
 import React from "react";
-import { Divider, Form, Input, Space, Typography, FormInstance } from "antd";
+import { Divider, Form, Input, Space, Typography } from "antd";
+import type { FormInstance } from "antd";
 import { Eye, EyeOff, Lock, LogIn, Mail } from "lucide-react";
 
 import {

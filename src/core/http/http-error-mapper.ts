@@ -7,6 +7,7 @@ export function mapHttpError(err: unknown, correlationId?: string): AppError {
     const ax = err as AxiosError<any>;
     const status = ax.response?.status;
 
+    const isNetworkCode = ax.code === "ERR_NETWORK" || ax.code === "ERR_CANCELED" || ax.code === "ECONNABORTED";
     const kind: AppErrorKind =
       status === 401
         ? "Unauthorized"
@@ -16,7 +17,7 @@ export function mapHttpError(err: unknown, correlationId?: string): AppError {
         ? "NotFound"
         : typeof status === "number"
         ? "Http"
-        : ax.code === "ERR_NETWORK"
+        : isNetworkCode
         ? "Network"
         : "Unknown";
 

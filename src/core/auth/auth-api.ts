@@ -11,10 +11,10 @@ export class AuthApi extends BaseHttpService {
   async verifyToken(token?: string): Promise<VerifyTokenResponse> {
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
-    return this.post<VerifyTokenResponse>("/auth/internal/verify-token", undefined, headers);
+    return this.post<VerifyTokenResponse>("internal/auth/verify-token", undefined, headers);
   }
 
   async register(payload: { name?: string; email: string; password: string }): Promise<unknown> {
-    return this.post<unknown>("/auth/internal/register", payload);
+    return this.post<unknown>("internal/auth/register", payload);
   }
 }

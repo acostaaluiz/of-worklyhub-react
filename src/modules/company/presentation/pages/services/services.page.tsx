@@ -2,17 +2,69 @@ import React, { type JSX } from "react";
 import { BaseTemplate } from "@shared/base/base.template";
 import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import ServiceManagerComponent from "@modules/company/presentation/components/company-services-admin/service-manager.component";
+import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import { message } from "antd";
+import { useEffect, useState } from "react";
 import { BasePage } from "@shared/base/base.page";
 
 function CompanyServicesAdminPageContent(): JSX.Element {
+  const [services, setServices] = useState<CompanyServiceModel[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await companyWorkspaceService.listServices();
+      setServices(res);
+    } catch (err) {
+      // swallow for now
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  async function handleCreate(payload: Omit<CompanyServiceModel, "id" | "createdAt">) {
+    console.log(payload);
+    try {
+      await companyWorkspaceService.createService(payload);
+      message.success("Serviço criado");
+      await load();
+    } catch (e) {
+      console.log('error: ', e);
+      message.error("Erro ao criar serviço");
+    }
+  }
+
+  async function handleUpdate(_id: string, _patch: Partial<CompanyServiceModel>) {
+    try {
+      // not implemented on backend yet; try local update via existing mock service or inform user
+      message.info("Atualização ainda não disponível");
+    } catch (e) {
+      message.error("Erro ao atualizar serviço");
+    }
+  }
+
+  async function handleDeactivate(_s: CompanyServiceModel) {
+    try {
+      message.info("Desativação ainda não disponível");
+    } catch (e) {
+      message.error("Erro ao inativar serviço");
+    }
+  }
+
   return (
     <BaseTemplate
       content={
         <PrivateFrameLayout>
           <div style={{ padding: 16 }}>
-            <h2 style={{ margin: 0 }}>Serviços</h2>
+            <h2 style={{ margin: 0 }}>Services you offer</h2>
             <div style={{ marginTop: 12 }}>
-              <ServiceManagerComponent />
+              <ServiceManagerComponent services={services} loading={loading} onCreate={handleCreate} onUpdate={handleUpdate} onDeactivate={handleDeactivate} />
             </div>
           </div>
         </PrivateFrameLayout>

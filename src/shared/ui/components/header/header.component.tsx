@@ -94,7 +94,7 @@ export class AppHeader extends BaseComponent<Props> {
                   placement="bottomRight"
                   trigger={["click"]}
                   getPopupContainer={() => document.body}
-                  overlayStyle={{ zIndex: 2000 }}
+                  styles={{ root: { zIndex: 2000 } }}
                 >
                   <Avatar shape="circle" style={{ cursor: "pointer" }}>
                     U

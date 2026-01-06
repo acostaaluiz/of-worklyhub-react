@@ -76,8 +76,9 @@ export function FormStepWizard<TValues extends object>({
 
   const handleSubmit = async () => {
     await validateCurrentStep();
-    const values = await form.validateFields();
-    onFinish(values as TValues);
+    await form.validateFields();
+    const values = form.getFieldsValue(true) as TValues;
+    onFinish(values);
   };
 
   const handleStepClick = async (index: number) => {

@@ -110,6 +110,17 @@ export class AxiosHttpClient implements HttpClient {
       attempt += 1;
       try {
         const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.();
+
+        // debug: log final request URL and headers to help diagnose canceled/invalid requests
+        try {
+          this.logger?.debug?.("HTTP sending", { correlationId, url, method: config.method, token: !!token });
+          // also emit a console debug for local dev visibility
+           
+          console.log("HTTP ->", { url, method: config.method, headers: config.headers, tokenPresent: !!token });
+        } catch {
+          // swallow
+        }
+
         const res = await this.axios.request<TData>({
           url,
           method: config.method,

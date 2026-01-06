@@ -3,8 +3,11 @@ import { firebaseAuthService } from "@core/auth/firebase/firebase-auth.service";
 import { authApi } from "@core/auth";
 import { authManager } from "@core/auth/auth-manager";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
+import { companyService } from "@modules/company/services/company.service";
+import { usersService } from "@modules/users/services/user.service";
+import { applicationService } from "@core/application/application.service";
 
-export type UserSession = { uid: string; claims: unknown } | null;
+export type UserSession = { uid: string; claims: unknown; email?: string; name?: string; photoUrl?: string } | null;
 
 const SESSION_KEY = "auth.session";
 
@@ -37,7 +40,7 @@ export class UsersAuthService {
     const verified = await authApi.verifyToken(token);
 
     // persist minimal session
-    const session: UserSession = { uid: verified.uid, claims: verified.claims };
+    const session: UserSession = { uid: verified.uid, claims: verified.claims, email };
     localStorageProvider.set(SESSION_KEY, JSON.stringify(session));
 
     // set tokens for http client
@@ -60,7 +63,24 @@ export class UsersAuthService {
       await firebaseAuthService.signOut();
     } finally {
       localStorageProvider.remove(SESSION_KEY);
+      // clear auth tokens and other cached application data
       authManager.signOut();
+      try {
+        usersService.clear();
+      } catch {
+        // ignore
+      }
+      try {
+        companyService.clear();
+      } catch {
+        // ignore
+      }
+      try {
+        applicationService.clear();
+      } catch {
+        // ignore
+      }
+
       this.session$.next(null);
     }
   }

@@ -18,16 +18,37 @@ import { servicesInfoStep } from "../../steps/services-info.step";
 import { summaryStep } from "../../steps/summary.step";
 
 import type { CompanyIntroductionValues } from "../../steps/personal-info.step";
+import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
+import ResponseModal, { type ResponseVariant } from "@shared/ui/components/response-modal/response-modal.component";
 
-export function CompanyIntroductionTemplate(): ReactElement {
+type Props = {
+  onFinish?: (values: CompanyIntroductionValues) => Promise<void> | void;
+  categories?: ApplicationCategoryItem[];
+  industries?: ApplicationIndustryItem[];
+  initialValues?: CompanyIntroductionValues;
+  responseModal?:
+    | {
+        open: boolean;
+        variant?: ResponseVariant;
+        title: string;
+        description?: string;
+        primaryLabel?: string;
+        secondaryLabel?: string;
+        onClose: () => void;
+        onPrimary: () => void;
+      }
+    | undefined;
+};
+
+export function CompanyIntroductionTemplate({ onFinish, categories, industries, initialValues: initialValuesProp, responseModal }: Props): ReactElement {
   const steps = [
     personalInfoStep(),
     companyInfoStep(),
-    servicesInfoStep(),
+    servicesInfoStep(categories, industries),
     summaryStep(),
   ];
 
-  const initialValues: CompanyIntroductionValues = {
+  const defaultValues: CompanyIntroductionValues = {
     fullName: "",
     email: "",
     phone: "",
@@ -39,10 +60,9 @@ export function CompanyIntroductionTemplate(): ReactElement {
     description: "",
   };
 
-  const handleFinish = () => {
-    // Front-only por enquanto.
-    // Próximo passo (quando entrar no E2E): persistir em store e chamar endpoint company/profile.
-    return;
+  const initialValues: CompanyIntroductionValues = {
+    ...defaultValues,
+    ...(initialValuesProp ?? {}),
   };
 
   return (
@@ -63,8 +83,21 @@ export function CompanyIntroductionTemplate(): ReactElement {
               subtitle="Complete these steps to personalize your workspace."
               steps={steps}
               initialValues={initialValues}
-              onFinish={handleFinish}
+              onFinish={onFinish}
             />
+            {/** Response modal is rendered inside the template so pages can control it */}
+            {responseModal ? (
+              <ResponseModal
+                open={responseModal.open}
+                variant={responseModal.variant}
+                title={responseModal.title}
+                description={responseModal.description}
+                primaryLabel={responseModal.primaryLabel}
+                secondaryLabel={responseModal.secondaryLabel}
+                onClose={responseModal.onClose}
+                onPrimary={responseModal.onPrimary}
+              />
+            ) : null}
           </TemplateShell>
         </PrivateFrameLayout>
       }

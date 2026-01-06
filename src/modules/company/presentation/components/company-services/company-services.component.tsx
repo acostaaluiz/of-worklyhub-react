@@ -7,7 +7,7 @@ import { CartBar } from "./cart-bar.component";
 import { BaseComponent } from "@shared/base/base.component";
 
 type Props = {
-  services: ServiceModel[];
+  services?: ServiceModel[];
 };
 
 type State = {
@@ -16,7 +16,7 @@ type State = {
 };
 
 export class CompanyServices extends BaseComponent<Props, State> {
-  protected override state: State = { open: false, cart: {} };
+  public override state: State = { open: false, cart: {} };
 
   private handleAdd = (s: ServiceModel) => {
     this.setState(({ cart }) => ({ cart: { ...cart, [s.id]: (cart[s.id] ?? 0) + 1 } }));
