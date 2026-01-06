@@ -19,9 +19,10 @@ import { LoginForm } from "../../components/login-form/login-form.component";
 
 type Props = {
   onSubmit?: (values: { email: string; password: string }) => Promise<void>;
+  onRegister?: () => void;
 };
 
-export function LoginTemplate({ onSubmit }: Props) {
+export function LoginTemplate({ onSubmit, onRegister }: Props) {
   return (
     <BaseTemplate
       content={
@@ -60,7 +61,7 @@ export function LoginTemplate({ onSubmit }: Props) {
             </LeftPanel>
 
             <RightPanel>
-              <LoginForm onSubmit={onSubmit} />
+              <LoginForm onSubmit={onSubmit} onRegister={onRegister} />
             </RightPanel>
           </Grid>
         </PublicFrameLayout>

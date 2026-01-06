@@ -26,6 +26,7 @@ type LoginFormValues = {
 
 type Props = BaseProps & {
   onSubmit?: (values: LoginFormValues) => Promise<void>;
+  onRegister?: () => void;
 };
 
 export class LoginForm extends BaseComponent<Props> {
@@ -139,7 +140,7 @@ export class LoginForm extends BaseComponent<Props> {
 
               <BottomRow>
                 <Typography.Text type="secondary">Not a member?</Typography.Text>{" "}
-                <Typography.Link>Register now</Typography.Link>
+                  <Typography.Link onClick={() => this.props.onRegister?.()}>Register now</Typography.Link>
               </BottomRow>
             </Form>
           </Space>

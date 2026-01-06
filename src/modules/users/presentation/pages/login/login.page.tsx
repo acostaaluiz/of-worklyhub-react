@@ -15,6 +15,11 @@ export class LoginPage extends BasePage {
   };
 
   protected override renderPage(): React.ReactNode {
+    const navigate = (path: string) => {
+      // use location navigation via window to keep behaviour consistent across pages
+      window.location.href = path;
+    };
+
     const handleLogin = async (values: LoginValues) => {
       loadingService.show();
       try {
@@ -60,7 +65,7 @@ export class LoginPage extends BasePage {
       }
     };
 
-    return <LoginTemplate onSubmit={handleLogin} />;
+    return <LoginTemplate onSubmit={handleLogin} onRegister={() => navigate("/register")} />;
   }
 }
 

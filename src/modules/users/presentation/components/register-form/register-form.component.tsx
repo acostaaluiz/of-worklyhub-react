@@ -28,6 +28,7 @@ import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 
 type Props = BaseProps & {
   onSubmit?: (values: RegisterFormValues) => Promise<void>;
+  onLogin?: () => void;
 };
 
 export class RegisterForm extends BaseComponent<Props> {
@@ -204,7 +205,7 @@ export class RegisterForm extends BaseComponent<Props> {
                 <Typography.Text type="secondary">
                   Already have an account?
                 </Typography.Text>{" "}
-                <Typography.Link>Sign in</Typography.Link>
+                <Typography.Link onClick={() => this.props.onLogin?.()}>Sign in</Typography.Link>
               </BottomRow>
             </Form>
           </Space>

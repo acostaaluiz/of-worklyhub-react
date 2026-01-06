@@ -35,9 +35,10 @@ type ResponseModalProps =
 type Props = {
   onSubmit?: (values: { name: string; email: string; password: string }) => Promise<void>;
   responseModal?: ResponseModalProps;
+  onLogin?: () => void;
 };
 
-export function RegisterTemplate({ onSubmit, responseModal }: Props) {
+export function RegisterTemplate({ onSubmit, responseModal, onLogin }: Props) {
   return (
     <BaseTemplate
       content={
@@ -76,7 +77,7 @@ export function RegisterTemplate({ onSubmit, responseModal }: Props) {
             </LeftPanel>
 
             <RightPanel>
-              <RegisterForm onSubmit={onSubmit} />
+              <RegisterForm onSubmit={onSubmit} onLogin={onLogin} />
             </RightPanel>
           </Grid>
 

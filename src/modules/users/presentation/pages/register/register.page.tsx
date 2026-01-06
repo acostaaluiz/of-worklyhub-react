@@ -70,9 +70,14 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
   protected override renderPage(): React.ReactNode {
     const response = this.state.responseModal;
 
+    const navigate = (path: string) => {
+      window.location.href = path;
+    };
+
     return (
       <RegisterTemplate
         onSubmit={(v) => this.handleRegister(v)}
+        onLogin={() => navigate("/login")}
         responseModal={
           response
             ? {
