@@ -18,12 +18,17 @@ export function ServiceListComponent({ services, onEdit, onDeactivate }: Props) 
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: CompanyServiceModel) => (
-        <Space>
-          <Button onClick={() => onEdit(record)}>Edit</Button>
-          <Button danger onClick={() => onDeactivate(record)}>Deactivate</Button>
-        </Space>
-      ),
+      render: (_: any, record: CompanyServiceModel) => {
+        const isActive = Boolean(record?.active);
+        return (
+          <Space>
+            <Button onClick={() => onEdit(record)}>Edit</Button>
+            <Button type={isActive ? undefined : "primary"} danger={isActive} onClick={() => onDeactivate(record)}>
+              {isActive ? "Deactivate" : "Activate"}
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 

@@ -33,7 +33,10 @@ type Plan = {
 import type { ApplicationPlanItem } from "@core/application/application-api";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 
-export class PlanSelector extends BaseComponent<BaseProps & { plans?: ApplicationPlanItem[] }, { isLoading: boolean; error?: unknown; interval: BillingInterval; selectedPlanId?: string }> {
+export class PlanSelector extends BaseComponent<
+  BaseProps & { plans?: ApplicationPlanItem[]; onSelectPlan?: (planId: string) => void; recommendedPlanId?: string },
+  { isLoading: boolean; error?: unknown; interval: BillingInterval; selectedPlanId?: string }
+> {
   public override state = { isLoading: false, error: undefined, interval: "monthly" as BillingInterval, selectedPlanId: undefined };
 
   private plans: Plan[] = [
@@ -113,24 +116,51 @@ export class PlanSelector extends BaseComponent<BaseProps & { plans?: Applicatio
   private handleSelectPlan = (planId: string) => {
     this.setState({ selectedPlanId: planId });
     console.log("Selected plan:", planId, "interval:", this.state.interval);
+    this.props.onSelectPlan?.(planId);
   };
 
-  override componentDidUpdate(prevProps: Readonly<BaseProps & { plans?: ApplicationPlanItem[] }>): void {
-    if (prevProps.plans !== this.props.plans) {
-      const external = this.mapExternalPlans(this.props.plans);
-      if (external && external.length > 0) {
-        const highlighted = external.find((p) => !!p.highlight) ?? external[0];
-        if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
-      } else {
-        const highlighted = this.plans.find((p) => !!p.highlight) ?? this.plans[0];
-        if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
+  override componentDidUpdate(prevProps: Readonly<BaseProps & { plans?: ApplicationPlanItem[]; recommendedPlanId?: string }>): void {
+    const plansChanged = prevProps.plans !== this.props.plans;
+    const recommendedChanged = prevProps.recommendedPlanId !== this.props.recommendedPlanId;
+    if (!plansChanged && !recommendedChanged) return;
+
+    const external = this.mapExternalPlans(this.props.plans);
+    const renderList = external && external.length > 0 ? external : this.plans;
+
+    // prefer recommendedPlanId when provided
+    const recId = this.props.recommendedPlanId;
+    if (recId) {
+      const rec = renderList.find((p) => p.id === recId);
+      if (rec && this.state.selectedPlanId !== rec.id) {
+        this.setState({ selectedPlanId: rec.id });
+        return;
       }
+    }
+
+    if (external && external.length > 0) {
+      const highlighted = external.find((p) => !!p.highlight) ?? external[0];
+      if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
+    } else {
+      const highlighted = this.plans.find((p) => !!p.highlight) ?? this.plans[0];
+      if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
     }
   }
 
   override componentDidMount(): void {
     super.componentDidMount();
     const external = this.mapExternalPlans(this.props.plans);
+    const renderList = external && external.length > 0 ? external : this.plans;
+
+    // if page provided a recommended id, prefer it
+    const recId = this.props.recommendedPlanId;
+    if (recId) {
+      const rec = renderList.find((p) => p.id === recId);
+      if (rec && this.state.selectedPlanId !== rec.id) {
+        this.setState({ selectedPlanId: rec.id });
+        return;
+      }
+    }
+
     if (external && external.length > 0) {
       const highlighted = external.find((p) => !!p.highlight) ?? external[0];
       if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
@@ -145,6 +175,8 @@ export class PlanSelector extends BaseComponent<BaseProps & { plans?: Applicatio
 
     const external = this.mapExternalPlans(this.props.plans);
     const renderPlans = external && external.length > 0 ? external : this.plans;
+
+    const selectedId = this.props.recommendedPlanId ?? this.state.selectedPlanId;
 
     return (
       <div>
@@ -176,7 +208,7 @@ export class PlanSelector extends BaseComponent<BaseProps & { plans?: Applicatio
         <PlanGrid>
           {renderPlans.map((plan) => {
             const price = interval === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
-            const isSelected = plan.id === this.state.selectedPlanId;
+            const isSelected = plan.id === selectedId;
 
             return (
               <PlanCard key={plan.id} className="surface" $highlight={!!isSelected}>

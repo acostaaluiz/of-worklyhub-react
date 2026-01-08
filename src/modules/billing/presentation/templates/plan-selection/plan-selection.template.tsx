@@ -7,15 +7,17 @@ import type { ApplicationPlanItem } from "@core/application/application-api";
 
 type Props = {
   plans?: ApplicationPlanItem[];
+  onSelectPlan?: (planId: string) => void;
+  recommendedPlanId?: string;
 };
 
-export function PlanSelectionTemplate({ plans }: Props) {
+export function PlanSelectionTemplate({ plans, onSelectPlan, recommendedPlanId }: Props) {
   return (
     <BaseTemplate
       content={
         <PrivateFrameLayout>
           <TemplateShell>
-            <PlanSelector plans={plans} />
+            <PlanSelector plans={plans} onSelectPlan={onSelectPlan} recommendedPlanId={recommendedPlanId} />
           </TemplateShell>
         </PrivateFrameLayout>
       }

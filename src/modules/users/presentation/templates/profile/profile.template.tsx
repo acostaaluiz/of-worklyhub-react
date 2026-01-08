@@ -18,6 +18,9 @@ export type PersonalModel = {
   email: string;
   phone?: string;
   photoUrl?: string;
+  planId?: number;
+  planName?: string;
+  planPrice?: string;
 };
 
 export type CompanyModel = {
@@ -77,6 +80,10 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, comp
           <div style={{ textAlign: "center" }}>
             <div style={{ fontWeight: 600 }}>{personal?.fullName}</div>
             <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>{personal?.email}</div>
+          </div>
+          <div style={{ textAlign: "center", marginTop: 8 }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>{personal?.planName ?? "No plan"}</div>
+            {personal?.planPrice ? <div style={{ color: "var(--color-text-muted)", fontSize: 13 }}>{personal.planPrice}</div> : null}
           </div>
           <Button type="default" onClick={onOpenAvatar}>Change photo</Button>
         </AvatarWrap>

@@ -61,6 +61,7 @@ function mapToApi(payload: CompanyServiceCreatePayload): { [key: string]: unknow
 
 export class CompanyWorkspaceService {
   private api = new CompaniesApi(httpClient);
+  private pendingFetchServices: Promise<CompanyServiceModel[]> | null = null;
 
   async listServices(): Promise<CompanyServiceModel[]> {
     try {
@@ -68,17 +69,28 @@ export class CompanyWorkspaceService {
       const w = ws as { workspaceId?: string; id?: string } | null;
       const workspaceId = (w?.workspaceId ?? w?.id) as string | undefined;
       if (!workspaceId) return [];
-      const res = await this.api.listWorkspaceServices(workspaceId);
-      if (!res) return [];
-      let arr: ApiRow[] = [];
-      if (Array.isArray(res)) {
-        arr = res as unknown[] as ApiRow[];
-      } else if (res && typeof res === "object") {
-        const obj = res as { [key: string]: unknown };
-        const maybe = obj["services"];
-        if (Array.isArray(maybe)) arr = maybe as ApiRow[];
+      // dedupe concurrent calls
+      if (this.pendingFetchServices) return this.pendingFetchServices;
+
+      this.pendingFetchServices = (async () => {
+        const res = await this.api.listWorkspaceServices(workspaceId);
+        if (!res) return [] as CompanyServiceModel[];
+        let arr: ApiRow[] = [];
+        if (Array.isArray(res)) {
+          arr = res as unknown[] as ApiRow[];
+        } else if (res && typeof res === "object") {
+          const obj = res as { [key: string]: unknown };
+          const maybe = obj["services"];
+          if (Array.isArray(maybe)) arr = maybe as ApiRow[];
+        }
+        return arr.map((r) => mapFromApi(r ?? {}));
+      })();
+
+      try {
+        return await this.pendingFetchServices;
+      } finally {
+        this.pendingFetchServices = null;
       }
-      return arr.map((r) => mapFromApi(r ?? {}));
     } catch (err) {
       throw toAppError(err);
     }
@@ -101,8 +113,52 @@ export class CompanyWorkspaceService {
   }
 
   async updateService(_id: string, _patch: Partial<CompanyServiceModel>): Promise<CompanyServiceModel> {
-    // fallback to local optimistic update if backend not implemented
-    throw new Error("Not implemented");
+    // send allowed patch fields to backend
+    try {
+      const ws = companyService.getWorkspaceValue();
+      const w = ws as { workspaceId?: string; id?: string } | null;
+      const workspaceId = (w?.workspaceId ?? w?.id) as string | undefined;
+      if (!workspaceId) throw new Error("No workspace available");
+
+      const serviceId = _id;
+
+      const body: { [key: string]: unknown } = {};
+      const patch = _patch as Partial<CompanyServiceModel>;
+      if (Object.prototype.hasOwnProperty.call(patch, "title")) body.name = patch.title ?? null;
+      if (Object.prototype.hasOwnProperty.call(patch, "tags")) body.category = Array.isArray(patch.tags) && patch.tags!.length ? patch.tags![0] : null;
+      if (Object.prototype.hasOwnProperty.call(patch, "description")) body.description = patch.description ?? null;
+      if (Object.prototype.hasOwnProperty.call(patch, "durationMinutes")) body.duration_minutes = patch.durationMinutes ?? null;
+      if (Object.prototype.hasOwnProperty.call(patch, "priceCents")) body.price_cents = patch.priceCents ?? null;
+      if (Object.prototype.hasOwnProperty.call(patch, "capacity")) body.capacity = patch.capacity ?? null;
+      if (Object.prototype.hasOwnProperty.call(patch, "active")) body.is_active = patch.active ?? null;
+
+      const res = await this.api.updateWorkspaceService(workspaceId, serviceId, body);
+
+      // if API returned an object representing the updated service, map it
+      if (res && typeof res === "object") {
+        const obj = res as ApiRow;
+        if (obj.id) {
+          return mapFromApi(obj);
+        }
+        // if API returned { serviceId } or similar, refresh list and return the updated item
+        if (obj.serviceId) {
+          const sid = String(obj.serviceId);
+          const list = await this.listServices();
+          const found = list.find((s) => s.id === sid);
+          if (found) return found;
+          throw new Error("Updated service not found after update");
+        }
+      }
+
+      // fallback: refresh list and try to find by id
+      const list2 = await this.listServices();
+      const f2 = list2.find((s) => s.id === serviceId);
+      if (f2) return f2;
+
+      throw new Error("Update failed or unexpected response");
+    } catch (err) {
+      throw toAppError(err);
+    }
   }
 
   async deactivateService(_id: string): Promise<void> {

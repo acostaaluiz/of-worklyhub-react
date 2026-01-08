@@ -16,39 +16,55 @@ export const categoriesSeed: ScheduleCategory[] = [
   { id: "gaming", label: "Gaming", color: "rgba(233, 171, 19, 0.95)" },
 ];
 
+// create a small dynamic seed relative to today so local metrics are visible
+function fmtDate(d: Date) {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const tomorrow = new Date(today);
+tomorrow.setDate(today.getDate() + 1);
+const inThree = new Date(today);
+inThree.setDate(today.getDate() + 3);
+const inSeven = new Date(today);
+inSeven.setDate(today.getDate() + 7);
+
 const eventsSeed: ScheduleEvent[] = [
   {
     id: "e-1",
-    title: "Daily Standup",
-    date: "2028-03-01",
+    title: "Initial Consultation",
+    date: fmtDate(today),
     startTime: "09:00",
-    endTime: "09:30",
-    categoryId: "work",
-    description: "Team sync.",
+    endTime: "09:45",
+    categoryId: "schedule",
+    description: "New client consult",
   },
   {
     id: "e-2",
-    title: "Client Meeting",
-    date: "2028-03-02",
-    startTime: "15:00",
-    endTime: "16:00",
-    categoryId: "work",
+    title: "Cleaning",
+    date: fmtDate(tomorrow),
+    startTime: "11:00",
+    endTime: "12:00",
+    categoryId: "schedule",
+    description: "Routine cleaning",
   },
   {
     id: "e-3",
-    title: "Lunch Break",
-    date: "2028-03-14",
-    startTime: "12:00",
-    endTime: "13:00",
-    categoryId: "personal",
+    title: "Extraction",
+    date: fmtDate(inThree),
+    startTime: "14:00",
+    endTime: "15:00",
+    categoryId: "schedule",
   },
   {
     id: "e-4",
-    title: "Gaming with friends",
-    date: "2028-03-30",
-    startTime: "20:00",
-    endTime: "22:00",
-    categoryId: "gaming",
+    title: "Follow up",
+    date: fmtDate(inSeven),
+    startTime: "10:00",
+    endTime: "10:30",
+    categoryId: "personal",
   },
 ];
 

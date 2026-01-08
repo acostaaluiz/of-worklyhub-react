@@ -22,6 +22,7 @@ export class ApplicationService {
   private subjectCategories = new BehaviorSubject<AppCategories>(this.loadCategoriesFromStorage());
   private subjectIndustries = new BehaviorSubject<AppIndustries>(this.loadIndustriesFromStorage());
   private subjectPlans = new BehaviorSubject<AppPlans>(this.loadPlansFromStorage());
+  private pendingFetchPlans: Promise<AppPlans> | null = null;
   private api = new ApplicationApi(httpClient);
   private pendingFetchServices: Promise<AppServices> | null = null;
 
@@ -149,15 +150,29 @@ export class ApplicationService {
   }
 
   async fetchPlans(): Promise<AppPlans> {
-    const res = await this.api.getPlans();
-    const plans = res?.plans ?? [];
+    // avoid duplicate concurrent requests
+    const existing = this.getPlansValue();
+    if (existing != null) return existing;
+
+    if (this.pendingFetchPlans) return this.pendingFetchPlans;
+
+    this.pendingFetchPlans = (async () => {
+      const res = await this.api.getPlans();
+      const plans = res?.plans ?? [];
+      try {
+        localStorageProvider.set(APP_PLANS_KEY, JSON.stringify(plans));
+      } catch {
+        // ignore
+      }
+      this.subjectPlans.next(plans);
+      return plans;
+    })();
+
     try {
-      localStorageProvider.set(APP_PLANS_KEY, JSON.stringify(plans));
-    } catch {
-      // ignore
+      return await this.pendingFetchPlans;
+    } finally {
+      this.pendingFetchPlans = null;
     }
-    this.subjectPlans.next(plans);
-    return plans;
   }
 
   clear(): void {

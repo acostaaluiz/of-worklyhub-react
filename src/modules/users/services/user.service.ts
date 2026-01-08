@@ -49,6 +49,27 @@ export class UsersService {
     }
   }
 
+  async setPlan(email: string, planId: number): Promise<void> {
+    try {
+      await this.api.setPlan(email, planId);
+
+      // update cached profile if present
+      const current = this.getProfileValue();
+      if (current) {
+        const updated = { ...current, planId } as UserProfileResponse;
+        this.subject.next(updated);
+        try {
+          localStorageProvider.set(PROFILE_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore storage errors
+        }
+      }
+    } catch (err) {
+      console.error("usersService.setPlan error", err);
+      throw err;
+    }
+  }
+
   clear(): void {
     localStorageProvider.remove(PROFILE_KEY);
     this.subject.next(null);

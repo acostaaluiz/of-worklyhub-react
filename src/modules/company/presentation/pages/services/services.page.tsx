@@ -42,18 +42,31 @@ function CompanyServicesAdminPageContent(): JSX.Element {
 
   async function handleUpdate(_id: string, _patch: Partial<CompanyServiceModel>) {
     try {
-      // not implemented on backend yet; try local update via existing mock service or inform user
-      message.info("Atualização ainda não disponível");
+      setLoading(true);
+      await companyWorkspaceService.updateService(_id, _patch);
+      message.success("Serviço atualizado");
+      await load();
     } catch (e) {
+      console.error(e);
       message.error("Erro ao atualizar serviço");
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleDeactivate(_s: CompanyServiceModel) {
+    const s = _s;
     try {
-      message.info("Desativação ainda não disponível");
+      setLoading(true);
+      const nextActive = !(s.active ?? false);
+      await companyWorkspaceService.updateService(s.id, { active: nextActive });
+      message.success(nextActive ? "Serviço ativado" : "Serviço desativado");
+      await load();
     } catch (e) {
-      message.error("Erro ao inativar serviço");
+      console.error(e);
+      message.error("Erro ao inativar/ativar serviço");
+    } finally {
+      setLoading(false);
     }
   }
 

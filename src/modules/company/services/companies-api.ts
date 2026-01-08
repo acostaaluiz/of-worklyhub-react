@@ -58,6 +58,10 @@ export class CompaniesApi extends BaseHttpService {
   async createWorkspaceService(workspaceId: string, body: unknown): Promise<unknown> {
     return this.post<unknown, unknown>(`/company/internal/workspaces/${workspaceId}/services`, body);
   }
+
+  async updateWorkspaceService(workspaceId: string, serviceId: string, body: unknown): Promise<unknown> {
+    return this.put<unknown, unknown>(`/company/internal/workspaces/${workspaceId}/services/${serviceId}`, body);
+  }
 }
 
 export default CompaniesApi;

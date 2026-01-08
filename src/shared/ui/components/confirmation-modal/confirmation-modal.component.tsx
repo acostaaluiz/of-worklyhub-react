@@ -13,7 +13,7 @@ import styled from "styled-components";
 
 const IconWrap = styled(BaseIconWrap)`
   svg {
-    color: var(--color-tertiary);
+    color: var(--color-secondary);
   }
 `;
 
