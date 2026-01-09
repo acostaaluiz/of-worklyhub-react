@@ -6,6 +6,7 @@ export type CompanyProfileModel = {
   description?: string;
   address?: string;
   imageUrl?: string;
+  wallpaperUrl?: string;
   phone?: string;
   rating?: number;
   reviewsCount?: number;

@@ -31,6 +31,7 @@ export type CompanyModel = {
   industry?: string;
   description?: string;
   tradeName?: string;
+  wallpaperUrl?: string;
 };
 
 export type ProfileTemplateProps = {
@@ -39,13 +40,14 @@ export type ProfileTemplateProps = {
   isSavingPersonal?: boolean;
   isSavingCompany?: boolean;
   onOpenAvatar: () => void;
+  onOpenWallpaper?: () => void;
   onSavePersonal: (values: PersonalModel) => void;
   onSaveCompany: (values: CompanyModel) => void;
 };
 
 const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
 
-export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, company, onOpenAvatar, onSavePersonal, onSaveCompany, isSavingPersonal, isSavingCompany }) => {
+export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, company, onOpenAvatar, onOpenWallpaper, onSavePersonal, onSaveCompany, isSavingPersonal, isSavingCompany }) => {
   const [personalForm] = Form.useForm();
   const [companyForm] = Form.useForm();
 
@@ -89,6 +91,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, comp
         </AvatarWrap>
       </Col>
       <Col xs={24} md={16}>
+        {company?.wallpaperUrl ? (
+          <div style={{ marginBottom: 12, borderRadius: 8, overflow: "hidden" }}>
+            <div style={{ height: 160, backgroundSize: "cover", backgroundPosition: "center", backgroundImage: `url(${company.wallpaperUrl})` }} />
+          </div>
+        ) : null}
         <Tabs defaultActiveKey="personal">
           <TabPane tab="Personal info" key="personal">
             <Form form={personalForm} initialValues={personal} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
@@ -141,7 +148,10 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, comp
               </Form.Item>
 
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <Button type="default" onClick={onOpenWallpaper}>Change wallpaper</Button>
+                  <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
+                </div>
               </Form.Item>
             </Form>
           </TabPane>

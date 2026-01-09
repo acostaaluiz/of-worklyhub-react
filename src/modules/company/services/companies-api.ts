@@ -62,6 +62,13 @@ export class CompaniesApi extends BaseHttpService {
   async updateWorkspaceService(workspaceId: string, serviceId: string, body: unknown): Promise<unknown> {
     return this.put<unknown, unknown>(`/company/internal/workspaces/${workspaceId}/services/${serviceId}`, body);
   }
+
+  async requestWallpaperSignature(contentType: string, filename: string): Promise<{ url: string; path: string; maxSize?: number } | null> {
+    return this.post<{ url: string; path: string; maxSize?: number }, { contentType: string; filename: string }>(
+      "/company/internal/company/profile/wallpaper/signature",
+      { contentType, filename }
+    ).catch(() => null);
+  }
 }
 
 export default CompaniesApi;

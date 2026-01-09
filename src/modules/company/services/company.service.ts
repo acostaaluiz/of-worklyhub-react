@@ -116,6 +116,58 @@ export class CompanyService {
       services: CompanyService.MOCK_SERVICES,
     } as CompanyProfileModel;
   }
+
+  async uploadWorkspaceWallpaper(file: File, onProgress?: (percent: number) => void): Promise<string> {
+    // request signature from backend
+    // CompaniesApi.requestWallpaperSignature returns { url, path, maxSize }
+    const sig = await this.api.requestWallpaperSignature(file.type, file.name);
+    if (!sig || !sig.url || !sig.path) throw new Error("Invalid signature response");
+    if (sig.maxSize && file.size > sig.maxSize) throw new Error("File exceeds maximum allowed size");
+
+    // upload using XHR to allow progress reporting
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", sig.url);
+      xhr.setRequestHeader("Content-Type", file.type);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable && typeof onProgress === "function") {
+          const percent = Math.round((ev.loaded / ev.total) * 100);
+          try {
+            onProgress(percent);
+          } catch {
+            // ignore
+          }
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed with status ${xhr.status}`));
+      };
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.send(file);
+    });
+
+    // update cached workspace: set company_profile.wallpaperUrl
+    try {
+      const current = this.getWorkspaceValue();
+      if (current) {
+        type WorkspaceWithCompany = WorkspaceModel & { company_profile?: { wallpaperUrl?: string; [k: string]: unknown } };
+        const updated = { ...(current as WorkspaceModel) } as WorkspaceWithCompany;
+        updated.company_profile = updated.company_profile ?? {};
+        updated.company_profile.wallpaperUrl = sig.path;
+        try {
+          localStorageProvider.set(WORKSPACE_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore
+        }
+        this.subject.next(updated as Workspace);
+      }
+    } catch {
+      // ignore
+    }
+
+    return sig.path;
+  }
 }
 
 export const companyService = new CompanyService();

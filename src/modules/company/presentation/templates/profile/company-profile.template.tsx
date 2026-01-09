@@ -37,6 +37,7 @@ export function CompanyProfileTemplate() {
         description: companyProfile.description ?? (ws as any).description ?? undefined,
         address: (ws as any).address ?? (ws as any).location ?? undefined,
         imageUrl: (ws as any).imageUrl ?? undefined,
+        wallpaperUrl: (companyProfile.wallpaperUrl as string) ?? (companyProfile.wallpaper_url as string) ?? (ws as any).wallpaperUrl ?? (ws as any).wallpaper_url ?? undefined,
         phone: (ws as any).phone ?? undefined,
         rating: typeof (ws as any).rating === "number" ? (ws as any).rating : undefined,
         reviewsCount: typeof (ws as any).reviewsCount === "number" ? (ws as any).reviewsCount : undefined,

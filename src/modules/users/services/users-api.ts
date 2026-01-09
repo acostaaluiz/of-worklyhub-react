@@ -22,4 +22,11 @@ export class UsersApi extends BaseHttpService {
     // endpoint returns 204 No Content on success
     await this.post<void, { email: string; planId: number }>("users/internal/users/plan", { email, planId });
   }
+
+  async requestProfilePhotoSignature(body: { contentType: string; filename?: string }) {
+    return await this.post<{ url: string; path: string; expiresAt: string; maxSize: number }, { contentType: string; filename?: string }>(
+      "users/internal/users/profile/photo/signature",
+      body
+    );
+  }
 }

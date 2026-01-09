@@ -11,6 +11,55 @@ export class UsersService {
   private subject = new BehaviorSubject<UserProfile>(this.loadFromStorage());
   private api = new UsersApi(httpClient);
 
+  async uploadProfilePhoto(file: File, onProgress?: (percent: number) => void): Promise<string> {
+    // request signature from backend
+    const sig = await this.api.requestProfilePhotoSignature({ contentType: file.type, filename: file.name });
+
+    if (!sig || !sig.url || !sig.path) throw new Error("Invalid signature response");
+    if (sig.maxSize && file.size > sig.maxSize) throw new Error("File exceeds maximum allowed size");
+
+    // upload using XHR to allow progress reporting
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", sig.url);
+      xhr.setRequestHeader("Content-Type", file.type);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable && typeof onProgress === "function") {
+          const percent = Math.round((ev.loaded / ev.total) * 100);
+          try {
+            onProgress(percent);
+          } catch {
+            // ignore
+          }
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed with status ${xhr.status}`));
+      };
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.send(file);
+    });
+
+    // update local cached profile (photoUrl)
+    try {
+      const current = this.getProfileValue();
+      if (current) {
+        const updated = { ...current, photoUrl: sig.path } as UserProfileResponse;
+        this.subject.next(updated);
+        try {
+          localStorageProvider.set(PROFILE_KEY, JSON.stringify(updated));
+        } catch {
+          // ignore storage errors
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return sig.path;
+  }
+
   private loadFromStorage(): UserProfile {
     try {
       const raw = localStorageProvider.get(PROFILE_KEY);

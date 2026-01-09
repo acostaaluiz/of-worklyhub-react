@@ -1,0 +1,21 @@
+[
+  {
+    "origin": [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://app.your-production-domain.com"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "ETag",
+      "x-goog-generation",
+      "x-goog-metageneration",
+      "x-goog-hash",
+      "x-goog-storage-class",
+      "x-goog-meta-*"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

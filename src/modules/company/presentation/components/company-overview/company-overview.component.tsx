@@ -16,7 +16,7 @@ type Props = {
 export function CompanyOverview({ profile }: Props) {
   return (
     <OverviewShell className="surface">
-      <HeroImage style={{ backgroundImage: `url(${profile.imageUrl})` }} />
+      <HeroImage style={{ backgroundImage: `url(${profile.wallpaperUrl ?? profile.imageUrl})` }} />
 
       <InfoRow>
         <div style={{ flex: 1 }}>

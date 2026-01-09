@@ -14,7 +14,9 @@ type State = {
   personal: PersonalModel;
   company?: CompanyModel;
   avatarModalOpen?: boolean;
+  wallpaperModalOpen?: boolean;
   isUploadingAvatar?: boolean;
+  isUploadingWallpaper?: boolean;
   isSavingPersonal?: boolean;
   isSavingCompany?: boolean;
 };
@@ -33,7 +35,9 @@ export class ProfilePage extends BasePage<{}, State> {
     },
     company: undefined,
     avatarModalOpen: false,
+    wallpaperModalOpen: false,
     isUploadingAvatar: false,
+    isUploadingWallpaper: false,
     isSavingPersonal: false,
     isSavingCompany: false,
   };
@@ -61,7 +65,9 @@ export class ProfilePage extends BasePage<{}, State> {
             const f = fetched as any;
             personal.fullName = (f.name as string) ?? personal.fullName;
             personal.email = (f.email as string) ?? personal.email;
-            if ((f as any).photoUrl) personal.photoUrl = (f as any).photoUrl;
+            // support multiple possible photo fields returned by API
+            const photoCandidates = (f as any).profilePhotoUrl ?? (f as any).profile_photo_url ?? (f as any).photoUrl ?? (f as any).photo_url ?? undefined;
+            if (photoCandidates) personal.photoUrl = photoCandidates as string;
             if ((f as any).phone) personal.phone = (f as any).phone;
 
             // map plan if available: resolve planId to title/price using applicationService
@@ -91,30 +97,59 @@ export class ProfilePage extends BasePage<{}, State> {
           // ignore fetch errors
         }
 
-        // fetch workspace for this user by email
+        // try to reuse cached workspace to avoid duplicate API calls
         try {
+          const cached = companyService.getWorkspaceValue();
+          if (cached) {
+            const ws: any = cached;
+            const cp: any = ws.company_profile ?? {};
+            const company = {
+              accountType:
+                (ws.workspace_type as "individual" | "company") ??
+                (ws.accountType as "individual" | "company") ??
+                "individual",
+              companyName:
+                (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
+              tradeName:
+                (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
+              employees:
+                (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
+              primaryService:
+                (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
+              industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
+              description: (cp.description as string) ?? (ws.description as string) ?? undefined,
+              wallpaperUrl:
+                (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined,
+            } as CompanyModel;
+
+            this.setSafeState({ personal, company });
+            return;
+          }
+
+          // if no cached workspace, fetch from API
           const workspace = await companyService.fetchWorkspaceByEmail(session.email);
           if (workspace) {
             console.log(`workspace fetched for email ${session.email}:`, workspace);
-            // API uses snake_case keys; map them to our CompanyModel shape
-              const ws: any = workspace;
-              const cp: any = ws.company_profile ?? {};
-              const company = {
-                accountType:
-                  (ws.workspace_type as "individual" | "company") ??
-                  (ws.accountType as "individual" | "company") ??
-                  "individual",
-                companyName:
-                  (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
-                tradeName:
-                  (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
-                employees:
-                  (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
-                primaryService:
-                  (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
-                industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
-                description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-              } as CompanyModel;
+            const ws: any = workspace;
+            const cp: any = ws.company_profile ?? {};
+            const company = {
+              accountType:
+                (ws.workspace_type as "individual" | "company") ??
+                (ws.accountType as "individual" | "company") ??
+                "individual",
+              companyName:
+                (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
+              tradeName:
+                (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
+              employees:
+                (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
+              primaryService:
+                (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
+              industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
+              description: (cp.description as string) ?? (ws.description as string) ?? undefined,
+              wallpaperUrl:
+                (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined,
+            } as CompanyModel;
 
             this.setSafeState({ personal, company });
             return;
@@ -131,40 +166,77 @@ export class ProfilePage extends BasePage<{}, State> {
 
   private handleOpenAvatar = () => this.setSafeState({ avatarModalOpen: true });
 
+  private handleOpenWallpaper = () => this.setSafeState({ wallpaperModalOpen: true });
+
   private handleCloseAvatar = () => this.setSafeState({ avatarModalOpen: false, isUploadingAvatar: false });
 
-  private handleUploadAvatar = async (
-    fileOrFiles: File | File[],
-    onProgress?: (index: number, percent: number) => void
-  ) => {
+  private handleCloseWallpaper = () => this.setSafeState({ wallpaperModalOpen: false, isUploadingWallpaper: false });
+
+  private handleUploadAvatar = async (fileOrFiles: File | File[]) => {
     const files = Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles];
+    if (files.length === 0) return;
     this.setSafeState({ isUploadingAvatar: true });
+
     try {
-      // simulate client-side upload progress for each file
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        // simulate progress from 0 to 100
-        for (let p = 0; p <= 100; p += 10) {
-          await new Promise((r) => setTimeout(r, 60));
-          try {
-            onProgress?.(i, p);
-          } catch {
-            // ignore
-          }
-        }
-        // small delay between files
-        await new Promise((r) => setTimeout(r, 80));
-        // set first file as preview
-        if (i === 0) {
-          const url = URL.createObjectURL(f);
-          this.setSafeState({ personal: { ...this.state.personal, photoUrl: url } });
-        }
-      }
-      // final: modal will show success message
+      // Only support single-file profile photo (maxFiles=1)
+      const file = files[0];
+
+      // Do not forward server upload progress to modal. Modal shows device->browser progress;
+      // server upload is indicated by a spinner only.
+      const path = await usersService.uploadProfilePhoto(file);
+
+      // update preview to stored path
+      this.setSafeState({ personal: { ...this.state.personal, photoUrl: path } });
+      message.success("Photo uploaded successfully");
     } catch (err) {
+      console.error(err);
       message.error("Failed to upload photo");
     } finally {
       this.setSafeState({ isUploadingAvatar: false, avatarModalOpen: false });
+    }
+  };
+
+  private handleUploadWallpaper = async (fileOrFiles: File | File[]) => {
+    const files = Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles];
+    if (files.length === 0) return;
+    this.setSafeState({ isUploadingWallpaper: true });
+
+    try {
+      const file = files[0];
+      await companyService.uploadWorkspaceWallpaper(file);
+
+      // update company preview from cached workspace if available
+      const cached = companyService.getWorkspaceValue();
+      if (cached) {
+        const ws: any = cached;
+        const cp: any = ws.company_profile ?? {};
+        const company = {
+          accountType:
+            (ws.workspace_type as "individual" | "company") ??
+            (ws.accountType as "individual" | "company") ??
+            "individual",
+          companyName:
+            (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
+          tradeName:
+            (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
+          employees:
+            (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
+          primaryService:
+            (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
+          industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
+          description: (cp.description as string) ?? (ws.description as string) ?? undefined,
+          wallpaperUrl: (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined,
+        } as any;
+
+        this.setSafeState({ company });
+      }
+
+      message.success("Wallpaper uploaded successfully");
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to upload wallpaper");
+    } finally {
+      this.setSafeState({ isUploadingWallpaper: false, wallpaperModalOpen: false });
     }
   };
 
@@ -195,6 +267,7 @@ export class ProfilePage extends BasePage<{}, State> {
           isSavingPersonal={this.state.isSavingPersonal}
           isSavingCompany={this.state.isSavingCompany}
           onOpenAvatar={this.handleOpenAvatar}
+          onOpenWallpaper={this.handleOpenWallpaper}
           onSavePersonal={this.handleSavePersonal}
           onSaveCompany={this.handleSaveCompany}
         />
@@ -206,6 +279,16 @@ export class ProfilePage extends BasePage<{}, State> {
           onClose={this.handleCloseAvatar}
           onUpload={this.handleUploadAvatar}
           isUploading={!!this.state.isUploadingAvatar}
+          maxFiles={1}
+        />
+
+        <AvatarUploadModal
+          open={!!this.state.wallpaperModalOpen}
+          title="Upload wallpaper"
+          subtitle="Select or drag an image to update your company wallpaper"
+          onClose={this.handleCloseWallpaper}
+          onUpload={this.handleUploadWallpaper}
+          isUploading={!!this.state.isUploadingWallpaper}
           maxFiles={1}
         />
       </>
