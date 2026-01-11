@@ -15,7 +15,16 @@ import {
 import { ScheduleCalendar } from "../../components/schedule-calendar/schedule-calendar.component";
 import { ScheduleSidebar } from "../../components/schedule-sidebar/schedule-sidebar.component";
 
-export function ScheduleTemplate() {
+type ScheduleTemplateProps = {
+  availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
+  availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
+  workspaceId?: string | null;
+  onCreate?: (draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
+  events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
+  onRangeChange?: (from: string, to: string) => Promise<void>;
+};
+
+export function ScheduleTemplate(props: ScheduleTemplateProps) {
   return (
     <BaseTemplate
       content={
@@ -35,11 +44,11 @@ export function ScheduleTemplate() {
 
             <Shell>
               <SidebarCard className="surface">
-                <ScheduleSidebar />
+                <ScheduleSidebar availableServices={props.availableServices} availableEmployees={props.availableEmployees} workspaceId={props.workspaceId} onCreate={props.onCreate} />
               </SidebarCard>
 
               <ContentCard className="surface">
-                <ScheduleCalendar />
+                <ScheduleCalendar availableServices={props.availableServices} availableEmployees={props.availableEmployees} workspaceId={props.workspaceId} onCreate={props.onCreate} events={props.events} onRangeChange={props.onRangeChange} />
               </ContentCard>
             </Shell>
           </PageStack>

@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 
 export const CalendarShell = styled.div`
   display: flex;
@@ -64,7 +64,8 @@ export const ToolbarRight = styled.div`
 export const CalendarWrap = styled.div`
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow: visible; /* allow absolute popups to escape the rounded container */
+  position: relative; /* anchor absolute popup positioning inside this container */
   background: var(--color-surface);
 
   flex: 1;
@@ -166,5 +167,299 @@ export const CalendarHost = styled.div`
 
   .toastui-calendar-popup-close {
     color: var(--toastui-calendar-text-muted);
+  }
+
+  /* Strongly-scoped rules to improve event and popup contrast inside this CalendarHost */
+  .tui-calendar-month {
+    .tui-month-schedule {
+      color: var(--toastui-calendar-text);
+
+      &-title,
+      .tui-month-schedule-title,
+      .tui-calendar-event-title,
+      .toastui-calendar-event-title {
+        color: var(--toastui-calendar-text) !important;
+        font-weight: 700 !important;
+        font-size: 12px !important;
+        text-shadow: none !important;
+      }
+
+      &-dot,
+      .tui-month-schedule-dot,
+      .tui-calendar-event-dot,
+      .toastui-calendar-event-dot {
+        /* background intentionally omitted so per-event inline styles control color */
+        width: 8px !important;
+        height: 8px !important;
+        border-radius: 999px !important;
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.06) !important;
+      }
+    }
+  }
+
+  /* Popup / detail box */
+  .tui-popup,
+  .toastui-popup,
+  .tui-calendar-popup,
+  .toastui-calendar-popup,
+  .toastui-calendar-detail-popup,
+  .tui-calendar-detail-popup {
+    /* allow inline/background from templates to control popup bg; keep other styles */
+    color: var(--toastui-calendar-text) !important;
+    border: 1px solid var(--toastui-calendar-border) !important;
+    box-shadow: var(--shadow-md) !important;
+  }
+
+  .tui-calendar-detail-popup .tui-calendar-popup-section,
+  .toastui-calendar-detail-popup .toastui-calendar-popup-section {
+    border-color: var(--toastui-calendar-divider) !important;
+  }
+`;
+
+/* Global styles for toast-ui elements that may be rendered outside the host (portals) */
+export const ToastUIGlobalStyles = createGlobalStyle`
+  /* Use global theme tokens so portal popups inherit app theme */
+  .tui-popup,
+  .toastui-popup,
+  .tui-calendar-popup,
+  .toastui-calendar-popup,
+  .toastui-calendar-detail-popup,
+  .tui-calendar-detail-popup,
+  .tui-full-calendar-popup-container,
+  .tui-full-calendar-popup {
+     /* style the outer popup container to match app theme */
+     background: var(--color-surface) !important;
+     color: var(--color-text) !important;
+     border: 1px solid var(--color-border) !important;
+     box-shadow: var(--shadow-md) !important;
+     border-radius: 8px !important;
+     z-index: 10000 !important;
+  }
+
+  .tui-full-calendar-popup-container,
+  .tui-popup,
+  .toastui-popup,
+  .tui-calendar-popup,
+  .toastui-calendar-popup,
+  .toastui-calendar-detail-popup,
+  .tui-calendar-detail-popup {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border: 0 transparent !important;
+    box-shadow: none !important;
+  }
+
+  .tui-popup .tui-popup-content,
+  .toastui-popup .toastui-popup-content,
+  .tui-calendar-detail-popup .tui-calendar-popup-section,
+  .toastui-calendar-detail-popup .toastui-calendar-popup-section,
+  .tui-full-calendar-popup-section {
+     /* keep inner container transparent so our custom inner popup renders cleanly */
+     background: transparent !important;
+     padding: 12px !important;
+     border-color: var(--color-divider) !important;
+  }
+
+  .tui-month-schedule-title,
+  .tui-calendar-event-title,
+  .toastui-calendar-event-title,
+  .tui-custom-title,
+  .tui-custom-popup-title {
+    color: var(--color-text) !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    text-shadow: none !important;
+  }
+
+  .tui-month-schedule-dot,
+  .tui-calendar-event-dot,
+  .toastui-calendar-event-dot,
+  .tui-custom-dot {
+    background: var(--color-primary);
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 999px !important;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.06) !important;
+  }
+
+  /* style our custom popup content injected by template.popupDetail */
+  .tui-custom-popup {
+    background: var(--color-surface);
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border) !important;
+    box-shadow: var(--shadow-md) !important;
+    border-radius: 8px;
+    padding: 12px !important;
+  }
+  .tui-custom-popup .tui-custom-popup-time {
+    color: var(--color-text-muted) !important;
+  }
+
+  .tui-popup,
+  .toastui-popup,
+  .tui-calendar-detail-popup,
+  .toastui-calendar-detail-popup,
+  .tui-full-calendar-popup-container,
+  .tui-full-calendar-popup {
+    background: transparent !important;
+    color: var(--color-text) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .tui-popup .tui-popup-content,
+  .toastui-popup .toastui-popup-content,
+  .tui-calendar-detail-popup .tui-calendar-popup-section,
+  .toastui-calendar-detail-popup .toastui-calendar-popup-section,
+  .tui-full-calendar-popup-section {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide default popup content container; allow our custom popup (if present) to display */
+  .tui-popup .tui-popup-content,
+  .toastui-popup .toastui-popup-content {
+    /* Hide default inner children but allow our custom popup to show */
+    .tui-popup .tui-popup-content > *,
+    .toastui-popup .toastui-popup-content > * {
+      display: none !important;
+    }
+
+    .tui-popup .tui-popup-content .tui-custom-popup,
+    .toastui-popup .toastui-popup-content .tui-custom-popup {
+      display: block !important;
+      position: relative !important;
+      z-index: 2147483647 !important;
+      pointer-events: auto !important;
+  }
+
+  /* If our custom popup exists inside the popup content, force it visible */
+  .tui-popup .tui-popup-content .tui-custom-popup,
+  .toastui-popup .toastui-popup-content .tui-custom-popup {
+    display: block !important;
+    position: relative !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Styles for React-managed popup (absolute inside CalendarWrap) */
+  .tui-react-popup {
+    pointer-events: auto;
+  }
+
+  .tui-react-popup .tui-custom-popup {
+    /* fixed popup width requested by user */
+    width: 250px !important;
+    min-width: 250px !important;
+    position: relative;
+    padding: 16px !important;
+    overflow: hidden; /* prevent content from resizing the card */
+  }
+
+  .tui-custom-popup-header {
+    margin-bottom: 6px;
+  }
+
+  .tui-custom-popup-title {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tui-custom-popup-status {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--color-text);
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(0,0,0,0.06);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tui-custom-popup-time {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tui-custom-popup-body {
+    font-size: 13px;
+    color: var(--color-text);
+    margin-bottom: 12px;
+    line-height: 1.2;
+    /* clamp to 3 lines with ellipsis */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tui-custom-popup-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-bottom: 8px;
+  }
+
+  .tui-custom-popup-meta .meta-item {
+    display:flex;align-items:center;gap:6px;
+  }
+  .tui-custom-popup-footer {
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+    margin-top:6px;
+  }
+
+  .tui-custom-popup-edit {
+    /* lightweight Ant-like primary appearance for template-rendered button */
+    background: var(--color-primary) !important;
+    color: var(--on-primary) !important;
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    font-weight: 600 !important;
+  }
+
+  .tui-custom-popup-delete {
+    background: transparent !important;
+    color: var(--color-text-muted) !important;
+    border: 1px solid var(--color-border) !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+  }
+
+  /* if the title or body are too long, ensure the whole card keeps fixed height */
+  .tui-custom-popup * { box-sizing: border-box; }
+
+  /* Ensure ANY custom popup rendered by toast-ui or React keeps fixed dimensions */
+  .tui-custom-popup {
+    width: 250px !important;
+    min-width: 250px !important;
+    overflow: hidden !important;
+  }
+
+  .tui-custom-popup .tui-custom-popup-title {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .tui-custom-popup .tui-custom-popup-body {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 3 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
   }
 `;

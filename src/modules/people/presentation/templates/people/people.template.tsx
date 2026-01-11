@@ -3,7 +3,7 @@ import { BaseTemplate } from "@shared/base/base.template";
 import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 export function PeopleTemplate(props: { title?: string; children?: React.ReactNode }) {
-  const { title = "Pessoas", children } = props;
+  const { title = "People", children } = props;
   return (
     <BaseTemplate
       content={

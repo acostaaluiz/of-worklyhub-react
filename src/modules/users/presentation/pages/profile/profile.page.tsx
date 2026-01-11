@@ -19,6 +19,8 @@ type State = {
   isUploadingWallpaper?: boolean;
   isSavingPersonal?: boolean;
   isSavingCompany?: boolean;
+  isAvatarLoading?: boolean;
+  isWallpaperLoading?: boolean;
 };
 
 export class ProfilePage extends BasePage<{}, State> {
@@ -40,7 +42,52 @@ export class ProfilePage extends BasePage<{}, State> {
     isUploadingWallpaper: false,
     isSavingPersonal: false,
     isSavingCompany: false,
+    isAvatarLoading: false,
+    isWallpaperLoading: false,
   };
+
+  private preloadImage = (url: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!url) return reject(new Error("no-url"));
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("failed-to-load"));
+        img.src = url;
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
+  private async preloadAndSetAvatar(url?: string) {
+    if (!url) return;
+    this.setSafeState({ isAvatarLoading: true });
+    try {
+      await this.preloadImage(url);
+      this.setSafeState({ personal: { ...this.state.personal, photoUrl: url } });
+    } catch (err) {
+      // keep existing photoUrl (or undefined) on error
+      console.error("Avatar preload failed", err);
+    } finally {
+      this.setSafeState({ isAvatarLoading: false });
+    }
+  }
+
+  private async preloadAndSetWallpaper(url?: string) {
+    if (!url) return;
+    this.setSafeState({ isWallpaperLoading: true });
+    try {
+      await this.preloadImage(url);
+      const existing = this.state.company ?? ({} as CompanyModel);
+      this.setSafeState({ company: { ...existing, wallpaperUrl: url } });
+    } catch (err) {
+      console.error("Wallpaper preload failed", err);
+    } finally {
+      this.setSafeState({ isWallpaperLoading: false });
+    }
+  }
 
   protected override async onInit(): Promise<void> {
     await this.runAsync(async () => {
@@ -50,8 +97,10 @@ export class ProfilePage extends BasePage<{}, State> {
         fullName: (session?.name as string) ?? "",
         email: session?.email ?? "",
         phone: undefined,
-        photoUrl: session?.photoUrl ?? undefined,
+        photoUrl: undefined,
       };
+      // if session has a photo, preload before assigning to avoid progressive render
+      if (session?.photoUrl) this.preloadAndSetAvatar(session.photoUrl).catch(() => {});
 
       // try fetch user profile from usersService if email available
       if (session?.email) {
@@ -67,7 +116,14 @@ export class ProfilePage extends BasePage<{}, State> {
             personal.email = (f.email as string) ?? personal.email;
             // support multiple possible photo fields returned by API
             const photoCandidates = (f as any).profilePhotoUrl ?? (f as any).profile_photo_url ?? (f as any).photoUrl ?? (f as any).photo_url ?? undefined;
-            if (photoCandidates) personal.photoUrl = photoCandidates as string;
+            if (photoCandidates) {
+              // defer setting photoUrl until fully loaded to avoid progressive render
+              const candidate = photoCandidates as string;
+              // keep preview empty until image fully loaded
+              personal.photoUrl = undefined as any;
+              // schedule preload after state updated below
+              this.preloadAndSetAvatar(candidate).catch(() => {});
+            }
             if ((f as any).phone) personal.phone = (f as any).phone;
 
             // map plan if available: resolve planId to title/price using applicationService
@@ -118,11 +174,15 @@ export class ProfilePage extends BasePage<{}, State> {
                 (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
               industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
               description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-              wallpaperUrl:
-                (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined,
+              // delay wallpaper until fully loaded to avoid partial render
+              wallpaperUrl: undefined as any,
             } as CompanyModel;
 
             this.setSafeState({ personal, company });
+            // if there is a wallpaper candidate, preload and set when ready
+            const wallpaperCandidate =
+              (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined;
+            if (wallpaperCandidate) this.preloadAndSetWallpaper(wallpaperCandidate).catch(() => {});
             return;
           }
 
@@ -147,11 +207,13 @@ export class ProfilePage extends BasePage<{}, State> {
                 (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
               industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
               description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-              wallpaperUrl:
-                (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined,
+              wallpaperUrl: undefined as any,
             } as CompanyModel;
 
             this.setSafeState({ personal, company });
+            const wallpaperCandidate =
+              (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined;
+            if (wallpaperCandidate) this.preloadAndSetWallpaper(wallpaperCandidate).catch(() => {});
             return;
           }
         } catch {
@@ -177,7 +239,7 @@ export class ProfilePage extends BasePage<{}, State> {
     if (files.length === 0) return;
     this.setSafeState({ isUploadingAvatar: true });
 
-    try {
+      try {
       // Only support single-file profile photo (maxFiles=1)
       const file = files[0];
 
@@ -185,8 +247,8 @@ export class ProfilePage extends BasePage<{}, State> {
       // server upload is indicated by a spinner only.
       const path = await usersService.uploadProfilePhoto(file);
 
-      // update preview to stored path
-      this.setSafeState({ personal: { ...this.state.personal, photoUrl: path } });
+      // preload and set only after fully loaded
+      await this.preloadAndSetAvatar(path);
       message.success("Photo uploaded successfully");
     } catch (err) {
       console.error(err);
@@ -225,10 +287,13 @@ export class ProfilePage extends BasePage<{}, State> {
             (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
           industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
           description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-          wallpaperUrl: (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined,
+          wallpaperUrl: undefined as any,
         } as any;
 
         this.setSafeState({ company });
+        const wallpaperCandidate =
+          (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined;
+        if (wallpaperCandidate) await this.preloadAndSetWallpaper(wallpaperCandidate);
       }
 
       message.success("Wallpaper uploaded successfully");

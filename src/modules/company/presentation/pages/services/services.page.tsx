@@ -5,6 +5,7 @@ import ServiceManagerComponent from "@modules/company/presentation/components/co
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import { message } from "antd";
+import { loadingService } from "@shared/ui/services/loading.service";
 import { useEffect, useState } from "react";
 import { BasePage } from "@shared/base/base.page";
 
@@ -30,6 +31,8 @@ function CompanyServicesAdminPageContent(): JSX.Element {
 
   async function handleCreate(payload: Omit<CompanyServiceModel, "id" | "createdAt">) {
     console.log(payload);
+    setLoading(true);
+    loadingService.show();
     try {
       await companyWorkspaceService.createService(payload);
       message.success("Serviço criado");
@@ -37,12 +40,16 @@ function CompanyServicesAdminPageContent(): JSX.Element {
     } catch (e) {
       console.log('error: ', e);
       message.error("Erro ao criar serviço");
+    } finally {
+      setLoading(false);
+      loadingService.hide();
     }
   }
 
   async function handleUpdate(_id: string, _patch: Partial<CompanyServiceModel>) {
+    setLoading(true);
+    loadingService.show();
     try {
-      setLoading(true);
       await companyWorkspaceService.updateService(_id, _patch);
       message.success("Serviço atualizado");
       await load();
@@ -51,13 +58,15 @@ function CompanyServicesAdminPageContent(): JSX.Element {
       message.error("Erro ao atualizar serviço");
     } finally {
       setLoading(false);
+      loadingService.hide();
     }
   }
 
   async function handleDeactivate(_s: CompanyServiceModel) {
     const s = _s;
+    setLoading(true);
+    loadingService.show();
     try {
-      setLoading(true);
       const nextActive = !(s.active ?? false);
       await companyWorkspaceService.updateService(s.id, { active: nextActive });
       message.success(nextActive ? "Serviço ativado" : "Serviço desativado");
@@ -67,6 +76,7 @@ function CompanyServicesAdminPageContent(): JSX.Element {
       message.error("Erro ao inativar/ativar serviço");
     } finally {
       setLoading(false);
+      loadingService.hide();
     }
   }
 

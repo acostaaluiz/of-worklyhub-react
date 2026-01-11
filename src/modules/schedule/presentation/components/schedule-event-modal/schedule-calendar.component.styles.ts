@@ -114,7 +114,7 @@ export const TimeTabsRow = styled.div`
   .ant-segmented {
     height: 40px;
     padding: 3px;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
   }
 
   .ant-segmented-item-label {
@@ -184,7 +184,7 @@ export const FieldRow = styled.div`
 
 export const FieldRow3 = styled.div`
   display: grid;
-  grid-template-columns: 1.3fr 0.9fr 0.9fr;
+  grid-template-columns: 1.6fr 1fr;
   gap: var(--space-3);
 
   @media (max-width: 768px) {

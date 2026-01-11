@@ -46,6 +46,8 @@ Não utilizar caminhos relativos longos (`../../..`) entre módulos.
 - Tipagem: `tsconfig.app.json` exige `strict: true` — todo código novo deve ter tipos explícitos.
 - Imports: use aliases; mantenha imports ordenados e agrupados por origem (externo, @core, @shared, @modules, relativo).
 - HTTP: usar `@core/http/http-client` para todas as requisições. Nunca usar `axios` diretamente em components.
+- HTTP: usar `@core/http/http-client` para todas as requisições. Nunca usar `axios` diretamente em components.
+- Service API wrapper: Para cada domínio que faz chamadas HTTP diretas, crie um wrapper de API em `src/modules/<feature>/services/<feature>-api.ts` que estenda `BaseHttpService` e exponha métodos tipados (`createWorker`, `updateWorker`, `listSomething`, etc.). Os services (ex.: `people.service.ts`) devem instanciar esse API wrapper com `new XApi(httpClient)` e usar seus métodos em vez de chamar `httpClient` diretamente. Isso mantém coerência com padrões existentes (`CompaniesApi`) e facilita mapeamento/transformação de resposta e tratamento de erros.
 - Erros: transformar erros com `to-app-error.ts` e identificar com `is-app-error.ts` antes de exibir na UI.
 - Logging: use `@core/logger` para eventos, warnings e erros críticos.
 - Estilo: usar `styled-components` ou os componentes `shared/ui` quando possível. Use `global.scss` somente para tokens/variáveis globais.
@@ -506,3 +508,136 @@ Objetivo do aprendizado:
 - Preservar coerência arquitetural e de negócio
 
 Fim das instruções estendidas.
+
+## Complemento — Padrões e Boas Práticas (adendo)
+
+Este adendo complementa o documento existente com regras práticas e incisivas para desenvolvimento no WorklyHub.
+As recomendações abaixo devem ser seguidas estritamente por novos códigos e por PRs que alterem infra-estrutura ou padrões.
+
+### Resumo executivo do negócio
+
+- WorklyHub é uma plataforma SaaS para empresas de serviços (merchants) e clientes finais (consumers).
+- Objetivo técnico: permitir operações de catálogo, agenda, colaboradores, clientes e faturamento com alta consistência arquitetural, testabilidade e segurança.
+- Prioridade: consistência entre domínios (`@modules`), baixo acoplamento entre `presentation` e `core`, e responsabilidade clara entre `API wrapper` (HTTP), `service` (domínio) e `page/component` (UI).
+
+### Padrões obrigatórios: Components
+
+- Tipo: componentes de interface com lógica local devem ser classes que estendem `@shared/base/base.component`.
+- Render: implementar `protected override renderView()`; não coloque lógica de render fora deste método.
+- Side-effects / fetch: use `this.runAsync(...)` para chamadas assíncronas e `this.setSafeState(...)` para atualizar `state`.
+- State: declarar tipo de `state` explicitamente; evite `any`. Permita `error?: unknown` quando necessário.
+- Estilos: colocar styled-components em `*.styles.ts` ao lado do componente.
+- Arquivo: `src/modules/<feature>/presentation/components/<name>/<name>.component.tsx`
+
+### Padrões obrigatórios: Templates
+
+- Tipo: templates devem ser Function Components que compõem `@shared/base/base.template`.
+- Props: tipar todas as props (incluindo callbacks) e evitar dependências implícitas (contextos globais sem injeção).
+- Responsabilidade: layout e orquestração (modais, confirmations, callbacks). Evite lógica de negócio ou chamadas HTTP diretas — prefira receber dados via props.
+- Fetch auxiliar: aceitável usar `useEffect` apenas para dados auxiliares (categorias, enums), não para carregar o recurso principal da rota.
+- Arquivo: `src/modules/<feature>/presentation/templates/<name>/<name>.template.tsx`
+
+### Padrões obrigatórios: Pages
+
+- Tipo: Pages de rota devem estender `@shared/base/base.page`.
+- Metadata: configurar `protected override options = { title, requiresAuth }`.
+- Ciclo de carga: buscar dados em `componentDidMount`, sempre chamando `super.componentDidMount?.()` se sobrescrito.
+- Params: use wrapper function components para injetar `useParams()` em Pages de classe.
+- UX de carregamento: não use o estado de `BasePage` para esconder toda a tela durante saves; use o `loadingService` (overlay global) para operações de persistência de longa duração.
+- Arquivo: `src/modules/<feature>/presentation/pages/<Name>.page.tsx`
+
+### Serviços e API wrappers (padrão obrigatório)
+
+- Estrutura:
+  - Criar `src/modules/<feature>/services/<feature>-api.ts` que estende `BaseHttpService`.
+  - Expor métodos HTTP tipados (ex.: `list(workspaceId: string): Promise<ApiResponse<...>>`).
+  - Criar `src/modules/<feature>/services/<feature>.service.ts` que instancia o API wrapper: `const api = new FeatureApi(httpClient)`.
+- Responsabilidade do API wrapper: falar apenas com HTTP, formar URLs, headers, timeouts e interceptors.
+- Responsabilidade do Service: regras de negócio, mapeamento (API -> Model), caching leve, dedupe de requests (ex.: `_listPromise`), retries limitados e transformar erros com `toAppError`.
+- Assinatura de métodos:
+  - Use `Promise<T>` explícito.
+  - Preferir nomes sem ambiguidade: `create`, `update`, `deactivate`, `list`, `getById`.
+  - Para listagens paginadas, usar e retornar estruturas `{ items: T[]; meta: PaginationMeta }`.
+- Exemplo (padrão):
+  - `class PeopleApi extends BaseHttpService { listWorkspaceWorkers(workspaceId: string) { return this.get(`/...`); } }`
+  - `export const PeopleService = { async listEmployees(): Promise<EmployeeModel[]> { try { const r = await api.listWorkspaceWorkers(ws); return mapFromApi(r.data); } catch(e) { throw toAppError(e); } } }`
+
+### Padrão de upload de imagens (recomendação e contrato)
+
+Opções suportadas (preferência por presigned URLs):
+
+1. Fluxo recomendado — Presigned URL (S3-like)
+
+- Backend fornece: `{ uploadUrl: string, method?: 'PUT'|'POST', fields?: Record<string,string> }`
+- Frontend: usa `fetch`/`axios` para enviar o arquivo diretamente ao `uploadUrl` (Content-Type apropriado).
+- Após PUT/POST, backend deve retornar a `publicUrl` ou a rota deve ser derivada a partir do `uploadUrl`.
+- API wrapper: `uploadImagePresigned(file: File, opts: { workspaceId:string }): Promise<string>` → retorna `publicUrl` (string).
+
+2. Fallback — multipart/form-data
+
+- Endpoint: `POST /uploads` aceita `FormData` com:
+  - field `file` (File)
+  - field `metadata` (JSON string) — opcional: `{ workspace_id, object_type, object_id? }`
+- Headers: deixe o browser setar `Content-Type` (boundary).
+- API wrapper: `uploadImageMultipart(file: File, metadata: UploadMetadata): Promise<string>`
+- Resposta: `{ url: string }`
+
+Notas operacionais:
+
+- Validar tamanho e tipo no cliente e no servidor (ex.: max 5MB, mime `image/*`), rejeitar imagens sem tratamento.
+- Sempre retornar URL pública (ou token que permita construção de URL) — evitar que frontend precise decodificar respostas complexas.
+- Em services, encapsular upload e persistência (ex.: salvar URL no recurso) em uma única função de alto nível.
+
+### Boas práticas de tipagem e DTOs
+
+- `strict: true` é mandatório; evite `any`.
+- Defina tipos simples e reutilizáveis:
+  - `type ID = string;`
+  - `interface PaginationMeta { page: number; perPage: number; total: number; }`
+- Use DTOs para entrada/saída (Ex.: `CreateWorkerDto`, `WorkerResponseDto`) e mappers `toModel(dto)`.
+- Validação: quando for necessário validar payloads externos (respostas do backend), use libs como `zod` ou `io-ts` nos boundaries (service/api), nunca no componente.
+- Estrutura de nomes: TS usa camelCase; mapeie snake_case do backend em um mapper centralizado.
+- Retornos: assinar sempre `Promise<T>`; evite funções que retornam `any` ou `unknown` sem validação.
+- Imutabilidade: prefira `Readonly<T>` / `ReadonlyArray<T>` para contratos imutáveis quando aplicável.
+
+### Mapeamento de API / Transformações
+
+- Colocar **mappers** (API -> Model) próximos ao service: `mapWorkerFromApi(apiItem): EmployeeModel`.
+- Centralizar conversões de datas, moedas e enums no mapper; nunca espalhar parsing pela UI.
+
+### Tratamento de erros e UX de loading
+
+- Erros: transforme todos os erros com `toAppError(err)` antes de propagar.
+- UI: para operações de persistência que afetam a tela atual (create/update/delete), usar `loadingService.show()`/`hide()` para overlay global; use `this.setSafeState({ loading })` para cargas locais (listas, cards).
+- Evitar "blank page" durante saves: não depende do `BasePage` loading state para long ops.
+
+### Testes, stories e revisão
+
+- Services: unit tests cobrindo mappers, lógica de dedupe e transformações (mock `httpClient`).
+- Components: testes unitários para lógica não trivial; snapshots só se úteis.
+- Storybook: documentar componentes reutilizáveis e templates mínimos.
+
+### Commits e PRs
+
+- Mensagens atômicas e com `commitizen` (CZ).
+- PR deve incluir:
+  - Descrição do problema/objetivo.
+  - Impacto nas rotas e contratos de API.
+  - Testes adicionados/alterados.
+  - Passos para validar localmente (ex.: env vars, seeds).
+
+### Convenções de codificação e comentários
+
+- Evitar comentários no código; prefira nomes claros e funções pequenas. Comentar apenas quando a intenção não puder ser expressa em código.
+- Não alterar padrões já estabelecidos sem proposta justificando o ganho (abrir issue).
+
+### Regras do Agent (comportamento)
+
+- O agent sempre responde em português.
+- Qualquer proposta de mudança neste arquivo deve apresentar um diff em formato `diff` e aguardar a frase explícita:
+
+  APROVAR ATUALIZAÇÃO DO AGENT
+
+  Somente após essa frase o agent aplicará as alterações no repositório.
+
+## Histórico de evolução do agent

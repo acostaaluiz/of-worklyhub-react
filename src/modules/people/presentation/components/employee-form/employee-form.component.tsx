@@ -18,11 +18,11 @@ export function EmployeeFormComponent({ initial, onSubmit, submitting }: Props) 
       if (v.hiredAt) prepared.hiredAt = (v.hiredAt as dayjs.Dayjs).format("YYYY-MM-DD");
       onSubmit(prepared);
     }}>
-      <Form.Item name="firstName" label="Nome" rules={[{ required: true }]}>
+      <Form.Item name="firstName" label="First name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
 
-      <Form.Item name="lastName" label="Sobrenome">
+      <Form.Item name="lastName" label="Last name">
         <Input />
       </Form.Item>
 
@@ -30,28 +30,28 @@ export function EmployeeFormComponent({ initial, onSubmit, submitting }: Props) 
         <Input />
       </Form.Item>
 
-      <Form.Item name="phone" label="Telefone">
+      <Form.Item name="phone" label="Phone">
         <Input />
       </Form.Item>
 
-      <Form.Item name="role" label="Cargo">
+      <Form.Item name="role" label="Role">
         <Input />
       </Form.Item>
 
-      <Form.Item name="department" label="Departamento">
+      <Form.Item name="department" label="Department">
         <Input />
       </Form.Item>
 
-      <Form.Item name="hiredAt" label="Data de admissão">
+      <Form.Item name="hiredAt" label="Hired at">
         <DatePicker style={{ width: "100%" }} />
       </Form.Item>
 
-      <Form.Item name="salaryCents" label="Salário (centavos)">
+      <Form.Item name="salaryCents" label="Salary (cents)">
         <InputNumber style={{ width: "100%" }} min={0} />
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={submitting}>Salvar</Button>
+        <Button type="primary" htmlType="submit" loading={submitting}>Save</Button>
       </Form.Item>
     </Form>
   );

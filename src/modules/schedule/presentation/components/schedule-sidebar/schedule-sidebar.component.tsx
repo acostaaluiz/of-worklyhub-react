@@ -18,9 +18,17 @@ import {
 import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
+import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
 
 
-export function ScheduleSidebar() {
+type ScheduleSidebarProps = {
+  availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
+  availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
+  workspaceId?: string | null;
+  onCreate?: (draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
+};
+
+export function ScheduleSidebar(props: ScheduleSidebarProps) {
   const api = useScheduleApi();
   const [categories, setCategories] = useState<ScheduleCategory[]>([]);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
@@ -77,8 +85,28 @@ export function ScheduleSidebar() {
     setCategorySelection((prev) => ({ ...prev, [id]: checked }));
   };
 
-  const handleCreate = async (payload: Omit<ScheduleEvent, "id">) => {
-    await api.createEvent(payload);
+  const handleCreate = async (payload: ScheduleEventDraft) => {
+    if (props.onCreate) {
+      await props.onCreate(payload);
+    } else {
+      const toCreate: Omit<ScheduleEvent, "id"> & { durationMinutes?: number | null } = {
+        title: payload.title,
+        date: payload.date,
+        startTime: payload.startTime,
+        endTime: payload.endTime,
+        categoryId: payload.categoryId,
+        description: payload.description,
+        durationMinutes: payload.durationMinutes ?? null,
+      };
+
+      await api.createSchedule({
+        event: toCreate,
+        serviceIds: payload.serviceIds,
+        employeeIds: payload.employeeIds,
+        totalPriceCents: payload.totalPriceCents,
+        workspaceId: props.workspaceId ?? null,
+      });
+    }
 
     const start = selectedDate.startOf("month").format("YYYY-MM-DD");
     const end = selectedDate.endOf("month").format("YYYY-MM-DD");
@@ -190,6 +218,8 @@ export function ScheduleSidebar() {
         categories={categories}
         initialDate={selectedDate.format("YYYY-MM-DD")}
         onConfirm={handleCreate}
+        availableServices={props.availableServices}
+        availableEmployees={props.availableEmployees}
       />
     </div>
   );

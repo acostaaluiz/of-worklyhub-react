@@ -1,18 +1,21 @@
 import React from "react";
-import { Table, Button, Space, Tag } from "antd";
+import { Button, Space, Tag } from "antd";
+import SmartTable from "@shared/ui/components/smart-table/smart-table.component";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 
 type Props = {
   services: CompanyServiceModel[];
   onEdit: (s: CompanyServiceModel) => void;
   onDeactivate: (s: CompanyServiceModel) => void;
+  toolbarLeft?: React.ReactNode;
+  toolbarRight?: React.ReactNode;
 };
 
-export function ServiceListComponent({ services, onEdit, onDeactivate }: Props) {
+export function ServiceListComponent({ services, onEdit, onDeactivate, toolbarLeft, toolbarRight }: Props) {
   const cols = [
     { title: "Title", dataIndex: "title", key: "title" },
-    { title: "Duration (min)", dataIndex: "durationMinutes", key: "duration" },
-    { title: "Price (cents)", dataIndex: "priceCents", key: "price", render: (v?: number) => (v ? `R$ ${(v / 100).toFixed(2)}` : "-") },
+    { title: "Duration (min)", dataIndex: "durationMinutes", key: "durationMinutes" },
+    { title: "Price (cents)", dataIndex: "priceCents", key: "priceCents", render: (v?: number) => (v ? `R$ ${(v / 100).toFixed(2)}` : "-") },
     { title: "Capacity", dataIndex: "capacity", key: "capacity" },
     { title: "Active", dataIndex: "active", key: "active", render: (v?: boolean) => (v ? <Tag color="green">Yes</Tag> : <Tag>No</Tag>) },
     {
@@ -32,7 +35,7 @@ export function ServiceListComponent({ services, onEdit, onDeactivate }: Props) 
     },
   ];
 
-  return <Table rowKey="id" columns={cols} dataSource={services} pagination={{ pageSize: 10 }} />;
+  return <SmartTable columns={cols} dataSource={services} rowKey="id" pageSize={10} searchFields={["title"]} topLeft={toolbarLeft} topRight={toolbarRight} />;
 }
 
 export default ServiceListComponent;

@@ -1,2 +1,156 @@
 @use "./theme/app-theme.scss";
 @import "@toast-ui/calendar/dist/toastui-calendar.min.css";
+
+/* Overrides for toast-ui calendar to improve event visibility in both themes */
+
+/* Month view event styling */
+.toastui-calendar .calendar-monthly-event,
+.toastui-calendar .toastui-calendar-monthly-event {
+  background: transparent;
+}
+
+.toastui-calendar .toastui-calendar-monthly-event-title,
+.toastui-calendar .toastui-calendar-monthly-event-dot,
+.toastui-calendar .toastui-calendar-weekday-schedule-title {
+  color: var(--color-text) !important;
+}
+
+.toastui-calendar .toastui-calendar-monthly-event-title {
+  font-weight: 700 !important;
+  color: var(--color-text) !important;
+  text-shadow: none !important;
+}
+
+/* Make the small dot more visible using theme primary color */
+.toastui-calendar .toastui-calendar-monthly-event-dot {
+  /* background not forced so per-event colors (inline) can apply */
+  box-shadow: 0 0 0 3px rgba(30, 112, 255, 0.06);
+}
+
+/* Allow custom month event dots to use per-event color via --event-dot variable */
+.toastui-calendar .tui-custom-month-event .tui-custom-dot {
+  background: var(--event-dot);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Week/day event blocks: ensure readable text on colored backgrounds */
+.toastui-calendar .toastui-calendar-week-schedule .toastui-calendar-schedule,
+.toastui-calendar
+  .toastui-calendar-weekday-schedule
+  .toastui-calendar-weekday-event {
+  color: var(--on-primary) !important;
+  background-color: rgba(0, 0, 0, 0.06) !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+  box-shadow: none !important;
+}
+
+/* Popup detail styling */
+.toastui-calendar .tui-popup,
+.toastui-calendar .toastui-popup,
+.tui-popup,
+.toastui-calendar-popup {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+}
+
+.tui-popup .tui-popup-title,
+.toastui-popup .toastui-popup-title,
+.toastui-calendar .tui-popup .tui-popup-title {
+  color: var(--color-text) !important;
+  font-weight: 800 !important;
+}
+
+.toastui-calendar .tui-popup .tui-popup-body,
+.toastui-calendar .toastui-popup .toastui-popup-body {
+  color: var(--color-text) !important;
+}
+
+/* Small adjustments for contrast in dark theme */
+:root[data-theme="dark"] .toastui-calendar .toastui-calendar-monthly-event-dot {
+  /* theme-specific background removed to allow event-specific coloring */
+}
+
+/* Ensure event titles are visible in month small space */
+.toastui-calendar .toastui-calendar-monthly-event-title {
+  font-size: 12px !important;
+  line-height: 1 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* More generic and high-specificity overrides to catch different toast-ui class names */
+.toastui-calendar [class*="monthly-event"],
+.tui-calendar [class*="monthly-event"],
+.toastui-calendar [class*="monthly-event"] *,
+.tui-calendar [class*="monthly-event"] * {
+  color: var(--color-text) !important;
+}
+
+.toastui-calendar [class*="monthly-event-title"],
+.tui-calendar [class*="monthly-event-title"] {
+  color: var(--color-text) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-shadow: none !important;
+}
+
+/* make tiny dots/tags visible */
+.toastui-calendar [class*="monthly-event-dot"],
+.tui-calendar [class*="monthly-event-dot"],
+.toastui-calendar [class*="event-dot"],
+.tui-calendar [class*="event-dot"] {
+  /* background not forced so per-event inline styles can control color */
+  border-radius: 999px !important;
+  width: 8px !important;
+  height: 8px !important;
+  display: inline-block !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Week/day event block improvements */
+.toastui-calendar .tui-calendar-week-schedule .tui-schedule,
+.tui-calendar .tui-calendar-week-schedule .tui-schedule,
+.toastui-calendar .tui-calendar-weekday-schedule .tui-schedule,
+.tui-calendar .tui-calendar-weekday-schedule .tui-schedule {
+  color: var(--on-primary) !important;
+  background-color: rgba(30, 112, 255, 0.12) !important;
+  border-radius: 8px !important;
+  padding: 2px 6px !important;
+  font-weight: 700 !important;
+}
+
+/* Popup detail high-contrast */
+.toastui-calendar .tui-popup,
+.tui-calendar .tui-popup,
+.toastui-calendar .toastui-popup,
+.tui-calendar .toastui-popup,
+.tui-popup,
+.toastui-popup {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* popup content elements */
+.tui-popup .tui-popup-title,
+.toastui-popup .toastui-popup-title,
+.tui-popup .tui-popup-body {
+  color: var(--color-text) !important;
+}
+
+/* ensure icons inside popup are visible */
+.tui-popup svg,
+.toastui-popup svg {
+  color: var(--color-text) !important;
+}
+
+/* Dark-specific tweaks */
+:root[data-theme="dark"] .toastui-calendar [class*="monthly-event-title"],
+:root[data-theme="dark"] .tui-calendar [class*="monthly-event-title"] {
+  color: var(--color-surface) !important;
+}

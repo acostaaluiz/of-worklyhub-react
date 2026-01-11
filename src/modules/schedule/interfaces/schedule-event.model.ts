@@ -10,4 +10,5 @@ export type ScheduleEvent = {
   endTime: string;
   categoryId: ScheduleCategoryId;
   description?: string;
+  durationMinutes?: number | null;
 };

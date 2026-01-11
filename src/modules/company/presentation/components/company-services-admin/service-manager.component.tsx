@@ -20,12 +20,15 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
 
   return (
     <Card bordered={false} loading={loading} style={{ marginTop: 12 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-        <h3>Services</h3>
-        <Button type="primary" onClick={() => { setEditing(null); setShowForm(true); }}>New service</Button>
-      </div>
-
-      <ServiceListComponent services={services} onEdit={(s) => { setEditing(s); setShowForm(true); }} onDeactivate={onDeactivate} />
+      <ServiceListComponent
+        services={services}
+        onEdit={(s) => {
+          setEditing(s);
+          setShowForm(true);
+        }}
+        onDeactivate={onDeactivate}
+        toolbarRight={<Button type="primary" onClick={() => { setEditing(null); setShowForm(true); }}>New service</Button>}
+      />
 
       <ModalOverrides>
         <Modal
