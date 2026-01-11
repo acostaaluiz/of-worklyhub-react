@@ -25,6 +25,10 @@ type ScheduleSidebarProps = {
   availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
   workspaceId?: string | null;
   onCreate?: (draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
+  categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
+  categoryCounts?: Record<string, number> | null;
+  selectedCategoryIds?: Record<string, boolean> | null;
+  onToggleCategory?: (id: string, checked: boolean) => void;
 };
 
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
@@ -33,55 +37,56 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
 
   const [selectedDate, _setSelectedDate] = useState<Dayjs>(dayjs());
-  const [categorySelection, setCategorySelection] = useState<
+  // local fallback selection used only when parent does not provide control
+  const [localCategorySelection, setLocalCategorySelection] = useState<
     Record<string, boolean>
-  >({
-    work: true,
-    personal: true,
-    schedule: true,
-    gaming: true,
-  });
+  >({});
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const cats = await api.getCategories();
-      setCategories(cats);
-
-      // sidebar counts: use current month (simple approach)
-      const start = selectedDate.startOf("month").format("YYYY-MM-DD");
-      const end = selectedDate.endOf("month").format("YYYY-MM-DD");
-      const ev = await api.getEvents({ from: start, to: end });
-      setEvents(ev);
+      // prefer categories passed from page (fetched from application service)
+      if (props.categories && Array.isArray(props.categories)) {
+        // map incoming categories to include a display color when missing
+        const codeColorMap: Record<string, string> = {
+          work: "var(--color-primary)",
+          personal: "var(--color-secondary)",
+          schedule: "var(--color-tertiary)",
+          gaming: "rgba(233, 171, 19, 0.95)",
+        };
+        const mapped = props.categories.map((c) => {
+          const code = c.code ?? "";
+          return { id: c.id, code, label: c.label, color: c.color ?? codeColorMap[code] ?? "var(--color-primary)" };
+        });
+        setCategories(mapped);
+      } else {
+        const cats = await api.getCategories();
+        setCategories(cats);
+      }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [api, props.categories]);
 
   const countsByCategory = useMemo(() => {
+    // if page provided counts, prefer them (ensure keys exist for categories)
+    if (props.categoryCounts && Object.keys(props.categoryCounts).length > 0) {
+      const out: Record<string, number> = {};
+      for (const c of categories) out[c.id] = props.categoryCounts[c.id] ?? 0;
+      return out;
+    }
+
     const counts: Record<string, number> = {};
     for (const c of categories) counts[c.id] = 0;
-    for (const e of events)
-      counts[e.categoryId] = (counts[e.categoryId] ?? 0) + 1;
+    for (const e of events) counts[e.categoryId] = (counts[e.categoryId] ?? 0) + 1;
     return counts;
-  }, [categories, events]);
-
-  const schedulesList = useMemo(
-    () => [
-      { key: "daily-standup", label: "Daily Standup" },
-      { key: "weekly-review", label: "Weekly Review" },
-      { key: "team-meeting", label: "Team Meeting" },
-      { key: "lunch-break", label: "Lunch Break" },
-      { key: "client-meeting", label: "Client Meeting" },
-      { key: "other", label: "Other" },
-    ],
-    []
-  );
-
-
-
+  }, [categories, events, props.categoryCounts]);
   const onToggleCategory = (id: string, checked: boolean) => {
-    setCategorySelection((prev) => ({ ...prev, [id]: checked }));
+    if (props.onToggleCategory) {
+      props.onToggleCategory(id, checked);
+      return;
+    }
+
+    setLocalCategorySelection((prev) => ({ ...prev, [id]: checked }));
   };
 
   const handleCreate = async (payload: ScheduleEventDraft) => {
@@ -136,23 +141,6 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
       <Block>
         <BlockHeader>
-          <div className="label">My Schedules</div>
-          <Button size="small">+</Button>
-        </BlockHeader>
-
-        <List>
-          {schedulesList.map((item) => (
-            <Checkbox key={item.key} defaultChecked>
-              {item.label}
-            </Checkbox>
-          ))}
-        </List>
-      </Block>
-
-      <div style={{ height: 14 }} />
-
-      <Block>
-        <BlockHeader>
           <div className="label">Categories</div>
           <Button size="small">Edit</Button>
         </BlockHeader>
@@ -162,7 +150,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
             <CategoryRow key={c.id} $color={c.color}>
               <div className="left">
                 <Checkbox
-                  checked={categorySelection[c.id] ?? true}
+                  checked={(props.selectedCategoryIds?.[c.id] ?? localCategorySelection[c.id]) ?? true}
                   onChange={(e) => onToggleCategory(c.id, e.target.checked)}
                 />
                 <span className="dot" />

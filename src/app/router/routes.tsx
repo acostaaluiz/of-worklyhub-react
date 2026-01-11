@@ -3,7 +3,6 @@ import { publicStackRoutes } from "@app/router/stacks/public.stack";
 import { privateStackRoutes } from "@app/router/stacks/private.stack";
 import RedirectIfAuthenticated from "@shared/providers/auth/redirect-if-authenticated";
 import RequireAuth from "@shared/providers/auth/require-auth";
-import { Outlet } from "react-router-dom";
 
 function NotFound() {
   return (
@@ -24,20 +23,12 @@ function NotFound() {
 const routes: RouteObject[] = [
   {
     // public routes are only for unauthenticated users — redirect to /home if already authenticated
-    element: (
-      <RedirectIfAuthenticated>
-        <Outlet />
-      </RedirectIfAuthenticated>
-    ),
+    element: <RedirectIfAuthenticated />,
     children: publicStackRoutes,
   },
   {
     // wrap private routes with RequireAuth
-    element: (
-      <RequireAuth>
-        <Outlet />
-      </RequireAuth>
-    ),
+    element: <RequireAuth />,
     children: privateStackRoutes,
   },
   { path: "*", element: <NotFound /> },

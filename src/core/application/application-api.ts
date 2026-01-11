@@ -13,6 +13,9 @@ export type ApplicationIndustriesResponse = { industries: ApplicationIndustryIte
 export type ApplicationPlanItem = { id: number; title: string; subtitle?: string; monthly_amount: number; yearly_amount: number; supports: string[]; highlight?: boolean; is_active: boolean };
 export type ApplicationPlansResponse = { plans: ApplicationPlanItem[] };
 
+export type EventCategoryItem = { id: string; code: string; label: string };
+export type EventCategoriesResponse = { categories: EventCategoryItem[] };
+
 export class ApplicationApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "application-api" });
@@ -32,6 +35,10 @@ export class ApplicationApi extends BaseHttpService {
 
   async getPlans(): Promise<ApplicationPlansResponse> {
     return this.get<ApplicationPlansResponse>("/internal/application/plans");
+  }
+
+  async getEventCategories(): Promise<EventCategoriesResponse> {
+    return this.get<EventCategoriesResponse>("/application/internal/event-categories");
   }
 }
 

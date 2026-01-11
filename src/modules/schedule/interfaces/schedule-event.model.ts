@@ -11,4 +11,10 @@ export type ScheduleEvent = {
   categoryId: ScheduleCategoryId;
   description?: string;
   durationMinutes?: number | null;
+  // optional full category object when returned by backend
+  category?: {
+    id: string;
+    code?: string;
+    label?: string;
+  } | null;
 };

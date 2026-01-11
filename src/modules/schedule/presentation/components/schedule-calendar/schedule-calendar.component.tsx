@@ -143,7 +143,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       out.push({
         id: e.id,
-        calendarId: e.categoryId,
+        calendarId: (e as any).category?.id ?? e.categoryId,
         title: e.title,
         category: "time",
         start,
@@ -166,6 +166,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           workers: (e as any).workers ?? null,
           _bodyHtml: bodyHtml,
           status: (e as any).status ?? null,
+          category: (e as any).category ?? null,
           statusColor,
           categoryColor,
         },
@@ -391,7 +392,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             const workersText = Array.isArray(workers) && workers.length > 0
               ? workers.map((w: any) => escapeHtml((w && (w.email || w.fullName || w.userUid)) || '')).join(', ')
               : null;
-            const categoryLabel = model.calendarId || '';
+            const categoryLabel = (model.raw && model.raw.category && model.raw.category.label) || model.calendarId || '';
             // TUI-style fixed popup layout inspired by Toast UI example (keeps app theme)
             return `
               <div class="tui-custom-popup" style="color:${fg};background:${bg} !important;padding:16px;width:250px;font-family:inherit;overflow:hidden;">
@@ -560,7 +561,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               const workersText = Array.isArray(workers) && workers.length > 0
                 ? workers.map((w: any) => escapeHtml((w && (w.email || w.fullName || w.userUid)) || '')).join(', ')
                 : null;
-              const categoryLabel = model.calendarId || '';
+              const categoryLabel = (model.raw && model.raw.category && model.raw.category.label) || model.calendarId || '';
               return `
                   <div class="tui-custom-popup" style="color:${fg};background:${bg} !important;padding:12px;width:250px;font-family:inherit;overflow:hidden;">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">

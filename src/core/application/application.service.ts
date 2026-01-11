@@ -16,15 +16,18 @@ const APP_SERVICES_KEY = "application.services";
 const APP_CATEGORIES_KEY = "application.categories";
 const APP_INDUSTRIES_KEY = "application.industries";
 const APP_PLANS_KEY = "application.plans";
+const APP_EVENT_CATEGORIES_KEY = "application.eventCategories";
 
 export class ApplicationService {
   private subject = new BehaviorSubject<AppServices>(this.loadFromStorage());
   private subjectCategories = new BehaviorSubject<AppCategories>(this.loadCategoriesFromStorage());
   private subjectIndustries = new BehaviorSubject<AppIndustries>(this.loadIndustriesFromStorage());
   private subjectPlans = new BehaviorSubject<AppPlans>(this.loadPlansFromStorage());
+  private subjectEventCategories = new BehaviorSubject<EventCategories | null>(this.loadEventCategoriesFromStorage());
   private pendingFetchPlans: Promise<AppPlans> | null = null;
   private api = new ApplicationApi(httpClient);
   private pendingFetchServices: Promise<AppServices> | null = null;
+  private pendingFetchEventCategories: Promise<EventCategories> | null = null;
 
   private loadFromStorage(): AppServices {
     try {
@@ -66,6 +69,16 @@ export class ApplicationService {
     }
   }
 
+  private loadEventCategoriesFromStorage(): EventCategories | null {
+    try {
+      const raw = localStorageProvider.get(APP_EVENT_CATEGORIES_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw) as EventCategories;
+    } catch {
+      return null;
+    }
+  }
+
   getServices$() {
     return this.subject.asObservable();
   }
@@ -96,6 +109,14 @@ export class ApplicationService {
 
   getPlansValue(): AppPlans {
     return this.subjectPlans.getValue();
+  }
+
+  getEventCategories$() {
+    return this.subjectEventCategories.asObservable();
+  }
+
+  getEventCategoriesValue(): EventCategories | null {
+    return this.subjectEventCategories.getValue();
   }
 
   async fetchServices(): Promise<AppServices> {
@@ -175,17 +196,47 @@ export class ApplicationService {
     }
   }
 
+  async fetchEventCategories(): Promise<EventCategories | null> {
+    const existing = this.getEventCategoriesValue();
+    if (existing != null) return existing;
+
+    if (this.pendingFetchEventCategories) return this.pendingFetchEventCategories;
+
+    this.pendingFetchEventCategories = (async () => {
+      const res = await this.api.getEventCategories();
+      const cats = res?.categories ?? [];
+      try {
+        localStorageProvider.set(APP_EVENT_CATEGORIES_KEY, JSON.stringify(cats));
+      } catch {
+        // ignore
+      }
+      this.subjectEventCategories.next(cats);
+      return cats;
+    })();
+
+    try {
+      return await this.pendingFetchEventCategories;
+    } finally {
+      this.pendingFetchEventCategories = null;
+    }
+  }
+
   clear(): void {
     localStorageProvider.remove(APP_SERVICES_KEY);
     localStorageProvider.remove(APP_CATEGORIES_KEY);
     localStorageProvider.remove(APP_INDUSTRIES_KEY);
     localStorageProvider.remove(APP_PLANS_KEY);
+    localStorageProvider.remove(APP_EVENT_CATEGORIES_KEY);
     this.subject.next(null);
     this.subjectCategories.next(null);
     this.subjectIndustries.next(null);
     this.subjectPlans.next(null);
+    this.subjectEventCategories.next(null);
   }
 }
+
+export type EventCategoryItem = { id: string; code: string; label: string };
+export type EventCategories = EventCategoryItem[] | null;
 
 export const applicationService = new ApplicationService();
 

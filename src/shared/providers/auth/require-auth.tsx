@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { usersAuthService } from "@modules/users/services/auth.service";
 
 type Props = {
-  children: React.ReactElement;
+  children?: React.ReactNode;
 };
 
 export default function RequireAuth({ children }: Props) {
@@ -15,7 +15,7 @@ export default function RequireAuth({ children }: Props) {
     return () => sub.unsubscribe();
   }, []);
 
-  if (session) return children;
+  if (session) return (children ?? <Outlet />);
 
   return <Navigate to="/login" state={{ from: location.pathname }} replace />;
 }

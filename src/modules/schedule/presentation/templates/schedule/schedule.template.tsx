@@ -22,6 +22,10 @@ type ScheduleTemplateProps = {
   onCreate?: (draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
   events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
+  categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
+  categoryCounts?: Record<string, number> | null;
+  selectedCategoryIds?: Record<string, boolean> | null;
+  onToggleCategory?: (id: string, checked: boolean) => void;
 };
 
 export function ScheduleTemplate(props: ScheduleTemplateProps) {
@@ -44,11 +48,27 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
 
             <Shell>
               <SidebarCard className="surface">
-                <ScheduleSidebar availableServices={props.availableServices} availableEmployees={props.availableEmployees} workspaceId={props.workspaceId} onCreate={props.onCreate} />
+                <ScheduleSidebar
+                  availableServices={props.availableServices}
+                  availableEmployees={props.availableEmployees}
+                  workspaceId={props.workspaceId}
+                  onCreate={props.onCreate}
+                  categories={props.categories}
+                  categoryCounts={props.categoryCounts}
+                  selectedCategoryIds={props.selectedCategoryIds}
+                  onToggleCategory={props.onToggleCategory}
+                />
               </SidebarCard>
 
               <ContentCard className="surface">
-                <ScheduleCalendar availableServices={props.availableServices} availableEmployees={props.availableEmployees} workspaceId={props.workspaceId} onCreate={props.onCreate} events={props.events} onRangeChange={props.onRangeChange} />
+                <ScheduleCalendar
+                  availableServices={props.availableServices}
+                  availableEmployees={props.availableEmployees}
+                  workspaceId={props.workspaceId}
+                  onCreate={props.onCreate}
+                  events={props.events}
+                  onRangeChange={props.onRangeChange}
+                />
               </ContentCard>
             </Shell>
           </PageStack>

@@ -170,8 +170,15 @@ export function useScheduleApi() {
             date,
             startTime,
             endTime,
-            // prefer categoryId from API if provided, else default
-            categoryId: (s["categoryId"] as string) ?? (s["calendarId"] as string) ?? "schedule",
+            // prefer categoryId from API if provided; backend may return a `category` object
+            categoryId:
+              (s["categoryId"] as string) ??
+              ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
+              (s["calendarId"] as string) ??
+              "schedule",
+              // preserve the backend category object when available (contains code/label)
+              category: (s["category"] as Record<string, unknown> | null) ?? null,
+              categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
             description: (s["description"] as string) ?? undefined,
             // preserve status object from backend so UI can color by status.code
               status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
