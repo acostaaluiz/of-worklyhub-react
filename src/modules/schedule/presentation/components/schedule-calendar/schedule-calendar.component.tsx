@@ -73,6 +73,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ left: number; top: number } | null>(null);
 
+  const { events: propEvents, workspaceId: propWorkspaceId, onRangeChange: propOnRangeChange, onCreate: propOnCreate, availableServices: propAvailableServices, availableEmployees: propAvailableEmployees } = props;
+
   const tuiCalendars = useMemo(() => {
     return categories.map((c) => ({
       id: c.id,
@@ -170,7 +172,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       } as any);
     });
 
-    console.log("ScheduleCalendar: tuiEvents generated", out.length, out.map((x) => ({ id: x.id, start: x.start, statusColor: (x as any).backgroundColor, rawStatus: (x as any).raw?.status }))); 
+    console.debug("ScheduleCalendar: tuiEvents generated", out.length, out.map((x) => ({ id: x.id, start: x.start, statusColor: (x as any).backgroundColor, rawStatus: (x as any).raw?.status })));
     return out;
   }, [filteredEvents]);
 
@@ -306,14 +308,15 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
     const from = dayjs(current).startOf("month").format("YYYY-MM-DD");
     const to = dayjs(current).endOf("month").format("YYYY-MM-DD");
-    if (props.onRangeChange) {
-      await props.onRangeChange(from, to);
+    if (propOnRangeChange) {
+      await propOnRangeChange(from, to);
     } else {
-      const ev = await api.getEvents({ from, to, workspaceId: props.workspaceId ?? null });
+      const ev = await api.getEvents({ from, to, workspaceId: propWorkspaceId ?? null });
       setEvents(ev);
     }
   };
 
+   
   useEffect(() => {
     (async () => {
       const cats = await api.getCategories();
@@ -332,11 +335,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       }
     })();
     // avoid re-running for changing onRangeChange identity - parent should provide stable callback
-  }, [api, props.workspaceId]);
+  }, [api, propWorkspaceId]);
 
   useEffect(() => {
-    setEvents(props.events ?? []);
-  }, [props.events]);
+    setEvents(propEvents ?? []);
+  }, [propEvents]);
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -354,7 +357,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         monthGridEvent: (model: any) => {
           try {
             // debug model at runtime to inspect color fields
-            try { console.log('tui.monthGridEvent model', model); } catch (err) { console.debug(err); }
+            try { console.debug('tui.monthGridEvent model', model); } catch (err) { console.debug(err); }
             const cardBg = model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
             const dotColor = model?.raw?.categoryColor || model.backgroundColor || `var(--color-primary)`;
             const fg = model.color || `var(--color-text)`;
@@ -532,7 +535,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         template: {
           monthGridEvent: (model: any) => {
             try {
-              try { console.log('tui.monthGridEvent (fallback) model', model); } catch (err) { console.debug(err); }
+              try { console.debug('tui.monthGridEvent (fallback) model', model); } catch (err) { console.debug(err); }
               const cardBg = model?.raw?.statusColor || model.backgroundColor || model.calendarId || "var(--toastui-calendar-primary)";
               const dotColor = model.backgroundColor || model?.raw?.categoryColor || model.calendarId || "var(--toastui-calendar-primary)";
               const fg = model.color || "var(--toastui-calendar-text)";
@@ -637,12 +640,75 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // Delegated handler for template-rendered popup delete buttons (native TUI popup).
+  useEffect(() => {
+    const eventsRef = { current: events };
+    const onClick = async (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target) return;
+      const btn = target.closest('.tui-custom-popup-delete') as HTMLElement | null;
+      if (!btn) return;
+      // find nearest popup container
+      const popup = btn.closest('.tui-custom-popup') as HTMLElement | null;
+      if (!popup) return;
+
+      // attempt to find event id: check data-event-id on siblings or searched elements
+      let id: string | null = null;
+      // look for attribute on popup or parent nodes
+      let node: HTMLElement | null = popup;
+      while (node && !id) {
+        if (node.hasAttribute && node.hasAttribute('data-event-id')) {
+          id = node.getAttribute('data-event-id');
+          break;
+        }
+        node = node.parentElement;
+      }
+
+      // fallback: match by title text inside popup
+      if (!id) {
+        const titleEl = popup.querySelector('.tui-custom-popup-title');
+        const titleText = titleEl ? titleEl.textContent?.trim() ?? '' : '';
+        if (titleText) {
+          const found = (eventsRef.current || events).find((e) => e.title === titleText);
+          if (found) id = found.id;
+        }
+      }
+
+      if (!id) {
+        message.error('Could not determine event to delete');
+        return;
+      }
+
+      try {
+        loadingService.show();
+        const ok = await api.removeEvent(id);
+        if (ok) {
+          try { await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); }
+          message.success('Event deleted');
+        } else {
+          message.error('Failed to delete event');
+        }
+      } catch (err) {
+        console.error(err);
+        message.error('Failed to delete event');
+      } finally {
+        loadingService.hide();
+        setSelectedEvent(null);
+        setPopupPosition(null);
+      }
+    };
+
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, [events, api]);
+
   // debug popup state changes
   useEffect(() => {
     console.debug("ScheduleCalendar.popupState", { selectedEvent, popupPosition });
   }, [selectedEvent, popupPosition]);
   // styling is provided via styled-components in the styles file
 
+   
   useEffect(() => {
     const node = wrapRef.current;
     if (!node) return;
@@ -656,6 +722,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   }, []);
 
   // Ensure popups created later by Toast UI do not carry unwanted inline max-width.
+   
   useEffect(() => {
     const enforcePopup = (el: HTMLElement) => {
       try {
@@ -701,6 +768,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     return () => observer.disconnect();
   }, []);
 
+   
   useEffect(() => {
     safeRender();
   }, [isModalOpen]);
@@ -750,11 +818,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       try {
       loadingService.show();
       // delegate creation to page via props.onCreate
-      if (props.onCreate) {
-        await props.onCreate(draft);
+      if (propOnCreate) {
+        await propOnCreate(draft);
       } else {
         // fallback to local create if no handler provided
-        await api.createSchedule({ event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: props.workspaceId ?? null });
+        await api.createSchedule({ event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
       }
 
       // refresh month events
@@ -762,10 +830,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       const current = inst?.getDate?.();
       const from = dayjs(current).startOf("month").format("YYYY-MM-DD");
       const to = dayjs(current).endOf("month").format("YYYY-MM-DD");
-      if (props.onRangeChange) {
-        await props.onRangeChange(from, to);
+      if (propOnRangeChange) {
+        await propOnRangeChange(from, to);
       } else {
-        const ev = await api.getEvents({ from, to, workspaceId: props.workspaceId ?? null });
+        const ev = await api.getEvents({ from, to, workspaceId: propWorkspaceId ?? null });
         setEvents(ev);
       }
 
@@ -859,7 +927,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 </div>
 
                 <div className="tui-custom-popup-footer" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
-                  <Button size="small" onClick={() => { setSelectedEvent(null); }}>
+                  <Button size="small" onClick={async () => {
+                    if (!selectedEvent) return;
+                    try {
+                      loadingService.show();
+                      const ok = await api.removeEvent(selectedEvent.id);
+                      if (ok) {
+                        try { await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); }
+                        message.success('Event deleted');
+                      } else {
+                        message.error('Failed to delete event');
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      message.error('Failed to delete event');
+                    } finally {
+                      loadingService.hide();
+                      setSelectedEvent(null);
+                    }
+                  }}>
                     <Trash2 size={14} />
                   </Button>
                   <Button type="primary" size="small" onClick={() => { setIsModalOpen(true); setSelectedEvent(null); }} icon={<Edit size={14} />}>
@@ -879,8 +965,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         categories={categories}
         initialDate={modalInitialDate}
         initialStartTime={modalInitialStartTime}
-        availableServices={props.availableServices}
-        availableEmployees={props.availableEmployees}
+          availableServices={propAvailableServices}
+          availableEmployees={propAvailableEmployees}
       />
     </>
   );

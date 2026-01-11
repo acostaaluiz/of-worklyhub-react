@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Calendar, Checkbox, Typography } from "antd";
+import { Button, Checkbox } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { Plus } from "lucide-react";
@@ -13,7 +13,6 @@ import {
   BlockHeader,
   List,
   CategoryRow,
-  MiniCalendarWrap,
 } from "./schedule-sidebar.component.styles";
 import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
@@ -33,7 +32,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
   const [categories, setCategories] = useState<ScheduleCategory[]>([]);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs());
+  const [selectedDate, _setSelectedDate] = useState<Dayjs>(dayjs());
   const [categorySelection, setCategorySelection] = useState<
     Record<string, boolean>
   >({
@@ -79,7 +78,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     []
   );
 
-  const onMiniSelect = (value: Dayjs) => setSelectedDate(value);
+
 
   const onToggleCategory = (id: string, checked: boolean) => {
     setCategorySelection((prev) => ({ ...prev, [id]: checked }));
@@ -132,43 +131,6 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
           New
         </Button>
       </SidebarHeaderRow>
-
-      <MiniCalendarWrap style={{ marginTop: 16 }}>
-        <Calendar
-          fullscreen={false}
-          value={selectedDate}
-          onSelect={onMiniSelect}
-          headerRender={({ value, onChange }) => {
-            const monthLabel = value.format("MMMM YYYY");
-            return (
-              <div
-                style={{
-                  padding: 12,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Typography.Text strong>{monthLabel}</Typography.Text>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <Button
-                    size="small"
-                    onClick={() => onChange(value.subtract(1, "month"))}
-                  >
-                    Prev
-                  </Button>
-                  <Button
-                    size="small"
-                    onClick={() => onChange(value.add(1, "month"))}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            );
-          }}
-        />
-      </MiniCalendarWrap>
 
       <div style={{ height: 14 }} />
 

@@ -3,9 +3,9 @@ import dayjs from "dayjs";
 import type { ScheduleCategory } from "../interfaces/schedule-category.model";
 import type { ScheduleEvent } from "../interfaces/schedule-event.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
-import { BaseHttpService } from "@core/http/base-http.service";
 import { httpClient } from "@core/http/client.instance";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
+import { SchedulesApi } from "./schedules-api";
 
 type CreateSchedulePayload = {
   start: string; // ISO
@@ -20,25 +20,6 @@ type CreateSchedulePayload = {
   services?: Array<{ serviceId: string; quantity?: number; priceCents?: number }>;
   workers?: Array<{ workspaceId?: string | null; userUid: string }>;
 };
-
-class SchedulesApi extends BaseHttpService {
-  constructor(http: HttpClient) {
-    super(http, { correlationNamespace: "schedules-api" });
-  }
-
-  async createSchedule(body: CreateSchedulePayload): Promise<unknown> {
-    return this.post<unknown, CreateSchedulePayload>("/schedule/internal/schedules", body);
-  }
-
-  async listSchedules(workspaceId: string, query?: { from?: string; to?: string }): Promise<unknown[]> {
-    // expects response shape { data: Schedule[] }
-    const q: Record<string, unknown> = { workspaceId };
-    if (query?.from) q.from = query.from;
-    if (query?.to) q.to = query.to;
-    const res = await this.get<{ data?: unknown[] }>("/schedule/internal/schedules", q);
-    return res?.data ?? [];
-  }
-}
 
 const schedulesApi = new SchedulesApi(httpClient as unknown as HttpClient);
 
@@ -298,8 +279,20 @@ export function useScheduleApi() {
   }, [store]);
 
   const removeEvent = useCallback(async (id: string): Promise<boolean> => {
-    store.removeEvent(id);
-    return true;
+    try {
+      // attempt backend deletion; if it fails we'll still remove locally as fallback
+      try {
+        await schedulesApi.deleteSchedule(id);
+      } catch (err) {
+        console.debug('schedulesApi.deleteSchedule failed, falling back to local store', err);
+      }
+
+      store.removeEvent(id);
+      return true;
+    } catch (err) {
+      console.error('removeEvent failed', err);
+      return false;
+    }
   }, [store]);
 
   const createSchedule = useCallback(async (args: {

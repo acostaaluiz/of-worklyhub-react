@@ -40,7 +40,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         const monthFrom = dayjs(from).startOf("month").format("YYYY-MM-DD");
         const monthTo = dayjs(to).endOf("month").format("YYYY-MM-DD");
         const ev = await api.getEvents({ from: monthFrom, to: monthTo, workspaceId: workspaceId ?? null });
-        console.log("SchedulePage.fetchRange: fetched events for month", monthFrom, monthTo, ev.length, ev.map((x: any) => ({ id: x.id, date: x.date, startTime: x.startTime })));
+        console.debug("SchedulePage.fetchRange: fetched events for month", monthFrom, monthTo, ev.length, ev.map((x: any) => ({ id: x.id, date: x.date, startTime: x.startTime })));
         setEvents(ev);
       }, [api, workspaceId]);
 
@@ -95,7 +95,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         const employees = await peopleService.listEmployees();
         this.setSafeState({ services, employees });
       } catch (err) {
-        // ignore errors silently (UI can remain functional with empty lists)
+        console.debug(err);
       }
     });
   }
