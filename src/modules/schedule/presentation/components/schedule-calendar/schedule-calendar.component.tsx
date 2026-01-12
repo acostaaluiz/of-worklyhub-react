@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Segmented, Typography, message } from "antd";
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Search, Settings, Edit, User, Clock, Tag, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Settings } from "lucide-react";
 
 import Calendar from "@toast-ui/calendar";
 import type { EventObject } from "@toast-ui/calendar";
@@ -22,48 +22,9 @@ import {
 } from "./schedule-calendar.component.styles";
 
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
+import ScheduleEventPopup from "./schedule-event-popup.component";
+import { normalizeCssColor, escapeHtml, buildCalendarOptions } from "./schedule-calendar.factory";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
-
-function escapeHtml(input?: string | null) {
-  if (!input) return "";
-  return String(input)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function stripHtml(input?: string | null) {
-  if (!input) return "";
-  try {
-    if (typeof document !== 'undefined') {
-      const div = document.createElement('div');
-      div.innerHTML = input;
-      return div.textContent || div.innerText || '';
-    }
-  } catch (err) {
-    // fallback to naive regex
-  }
-  return String(input).replace(/<[^>]*>/g, '');
-}
-
-function removeDateTimeFromBody(input?: string | null) {
-  if (!input) return "";
-  try {
-    // normalize to plain text first
-    let s = stripHtml(input);
-    // remove patterns like `YYYY.MM.DD HH:mm — HH:mm`
-    s = s.replace(/\d{4}\.\d{2}\.\d{2}\s*\d{2}:\d{2}\s*—\s*\d{2}:\d{2}/g, "");
-    // remove standalone time ranges like `HH:mm — HH:mm`
-    s = s.replace(/\d{2}:\d{2}\s*—\s*\d{2}:\d{2}/g, "");
-    // collapse multiple blank lines/spaces
-    s = s.replace(/\n{2,}/g, "\n").trim();
-    return s;
-  } catch (err) {
-    return String(input);
-  }
-}
 
 type ViewMode = "month";
 
@@ -106,30 +67,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ left: number; top: number } | null>(null);
 
-  // Resolve CSS variable references (e.g. "var(--color-primary)") to concrete RGB/hex values
-  const normalizeCssColor = (value?: string | null): string | undefined => {
-    if (!value) return undefined;
-    if (typeof document === 'undefined') return value as string;
-    try {
-      const v = value.trim();
-      if (v.startsWith('#')) return v;
-      if (/^rgb/.test(v)) {
-        const m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-        if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
-      }
-      const el = document.createElement('div');
-      el.style.color = v;
-      el.style.display = 'none';
-      document.body.appendChild(el);
-      const computed = getComputedStyle(el).color || '';
-      document.body.removeChild(el);
-      const m = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-      if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
-      return v;
-    } catch (err) {
-      return value as string;
-    }
-  };
+
 
   const { events: propEvents, workspaceId: propWorkspaceId, onRangeChange: propOnRangeChange, onCreate: propOnCreate, availableServices: propAvailableServices, availableEmployees: propAvailableEmployees } = props;
 
@@ -282,6 +220,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       },
     };
   }, []);
+
+ 
 
   const syncHostHeight = () => {
     const wrap = wrapRef.current;
@@ -484,103 +424,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     syncHostHeight();
 
     // create calendar once on mount
-    const inst = new Calendar(hostRef.current, {
-      height: "100%",
-      defaultView: viewMode,
-      calendars: tuiCalendars,
-      events: tuiEvents,
-      theme: calendarTheme as any,
-      template: {
-        monthGridEvent: (model: any) => {
-          try {
-            // debug model at runtime to inspect color fields
-            try { console.debug('tui.monthGridEvent model', model); } catch (err) { console.debug(err); }
-            const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
-            const dotColorRaw = model?.raw?.statusColor || model?.raw?.categoryColor || model.backgroundColor || `var(--color-primary)`;
-            const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
-            const fg = model.color || `var(--color-text)`;
-              return `
-                <div class="tui-custom-month-event"
-                     style="display:flex;align-items:center;gap:8px;
-                            background:${cardBg} !important;padding:6px;border-radius:6px;color:${fg};">
-                  <span class="tui-custom-dot"
-                        style="width:8px;height:8px;border-radius:999px;display:inline-block;
-                               background:${dotColor} !important;"></span>
-                  <span class="tui-custom-title"
-                        style="color:${fg};font-weight:700;font-size:12px;
-                               white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                    ${escapeHtml(model.title)}
-                  </span>
-                </div>
-              `;
-          } catch (err) {
-            return escapeHtml(model.title || "");
-          }
-        },
-        popupDetail: (model: any) => {
-          try {
-            const fg = model.color || `var(--color-text)`;
-            const bg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
-            const start = model.start ? dayjs(model.start) : null;
-            const end = model.end ? dayjs(model.end) : null;
-            const timeRange = start && end ? `${start.format("HH:mm")} — ${end.format("HH:mm")}` : "";
-            const body = model.body || (model.raw && model.raw.description) || "";
-            const workers = (model.raw && model.raw.workers) || null;
-            const workersText = Array.isArray(workers) && workers.length > 0
-              ? workers.map((w: any) => escapeHtml((w && (w.email || w.fullName || w.userUid)) || '')).join(', ')
-              : null;
-            const categoryLabel = (model.raw && model.raw.category && model.raw.category.label) || model.calendarId || '';
-            // TUI-style fixed popup layout inspired by Toast UI example (keeps app theme)
-            return `
-              <div class="tui-custom-popup" style="color:${fg};background:${bg} !important;padding:16px;width:250px;font-family:inherit;overflow:hidden;">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">
-                  <div style="flex:1;min-width:0;">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <div class="tui-custom-popup-title" style="font-weight:800;color:${fg};font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${escapeHtml(model.title)}</div>
-                      <div class="tui-custom-popup-status" style="flex:0 0 auto;margin-left:8px;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,0.06);color:var(--color-text);font-size:12px;">${escapeHtml((model.raw && model.raw.status && (model.raw.status.label || model.raw.status.code)) || '')}</div>
-                    </div>
-                    <div style="font-size:12px;color:var(--toastui-calendar-text-muted);margin-top:6px;display:flex;align-items:center;gap:8px;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="currentColor"/></svg>
-                      <span>${timeRange}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
-                  <div style="font-size:13px;color:var(--toastui-calendar-text);line-height:1.3;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(body)}</div>
-                  <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--toastui-calendar-text-muted);">
-                    <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden;">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 14px;color:currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM12 14c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z" fill="currentColor"/></svg>
-                      <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${workersText ? workersText : '—'}</div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto;">
-                      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--toastui-calendar-text-muted);">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        <span style="display:inline-block;vertical-align:middle;">${escapeHtml(categoryLabel)}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="tui-custom-popup-footer" style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
-                  <button class="ant-btn ant-btn-default ant-btn-sm tui-custom-popup-delete" title="Delete">Delete</button>
-                  <button class="ant-btn ant-btn-primary ant-btn-sm tui-custom-popup-edit" title="Edit">Edit</button>
-                </div>
-              </div>`;
-          } catch (err) {
-            return model.title || "";
-          }
-        },
-      },
-      month: {
-        startDayOfWeek: 0,
-        visibleWeeksCount: 0,
-        isAlways6Weeks: false,
-      },
-      usageStatistics: false,
-      useDetailPopup: false, // disable native popup — we'll render a React popup
-      useFormPopup: false,
-    } as any);
+    const inst = new Calendar(hostRef.current, buildCalendarOptions({ viewMode, tuiCalendars, tuiEvents, calendarTheme }));
 
     inst.on("clickEvent", (e: any) => {
       console.debug("ScheduleCalendar.clickEvent", { e });
@@ -714,92 +558,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         instanceRef.current = null;
         return;
       }
-      const next = new Calendar(host, {
-        height: "100%",
-        defaultView: viewMode,
-        calendars: tuiCalendars,
-        events: tuiEvents,
-        theme: calendarTheme as any,
-        template: {
-          monthGridEvent: (model: any) => {
-            try {
-              try { console.debug('tui.monthGridEvent (fallback) model', model); } catch (err) { console.debug(err); }
-              // card background should follow category color; dot shows status
-              const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || model.calendarId || "var(--toastui-calendar-primary)";
-              const dotColor = model?.raw?.statusColor || model.backgroundColor || model?.raw?.categoryColor || model.calendarId || "var(--toastui-calendar-primary)";
-              const fg = model.color || "var(--toastui-calendar-text)";
-                return `<div class="tui-custom-month-event" style="display:flex;align-items:center;gap:8px;background:${cardBg} !important;padding:6px;border-radius:6px;color:${fg};">
-                            <span class="tui-custom-dot" style="width:8px;height:8px;border-radius:999px;display:inline-block;background:${dotColor} !important;flex:0 0 auto;"></span>
-                            <span class="tui-custom-title" style="color:${fg};font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(model.title)}</span>
-                          </div>`;
-            } catch (err) {
-              return model.title || "";
-            }
-          },
-          popupDetail: (model: any) => {
-            try {
-              const fg = model.color || `var(--color-text)`;
-              const bg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
-              const start = model.start ? dayjs(model.start) : null;
-              const end = model.end ? dayjs(model.end) : null;
-              const timeRange = start && end ? `${start.format("HH:mm")} — ${end.format("HH:mm")}` : "";
-              const body = model.body || (model.raw && model.raw.description) || "";
-              // build worker emails list if available
-              const workers = (model.raw && model.raw.workers) || null;
-              const workersText = Array.isArray(workers) && workers.length > 0
-                ? workers.map((w: any) => escapeHtml((w && (w.email || w.fullName || w.userUid)) || '')).join(', ')
-                : null;
-              const categoryLabel = (model.raw && model.raw.category && model.raw.category.label) || model.calendarId || '';
-              return `
-                  <div class="tui-custom-popup" style="color:${fg};background:${bg} !important;padding:12px;width:250px;font-family:inherit;overflow:hidden;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px;">
-                      <div style="flex:1;min-width:0;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                          <div class="tui-custom-popup-title" style="font-weight:800;color:${fg};font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${escapeHtml(model.title)}</div>
-                          <div class="tui-custom-popup-status" style="flex:0 0 auto;margin-left:8px;padding:4px 8px;border-radius:12px;background:rgba(255,255,255,0.06);color:var(--color-text);font-size:12px;">${escapeHtml((model.raw && model.raw.status && (model.raw.status.label || model.raw.status.code)) || '')}</div>
-                        </div>
-                        <div style="font-size:12px;color:var(--toastui-calendar-text-muted);margin-top:6px;display:flex;align-items:center;gap:8px;">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="currentColor"/></svg>
-                          <span>${timeRange}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
-                      <div style="font-size:13px;color:var(--toastui-calendar-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(body)}</div>
-                      <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--toastui-calendar-text-muted);">
-                        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden;">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 14px;color:currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM12 14c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z" fill="currentColor"/></svg>
-                          <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${workersText ? workersText : '—'}</div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto;">
-                          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--toastui-calendar-text-muted);">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                            <span style="display:inline-block;vertical-align:middle;">${escapeHtml(categoryLabel)}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style="position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:8px;justify-content:flex-end;">
-                      <button class="tui-custom-popup-edit" title="Edit" style="display:inline-flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>Edit</button>
-                      <button class="tui-custom-popup-delete" title="Delete" style="display:inline-flex;align-items:center;gap:8px;">Delete</button>
-                    </div>
-                  </div>`;
-            } catch (err) {
-              return model.title || "";
-            }
-          },
-        },
-        month: {
-          startDayOfWeek: 0,
-          visibleWeeksCount: 0,
-          isAlways6Weeks: false,
-        },
-        usageStatistics: false,
-        useDetailPopup: false,
-        useFormPopup: false,
-      } as any);
+      const next = new Calendar(host, buildCalendarOptions({ viewMode, tuiCalendars, tuiEvents, calendarTheme }));
       if (prevDate) {
         try { (next as any).setDate?.(prevDate); } catch (err) { console.debug(err); }
       }
@@ -1075,101 +834,14 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
           {/* React-controlled popup rendered inside the calendar wrap so it inherits theme */}
           {selectedEvent && popupPosition ? (
-            <div
-              className="tui-react-popup"
-              style={{
-                position: "absolute",
-                left: popupPosition.left,
-                top: popupPosition.top,
-                transform: "translate(-50%, -8px)",
-                zIndex: 2147483647,
-                pointerEvents: "auto",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="tui-custom-popup" style={{ background: selectedEvent.raw?.statusColor || selectedEvent.backgroundColor || 'var(--color-surface)', padding: 16, width: 250, boxSizing: 'border-box' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div className="tui-custom-popup-title" style={{ fontWeight: 800, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedEvent.title}</div>
-                      <div className="tui-custom-popup-status" style={{ flex: '0 0 auto', marginLeft: 8, padding: '4px 8px', borderRadius: 12, background: 'rgba(255,255,255,0.06)', color: 'var(--color-text)', fontSize: 12 }}>{(selectedEvent.raw?.status && (selectedEvent.raw?.status.label || selectedEvent.raw?.status.code)) || ''}</div>
-                    </div>
-                    <div className="tui-custom-popup-time" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                      <Clock size={14} />
-                      <span style={{ color: 'var(--color-text-muted)' }}>{(selectedEvent.raw?.startTime && selectedEvent.raw?.endTime) ? `${selectedEvent.raw.startTime} — ${selectedEvent.raw.endTime}` : ''}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-                  {
-                    // Render popup body as HTML when a pre-built `body` exists (it's constructed safely
-                    // above using `escapeHtml`). If only a raw description exists, escape it and render
-                    // as HTML wrapped in a simple container. This avoids showing raw HTML markup as text.
-                  }
-                  <div
-                    className="tui-custom-popup-body"
-                    style={{ color: 'var(--color-text)', lineHeight: 1.3, overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{
-                      __html: (() => {
-                        const rawBody = selectedEvent?.body ?? null;
-                        if (rawBody) {
-                          // strip any HTML tags from the pre-built body and remove the
-                            // redundant date/time line (it's shown above in the header).
-                            // Then escape the resulting text for safety.
-                            return `<div>${escapeHtml(removeDateTimeFromBody(String(rawBody)))}</div>`;
-                        }
-                        return `<div>${escapeHtml(selectedEvent?.raw?.description ?? '')}</div>`;
-                      })(),
-                    }}
-                  />
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12, color: 'var(--color-text-muted)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1, overflow: 'hidden' }}>
-                      <User size={14} />
-                      <div style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{(selectedEvent.raw?.workers && selectedEvent.raw.workers.length) ? (selectedEvent.raw.workers.map((w: any) => w.email || w.fullName || w.userUid).join(', ')) : '—'}</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}>
-                      <Tag size={14} />
-                      <div style={{ color: 'var(--color-text-muted)' }}>
-                        {(() => {
-                          const labelFromRaw = selectedEvent.raw && selectedEvent.raw.category && (selectedEvent.raw.category.label as string | undefined);
-                          if (labelFromRaw) return labelFromRaw;
-                          const local = categories.find((c) => c.id === selectedEvent.calendarId);
-                          return (local && local.label) || selectedEvent.calendarId || '—';
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="tui-custom-popup-footer" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>
-                  <Button size="small" onClick={async () => {
-                    if (!selectedEvent) return;
-                    try {
-                      loadingService.show();
-                      const ok = await api.removeEvent(selectedEvent.id);
-                      if (ok) {
-                        try { await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); }
-                        message.success('Event deleted');
-                      } else {
-                        message.error('Failed to delete event');
-                      }
-                    } catch (err) {
-                      console.error(err);
-                      message.error('Failed to delete event');
-                    } finally {
-                      loadingService.hide();
-                      setSelectedEvent(null);
-                    }
-                  }}>
-                    <Trash2 size={14} />
-                  </Button>
-                  <Button type="primary" size="small" onClick={() => { setIsModalOpen(true); setSelectedEvent(null); }} icon={<Edit size={14} />}>
-                    Edit
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <ScheduleEventPopup
+              event={selectedEvent}
+              position={popupPosition}
+              onClose={() => { setSelectedEvent(null); setPopupPosition(null); }}
+              onDeleted={async () => { try { await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); } }}
+              categories={categories.map((c) => ({ ...c, color: c.color ?? 'var(--color-surface)' }))}
+              loadMonthEventsFromInstance={loadMonthEventsFromInstance}
+            />
           ) : null}
         </CalendarWrap>
       </CalendarShell>
@@ -1178,7 +850,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         open={isModalOpen}
         onClose={handleCloseModal}
         onConfirm={handleConfirmModal}
-        categories={categories}
+        categories={categories.map((c) => ({ ...c, color: c.color ?? 'var(--color-surface)' }))}
         initialDate={modalInitialDate}
         initialStartTime={modalInitialStartTime}
           availableServices={propAvailableServices}
