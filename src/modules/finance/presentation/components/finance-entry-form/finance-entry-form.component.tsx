@@ -23,35 +23,35 @@ export function FinanceEntryForm({ initial, onSaved }: Props) {
       };
 
       const created = await api.createEntry(payload);
-      message.success("Lançamento salvo");
+      message.success("Entry saved");
       onSaved?.(created);
       form.resetFields();
     } catch (err) {
-      message.error("Erro ao salvar lançamento");
+      message.error("Error saving entry");
     }
   }
 
   return (
     <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ type: "expense", amount: initial?.amountCents ? initial.amountCents / 100 : undefined }}>
-      <Form.Item name="type" label="Tipo" rules={[{ required: true }]}>
-        <Select options={[{ label: "Receita", value: "income" }, { label: "Despesa", value: "expense" }, { label: "Fixa", value: "fixed" }]} />
+      <Form.Item name="type" label="Type" rules={[{ required: true }]}>
+        <Select options={[{ label: "Income", value: "income" }, { label: "Expense", value: "expense" }, { label: "Fixed", value: "fixed" }]} />
       </Form.Item>
 
-      <Form.Item name="amount" label="Valor (R$)" rules={[{ required: true }]}>
+      <Form.Item name="amount" label="Amount (BRL)" rules={[{ required: true }]}>
         <InputNumber style={{ width: "100%" }} min={0} step={0.01} />
       </Form.Item>
 
-      <Form.Item name="date" label="Data">
+      <Form.Item name="date" label="Date">
         <DatePicker style={{ width: "100%" }} />
       </Form.Item>
 
-      <Form.Item name="description" label="Descrição">
+      <Form.Item name="description" label="Description">
         <Input />
       </Form.Item>
 
       <Form.Item>
         <Button type="primary" htmlType="submit">
-          Salvar
+          Save
         </Button>
       </Form.Item>
     </Form>

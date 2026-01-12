@@ -13,15 +13,15 @@ export function EntriesTemplate() {
         <PrivateFrameLayout>
           <Grid>
             <LeftPanel>
-              <h2>Lançamentos</h2>
-              <p>Entradas, saídas e despesas fixas.</p>
+              <h2>Entries</h2>
+              <p>Incomes, expenses and fixed costs.</p>
               <FinanceKpis />
               <FinanceEntriesList />
             </LeftPanel>
 
             <RightPanel>
               <div style={{ width: "100%", maxWidth: 380 }}>
-                <h3>Adicionar novo lançamento</h3>
+                <h3>Add new entry</h3>
                 <FinanceEntryForm />
               </div>
             </RightPanel>

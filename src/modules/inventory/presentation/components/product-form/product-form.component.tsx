@@ -13,7 +13,7 @@ type Props = {
 export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
   const [form] = Form.useForm();
   const [categories, setCategories] = useState<CategoryModel[]>([]);
-  const service = new InventoryService();
+  const service = React.useMemo(() => new InventoryService(), []);
 
   useEffect(() => {
     let alive = true;
@@ -22,14 +22,14 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         const cats = await service.listCategories();
         if (!alive) return;
         setCategories(cats.filter((c) => c.active));
-      } catch {
-        // ignore
+      } catch (err) {
+        console.debug('product-form: failed to load categories', err);
       }
     })();
     return () => {
       alive = false;
     };
-  }, []);
+  }, [service]);
   return (
     <Form form={form} layout="vertical" initialValues={{ stock: 0, unit: "un", active: true, ...initial }} onFinish={(v) => onSubmit(v as any)}>
       <Form.Item name="name" label="Nome" rules={[{ required: true }]}>

@@ -194,8 +194,67 @@ a:hover {
 
 :focus-visible {
   outline: none;
+}
+
+/* Aplicar ring de foco apenas em controles de formulário e componentes Ant Design
+   para evitar que a aplicação inteira receba a sombra ao focar elementos internos. */
+input:focus-visible,
+textarea:focus-visible,
+button:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
   box-shadow: var(--focus-ring);
-  border-radius: var(--radius-xs);
+}
+
+/* Ant Design: usar classes de estado que a biblioteca aplica quando o componente está focado */
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused .ant-picker {
+  box-shadow: var(--focus-ring);
+}
+
+/* Evita anel duplo: remover ring de foco dos inputs internos usados pelos componentes Ant Design
+   (ex.: select, picker, input-number) — regras específicas com maior especificidade. */
+.ant-select .ant-select-selector input:focus-visible,
+.ant-select
+  .ant-select-selector
+  .ant-select-selection-search-input:focus-visible,
+.ant-picker .ant-picker-input:focus-visible,
+.ant-input-number input:focus-visible,
+.ant-input-number .ant-input-number-input:focus-visible {
+  box-shadow: none;
+  outline: none;
+}
+
+/* Em casos onde o componente Ant aplica classes de foco, preferimos aplicar o ring
+   no container (já definido acima) e garantir que elementos internos não reapliquem sombras. */
+.ant-select-focused
+  .ant-select-selector
+  :is(input, .ant-select-selection-search-input),
+.ant-picker-focused .ant-picker :is(input, .ant-picker-input) {
+  box-shadow: none;
+}
+
+/* Seletores mais específicos para garantir que nenhum elemento interno do select
+   reaplique um focus ring (resolve o anel interno visto no screenshot). */
+.ant-select-focused .ant-select-selector *:focus-visible,
+.ant-select .ant-select-selector *:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Cobrir o markup atual do Antd: o input do select pode viver dentro de
+   .ant-select-content com classe .ant-select-input (readonly combobox). */
+.ant-select-focused .ant-select-content input.ant-select-input:focus-visible,
+.ant-select .ant-select-content input.ant-select-input:focus-visible,
+.ant-select-focused
+  .ant-select-content
+  .ant-select-selection-search-input:focus-visible,
+.ant-select
+  .ant-select-content
+  .ant-select-selection-search-input:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+  -webkit-box-shadow: none !important;
 }
 
 .container {

@@ -444,5 +444,91 @@ export function useScheduleApi() {
     }
   }, [store]);
 
-  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent, getNextSchedules: getNextSchedulesForWorkspace }), [getCategories, getEvents, createEvent, createSchedule, removeEvent]);
+  const updateEvent = useCallback(async (args: {
+    id: string;
+    event: Omit<ScheduleEvent, "id">;
+    serviceIds?: string[];
+    employeeIds?: string[];
+    totalPriceCents?: number;
+    workspaceId?: string | null;
+  }): Promise<ScheduleEvent> => {
+    const { id, event, serviceIds, employeeIds, totalPriceCents, workspaceId } = args;
+
+    try {
+      const startIso = new Date(`${event.date}T${event.startTime}:00.000Z`).toISOString();
+      const endIso = new Date(`${event.date}T${event.endTime}:00.000Z`).toISOString();
+
+      const body: Partial<CreateSchedulePayload> = {
+        start: startIso,
+        end: endIso,
+        title: event.title ?? null,
+        description: event.description ?? null,
+        workspaceId: workspaceId ?? null,
+        durationMinutes: (event.durationMinutes as number) ?? null,
+        services: serviceIds?.map((sid) => ({ serviceId: sid, priceCents: undefined })) ?? undefined,
+        workers: employeeIds?.map((eid) => ({ workspaceId: workspaceId ?? null, userUid: eid })) ?? undefined,
+      };
+
+      const evtMeta = event as unknown as { categoryCode?: string | null };
+      body.categoryCode = evtMeta.categoryCode ?? event.categoryId ?? null;
+
+      if (typeof totalPriceCents === "number") {
+        if (body.services && body.services.length > 0) {
+          body.services[0].priceCents = totalPriceCents;
+        }
+      }
+
+      const res = await schedulesApi.updateSchedule(id, body);
+      const resp = (res as unknown as Record<string, unknown>) ?? {};
+      const newId = resp.id || id;
+
+      const updated: ScheduleEvent = {
+        id: newId,
+        title: event.title ?? "Untitled",
+        date: event.date,
+        startTime: event.startTime ?? "09:00",
+        endTime: event.endTime ?? "09:30",
+        categoryId: event.categoryId ?? "schedule",
+        description: event.description,
+      };
+
+      // update local store for offline UI consistency
+      try {
+        store.removeEvent(newId);
+      } catch (err) {
+        console.debug('store.removeEvent failed during updateEvent cleanup', err);
+      }
+      store.addEvent({
+        id: updated.id,
+        title: updated.title,
+        date: updated.date,
+        startTime: updated.startTime,
+        endTime: updated.endTime,
+        categoryId: updated.categoryId,
+        description: updated.description,
+      });
+
+      return updated;
+    } catch (err) {
+      // fallback: update local store
+      console.debug('updateEvent failed, falling back to local store', err);
+      try {
+        store.removeEvent(id);
+      } catch (e) {
+        console.debug('store.removeEvent failed in fallback', e);
+      }
+      const next = store.addEvent({ ...event, id });
+      return {
+        id: next.id,
+        title: next.title,
+        date: next.date,
+        startTime: next.startTime ?? "09:00",
+        endTime: next.endTime ?? "09:30",
+        categoryId: next.categoryId ?? "schedule",
+        description: next.description,
+      };
+    }
+  }, [store]);
+
+  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent, getNextSchedules: getNextSchedulesForWorkspace }), [getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent]);
 }

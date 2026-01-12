@@ -27,6 +27,7 @@ export type ScheduleEventModalProps = BaseProps & {
   availableEmployees?: EmployeeModel[];
   initialDate?: string;
   initialStartTime?: string;
+  initialDraft?: ScheduleEventDraft & { id?: string };
   onClose: () => void;
   onConfirm: (draft: ScheduleEventDraft) => void;
 };

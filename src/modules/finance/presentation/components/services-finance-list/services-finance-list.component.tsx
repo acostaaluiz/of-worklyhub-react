@@ -9,7 +9,7 @@ type Props = {
 };
 
 export function ServicesFinanceList({ onSelect }: Props) {
-  const svc = new FinanceService();
+  const svc = React.useMemo(() => new FinanceService(), []);
   const [items, setItems] = useState<(CompanyServiceModel & { suggestedCents: number })[]>([]);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export function ServicesFinanceList({ onSelect }: Props) {
       const data = await svc.listServicesWithSuggestions();
       setItems(data);
     })();
-  }, []);
+  }, [svc]);
 
   return (
     <List
@@ -39,12 +39,12 @@ export function ServicesFinanceList({ onSelect }: Props) {
                 </div>
 
                 <div style={{ marginTop: 8 }}>
-                  <div style={{ fontWeight: 600 }}>Sugestão: R$ {(it.suggestedCents ?? 0) / 100}</div>
+                  <div style={{ fontWeight: 600 }}>Suggested: R$ {(it.suggestedCents ?? 0) / 100}</div>
                 </div>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-                <Button size="small" onClick={() => onSelect?.(it, it.suggestedCents)}>Adicionar como despesa</Button>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                <Button size="small" onClick={() => onSelect?.(it, it.suggestedCents)}>Add as expense</Button>
               </div>
             </div>
           </Card>

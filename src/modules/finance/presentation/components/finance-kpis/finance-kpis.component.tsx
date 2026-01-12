@@ -21,17 +21,17 @@ export function FinanceKpis() {
     <Row gutter={16} style={{ marginBottom: 24 }}>
       <Col span={8}>
         <Card bordered={false}>
-          <Statistic title="Receita" value={receita} precision={2} prefix="R$" />
+          <Statistic title="Income" value={receita} precision={2} prefix="R$" />
         </Card>
       </Col>
       <Col span={8}>
         <Card bordered={false}>
-          <Statistic title="Despesa" value={despesa} precision={2} prefix="R$" />
+          <Statistic title="Expense" value={despesa} precision={2} prefix="R$" />
         </Card>
       </Col>
       <Col span={8}>
         <Card bordered={false}>
-          <Statistic title="Lucro" value={lucro} precision={2} prefix="R$" />
+          <Statistic title="Profit" value={lucro} precision={2} prefix="R$" />
         </Card>
       </Col>
     </Row>

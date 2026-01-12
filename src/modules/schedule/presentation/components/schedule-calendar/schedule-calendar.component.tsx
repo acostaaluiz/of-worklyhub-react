@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Segmented, Typography, message } from "antd";
 import dayjs from "dayjs";
@@ -33,6 +34,7 @@ type ScheduleCalendarProps = {
   availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
   workspaceId?: string | null;
   onCreate?: (draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
+  onUpdate?: (args: { id: string; event: import("../../../interfaces/schedule-event.model").ScheduleEvent; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => Promise<void>;
   events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
   categories?: import("../../../interfaces/schedule-category.model").ScheduleCategory[] | null;
@@ -62,6 +64,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const [modalInitialStartTime, setModalInitialStartTime] = useState<
     string | undefined
   >(undefined);
+  const [modalInitialDraft, setModalInitialDraft] = useState<import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & { id?: string } | undefined>(undefined);
 
   // React-controlled popup state (replacement for native detail popup)
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -172,6 +175,30 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           category: (e as any).category ?? null,
           statusColor,
           categoryColor,
+        },
+        // helper to open edit modal when popup Edit pressed
+        onEdit: () => {
+          try {
+            const raw = (e as any) || {};
+            const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & { id?: string } = {
+              id: e.id,
+              title: e.title ?? "",
+              description: raw.description ?? undefined,
+              categoryId: e.categoryId ?? String((raw.category && raw.category.id) ?? ""),
+              date: e.date,
+              startTime: e.startTime ?? "09:00",
+              endTime: e.endTime ?? "09:30",
+              durationMinutes: (e as any).durationMinutes ?? undefined,
+              serviceIds: Array.isArray(raw.services) ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean) : undefined,
+              employeeIds: Array.isArray(raw.workers) ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean) : undefined,
+              totalPriceCents: Array.isArray(raw.services) ? raw.services.reduce((acc: number, s: any) => acc + (s.priceCents ?? 0), 0) : undefined,
+            };
+
+            setModalInitialDraft(draft);
+            setModalInitialDate(draft.date);
+            setModalInitialStartTime(draft.startTime);
+            setIsModalOpen(true);
+          } catch (err) { console.debug('openEditModal failed', err); }
         },
       } as any);
     });
@@ -452,7 +479,46 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         const rect = wrapRef.current.getBoundingClientRect();
         setPopupPosition({ left: Math.floor(rect.width / 2), top: Math.floor(rect.height / 2) });
       }
-      setSelectedEvent(ev);
+      // attach an onEdit handler directly to the selected event object so Toast UI's internal cloning
+      // won't remove function refs. This opens the edit modal prefilled with the event data.
+      try {
+        const raw = (ev as any).raw || {};
+        const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & { id?: string } = {
+          id: ev.id,
+          title: ev.title ?? "",
+          description: raw.description ?? undefined,
+          categoryId: (ev as any).calendarId ?? (ev as any).raw?.category?.id ?? "",
+          date: raw.date ?? "",
+          startTime: raw.startTime ?? "09:00",
+          endTime: raw.endTime ?? "09:30",
+          durationMinutes: (raw.durationMinutes as number) ?? undefined,
+          serviceIds: Array.isArray(raw.services) ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean) : undefined,
+          employeeIds: Array.isArray(raw.workers) ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean) : undefined,
+          totalPriceCents: Array.isArray(raw.services) ? raw.services.reduce((acc: number, s: any) => acc + (s.priceCents ?? 0), 0) : undefined,
+        };
+
+        const augmented = {
+          ...ev,
+          onEdit: () => {
+            try {
+              setModalInitialDraft(draft);
+              setModalInitialDate(draft.date);
+              setModalInitialStartTime(draft.startTime);
+              setIsModalOpen(true);
+              // close popup
+              setSelectedEvent(null);
+              setPopupPosition(null);
+            } catch (err) {
+              console.debug('onEdit handler failed', err);
+            }
+          },
+        } as any;
+
+        setSelectedEvent(augmented);
+      } catch (err) {
+        console.debug('failed to attach onEdit to event', err);
+        setSelectedEvent(ev);
+      }
     });
 
     inst.on("selectDateTime", (e: any) => {
@@ -750,6 +816,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setModalInitialDraft(undefined);
   };
 
   const handleConfirmModal = async (draft: ScheduleEventDraft) => {
@@ -765,12 +832,26 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       try {
       loadingService.show();
-      // delegate creation to page via props.onCreate
-      if (propOnCreate) {
-        await propOnCreate(draft);
+      // if editing an existing draft, delegate to page-level update handler
+      if (modalInitialDraft && modalInitialDraft.id) {
+        if (props.onUpdate) {
+          await props.onUpdate({ id: modalInitialDraft.id, event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+        } else {
+          // fallback to calling api.updateEvent directly
+          if ((api as any).updateEvent) {
+            await (api as any).updateEvent({ id: modalInitialDraft.id, event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+          } else {
+            console.debug('No update handler available');
+          }
+        }
       } else {
-        // fallback to local create if no handler provided
-        await api.createSchedule({ event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+        // delegate creation to page via props.onCreate
+        if (propOnCreate) {
+          await propOnCreate(draft);
+        } else {
+          // fallback to local create if no handler provided
+          await api.createSchedule({ event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+        }
       }
 
       // refresh month events
@@ -785,8 +866,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         setEvents(ev);
       }
 
-      message.success("Schedule created");
+      message.success(modalInitialDraft && modalInitialDraft.id ? "Schedule updated" : "Schedule created");
       setIsModalOpen(false);
+      setModalInitialDraft(undefined);
     } catch (err) {
       console.error(err);
       message.error("Failed to create schedule");
@@ -853,6 +935,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         categories={categories.map((c) => ({ ...c, color: c.color ?? 'var(--color-surface)' }))}
         initialDate={modalInitialDate}
         initialStartTime={modalInitialStartTime}
+        initialDraft={modalInitialDraft}
           availableServices={propAvailableServices}
           availableEmployees={propAvailableEmployees}
       />

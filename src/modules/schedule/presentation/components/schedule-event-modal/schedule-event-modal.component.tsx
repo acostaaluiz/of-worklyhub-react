@@ -162,6 +162,34 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       });
     }
 
+    // if opening in edit mode with an initialDraft, populate fields from it
+    if (open && this.props.initialDraft && this.props.initialDraft !== prevProps.initialDraft) {
+      const d = this.props.initialDraft;
+      const base = dayjs(d.date, "YYYY-MM-DD");
+      const dayPart = d.startTime
+        ? (Number(d.startTime.split(":")[0]) < 12
+            ? "morning"
+            : Number(d.startTime.split(":")[0]) < 17
+            ? "afternoon"
+            : "evening")
+        : "morning";
+
+      this.setSafeState({
+        weekAnchor: base,
+        selectedDay: base,
+        selectedTime: d.startTime ?? undefined,
+        dayPart,
+        slotPage: 0,
+        title: d.title ?? "",
+        description: d.description ?? "",
+        categoryId: d.categoryId ?? categories?.[0]?.id ?? "",
+        durationMinutes: d.durationMinutes ?? 25,
+        priceCents: d.totalPriceCents ?? 5000,
+        selectedServiceIds: d.serviceIds ?? [],
+        selectedEmployeeIds: d.employeeIds ?? [],
+      });
+    }
+
     if (categories !== prevProps.categories) {
       this.setSafeState({ categoryId: categories?.[0]?.id ?? "" });
     }
@@ -485,7 +513,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
             <ContinueWrap>
               <Button type="primary" size="large" block disabled={!this.canConfirm} onClick={this.handleConfirm}>
-                Continue
+                {(this.props.initialDraft && this.props.initialDraft.id) ? 'Save edit' : 'Continue'}
               </Button>
             </ContinueWrap>
           </ModalBody>

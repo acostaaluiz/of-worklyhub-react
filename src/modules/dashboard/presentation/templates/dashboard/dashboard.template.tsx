@@ -51,16 +51,16 @@ export function DashboardTemplate() {
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<DashboardResponse | null>(null);
 
-  const load = async (q: DashboardQueryModel) => {
+  const load = useCallback(async (q: DashboardQueryModel) => {
     setLoading(true);
     const res = await service.getDashboard(q);
     setData(res);
     setLoading(false);
-  };
+  }, [service]);
 
   useEffect(() => {
     load(query);
-  }, [query, service]);
+  }, [query, load]);
 
   return (
     <BaseTemplate

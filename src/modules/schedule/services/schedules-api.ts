@@ -55,6 +55,11 @@ export class SchedulesApi extends BaseHttpService {
     await this.delete<void>(`/schedule/internal/schedules/${id}`);
   }
 
+  async updateSchedule(id: string, body: Partial<CreateSchedulePayload>): Promise<ScheduleServiceItem | unknown> {
+    const res = await this.patch<unknown, Partial<CreateSchedulePayload>>(`/schedule/internal/schedules/${id}`, body);
+    return res;
+  }
+
   async listSchedules(workspaceId: string, query?: { from?: string; to?: string }): Promise<ScheduleServiceItem[]> {
     const q: Record<string, unknown> = { workspaceId };
     if (query?.from) q.from = query.from;

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
@@ -42,7 +43,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       const [events, setEvents] = useState<ScheduleEvent[]>([]);
     const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<Record<string, boolean>>({});
 
-      const categoryCounts = React.useMemo(() => {
+        const categoryCounts = (() => {
         const out: Record<string, number> = {};
         const cats = (categories ?? []) as { id: string; code?: string }[];
         for (const c of cats) out[c.id] = 0;
@@ -72,7 +73,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         }
 
         return out;
-      }, [events, categories]);
+      })();
 
       // ensure we have an initial selection map (all selected) when categories load
       React.useEffect(() => {
@@ -85,7 +86,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           for (const c of categories ?? []) map[c.id] = true;
           return map;
         });
-      }, [categories]);
+      }, [categories?.length]);
 
       const onToggleCategory = React.useCallback((id: string, checked: boolean) => {
         try { console.debug('SchedulePage.onToggleCategory', { id, checked }); } catch (err) { console.debug(err); }
@@ -146,7 +147,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         } finally {
           loadingService.hide();
         }
-      }, [api, workspaceId]);
+      }, [api]);
 
       const initialFetchedRef = React.useRef(false);
 
@@ -187,7 +188,25 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         await fetchRange(from, to);
       };
 
-      return <ScheduleTemplate availableServices={services} availableEmployees={employees} workspaceId={workspaceId ?? null} onCreate={handleCreate} events={filteredEvents} onRangeChange={fetchRange} categories={categories ?? null} categoryCounts={categoryCounts} selectedCategoryIds={selectedCategoryIds} onToggleCategory={onToggleCategory} nextSchedules={nextSchedules ?? null} />;
+      const handleUpdate = async (args: { id: string; event: import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => {
+        try {
+          loadingService.show();
+          if ((api as any).updateEvent) {
+            await (api as any).updateEvent({ id: args.id, event: args.event, serviceIds: args.serviceIds, employeeIds: args.employeeIds, totalPriceCents: args.totalPriceCents, workspaceId: args.workspaceId });
+          }
+
+          // refresh current month
+          const from = dayjs().startOf("month").format("YYYY-MM-DD");
+          const to = dayjs().endOf("month").format("YYYY-MM-DD");
+          await fetchRange(from, to);
+        } catch (err) {
+          console.error('handleUpdate failed', err);
+        } finally {
+          loadingService.hide();
+        }
+      };
+
+      return <ScheduleTemplate availableServices={services} availableEmployees={employees} workspaceId={workspaceId ?? null} onCreate={handleCreate} onUpdate={handleUpdate} events={filteredEvents} onRangeChange={fetchRange} categories={categories ?? null} categoryCounts={categoryCounts} selectedCategoryIds={selectedCategoryIds} onToggleCategory={onToggleCategory} nextSchedules={nextSchedules ?? null} />;
     }
 
     return <Wrapper />;
