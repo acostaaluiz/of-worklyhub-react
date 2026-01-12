@@ -47,7 +47,8 @@ export const ContentCard = styled.main`
   min-height: 560px;
 
   min-width: 0;
-  overflow: hidden;
+  /* allow popups to escape the content card and not be clipped */
+  overflow: visible;
 
   & > :first-child {
     flex: 1;

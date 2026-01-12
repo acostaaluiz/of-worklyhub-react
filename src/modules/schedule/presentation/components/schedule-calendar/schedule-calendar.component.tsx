@@ -34,6 +34,37 @@ function escapeHtml(input?: string | null) {
     .replace(/'/g, "&#039;");
 }
 
+function stripHtml(input?: string | null) {
+  if (!input) return "";
+  try {
+    if (typeof document !== 'undefined') {
+      const div = document.createElement('div');
+      div.innerHTML = input;
+      return div.textContent || div.innerText || '';
+    }
+  } catch (err) {
+    // fallback to naive regex
+  }
+  return String(input).replace(/<[^>]*>/g, '');
+}
+
+function removeDateTimeFromBody(input?: string | null) {
+  if (!input) return "";
+  try {
+    // normalize to plain text first
+    let s = stripHtml(input);
+    // remove patterns like `YYYY.MM.DD HH:mm — HH:mm`
+    s = s.replace(/\d{4}\.\d{2}\.\d{2}\s*\d{2}:\d{2}\s*—\s*\d{2}:\d{2}/g, "");
+    // remove standalone time ranges like `HH:mm — HH:mm`
+    s = s.replace(/\d{2}:\d{2}\s*—\s*\d{2}:\d{2}/g, "");
+    // collapse multiple blank lines/spaces
+    s = s.replace(/\n{2,}/g, "\n").trim();
+    return s;
+  } catch (err) {
+    return String(input);
+  }
+}
+
 type ViewMode = "month";
 
 type ScheduleCalendarProps = {
@@ -43,6 +74,7 @@ type ScheduleCalendarProps = {
   onCreate?: (draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
   events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
+  categories?: import("../../../interfaces/schedule-category.model").ScheduleCategory[] | null;
 };
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
@@ -51,6 +83,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<Calendar | null>(null);
+  const eventColorMapRef = useRef<Map<string, string>>(new Map());
 
   const [viewMode, setViewMode] = useState<ViewMode>("month");
   const [headerLabel, setHeaderLabel] = useState<string>(
@@ -58,7 +91,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   );
   const [search, setSearch] = useState("");
 
-  const [categories, setCategories] = useState<ScheduleCategory[]>([]);
+  const [categories, setCategories] = useState<ScheduleCategory[]>(props.categories ?? []);
   const [events, setEvents] = useState<ScheduleEvent[]>(props.events ?? []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,11 +106,36 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [popupPosition, setPopupPosition] = useState<{ left: number; top: number } | null>(null);
 
+  // Resolve CSS variable references (e.g. "var(--color-primary)") to concrete RGB/hex values
+  const normalizeCssColor = (value?: string | null): string | undefined => {
+    if (!value) return undefined;
+    if (typeof document === 'undefined') return value as string;
+    try {
+      const v = value.trim();
+      if (v.startsWith('#')) return v;
+      if (/^rgb/.test(v)) {
+        const m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+        if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
+      }
+      const el = document.createElement('div');
+      el.style.color = v;
+      el.style.display = 'none';
+      document.body.appendChild(el);
+      const computed = getComputedStyle(el).color || '';
+      document.body.removeChild(el);
+      const m = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
+      return v;
+    } catch (err) {
+      return value as string;
+    }
+  };
+
   const { events: propEvents, workspaceId: propWorkspaceId, onRangeChange: propOnRangeChange, onCreate: propOnCreate, availableServices: propAvailableServices, availableEmployees: propAvailableEmployees } = props;
 
   const tuiCalendars = useMemo(() => {
     return categories.map((c) => ({
-      id: c.id,
+      id: String(c.id),
       name: c.label,
       backgroundColor: c.color,
       borderColor: c.color,
@@ -103,13 +161,16 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     const themeOnPrimary = root ? getComputedStyle(root).getPropertyValue('--toastui-calendar-on-primary').trim() : '';
     const themePrimary = root ? getComputedStyle(root).getPropertyValue('--toastui-calendar-primary').trim() : '';
 
+    // Status colors (chosen to contrast with category card colors)
     const statusColorMap: Record<string, string> = {
-      pending: "#60A5FA",
-      confirmed: "#16A34A",
-      in_progress: "#DC2626",
-      cancelled: "#F97316",
-      completed: "#7C3AED",
+      completed: "#16A34A",   // green
+      pending: "#F59E0B",     // amber
+      in_progress: "#DC2626", // red
+      confirmed: "#06B6D4",   // cyan
+      cancelled: "#F97316",   // orange
     };
+
+    
 
     filteredEvents.forEach((e) => {
       const start = dayjs(`${e.date}T${e.startTime}`).toDate();
@@ -125,10 +186,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         return;
       }
 
-      const category = categories.find((c) => c.id === e.categoryId);
-      const categoryColor = category?.color ?? themePrimary ?? '#1e70ff';
+      // match category by stringified id to avoid mismatches (number vs string)
+      const category = categories.find((c) => String(c.id) === String(e.categoryId));
+      const rawCategoryColor = category?.color ?? themePrimary ?? '#1e70ff';
+      const categoryColor = normalizeCssColor(rawCategoryColor) ?? rawCategoryColor;
       const statusCode = (e as any)?.status?.code ?? null;
-      const statusColor = statusCode ? (statusColorMap[statusCode] ?? themePrimary ?? '#7c3aed') : (categoryColor ?? themePrimary ?? '#1e70ff');
+      const statusColorRaw = statusCode ? (statusColorMap[statusCode] ?? themePrimary ?? '#7c3aed') : undefined;
+      const statusColor = normalizeCssColor(statusColorRaw) ?? statusColorRaw;
       const textColor = themeOnPrimary || themeText || '#ffffff';
 
       const startText = dayjs(start).format("YYYY.MM.DD HH:mm");
@@ -143,17 +207,18 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       out.push({
         id: e.id,
-        calendarId: (e as any).category?.id ?? e.categoryId,
+        // ensure calendarId is a string so it matches tuiCalendars ids
+        calendarId: String((e as any).category?.id ?? e.categoryId),
         title: e.title,
         category: "time",
         start,
         end,
         // visual properties supported by toast-ui Calendar
-        // use `statusColor` as the event background (card) so whole card is colored
-        backgroundColor: statusColor,
-        borderColor: statusColor,
+        // prefer category color for the event card; fall back to status color
+        backgroundColor: categoryColor ?? statusColor,
+        borderColor: categoryColor ?? statusColor,
         color: textColor,
-        dragBackgroundColor: statusColor,
+        dragBackgroundColor: categoryColor ?? statusColor,
         customStyle: { fontWeight: '700' },
         // provide a full HTML body (inline styles using app CSS variables)
         body: bodyHtml,
@@ -173,7 +238,19 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       } as any);
     });
 
-    console.debug("ScheduleCalendar: tuiEvents generated", out.length, out.map((x) => ({ id: x.id, start: x.start, statusColor: (x as any).backgroundColor, rawStatus: (x as any).raw?.status })));
+    // build quick lookup map for event -> preferred color (use normalized categoryColor first)
+    try {
+      const map = new Map<string, string>();
+      out.forEach((ev) => {
+        const id = ev.id as string;
+        const bgRaw = (ev as any).backgroundColor || (ev as any).raw?.categoryColor || (ev as any).raw?.statusColor || '';
+        const bg = normalizeCssColor(bgRaw) ?? bgRaw;
+        if (id && bg) map.set(id, bg as string);
+      });
+      eventColorMapRef.current = map;
+    } catch (err) { console.debug(err); }
+
+    console.debug("ScheduleCalendar: tuiEvents generated", out.length, out.map((x) => ({ id: x.id, start: x.start, bg: (x as any).backgroundColor, rawStatus: (x as any).raw?.status })));
     return out;
   }, [filteredEvents]);
 
@@ -232,16 +309,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           const nodes = host.querySelectorAll(`[data-event-id="${id}"]`);
           nodes.forEach((n) => {
             const el = n as HTMLElement;
-            const statusColor = (ev as unknown as any).backgroundColor || (ev as any).raw?.statusColor;
-            const categoryColor = (ev as any).raw?.categoryColor;
+            // prefer explicit color from the eventColorMap (normalized), then raw values
+            const fromMap = eventColorMapRef.current.get(id);
+            const statusColor = (ev as unknown as any).raw?.statusColor;
+            const categoryColor = (ev as any).raw?.categoryColor || (ev as unknown as any).backgroundColor;
+            const preferredColor = fromMap || categoryColor || statusColor;
 
             try {
-              if (statusColor) el.style.setProperty('background-color', statusColor, 'important');
-              if (statusColor) el.style.background = statusColor;
+              if (preferredColor) {
+                el.style.setProperty('background-color', preferredColor, 'important');
+                el.style.background = preferredColor;
+                // expose applied color as data attribute for debugging
+                el.setAttribute('data-applied-color', preferredColor);
+              }
             } catch (err) {
               console.debug(err);
-              if (statusColor) el.style.background = statusColor;
+              if (preferredColor) el.style.background = preferredColor;
             }
+
+            try { console.debug('applyEventDomColors: event', id, { preferredColor, categoryColor, statusColor }); } catch (err) { console.debug(err); }
 
             // ensure any template popup width is enforced and remove stray max-width
             try {
@@ -257,12 +343,15 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             const dot = el.querySelector('.toastui-calendar-weekday-event-dot, .tui-custom-dot, .toastui-calendar-monthly-event-dot') as HTMLElement | null;
             if (dot) {
               try {
-                const dotColor = categoryColor || statusColor;
+                // prefer status color for the dot so it clearly indicates event status
+                const dotColorRaw = statusColor || categoryColor;
+                const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
                 if (dotColor) dot.style.setProperty('background-color', dotColor, 'important');
                 if (dotColor) dot.style.background = dotColor;
               } catch (err) {
                 console.debug(err);
-                const dotColor = categoryColor || statusColor;
+                const dotColorRaw = statusColor || categoryColor;
+                const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
                 if (dotColor) dot.style.background = dotColor;
               }
             }
@@ -320,8 +409,54 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
    
   useEffect(() => {
     (async () => {
-      const cats = await api.getCategories();
-      setCategories(cats);
+      // prefer categories passed from props (page/sidebar). Only fetch when not provided.
+      if (!props.categories) {
+        const cats = await api.getCategories();
+        setCategories(cats);
+      } else {
+        // normalize incoming categories to ensure each has a usable, unique color
+        // explicit distinct colors to avoid similar shades; we'll move these to theme later
+        // explicit distinct colors to avoid similar shades; work=green, personal=blue
+        const codeColorMap: Record<string, string> = {
+          work: "#10B981",       // green
+          personal: "#0EA5E9",   // blue
+          schedule: "#A78BFA",   // violet
+          gaming: "#E9AB13",     // gold-ish
+        };
+        const palette = [
+          "#F59E0B",
+          "#06B6D4",
+          "#A78BFA",
+          "#10B981",
+          "#F97316",
+          "#EF4444",
+          "#0EA5E9",
+          "#7C3AED",
+        ];
+
+        const used = new Set<string>();
+        const mapped = (props.categories ?? []).map((c, idx) => {
+          const code = c.code ?? "";
+          let chosen = c.color ?? codeColorMap[code] ?? palette[idx % palette.length];
+          // normalize CSS variable references to concrete colors
+          chosen = normalizeCssColor(chosen) ?? chosen;
+          // if exact color already used, pick first unused palette entry
+          if (used.has(chosen)) {
+            const found = palette.find((p) => !used.has(p));
+            if (found) chosen = normalizeCssColor(found) ?? found;
+            else {
+              const hue = (idx * 47) % 360;
+              chosen = `hsl(${hue} 65% 50%)`;
+            }
+          }
+          used.add(chosen);
+          return { ...c, color: chosen } as ScheduleCategory;
+        });
+
+        // use mapped colors (prefer explicit category color or codeColorMap)
+        setCategories(mapped);
+        try { console.debug('ScheduleCalendar: mapped categories', mapped.map(c => ({ id: c.id, code: c.code, color: c.color }))); } catch (err) { console.debug(err); }
+      }
 
       // Only fetch initial events here when parent did not provide `events`.
       if (props.events === undefined) {
@@ -336,7 +471,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       }
     })();
     // avoid re-running for changing onRangeChange identity - parent should provide stable callback
-  }, [api, propWorkspaceId]);
+    // include props.categories so we react when parent provides them
+  }, [api, propWorkspaceId, props.categories]);
 
   useEffect(() => {
     setEvents(propEvents ?? []);
@@ -359,8 +495,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           try {
             // debug model at runtime to inspect color fields
             try { console.debug('tui.monthGridEvent model', model); } catch (err) { console.debug(err); }
-            const cardBg = model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
-            const dotColor = model?.raw?.categoryColor || model.backgroundColor || `var(--color-primary)`;
+            const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
+            const dotColorRaw = model?.raw?.statusColor || model?.raw?.categoryColor || model.backgroundColor || `var(--color-primary)`;
+            const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
             const fg = model.color || `var(--color-text)`;
               return `
                 <div class="tui-custom-month-event"
@@ -383,7 +520,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         popupDetail: (model: any) => {
           try {
             const fg = model.color || `var(--color-text)`;
-            const bg = model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
+            const bg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
             const start = model.start ? dayjs(model.start) : null;
             const end = model.end ? dayjs(model.end) : null;
             const timeRange = start && end ? `${start.format("HH:mm")} — ${end.format("HH:mm")}` : "";
@@ -490,12 +627,62 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     // ensure DOM nodes receive color styles
     applyEventDomColors();
 
+    // Observe DOM mutations under host and reapply colors when event nodes are added/changed
+    let observer: MutationObserver | null = null;
+    try {
+      const host = hostRef.current;
+      observer = new MutationObserver((mutations) => {
+        let found = false;
+        for (const m of mutations) {
+          if (m.addedNodes && m.addedNodes.length > 0) { found = true; break; }
+          if (m.type === 'attributes' && (m as any).attributeName?.includes('data-event')) { found = true; break; }
+        }
+        if (found) {
+          try { applyEventDomColors(); } catch (err) { console.debug(err); }
+        }
+      });
+      observer.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-event-id'] });
+    } catch (err) { console.debug(err); }
+
     return () => {
       instanceRef.current?.destroy?.();
       instanceRef.current = null;
+      try { observer?.disconnect(); } catch (err) { console.debug(err); }
     };
     // mount only
   }, []);
+
+  // When calendar definitions change (colors/categories), try to update the existing instance
+  useEffect(() => {
+    const inst = instanceRef.current as any;
+    if (!inst) return;
+    try {
+      // Toast UI Calendar may expose setCalendars/createCalendars - try a few options
+      if (typeof inst.setCalendars === 'function') {
+        inst.setCalendars(tuiCalendars);
+      } else if (typeof inst.createCalendars === 'function') {
+        // remove all then recreate
+        try { inst.clearCalendars?.(); } catch (err) { console.debug(err); }
+        inst.createCalendars(tuiCalendars);
+      } else {
+        // fallback: update options and rerender
+        try { (inst as any).options.calendars = tuiCalendars; } catch (err) { console.debug(err); }
+      }
+      // ensure events & DOM colors are refreshed
+      try {
+        if (typeof inst.clear === 'function' && typeof inst.createEvents === 'function') {
+          inst.clear();
+          if (tuiEvents && tuiEvents.length > 0) inst.createEvents(tuiEvents);
+        }
+      } catch (err) { console.debug(err); }
+      inst.render?.();
+      // apply DOM color overrides after a tick
+      requestAnimationFrame(() => applyEventDomColors());
+      try { console.debug('ScheduleCalendar: updated instance calendars', tuiCalendars.map((c) => ({ id: c.id, bg: c.backgroundColor }))) } catch (err) { console.debug(err); }
+    } catch (err) {
+      console.debug('ScheduleCalendar: failed to update calendars', err);
+    }
+  }, [tuiCalendars, tuiEvents]);
 
   // update events on existing instance without recreating the whole calendar
   useEffect(() => {
@@ -537,8 +724,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           monthGridEvent: (model: any) => {
             try {
               try { console.debug('tui.monthGridEvent (fallback) model', model); } catch (err) { console.debug(err); }
-              const cardBg = model?.raw?.statusColor || model.backgroundColor || model.calendarId || "var(--toastui-calendar-primary)";
-              const dotColor = model.backgroundColor || model?.raw?.categoryColor || model.calendarId || "var(--toastui-calendar-primary)";
+              // card background should follow category color; dot shows status
+              const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || model.calendarId || "var(--toastui-calendar-primary)";
+              const dotColor = model?.raw?.statusColor || model.backgroundColor || model?.raw?.categoryColor || model.calendarId || "var(--toastui-calendar-primary)";
               const fg = model.color || "var(--toastui-calendar-text)";
                 return `<div class="tui-custom-month-event" style="display:flex;align-items:center;gap:8px;background:${cardBg} !important;padding:6px;border-radius:6px;color:${fg};">
                             <span class="tui-custom-dot" style="width:8px;height:8px;border-radius:999px;display:inline-block;background:${dotColor} !important;flex:0 0 auto;"></span>
@@ -551,7 +739,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           popupDetail: (model: any) => {
             try {
               const fg = model.color || `var(--color-text)`;
-              const bg = model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
+              const bg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
               const start = model.start ? dayjs(model.start) : null;
               const end = model.end ? dayjs(model.end) : null;
               const timeRange = start && end ? `${start.format("HH:mm")} — ${end.format("HH:mm")}` : "";
@@ -914,7 +1102,27 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-                  <div className="tui-custom-popup-body" style={{ color: 'var(--color-text)', lineHeight: 1.3, overflow: 'hidden' }}>{selectedEvent.raw?.description || selectedEvent.body || ''}</div>
+                  {
+                    // Render popup body as HTML when a pre-built `body` exists (it's constructed safely
+                    // above using `escapeHtml`). If only a raw description exists, escape it and render
+                    // as HTML wrapped in a simple container. This avoids showing raw HTML markup as text.
+                  }
+                  <div
+                    className="tui-custom-popup-body"
+                    style={{ color: 'var(--color-text)', lineHeight: 1.3, overflow: 'hidden' }}
+                    dangerouslySetInnerHTML={{
+                      __html: (() => {
+                        const rawBody = selectedEvent?.body ?? null;
+                        if (rawBody) {
+                          // strip any HTML tags from the pre-built body and remove the
+                            // redundant date/time line (it's shown above in the header).
+                            // Then escape the resulting text for safety.
+                            return `<div>${escapeHtml(removeDateTimeFromBody(String(rawBody)))}</div>`;
+                        }
+                        return `<div>${escapeHtml(selectedEvent?.raw?.description ?? '')}</div>`;
+                      })(),
+                    }}
+                  />
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 12, color: 'var(--color-text-muted)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1, overflow: 'hidden' }}>
                       <User size={14} />
@@ -922,7 +1130,14 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto' }}>
                       <Tag size={14} />
-                      <div style={{ color: 'var(--color-text-muted)' }}>{selectedEvent.calendarId || '—'}</div>
+                      <div style={{ color: 'var(--color-text-muted)' }}>
+                        {(() => {
+                          const labelFromRaw = selectedEvent.raw && selectedEvent.raw.category && (selectedEvent.raw.category.label as string | undefined);
+                          if (labelFromRaw) return labelFromRaw;
+                          const local = categories.find((c) => c.id === selectedEvent.calendarId);
+                          return (local && local.label) || selectedEvent.calendarId || '—';
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </div>

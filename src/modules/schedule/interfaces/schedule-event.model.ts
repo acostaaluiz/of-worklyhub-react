@@ -9,6 +9,8 @@ export type ScheduleEvent = {
   startTime: string;
   endTime: string;
   categoryId: ScheduleCategoryId;
+  // optional category code (e.g. 'work') to send to backend
+  categoryCode?: string;
   description?: string;
   durationMinutes?: number | null;
   // optional full category object when returned by backend

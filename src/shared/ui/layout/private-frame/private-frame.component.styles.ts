@@ -32,7 +32,8 @@ export const PrivateFrame = styled.div`
   box-shadow: var(--shadow-elevated);
 
   padding: var(--space-4);
-  overflow: hidden;
+  /* allow children popups (calendar, tooltips) to escape the frame and not be clipped */
+  overflow: visible;
 
   margin-top: var(--space-2);
 

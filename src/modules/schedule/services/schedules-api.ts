@@ -35,6 +35,13 @@ export type ScheduleServiceItem = {
 
 export type ScheduleListResponse = { data: ScheduleServiceItem[] };
 
+export type NextScheduleItem = ScheduleServiceItem & {
+  startsInMinutes: number;
+  startsIn: string;
+};
+
+export type NextSchedulesResponse = { data: NextScheduleItem[] };
+
 export class SchedulesApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "schedules-api" });
@@ -53,6 +60,13 @@ export class SchedulesApi extends BaseHttpService {
     if (query?.from) q.from = query.from;
     if (query?.to) q.to = query.to;
     const res = await this.get<ScheduleListResponse>('/schedule/internal/schedules', q);
+    return res?.data ?? [];
+  }
+
+  async nextSchedules(workspaceId: string, limit?: number): Promise<NextScheduleItem[]> {
+    const q: Record<string, unknown> = { workspaceId };
+    if (typeof limit === 'number') q.limit = limit;
+    const res = await this.get<NextSchedulesResponse>('/schedule/internal/schedules/next', q);
     return res?.data ?? [];
   }
 }

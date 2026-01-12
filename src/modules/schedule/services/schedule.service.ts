@@ -6,6 +6,7 @@ import { useMockStore } from "@core/storage/mock-store.provider";
 import { httpClient } from "@core/http/client.instance";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import { SchedulesApi } from "./schedules-api";
+import type { NextScheduleItem } from "./schedules-api";
 
 type CreateSchedulePayload = {
   start: string; // ISO
@@ -19,9 +20,76 @@ type CreateSchedulePayload = {
   description?: string | null;
   services?: Array<{ serviceId: string; quantity?: number; priceCents?: number }>;
   workers?: Array<{ workspaceId?: string | null; userUid: string }>;
+  // optional category code expected by backend (e.g. 'work')
+  categoryCode?: string | null;
 };
 
 const schedulesApi = new SchedulesApi(httpClient as unknown as HttpClient);
+
+export async function getNextSchedulesForWorkspace(workspaceId?: string | null, limit = 3): Promise<NextScheduleItem[]> {
+  const max = Math.min(Math.max(1, limit ?? 3), 3);
+
+  // try backend when workspaceId provided
+  if (workspaceId) {
+    try {
+      const rows = await schedulesApi.nextSchedules(workspaceId, max);
+      return rows ?? [];
+    } catch (err) {
+      console.debug('schedulesApi.nextSchedules failed, falling back to local store', err);
+    }
+  }
+
+  // fallback: compute from local in-memory DB events
+  try {
+    const now = dayjs();
+    const todayStr = now.format('YYYY-MM-DD');
+    const upcoming = inMemoryDb.events
+      .filter((e) => e.date === todayStr)
+      .map((e) => ({ ...e }))
+      .filter((e) => {
+        const start = dayjs(`${e.date}T${(e.startTime ?? '00:00')}:00.000Z`);
+        return start.isAfter(now) || start.isSame(now);
+      })
+      .sort((a, b) => {
+        const ad = dayjs(`${a.date}T${(a.startTime ?? '00:00')}:00.000Z`);
+        const bd = dayjs(`${b.date}T${(b.startTime ?? '00:00')}:00.000Z`);
+        return ad.valueOf() - bd.valueOf();
+      })
+      .slice(0, max)
+      .map((e) => {
+        const start = dayjs(`${e.date}T${(e.startTime ?? '00:00')}:00.000Z`);
+        const diffMinutes = Math.max(0, start.diff(dayjs(), 'minute'));
+        const hours = Math.floor(diffMinutes / 60);
+        const minutes = diffMinutes % 60;
+        const startsIn = hours > 0 ? (minutes > 0 ? `starts in ${hours}h ${minutes}m` : `starts in ${hours}h`) : `starts in ${minutes} minutes`;
+        return {
+          id: e.id,
+          scheduleId: undefined,
+          workspaceId: undefined,
+          resourceId: undefined,
+          clientId: undefined,
+          start: new Date(`${e.date}T${(e.startTime ?? '00:00')}:00.000Z`).toISOString(),
+          end: new Date(`${e.date}T${(e.endTime ?? '00:00')}:00.000Z`).toISOString(),
+          durationMinutes: undefined,
+          title: e.title ?? 'Untitled',
+          description: e.description ?? null,
+          services: undefined,
+          workers: undefined,
+          category: undefined,
+          status: undefined,
+          createdAt: new Date().toISOString(),
+          updatedAt: undefined,
+          startsInMinutes: diffMinutes,
+          startsIn,
+        } as NextScheduleItem;
+      });
+
+    return upcoming;
+  } catch (err) {
+    console.debug('getNextSchedulesForWorkspace fallback failed', err);
+    return [] as NextScheduleItem[];
+  }
+}
 
 type GetEventsParams = {
   from: string; // "YYYY-MM-DD"
@@ -157,14 +225,22 @@ export function useScheduleApi() {
           const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
           const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
 
-          const sd = startIso ? dayjs(startIso) : null;
-          const ed = endIso ? dayjs(endIso) : null;
+          // derive date and times using UTC components to reflect backend day boundaries
+          const pad = (n: number) => n.toString().padStart(2, "0");
+          let date = "";
+          let startTime = "09:00";
+          let endTime = "09:30";
+          if (startIso) {
+            const d = new Date(startIso);
+            date = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+            startTime = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+          }
+          if (endIso) {
+            const e = new Date(endIso);
+            endTime = `${pad(e.getUTCHours())}:${pad(e.getUTCMinutes())}`;
+          }
 
-          const date = sd ? sd.format("YYYY-MM-DD") : "";
-          const startTime = sd ? sd.format("HH:mm") : "09:00";
-          const endTime = ed ? ed.format("HH:mm") : "09:30";
-
-            return {
+          return {
             id: String(s["id"] ?? ""),
             title: (s["title"] as string) ?? "Untitled",
             date,
@@ -176,33 +252,25 @@ export function useScheduleApi() {
               ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
               (s["calendarId"] as string) ??
               "schedule",
-              // preserve the backend category object when available (contains code/label)
-              category: (s["category"] as Record<string, unknown> | null) ?? null,
-              categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
+            // preserve the backend category object when available (contains code/label)
+            category: (s["category"] as Record<string, unknown> | null) ?? null,
+            categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
             description: (s["description"] as string) ?? undefined,
             // preserve status object from backend so UI can color by status.code
-              status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
-              // preserve workers and services from backend for UI details
-              workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-              services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            _sd: sd,
-          } as ScheduleEvent & { _sd?: dayjs.Dayjs | null };
+            status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
+            // preserve workers and services from backend for UI details
+            workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+          } as ScheduleEvent;
         });
 
-        const fromStart = dayjs(from).startOf("day").valueOf();
-        const toEnd = dayjs(to).endOf("day").valueOf();
-
+        // filter by date string (YYYY-MM-DD) to match backend day boundaries
         const filtered = mapped.filter((e) => {
-          const sd = ((e as unknown) as { _sd?: dayjs.Dayjs | null })._sd as dayjs.Dayjs | null | undefined;
-          if (!sd) return false;
-          const t = sd.startOf("day").valueOf();
-          return t >= fromStart && t <= toEnd;
+          if (!e.date) return false;
+          return e.date >= from && e.date <= to;
         });
 
-        const result = filtered.map((e) => {
-          const { _sd, ...rest } = e as unknown as Record<string, unknown>;
-          return rest as ScheduleEvent;
-        });
+        const result = filtered.map((e) => e as ScheduleEvent);
 
         console.log("useScheduleApi.getEvents: mapped -> filtered -> result", mapped.length, filtered.length, result.length, result.map((r) => ({ id: r.id, date: r.date, startTime: r.startTime })));
         return result;
@@ -326,6 +394,10 @@ export function useScheduleApi() {
         workers: employeeIds?.map((eid) => ({ workspaceId: workspaceId ?? null, userUid: eid })) ?? undefined,
       };
 
+      // attach categoryCode when available (prefer explicit code on event, otherwise fallback to categoryId)
+      // backend expects a category code (eg. 'work') under `categoryCode`
+      body.categoryCode = event.categoryCode ?? event.categoryId ?? null;
+
       if (typeof totalPriceCents === "number") {
         // attach price on first service element if any
         if (body.services && body.services.length > 0) {
@@ -372,5 +444,5 @@ export function useScheduleApi() {
     }
   }, [store]);
 
-  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent }), [getCategories, getEvents, createEvent, createSchedule, removeEvent]);
+  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent, getNextSchedules: getNextSchedulesForWorkspace }), [getCategories, getEvents, createEvent, createSchedule, removeEvent]);
 }

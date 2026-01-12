@@ -12,6 +12,8 @@ import {
   Block,
   BlockHeader,
   List,
+  NextBlock,
+  NextCard,
   CategoryRow,
 } from "./schedule-sidebar.component.styles";
 import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
@@ -29,10 +31,23 @@ type ScheduleSidebarProps = {
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
+  nextSchedules?: import("@modules/schedule/services/schedules-api").NextScheduleItem[] | null;
 };
 
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
   const api = useScheduleApi();
+  // deterministic color from id to avoid duplicates when no explicit color provided
+  const colorFromId = (id: string, idx: number) => {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) {
+      h = (h << 5) - h + id.charCodeAt(i);
+      h = h & h;
+    }
+    const hue = Math.abs(h) % 360;
+    const sat = 64 + (idx * 11) % 20; // vary saturation slightly by index
+    const light = 48 + (idx * 7) % 6;
+    return `hsl(${hue} ${sat}% ${light}%)`;
+  };
   const [categories, setCategories] = useState<ScheduleCategory[]>([]);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
 
@@ -43,6 +58,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
   >({});
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const nextSchedules = props.nextSchedules ?? null;
 
   useEffect(() => {
     (async () => {
@@ -55,9 +71,43 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
           schedule: "var(--color-tertiary)",
           gaming: "rgba(233, 171, 19, 0.95)",
         };
-        const mapped = props.categories.map((c) => {
+        // explicit palette of contrasting colors to avoid near-duplicates
+        const palette = [
+          "#F59E0B", // amber
+          "#06B6D4", // cyan
+          "#A78BFA", // purple
+          "#10B981", // green
+          "#F97316", // orange
+          "#EF4444", // red
+          "#0EA5E9", // blue
+          "#7C3AED",
+        ];
+
+        const used = new Set<string>();
+        const mapped = props.categories.map((c, idx) => {
           const code = c.code ?? "";
-          return { id: c.id, code, label: c.label, color: c.color ?? codeColorMap[code] ?? "var(--color-primary)" };
+          // try to use explicit color only when it's a concrete color (not var(...))
+          let chosen: string | undefined;
+          const explicit = c.color?.toString()?.trim();
+          if (explicit && !explicit.startsWith("var(")) chosen = explicit;
+
+          // next try code map if it provides a concrete color
+          const mappedByCode = codeColorMap[code];
+          if (!chosen && mappedByCode && !mappedByCode.startsWith("var(")) chosen = mappedByCode;
+
+          // otherwise pick from palette
+          if (!chosen) chosen = palette[idx % palette.length];
+
+          // ensure uniqueness: prefer palette/free generated color if collision
+          if (used.has(chosen)) {
+            // try find unused in palette
+            const found = palette.find((p) => !used.has(p));
+            if (found) chosen = found;
+            else chosen = colorFromId(c.id, idx);
+          }
+
+          used.add(chosen);
+          return { id: c.id, code, label: c.label, color: chosen };
         });
         setCategories(mapped);
       } else {
@@ -81,6 +131,9 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     return counts;
   }, [categories, events, props.categoryCounts]);
   const onToggleCategory = (id: string, checked: boolean) => {
+    try {
+      console.debug("ScheduleSidebar.onToggleCategory called", { id, checked, hasProp: !!props.onToggleCategory });
+    } catch (err) { console.debug(err); }
     if (props.onToggleCategory) {
       props.onToggleCategory(id, checked);
       return;
@@ -161,6 +214,23 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
           ))}
         </List>
       </Block>
+
+      {nextSchedules && nextSchedules.length > 0 ? (
+        <NextBlock>
+          <BlockHeader>
+            <div className="label">Next events</div>
+          </BlockHeader>
+          <List>
+            {nextSchedules.map((n) => (
+              <NextCard key={n.id}>
+                <div className="time">{dayjs(n.start).format('HH:mm')}</div>
+                <div className="title">{n.title ?? 'Untitled'}</div>
+                <div className="meta">{n.startsIn ?? `${n.startsInMinutes} minutes`}</div>
+              </NextCard>
+            ))}
+          </List>
+        </NextBlock>
+      ) : null}
 
       <ScheduleEventModal
         open={isCreateOpen}

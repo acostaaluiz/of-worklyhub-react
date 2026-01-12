@@ -69,6 +69,7 @@ export const CategoryRow = styled.div<{ $color: string }>`
     height: 10px;
     border-radius: 999px;
     background: ${(p) => p.$color};
+    /* subtle halo like before */
     box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.04);
   }
 
@@ -103,5 +104,40 @@ export const MiniCalendarWrap = styled.div`
     border-radius: var(--radius-md);
     overflow: hidden;
     background: var(--color-surface);
+  }
+`;
+
+export const NextBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+`;
+
+export const NextCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-glass-surface);
+
+  .time {
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+  }
+
+  .title {
+    font-size: var(--font-size-sm);
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
   }
 `;
