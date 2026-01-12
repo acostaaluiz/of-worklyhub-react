@@ -480,7 +480,8 @@ export function useScheduleApi() {
 
       const res = await schedulesApi.updateSchedule(id, body);
       const resp = (res as unknown as Record<string, unknown>) ?? {};
-      const newId = resp.id || id;
+      const maybeId = resp.id;
+      const newId = typeof maybeId === "string" && maybeId ? maybeId : id;
 
       const updated: ScheduleEvent = {
         id: newId,

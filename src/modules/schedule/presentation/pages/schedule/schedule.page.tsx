@@ -188,7 +188,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         await fetchRange(from, to);
       };
 
-      const handleUpdate = async (args: { id: string; event: import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => {
+      const handleUpdate = async (args: { id: string; event: Omit<import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => {
         try {
           loadingService.show();
           if ((api as any).updateEvent) {

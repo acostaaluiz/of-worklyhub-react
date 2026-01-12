@@ -20,7 +20,7 @@ type ScheduleTemplateProps = {
   availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
   workspaceId?: string | null;
   onCreate?: (draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
-  onUpdate?: (args: { id: string; event: import("../../../interfaces/schedule-event.model").ScheduleEvent; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => Promise<void>;
+  onUpdate?: (args: { id: string; event: Omit<import("../../../interfaces/schedule-event.model").ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => Promise<void>;
   events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
   categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
