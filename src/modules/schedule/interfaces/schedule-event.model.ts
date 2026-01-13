@@ -19,4 +19,10 @@ export type ScheduleEvent = {
     code?: string;
     label?: string;
   } | null;
+  // optional status object when returned by backend
+  status?: {
+    id?: string;
+    code?: string;
+    label?: string;
+  } | null;
 };

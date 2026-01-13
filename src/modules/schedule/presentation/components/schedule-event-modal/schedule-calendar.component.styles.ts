@@ -3,13 +3,13 @@ import styled from "styled-components";
 export const ModalBody = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-1);
 `;
 
 export const DateStrip = styled.div`
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
-  gap: var(--space-3);
+  grid-template-columns: 36px 1fr 36px;
+  gap: var(--space-2);
   align-items: center;
 `;
 
@@ -23,12 +23,11 @@ export const DateRail = styled.div`
 
 export const DateChip = styled.button<{ $active?: boolean }>`
   border: 1px solid var(--color-border);
-  background: ${(p) =>
-    p.$active ? "var(--color-tertiary)" : "var(--color-surface)"};
+  background: ${(p) => (p.$active ? "var(--color-tertiary)" : "var(--color-surface)")};
   color: ${(p) => (p.$active ? "var(--on-tertiary)" : "var(--color-text)")};
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  min-width: 84px;
+  padding: 6px 8px;
+  min-width: 60px;
   text-align: center;
   cursor: pointer;
   box-shadow: ${(p) => (p.$active ? "var(--shadow-sm)" : "none")};
@@ -52,13 +51,13 @@ export const DateChip = styled.button<{ $active?: boolean }>`
   }
 
   .day {
-    font-size: var(--font-size-lg);
+    font-size: 14px;
     font-weight: 700;
     line-height: 1;
   }
 
   .dot {
-    width: 18px;
+    width: 12px;
     height: 3px;
     border-radius: 999px;
     background: ${(p) =>
@@ -99,7 +98,7 @@ export const Separator = styled.div`
 export const Section = styled.section`
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 `;
 
 export const CenterRow = styled.div`
@@ -112,15 +111,15 @@ export const TimeTabsRow = styled.div`
   justify-content: center;
 
   .ant-segmented {
-    height: 40px;
-    padding: 3px;
+    height: 34px;
+    padding: 2px;
     border-radius: var(--radius-sm);
   }
 
   .ant-segmented-item-label {
-    height: 34px;
-    line-height: 34px;
-    padding-inline: 18px;
+    height: 30px;
+    line-height: 30px;
+    padding-inline: 12px;
   }
 `;
 
@@ -141,12 +140,11 @@ export const SlotsRail = styled.div`
 
 export const TimeChip = styled.button<{ $active?: boolean }>`
   border: 1px solid var(--color-border);
-  background: ${(p) =>
-    p.$active ? "var(--color-tertiary)" : "var(--color-surface)"};
+  background: ${(p) => (p.$active ? "var(--color-tertiary)" : "var(--color-surface)")};
   color: ${(p) => (p.$active ? "var(--on-tertiary)" : "var(--color-text)")};
   border-radius: var(--radius-sm);
-  padding: 10px 14px;
-  min-width: 96px;
+  padding: 6px 10px;
+  min-width: 64px;
   text-align: center;
   cursor: pointer;
 
@@ -163,7 +161,7 @@ export const TimeChip = styled.button<{ $active?: boolean }>`
 export const FormStack = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 
   .ant-input,
   .ant-input-affix-wrapper,
@@ -196,13 +194,13 @@ export const SlotCard = styled.div`
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   border-radius: var(--radius-md);
-  padding: var(--space-4);
+  padding: calc(var(--space-2) + 6px);
   box-shadow: var(--shadow-sm);
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-2);
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -217,7 +215,7 @@ export const SlotLeft = styled.div`
 
   .title {
     font-weight: 800;
-    font-size: 18px;
+    font-size: 15px;
     letter-spacing: -0.01em;
   }
 
@@ -283,7 +281,7 @@ export const FooterTotal = styled.div`
 
   .value {
     font-weight: 900;
-    font-size: 28px;
+    font-size: 24px;
     letter-spacing: -0.02em;
   }
 
@@ -297,7 +295,7 @@ export const ContinueWrap = styled.div`
   margin-top: var(--space-2);
 
   .ant-btn {
-    height: 56px;
+    height: 48px;
     border-radius: var(--radius-md);
     font-weight: 700;
     font-size: 16px;
@@ -311,4 +309,46 @@ export const ModalOverrides = styled.div`
     border-radius: var(--radius-lg);
     background: var(--color-surface);
   }
+  .wh-schedule-modal .ant-modal-content {
+    max-height: 72vh;
+    overflow: hidden;
+  }
+  .wh-schedule-modal .ant-modal-body {
+    padding: var(--space-2) !important;
+    max-height: calc(72vh - 120px);
+    overflow: auto;
+  }
 `;
+
+export const StatusRow = styled.div`
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+`;
+
+export const StatusCard = styled.button<{ $active?: boolean }>`
+  border: 1px solid var(--color-border);
+  background: ${(p) => (p.$active ? 'var(--color-primary)' : 'var(--color-surface)')};
+  color: ${(p) => (p.$active ? 'var(--on-primary)' : 'var(--color-text)')};
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  min-width: 120px;
+  text-align: left;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &:hover {
+    border-color: rgba(122,44,255,0.55);
+  }
+`;
+
+export const Label = styled.div`
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+`;
+

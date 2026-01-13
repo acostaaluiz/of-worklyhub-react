@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
-import { useScheduleApi, getNextSchedulesForWorkspace } from "@modules/schedule/services/schedule.service";
+import { useScheduleApi, getNextSchedulesForWorkspace, getStatuses } from "@modules/schedule/services/schedule.service";
 import { ScheduleTemplate } from "../../templates/schedule/schedule.template";
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
 import { companyService } from "@modules/company/services/company.service";
@@ -21,6 +21,7 @@ type SchedulePageState = BasePageState & {
   employees?: EmployeeModel[];
   categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
   nextSchedules?: NextScheduleItem[];
+  statuses?: Array<{ id: string; code?: string; label?: string }> | null;
 };
 
 export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
@@ -37,6 +38,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
     const employees = this.state.employees;
     const categories = this.state.categories;
     const nextSchedules = this.state.nextSchedules;
+    const statuses = this.state.statuses;
 
     function Wrapper(): React.ReactElement {
       const api = useScheduleApi();
@@ -206,7 +208,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         }
       };
 
-      return <ScheduleTemplate availableServices={services} availableEmployees={employees} workspaceId={workspaceId ?? null} onCreate={handleCreate} onUpdate={handleUpdate} events={filteredEvents} onRangeChange={fetchRange} categories={categories ?? null} categoryCounts={categoryCounts} selectedCategoryIds={selectedCategoryIds} onToggleCategory={onToggleCategory} nextSchedules={nextSchedules ?? null} />;
+      return <ScheduleTemplate availableServices={services} availableEmployees={employees} workspaceId={workspaceId ?? null} onCreate={handleCreate} onUpdate={handleUpdate} events={filteredEvents} onRangeChange={fetchRange} categories={categories ?? null} categoryCounts={categoryCounts} selectedCategoryIds={selectedCategoryIds} onToggleCategory={onToggleCategory} nextSchedules={nextSchedules ?? null} statuses={ (statuses ?? null) } />;
     }
 
     return <Wrapper />;
@@ -223,7 +225,13 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // also fetch shared application event categories and expose to template via window fallback
           try {
             const appCats = await import("@core/application/application.service").then((m) => m.applicationService.fetchEventCategories());
-            this.setSafeState({ services, employees, categories: appCats ?? null });
+              // also fetch statuses for schedule updates
+              try {
+                const sts = await getStatuses();
+                this.setSafeState({ services, employees, categories: appCats ?? null, statuses: sts ?? null });
+              } catch (e) {
+                this.setSafeState({ services, employees, categories: appCats ?? null });
+              }
             try {
               const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
               const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
@@ -234,7 +242,13 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             }
           } catch (e) {
             console.debug(e);
-            this.setSafeState({ services, employees });
+            // attempt to fetch statuses even when appCats import fails
+            try {
+              const sts = await getStatuses();
+              this.setSafeState({ services, employees, statuses: sts ?? null });
+            } catch (err) {
+              this.setSafeState({ services, employees });
+            }
             try {
               const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
               const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;

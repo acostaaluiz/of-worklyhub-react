@@ -13,6 +13,8 @@ export type CreateSchedulePayload = {
   description?: string | null;
   services?: Array<{ serviceId: string; quantity?: number; priceCents?: number }>;
   workers?: Array<{ workspaceId?: string | null; userUid: string }>;
+  // optional status id for updates
+  statusId?: string | null;
 };
 
 export type ScheduleServiceItem = {
@@ -34,6 +36,9 @@ export type ScheduleServiceItem = {
 };
 
 export type ScheduleListResponse = { data: ScheduleServiceItem[] };
+
+export type ScheduleStatus = { id: string; code: string; label: string };
+export type ScheduleStatusesResponse = { data: ScheduleStatus[] };
 
 export type NextScheduleItem = ScheduleServiceItem & {
   startsInMinutes: number;
@@ -72,6 +77,11 @@ export class SchedulesApi extends BaseHttpService {
     const q: Record<string, unknown> = { workspaceId };
     if (typeof limit === 'number') q.limit = limit;
     const res = await this.get<NextSchedulesResponse>('/schedule/internal/schedules/next', q);
+    return res?.data ?? [];
+  }
+
+  async getStatuses(): Promise<ScheduleStatus[]> {
+    const res = await this.get<ScheduleStatusesResponse>('/schedule/internal/statuses');
     return res?.data ?? [];
   }
 }

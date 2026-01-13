@@ -34,6 +34,9 @@ import {
   FooterTotal,
   ContinueWrap,
   ModalOverrides,
+  StatusRow,
+  StatusCard,
+  Label,
 } from "./schedule-calendar.component.styles";
 
 type DurationOption = { label: string; minutes: number };
@@ -102,6 +105,7 @@ interface ScheduleEventModalState {
   priceCents: number;
   selectedServiceIds: string[];
   selectedEmployeeIds: string[];
+  selectedStatusId?: string | null;
   selectModalOpen?: "services" | "employees" | null;
 }
 
@@ -127,6 +131,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       priceCents: 5000,
       selectedServiceIds: [],
       selectedEmployeeIds: [],
+      selectedStatusId: undefined,
       selectModalOpen: null,
     };
   }
@@ -187,6 +192,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         priceCents: d.totalPriceCents ?? 5000,
         selectedServiceIds: d.serviceIds ?? [],
         selectedEmployeeIds: d.employeeIds ?? [],
+        selectedStatusId: (d as any).statusId ?? null,
       });
     }
 
@@ -251,6 +257,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       serviceIds: this.state.selectedServiceIds.length ? this.state.selectedServiceIds.slice() : undefined,
       employeeIds: this.state.selectedEmployeeIds.length ? this.state.selectedEmployeeIds.slice() : undefined,
       totalPriceCents: this.state.priceCents,
+      statusId: this.state.selectedStatusId ?? undefined,
     };
 
     onConfirm(draft);
@@ -376,9 +383,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
             <Separator />
 
             <Section>
-              <Typography.Title level={5} style={{ margin: 0 }}>
-                Appointment details
-              </Typography.Title>
+              <Label>Appointment details</Label>
 
               <FormStack>
                 <Input
@@ -405,15 +410,43 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   />
                 </FieldRow3>
 
+                {/* Status selector - only shown when editing an existing event */}
+                {this.props.initialDraft && this.props.initialDraft.id ? (
+                  <div>
+                    <Label>Event status</Label>
+                    <div style={{ height: 6 }} />
+                    <StatusRow>
+                      {(this.props.statuses ?? []).map((s) => {
+                        const active = this.state.selectedStatusId === s.id;
+                        return (
+                          <StatusCard
+                            key={s.id}
+                            type="button"
+                            $active={active}
+                            onClick={() => this.setSafeState({ selectedStatusId: s.id })}
+                            aria-pressed={active}
+                          >
+                            <div style={{ fontWeight: 700, fontSize: 13 }}>{s.label}</div>
+                          </StatusCard>
+                        );
+                      })}
+                    </StatusRow>
+                  </div>
+                ) : null}
+
                 {/* Duration selector moved to its own row to avoid crowding */}
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <DurationTimeSelector
-                    mode="duration"
-                    size="large"
-                    value={this.state.durationMinutes}
-                    onChange={(v) => this.setSafeState({ durationMinutes: Number(v) })}
-                    durations={DURATION_OPTIONS.map((d) => d.minutes)}
-                  />
+                <div>
+                  <Label>Duration</Label>
+                  <div style={{ height: 6 }} />
+                  <div style={{ display: "flex", justifyContent: "center" }}>
+                    <DurationTimeSelector
+                      mode="duration"
+                      size="large"
+                      value={this.state.durationMinutes}
+                      onChange={(v) => this.setSafeState({ durationMinutes: Number(v) })}
+                      durations={DURATION_OPTIONS.map((d) => d.minutes)}
+                    />
+                  </div>
                 </div>
 
                 <FieldRow>

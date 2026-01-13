@@ -16,6 +16,8 @@ export type ScheduleEventDraft = {
   serviceIds?: string[];
   employeeIds?: string[];
   totalPriceCents?: number;
+  // when editing, selected status id (from backend statuses list)
+  statusId?: string;
 };
 
 export type ScheduleEventModalProps = BaseProps & {
@@ -28,6 +30,7 @@ export type ScheduleEventModalProps = BaseProps & {
   initialDate?: string;
   initialStartTime?: string;
   initialDraft?: ScheduleEventDraft & { id?: string };
+  statuses?: Array<{ id: string; code?: string; label?: string }>;
   onClose: () => void;
   onConfirm: (draft: ScheduleEventDraft) => void;
 };

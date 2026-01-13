@@ -22,6 +22,8 @@ type CreateSchedulePayload = {
   workers?: Array<{ workspaceId?: string | null; userUid: string }>;
   // optional category code expected by backend (e.g. 'work')
   categoryCode?: string | null;
+  // optional status id for updates
+  statusId?: string | null;
 };
 
 const schedulesApi = new SchedulesApi(httpClient as unknown as HttpClient);
@@ -201,6 +203,17 @@ export class ScheduleService {
     if (idx === -1) return false;
     inMemoryDb.events.splice(idx, 1);
     return true;
+  }
+}
+
+// exported helper to fetch statuses from backend
+export async function getStatuses(): Promise<import("./schedules-api").ScheduleStatus[]> {
+  try {
+    const rows = await schedulesApi.getStatuses();
+    return rows ?? [];
+  } catch (err) {
+    console.debug('schedulesApi.getStatuses failed', err);
+    return [];
   }
 }
 
@@ -469,6 +482,24 @@ export function useScheduleApi() {
         workers: employeeIds?.map((eid) => ({ workspaceId: workspaceId ?? null, userUid: eid })) ?? undefined,
       };
 
+      // include status when provided by UI (event may include statusId or status object)
+      try {
+        const evt = event as unknown as Record<string, unknown>;
+        let evtStatusId: string | null = null;
+        const sId = evt['statusId'];
+        if (typeof sId === 'string' && sId) evtStatusId = sId;
+        else {
+          const st = evt['status'];
+          if (st && typeof st === 'object') {
+            const stId = (st as Record<string, unknown>)['id'];
+            if (typeof stId === 'string' && stId) evtStatusId = stId;
+          }
+        }
+        if (evtStatusId) (body as Record<string, unknown>)['statusId'] = evtStatusId;
+      } catch (err) {
+        // no-op
+      }
+
       const evtMeta = event as unknown as { categoryCode?: string | null };
       body.categoryCode = evtMeta.categoryCode ?? event.categoryId ?? null;
 
@@ -531,5 +562,5 @@ export function useScheduleApi() {
     }
   }, [store]);
 
-  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent, getNextSchedules: getNextSchedulesForWorkspace }), [getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent]);
+  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent, getNextSchedules: getNextSchedulesForWorkspace, getStatuses }), [getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent]);
 }

@@ -28,6 +28,7 @@ type ScheduleTemplateProps = {
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
   nextSchedules?: import("@modules/schedule/services/schedules-api").NextScheduleItem[] | null;
+  statuses?: import("@modules/schedule/services/schedules-api").ScheduleStatus[] | null;
 };
 
 export function ScheduleTemplate(props: ScheduleTemplateProps) {
@@ -72,6 +73,7 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   onUpdate={props.onUpdate}
                   events={props.events}
                   categories={props.categories}
+                  statuses={props.statuses}
                   onRangeChange={props.onRangeChange}
                 />
               </ContentCard>

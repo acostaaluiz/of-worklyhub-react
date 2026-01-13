@@ -38,6 +38,7 @@ type ScheduleCalendarProps = {
   events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
   categories?: import("../../../interfaces/schedule-category.model").ScheduleCategory[] | null;
+  statuses?: import("@modules/schedule/services/schedules-api").ScheduleStatus[] | null;
 };
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
@@ -192,6 +193,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               serviceIds: Array.isArray(raw.services) ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean) : undefined,
               employeeIds: Array.isArray(raw.workers) ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean) : undefined,
               totalPriceCents: Array.isArray(raw.services) ? raw.services.reduce((acc: number, s: any) => acc + (s.priceCents ?? 0), 0) : undefined,
+              statusId: (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
             };
 
             setModalInitialDraft(draft);
@@ -495,6 +497,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           serviceIds: Array.isArray(raw.services) ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean) : undefined,
           employeeIds: Array.isArray(raw.workers) ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean) : undefined,
           totalPriceCents: Array.isArray(raw.services) ? raw.services.reduce((acc: number, s: any) => acc + (s.priceCents ?? 0), 0) : undefined,
+          statusId: (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
         };
 
         const augmented = {
@@ -938,6 +941,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         initialDraft={modalInitialDraft}
           availableServices={propAvailableServices}
           availableEmployees={propAvailableEmployees}
+          statuses={props.statuses}
       />
     </>
   );
