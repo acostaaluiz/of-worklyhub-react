@@ -7,6 +7,13 @@ import type { FinanceQueryModel } from "@modules/finance/interfaces/finance-quer
 import type { FinanceResponseModel } from "@modules/finance/interfaces/finance-response.model";
 import type { FinanceSeries } from "@modules/finance/interfaces/finance-series.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
+import { FinanceApi, type FinanceEntryType } from "@modules/finance/services/finance-api";
+import { httpClient } from "@core/http/client.instance";
+
+// Simple per-workspace in-flight/cached promise map to avoid duplicate requests
+const entryTypesCache = new Map<string, Promise<FinanceEntryType[]>>();
+// In-flight/cached entries list promises to avoid duplicate GETs
+const entriesCache = new Map<string, Promise<unknown[]>>();
 
 const inMemoryDb: { entries: FinanceEntryModel[] } = { entries: [] };
 
@@ -18,6 +25,7 @@ const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(ma
 
 export class FinanceService {
   private companyService = new CompanyServicesService();
+  private api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
 
   // Entries
   async listEntries(): Promise<FinanceEntryModel[]> {
@@ -207,21 +215,137 @@ export class FinanceService {
 }
 
 // Hook-based API to integrate with MockStoreProvider
+import { useCallback, useMemo } from "react";
+
 export function useFinanceApi() {
   const store = useMockStore();
 
-  const listEntries = async () => {
-    return store.finance;
-  };
+  const listEntries = useCallback(async (opts?: { workspaceId?: string; start?: string; end?: string; limit?: number; offset?: number; typeId?: string }) => {
+    const key = JSON.stringify({ workspaceId: opts?.workspaceId, typeId: opts?.typeId, start: opts?.start, end: opts?.end, limit: opts?.limit, offset: opts?.offset });
+    if (entriesCache.has(key)) return entriesCache.get(key)!;
 
-  const createEntry = async (payload: { serviceId?: string; amount: number; date: string; note?: string }) => {
-    return store.addFinanceEntry({ ...payload, id: `f-${Math.random().toString(16).slice(2)}` });
-  };
+    const p = (async () => {
+      try {
+        const api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
 
-  const removeEntry = async (id: string) => {
+        const query: Record<string, unknown> = {};
+        if (opts?.typeId) query.typeId = opts.typeId;
+        if (opts?.start) query.start = opts.start;
+        if (opts?.end) query.end = opts.end;
+        if (opts?.limit) query.limit = opts.limit;
+        if (opts?.offset) query.offset = opts.offset;
+
+        const rows = await api.listEntries(opts?.workspaceId, query);
+
+        // try to map typeId -> type key/name for UI convenience
+        const types = await (async () => {
+          try {
+            return await (new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient)).listEntryTypes(opts?.workspaceId);
+          } catch {
+            return [] as FinanceEntryType[];
+          }
+        })();
+
+        const typeMap = new Map<string, FinanceEntryType>();
+        (types || []).forEach((t) => {
+          if (t?.id) typeMap.set(t.id, t);
+        });
+
+        const mapped = (rows || []).map((r: unknown) => {
+          const rr = r as Record<string, unknown>;
+          const amountRaw = rr["amount_cents"] ?? rr["amount"] ?? 0;
+          const amount = typeof amountRaw === "number" ? (amountRaw as number) / 100 : Number(String(amountRaw || "0")) / 100;
+          const occurred = (rr["occurred_at"] ?? rr["date"] ?? rr["created_at"]) as string | undefined;
+          const typeIdKey = (rr["typeId"] ?? rr["type_id"]) as string | undefined;
+          const t = typeMap.get(typeIdKey ?? "");
+          return {
+            id: (rr["id"] as string) ?? undefined,
+            serviceId: (rr["serviceId"] ?? rr["service_id"]) as string | undefined,
+            amount,
+            date: occurred,
+            note: (rr["description"] ?? rr["note"]) as string | undefined,
+            description: (rr["description"] ?? rr["note"]) as string | undefined,
+            type: String((t?.key ?? (t?.name ?? ""))).toLowerCase(),
+            typeId: typeIdKey,
+            raw: rr,
+          } as unknown;
+        });
+
+        return mapped;
+      } catch (err) {
+        return store.finance;
+      }
+    })();
+
+    entriesCache.set(key, p);
+    return p;
+  }, [store]);
+
+  const createEntry = useCallback(async (payload: { serviceId?: string; type?: string; typeId?: string; amount: number; date: string; note?: string; workspaceId?: string }) => {
+    // Try remote creation via API; fall back to mock store on error
+    try {
+      const api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
+
+      const occurredAt = payload.date ? dayjs(payload.date).toISOString() : dayjs().toISOString();
+      const amountCents = Math.round((Number(payload.amount) || 0) * 100);
+
+      const body: { typeId?: string; amount_cents: number | string; occurred_at: string; description?: string; workspaceId?: string } = {
+        typeId: payload.typeId ?? payload.type,
+        amount_cents: amountCents,
+        occurred_at: occurredAt,
+        description: payload.note,
+      };
+
+      if (payload.workspaceId) body.workspaceId = payload.workspaceId;
+
+      const res = await api.createEntry(payload.workspaceId, body);
+      const id = res?.id ?? `f-${Math.random().toString(16).slice(2)}`;
+
+      // Update mock store so UI shows the new entry locally
+      // invalidate entries cache so lists refresh on next load
+      try { entriesCache.clear(); } catch (e) { void e; }
+      return store.addFinanceEntry({ id, serviceId: payload.serviceId, amount: Number(payload.amount), date: occurredAt, note: payload.note });
+    } catch (err) {
+      // fallback to mock store
+      return store.addFinanceEntry({ ...payload, id: `f-${Math.random().toString(16).slice(2)}` });
+    }
+  }, [store]);
+
+  const removeEntry = useCallback(async (id: string) => {
+    try {
+      // if remote removal exists, call it (not implemented in mock)
+      // invalidate cache
+      entriesCache.clear();
+    } catch (e) { void e; }
     store.removeFinanceEntry(id);
     return true;
-  };
+  }, [store]);
 
-  return { listEntries, createEntry, removeEntry };
+  const listEntryTypes = useCallback(async (workspaceId?: string): Promise<FinanceEntryType[]> => {
+    const key = workspaceId ?? "__default";
+    if (entryTypesCache.has(key)) {
+      return entryTypesCache.get(key)!;
+    }
+
+    const p = (async () => {
+      try {
+        const api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
+        const rows = await api.listEntryTypes(workspaceId);
+        if (Array.isArray(rows) && rows.length > 0) return rows;
+      } catch (err) {
+        // fallback to store/mock list
+      }
+
+      return [
+        { id: "income", key: "income", name: "Income" },
+        { id: "expense", key: "expense", name: "Expense" },
+        { id: "fixed", key: "fixed", name: "Fixed" },
+      ];
+    })();
+
+    entryTypesCache.set(key, p);
+    return p;
+  }, []);
+
+  return useMemo(() => ({ listEntries, createEntry, removeEntry, listEntryTypes }), [listEntries, createEntry, removeEntry, listEntryTypes]);
 }
