@@ -5,6 +5,7 @@ import { usersAuthService } from "@modules/users/services/auth.service";
 import { message } from "antd";
 import { AppError } from "@core/errors/app-error";
 import { loadingService } from "@shared/ui/services/loading.service";
+import { navigateTo } from "@core/navigation/navigation.service";
 
 type LoginValues = { email: string; password: string };
 
@@ -15,10 +16,7 @@ export class LoginPage extends BasePage {
   };
 
   protected override renderPage(): React.ReactNode {
-    const navigate = (path: string) => {
-      // use location navigation via window to keep behaviour consistent across pages
-      window.location.href = path;
-    };
+    const navigate = (path: string) => navigateTo(path);
 
     const handleLogin = async (values: LoginValues) => {
       loadingService.show();

@@ -11,6 +11,7 @@ import { companyService } from "@modules/company/services/company.service";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
 import { loadingService } from "@shared/ui/services/loading.service";
 import { message } from "antd";
+import { navigateTo } from "@core/navigation/navigation.service";
 
 export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; name?: string; services?: ApplicationServiceItem[] | null; metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } } }> {
   protected override options = { title: "Home | WorklyHub", requiresAuth: true };
@@ -159,7 +160,7 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
         services={services}
         metrics={this.state.metrics}
         onEditCompany={() => {
-          window.location.href = "/company/introduction";
+          navigateTo("/company/introduction");
         }}
       />
     );

@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
 import { publicStackRoutes } from "@app/router/stacks/public.stack";
 import { privateStackRoutes } from "@app/router/stacks/private.stack";
+import { NavigationBoot } from "@core/navigation/navigation.boot";
 import RedirectIfAuthenticated from "@shared/providers/auth/redirect-if-authenticated";
 import RequireAuth from "@shared/providers/auth/require-auth";
 
@@ -22,16 +23,21 @@ function NotFound() {
 
 const routes: RouteObject[] = [
   {
-    // public routes are only for unauthenticated users — redirect to /home if already authenticated
-    element: <RedirectIfAuthenticated />,
-    children: publicStackRoutes,
+    element: <NavigationBoot />,
+    children: [
+      {
+        // public routes are only for unauthenticated users — redirect to /home if already authenticated
+        element: <RedirectIfAuthenticated />,
+        children: publicStackRoutes,
+      },
+      {
+        // wrap private routes with RequireAuth
+        element: <RequireAuth />,
+        children: privateStackRoutes,
+      },
+      { path: "*", element: <NotFound /> },
+    ],
   },
-  {
-    // wrap private routes with RequireAuth
-    element: <RequireAuth />,
-    children: privateStackRoutes,
-  },
-  { path: "*", element: <NotFound /> },
 ];
 
 export const appRouter = createBrowserRouter(routes);

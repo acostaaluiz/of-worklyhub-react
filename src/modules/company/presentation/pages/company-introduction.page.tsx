@@ -10,6 +10,7 @@ import { loadingService } from "@shared/ui/services/loading.service";
 import { message } from "antd";
 import { companyService } from "@modules/company/services/company.service";
 import type { WorkspaceCreatePayload } from "@modules/company/services/companies-api";
+import { navigateTo } from "@core/navigation/navigation.service";
 
 type ResponseModalState = { open: boolean; title: string; description?: string } | undefined;
 
@@ -34,7 +35,7 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
     try {
       const ws = companyService.getWorkspaceValue();
       if (ws) {
-        window.location.href = "/home";
+        navigateTo("/home");
         return;
       }
     } catch {
@@ -149,7 +150,7 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
 
   protected confirmResponse = () => {
     this.setSafeState({ responseModal: undefined });
-    window.location.href = "/home";
+    navigateTo("/home");
   };
 
   protected override renderPage(): React.ReactNode {

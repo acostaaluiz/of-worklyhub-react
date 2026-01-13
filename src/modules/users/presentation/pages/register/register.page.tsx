@@ -5,6 +5,7 @@ import { usersAuthService } from "@modules/users/services/auth.service";
 import { message } from "antd";
 import { AppError } from "@core/errors/app-error";
 import { loadingService } from "@shared/ui/services/loading.service";
+import { navigateTo } from "@core/navigation/navigation.service";
 
 type ResponseModalState = { open: boolean; title: string; description?: string } | undefined;
 
@@ -64,15 +65,13 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
 
   protected confirmResponse = () => {
     this.setSafeState({ responseModal: undefined });
-    window.location.href = "/login";
+    navigateTo("/login");
   };
 
   protected override renderPage(): React.ReactNode {
     const response = this.state.responseModal;
 
-    const navigate = (path: string) => {
-      window.location.href = path;
-    };
+    const navigate = (path: string) => navigateTo(path);
 
     return (
       <RegisterTemplate
