@@ -13,7 +13,7 @@ function InventoryProductsPageContent(): JSX.Element {
   const service = useMemo(() => new InventoryService(), []);
   const [products, setProducts] = useState<ProductModel[]>([]);
   const [categories, setCategories] = useState<import("@modules/inventory/interfaces/category.model").CategoryModel[]>([]);
-  const [/* loading, */ setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [productModalInitial, setProductModalInitial] = useState<Partial<ProductModel> | null>(null);
 
@@ -36,13 +36,11 @@ function InventoryProductsPageContent(): JSX.Element {
   // create/update handled by ProductModal; keep page logic minimal
 
   function openCreate() {
-    setEditing(null);
     setProductModalInitial(null);
     setProductModalOpen(true);
   }
 
   function openEdit(p: ProductModel) {
-    setEditing(p);
     setProductModalInitial(p);
     setProductModalOpen(true);
   }

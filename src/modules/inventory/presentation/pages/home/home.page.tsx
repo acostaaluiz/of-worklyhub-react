@@ -5,7 +5,7 @@ import ProductListComponent from "@modules/inventory/presentation/components/pro
 import ProductModal from "@modules/inventory/presentation/components/product-modal/product-modal.component";
 import { InventoryService } from "@modules/inventory/services/inventory.service";
 import { companyService } from "@modules/company/services/company.service";
-import { listInventoryItems, updateInventoryItem } from "@modules/inventory/services/inventory.http.service";
+import { listInventoryItems, createInventoryItem, updateInventoryItem } from "@modules/inventory/services/inventory.http.service";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
 import type { InventoryFilterState } from "@modules/inventory/presentation/components/inventory-filter/inventory-filter.component";
@@ -15,7 +15,7 @@ function InventoryHomePageContent(): JSX.Element {
   const service = useMemo(() => new InventoryService(), []);
   const [products, setProducts] = useState<ProductModel[]>([]);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
-  const [/* loading, */ setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [productModalInitial, setProductModalInitial] = useState<Partial<ProductModel> | null>(null);
   const [filter, setFilter] = useState<InventoryFilterState>({ q: "", stockStatus: "all" });
@@ -69,13 +69,11 @@ function InventoryHomePageContent(): JSX.Element {
   // create/update handled by ProductModal; keep page logic minimal
 
   function openCreate() {
-    setEditing(null);
     setProductModalInitial(null);
     setProductModalOpen(true);
   }
 
   function openEdit(p: ProductModel) {
-    setEditing(p);
     setProductModalInitial(p);
     setProductModalOpen(true);
   }
@@ -214,35 +212,54 @@ function InventoryHomePageContent(): JSX.Element {
         workspaceId={(companyService.getWorkspaceValue() as any)?.workspaceId ?? (companyService.getWorkspaceValue() as any)?.id}
         categories={categories}
         onClose={() => setProductModalOpen(false)}
-        onSaved={async () => {
-          // refresh list when saved
+        onSaved={async (payload: any, id?: string) => {
           const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
           const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
-          if (workspaceId) {
-            const res = await listInventoryItems(workspaceId);
-            const mapped = res.map((r) => ({
-              id: r.id,
-              name: r.name,
-              sku: r.sku ?? undefined,
-              description: undefined,
-              barcode: undefined,
-              unit: "un",
-              categoryId: r.category ?? undefined,
-              costCents: undefined,
-              priceCents: r.priceCents ?? undefined,
-              minStock: r.minQuantity ?? undefined,
-              location: r.location ?? undefined,
-              tags: undefined,
-              active: r.isActive,
-              stock: r.quantity ?? 0,
-              createdAt: r.createdAt,
-            }));
-            setProducts(mapped);
-          } else {
-            const res = await service.listProducts();
-            setProducts(res);
+          setLoading(true);
+          try {
+            if (workspaceId) {
+              if (id) {
+                await updateInventoryItem(id, { ...payload, workspaceId });
+                message.success("Item atualizado com sucesso");
+              } else {
+                await createInventoryItem({ ...payload, workspaceId } as any);
+                message.success("Item criado com sucesso");
+              }
+
+              const res = await listInventoryItems(workspaceId);
+              const mapped = res.map((r) => ({
+                id: r.id,
+                name: r.name,
+                sku: r.sku ?? undefined,
+                description: undefined,
+                barcode: undefined,
+                unit: "un",
+                categoryId: r.category ?? undefined,
+                costCents: undefined,
+                priceCents: r.priceCents ?? undefined,
+                minStock: r.minQuantity ?? undefined,
+                location: r.location ?? undefined,
+                tags: undefined,
+                active: r.isActive,
+                stock: r.quantity ?? 0,
+                createdAt: r.createdAt,
+              }));
+              setProducts(mapped);
+            } else {
+              if (id) {
+                await service.updateProduct(id, payload);
+                message.success("Item atualizado com sucesso");
+              } else {
+                await service.createProduct(payload);
+                message.success("Item criado com sucesso");
+              }
+              const res = await service.listProducts();
+              setProducts(res);
+            }
+            setProductModalOpen(false);
+          } finally {
+            setLoading(false);
           }
-          setProductModalOpen(false);
         }}
       />
     </StockTemplate>

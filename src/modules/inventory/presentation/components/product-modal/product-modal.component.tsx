@@ -3,15 +3,14 @@ import { Modal, Typography, message, Form, Input, InputNumber, Button, Select, S
 import type { FormInstance } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { BaseComponent } from "@shared/base/base.component";
-import { loadingService } from "@shared/ui/services/loading.service";
-import { createInventoryItem, updateInventoryItem } from "@modules/inventory/services/inventory.http.service";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import { ModalOverrides } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 
-type Props = {
+type Props = BaseProps & {
   open: boolean;
   onClose: () => void;
-  onSaved?: (item: any) => void;
+  onSaved?: (payload: Omit<ProductModel, "id" | "createdAt">, id?: string) => Promise<any> | void;
   initial?: Partial<ProductModel> | null;
   workspaceId?: string | undefined;
   categories?: Array<{ id: string; name: string }>;
@@ -37,13 +36,11 @@ export class ProductModal extends BaseComponent<Props, State> {
   }
 
   private handleSubmit = async (data: Omit<ProductModel, "id" | "createdAt">) => {
-    const { initial, onSaved, workspaceId } = this.props;
+    const { initial, onSaved } = this.props;
     try {
       this.setSafeState({ submitting: true });
-      loadingService.show();
 
       const payload: any = {
-        workspaceId,
         name: data.name,
         sku: data.sku ?? null,
         category: data.categoryId ?? null,
@@ -54,22 +51,11 @@ export class ProductModal extends BaseComponent<Props, State> {
         isActive: data.active ?? true,
       };
 
-      let created;
-      if (initial && (initial as any).id) {
-        created = await updateInventoryItem((initial as any).id, payload);
-        message.success("Item atualizado com sucesso");
-      } else {
-        created = await createInventoryItem(payload);
-        message.success("Item criado com sucesso");
-      }
+      if (onSaved) await onSaved(payload, (initial as any)?.id);
 
       this.setSafeState({ submitting: false });
-      loadingService.hide();
-      if (onSaved) onSaved(created);
-      this.props.onClose();
     } catch (err) {
       this.setSafeState({ submitting: false, error: err });
-      loadingService.hide();
 
       // If backend returned a duplicate-name error, show specific feedback and mark the name field
       const details = (err as any)?.details ?? (err as any)?.response?.data ?? undefined;
@@ -89,6 +75,7 @@ export class ProductModal extends BaseComponent<Props, State> {
       }
 
       message.error((err as any)?.message ?? "Falha ao salvar item");
+      throw err;
     }
   };
 
