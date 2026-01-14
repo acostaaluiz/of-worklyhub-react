@@ -1,6 +1,5 @@
 import React from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import { FinanceEntryForm } from "@modules/finance/presentation/components/finance-entry-form/finance-entry-form.component";
 import { FinanceEntriesList } from "@modules/finance/presentation/components/finance-entries-list/finance-entries-list.component";
 import { Grid, LeftPanel, RightPanel } from "@modules/users/presentation/templates/login/login.template.styles";
@@ -14,7 +13,7 @@ export function EntriesTemplate({ workspaceId }: Props) {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <Grid>
             <LeftPanel>
               <h2>Entries</h2>
@@ -30,7 +29,7 @@ export function EntriesTemplate({ workspaceId }: Props) {
               </div>
             </RightPanel>
           </Grid>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

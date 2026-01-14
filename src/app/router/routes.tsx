@@ -4,6 +4,7 @@ import { privateStackRoutes } from "@app/router/stacks/private.stack";
 import { NavigationBoot } from "@core/navigation/navigation.boot";
 import RedirectIfAuthenticated from "@shared/providers/auth/redirect-if-authenticated";
 import RequireAuth from "@shared/providers/auth/require-auth";
+import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 function NotFound() {
   return (
@@ -31,8 +32,12 @@ const routes: RouteObject[] = [
         children: publicStackRoutes,
       },
       {
-        // wrap private routes with RequireAuth
-        element: <RequireAuth />,
+        // wrap private routes with RequireAuth and persistent PrivateFrameLayout
+        element: (
+          <RequireAuth>
+            <PrivateFrameLayout />
+          </RequireAuth>
+        ),
         children: privateStackRoutes,
       },
       { path: "*", element: <NotFound /> },

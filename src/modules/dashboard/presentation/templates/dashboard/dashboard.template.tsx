@@ -3,7 +3,6 @@ import { Typography } from "antd";
 import dayjs from "dayjs";
 
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 import {
   PageStack,
@@ -65,7 +64,7 @@ export function DashboardTemplate() {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <PageStack>
             <TemplateTitleRow>
               <TemplateTitleBlock>
@@ -169,7 +168,7 @@ export function DashboardTemplate() {
               )}
             </DashboardShell>
           </PageStack>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

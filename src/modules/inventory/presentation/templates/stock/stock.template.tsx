@@ -1,6 +1,5 @@
 import React from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import InventoryFilterComponent, { type InventoryFilterState } from "@modules/inventory/presentation/components/inventory-filter/inventory-filter.component";
 
 type Props = {
@@ -18,7 +17,7 @@ export function StockTemplate(props: Props) {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <div style={{ padding: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h2 style={{ margin: 0 }}>{title}</h2>
@@ -32,7 +31,7 @@ export function StockTemplate(props: Props) {
 
             <div style={{ marginTop: 8 }}>{children}</div>
           </div>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

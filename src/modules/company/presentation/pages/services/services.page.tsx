@@ -1,6 +1,5 @@
 import React, { type JSX } from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import ServiceManagerComponent from "@modules/company/presentation/components/company-services-admin/service-manager.component";
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
@@ -83,14 +82,14 @@ function CompanyServicesAdminPageContent(): JSX.Element {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <div style={{ padding: 16 }}>
             <h2 style={{ margin: 0 }}>Services you offer</h2>
             <div style={{ marginTop: 12 }}>
               <ServiceManagerComponent services={services} loading={loading} onCreate={handleCreate} onUpdate={handleUpdate} onDeactivate={handleDeactivate} />
             </div>
           </div>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

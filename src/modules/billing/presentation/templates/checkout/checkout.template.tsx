@@ -1,7 +1,6 @@
 import { Typography } from "antd";
 
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 import {
   Shell,
@@ -19,7 +18,7 @@ export function CheckoutTemplate() {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <Shell className="surface">
             <HeaderRow>
               <HeaderText>
@@ -42,7 +41,7 @@ export function CheckoutTemplate() {
               </AsideColumn>
             </Grid>
           </Shell>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );
