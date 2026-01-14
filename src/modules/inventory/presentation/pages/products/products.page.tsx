@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Button, Modal, message } from "antd";
 import StockTemplate from "@modules/inventory/presentation/templates/stock/stock.template";
 import ProductListComponent from "@modules/inventory/presentation/components/product-list/product-list.component";
-import ProductFormComponent from "@modules/inventory/presentation/components/product-form/product-form.component";
+import ProductModal from "@modules/inventory/presentation/components/product-modal/product-modal.component";
+import { companyService } from "@modules/company/services/company.service";
+import { listInventoryItems } from "@modules/inventory/services/inventory.http.service";
 import { InventoryService } from "@modules/inventory/services/inventory.service";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 import { BasePage } from "@shared/base/base.page";
@@ -11,9 +13,9 @@ function InventoryProductsPageContent(): JSX.Element {
   const service = useMemo(() => new InventoryService(), []);
   const [products, setProducts] = useState<ProductModel[]>([]);
   const [categories, setCategories] = useState<import("@modules/inventory/interfaces/category.model").CategoryModel[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<ProductModel | null>(null);
+  const [/* loading, */ setLoading] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [productModalInitial, setProductModalInitial] = useState<Partial<ProductModel> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -29,46 +31,20 @@ function InventoryProductsPageContent(): JSX.Element {
         setLoading(false);
       }
     })();
-  }, [service]);
+  }, [service, setLoading]);
 
-  async function handleCreate(data: Omit<ProductModel, "id" | "createdAt">) {
-    setLoading(true);
-    try {
-      await service.createProduct(data);
-      setShowForm(false);
-      const res = await service.listProducts();
-      setProducts(res);
-      message.success("Produto criado");
-    } catch (e) {
-      message.error("Falha ao criar produto");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleUpdate(id: string, patch: Partial<ProductModel>) {
-    setLoading(true);
-    try {
-      await service.updateProduct(id, patch);
-      setEditing(null);
-      const res = await service.listProducts();
-      setProducts(res);
-      message.success("Produto atualizado");
-    } catch (e) {
-      message.error("Falha ao atualizar produto");
-    } finally {
-      setLoading(false);
-    }
-  }
+  // create/update handled by ProductModal; keep page logic minimal
 
   function openCreate() {
     setEditing(null);
-    setShowForm(true);
+    setProductModalInitial(null);
+    setProductModalOpen(true);
   }
 
   function openEdit(p: ProductModel) {
     setEditing(p);
-    setShowForm(true);
+    setProductModalInitial(p);
+    setProductModalOpen(true);
   }
 
   function openEntry(p: ProductModel) {
@@ -120,9 +96,42 @@ function InventoryProductsPageContent(): JSX.Element {
 
       <ProductListComponent products={products} categories={categories} onEdit={openEdit} onEntry={openEntry} onExit={openExit} />
 
-      <Modal title={editing ? "Editar produto" : "Criar produto"} open={showForm} footer={null} onCancel={() => setShowForm(false)}>
-        <ProductFormComponent initial={editing ?? undefined} onSubmit={(d) => (editing ? handleUpdate(editing.id, d as any) : handleCreate(d))} submitting={loading} />
-      </Modal>
+      <ProductModal
+        open={productModalOpen}
+        initial={productModalInitial ?? undefined}
+        categories={categories}
+        workspaceId={(companyService.getWorkspaceValue() as any)?.workspaceId ?? (companyService.getWorkspaceValue() as any)?.id}
+        onClose={() => setProductModalOpen(false)}
+        onSaved={async () => {
+          const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+          const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+          if (workspaceId) {
+            const res = await listInventoryItems(workspaceId);
+            const mapped = res.map((r) => ({
+              id: r.id,
+              name: r.name,
+              sku: r.sku ?? undefined,
+              description: undefined,
+              barcode: undefined,
+              unit: "un",
+              categoryId: r.category ?? undefined,
+              costCents: undefined,
+              priceCents: r.priceCents ?? undefined,
+              minStock: r.minQuantity ?? undefined,
+              location: r.location ?? undefined,
+              tags: undefined,
+              active: r.isActive,
+              stock: r.quantity ?? 0,
+              createdAt: r.createdAt,
+            }));
+            setProducts(mapped);
+          } else {
+            const res = await service.listProducts();
+            setProducts(res);
+          }
+          setProductModalOpen(false);
+        }}
+      />
     </StockTemplate>
   );
 }

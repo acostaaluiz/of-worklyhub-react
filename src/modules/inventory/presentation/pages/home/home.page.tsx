@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Button, Modal, InputNumber, message } from "antd";
 import StockTemplate from "@modules/inventory/presentation/templates/stock/stock.template";
 import ProductListComponent from "@modules/inventory/presentation/components/product-list/product-list.component";
-import ProductFormComponent from "@modules/inventory/presentation/components/product-form/product-form.component";
+import ProductModal from "@modules/inventory/presentation/components/product-modal/product-modal.component";
 import { InventoryService } from "@modules/inventory/services/inventory.service";
+import { companyService } from "@modules/company/services/company.service";
+import { listInventoryItems, updateInventoryItem } from "@modules/inventory/services/inventory.http.service";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
 import type { InventoryFilterState } from "@modules/inventory/presentation/components/inventory-filter/inventory-filter.component";
@@ -13,65 +15,69 @@ function InventoryHomePageContent(): JSX.Element {
   const service = useMemo(() => new InventoryService(), []);
   const [products, setProducts] = useState<ProductModel[]>([]);
   const [categories, setCategories] = useState<CategoryModel[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<ProductModel | null>(null);
+  const [/* loading, */ setLoading] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [productModalInitial, setProductModalInitial] = useState<Partial<ProductModel> | null>(null);
   const [filter, setFilter] = useState<InventoryFilterState>({ q: "", stockStatus: "all" });
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const res = await service.listProducts();
-        setProducts(res);
-        const cats = await service.listCategories();
-        setCategories(cats.filter((c) => c.active));
+        const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+        const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+
+        if (workspaceId) {
+          // load from backend when workspace available
+          const rows = await listInventoryItems(workspaceId);
+          // map InventoryItem -> ProductModel shape used by UI
+          const mapped = rows.map((r) => ({
+            id: r.id,
+            name: r.name,
+            sku: r.sku ?? undefined,
+            description: undefined,
+            barcode: undefined,
+            unit: "un",
+            categoryId: r.category ?? undefined,
+            costCents: undefined,
+            priceCents: r.priceCents ?? undefined,
+            minStock: r.minQuantity ?? undefined,
+            location: r.location ?? undefined,
+            tags: undefined,
+            active: r.isActive,
+            stock: r.quantity ?? 0,
+            createdAt: r.createdAt,
+          }));
+          setProducts(mapped);
+          // categories kept from mock service for now
+          const cats = await service.listCategories();
+          setCategories(cats.filter((c) => c.active));
+        } else {
+          const res = await service.listProducts();
+          setProducts(res);
+          const cats = await service.listCategories();
+          setCategories(cats.filter((c) => c.active));
+        }
       } catch (e) {
         message.error("Erro ao carregar produtos");
       } finally {
         setLoading(false);
       }
     })();
-  }, [service]);
+  }, [service, setLoading]);
 
-  async function handleCreate(data: Omit<ProductModel, "id" | "createdAt">) {
-    setLoading(true);
-    try {
-      await service.createProduct(data);
-      setShowForm(false);
-      const res = await service.listProducts();
-      setProducts(res);
-      message.success("Produto criado");
-    } catch (e) {
-      message.error("Falha ao criar produto");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleUpdate(id: string, patch: Partial<ProductModel>) {
-    setLoading(true);
-    try {
-      await service.updateProduct(id, patch);
-      setEditing(null);
-      const res = await service.listProducts();
-      setProducts(res);
-      message.success("Produto atualizado");
-    } catch (e) {
-      message.error("Falha ao atualizar produto");
-    } finally {
-      setLoading(false);
-    }
-  }
+  // create/update handled by ProductModal; keep page logic minimal
 
   function openCreate() {
     setEditing(null);
-    setShowForm(true);
+    setProductModalInitial(null);
+    setProductModalOpen(true);
   }
 
   function openEdit(p: ProductModel) {
     setEditing(p);
-    setShowForm(true);
+    setProductModalInitial(p);
+    setProductModalOpen(true);
   }
 
   function openEntry(p: ProductModel) {
@@ -87,10 +93,40 @@ function InventoryHomePageContent(): JSX.Element {
         const el = document.getElementById("__inv_entry_qty") as HTMLInputElement | null;
         const val = (el && Number((el as any).value)) || 0;
         if (val <= 0) return Promise.reject();
-        await service.changeStock(p.id, val, "IN");
-        const res = await service.listProducts();
-        setProducts(res);
-        message.success("Entrada registrada");
+        const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+        const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+        if (workspaceId) {
+          // fetch current item to compute new quantity
+          const rows = await listInventoryItems(workspaceId);
+          const found = rows.find((r) => r.id === p.id);
+          const newQty = (found?.quantity ?? 0) + val;
+          await updateInventoryItem(p.id, { quantity: newQty, workspaceId } as any);
+          const res = await listInventoryItems(workspaceId);
+          const mapped = res.map((r) => ({
+            id: r.id,
+            name: r.name,
+            sku: r.sku ?? undefined,
+            description: undefined,
+            barcode: undefined,
+            unit: "un",
+            categoryId: r.category ?? undefined,
+            costCents: undefined,
+            priceCents: r.priceCents ?? undefined,
+            minStock: r.minQuantity ?? undefined,
+            location: r.location ?? undefined,
+            tags: undefined,
+            active: r.isActive,
+            stock: r.quantity ?? 0,
+            createdAt: r.createdAt,
+          }));
+          setProducts(mapped);
+          message.success("Entrada registrada");
+        } else {
+          await service.changeStock(p.id, val, "IN");
+          const res = await service.listProducts();
+          setProducts(res);
+          message.success("Entrada registrada");
+        }
       },
     });
   }
@@ -108,10 +144,39 @@ function InventoryHomePageContent(): JSX.Element {
         const el = document.getElementById("__inv_exit_qty") as HTMLInputElement | null;
         const val = (el && Number((el as any).value)) || 0;
         if (val <= 0) return Promise.reject();
-        await service.changeStock(p.id, val, "OUT");
-        const res = await service.listProducts();
-        setProducts(res);
-        message.success("Saída registrada");
+        const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+        const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+        if (workspaceId) {
+          const rows = await listInventoryItems(workspaceId);
+          const found = rows.find((r) => r.id === p.id);
+          const newQty = Math.max(0, (found?.quantity ?? 0) - val);
+          await updateInventoryItem(p.id, { quantity: newQty, workspaceId } as any);
+          const res = await listInventoryItems(workspaceId);
+          const mapped = res.map((r) => ({
+            id: r.id,
+            name: r.name,
+            sku: r.sku ?? undefined,
+            description: undefined,
+            barcode: undefined,
+            unit: "un",
+            categoryId: r.category ?? undefined,
+            costCents: undefined,
+            priceCents: r.priceCents ?? undefined,
+            minStock: r.minQuantity ?? undefined,
+            location: r.location ?? undefined,
+            tags: undefined,
+            active: r.isActive,
+            stock: r.quantity ?? 0,
+            createdAt: r.createdAt,
+          }));
+          setProducts(mapped);
+          message.success("Saída registrada");
+        } else {
+          await service.changeStock(p.id, val, "OUT");
+          const res = await service.listProducts();
+          setProducts(res);
+          message.success("Saída registrada");
+        }
       },
     });
   }
@@ -143,9 +208,43 @@ function InventoryHomePageContent(): JSX.Element {
 
       <ProductListComponent products={filtered} categories={categories} onEdit={openEdit} onEntry={openEntry} onExit={openExit} />
 
-      <Modal title={editing ? "Editar produto" : "Criar produto"} open={showForm} footer={null} onCancel={() => setShowForm(false)}>
-        <ProductFormComponent initial={editing ?? undefined} onSubmit={(d) => (editing ? handleUpdate(editing.id, d as any) : handleCreate(d))} submitting={loading} />
-      </Modal>
+      <ProductModal
+        open={productModalOpen}
+        initial={productModalInitial ?? undefined}
+        workspaceId={(companyService.getWorkspaceValue() as any)?.workspaceId ?? (companyService.getWorkspaceValue() as any)?.id}
+        categories={categories}
+        onClose={() => setProductModalOpen(false)}
+        onSaved={async () => {
+          // refresh list when saved
+          const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+          const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+          if (workspaceId) {
+            const res = await listInventoryItems(workspaceId);
+            const mapped = res.map((r) => ({
+              id: r.id,
+              name: r.name,
+              sku: r.sku ?? undefined,
+              description: undefined,
+              barcode: undefined,
+              unit: "un",
+              categoryId: r.category ?? undefined,
+              costCents: undefined,
+              priceCents: r.priceCents ?? undefined,
+              minStock: r.minQuantity ?? undefined,
+              location: r.location ?? undefined,
+              tags: undefined,
+              active: r.isActive,
+              stock: r.quantity ?? 0,
+              createdAt: r.createdAt,
+            }));
+            setProducts(mapped);
+          } else {
+            const res = await service.listProducts();
+            setProducts(res);
+          }
+          setProductModalOpen(false);
+        }}
+      />
     </StockTemplate>
   );
 }

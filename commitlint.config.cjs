@@ -36,6 +36,7 @@ module.exports = {
       "finance",
       "dashboard",
       "clients",
+      "inventory",
     ],
 
     messages: {
