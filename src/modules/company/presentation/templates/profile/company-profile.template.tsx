@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 import { CompanyOverview } from "@modules/company/presentation/components/company-overview/company-overview.component";
 import { CompanyServices } from "@modules/company/presentation/components/company-services/company-services.component";
@@ -87,7 +86,7 @@ export function CompanyProfileTemplate() {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <TemplateShell>
             {profile ? (
               <>
@@ -97,7 +96,7 @@ export function CompanyProfileTemplate() {
               </>
             ) : null}
           </TemplateShell>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

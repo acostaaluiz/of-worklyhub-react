@@ -1,5 +1,4 @@
 import React from "react";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import ServicesCards from "@modules/users/presentation/components/home/services-cards.component";
 import MetricsCards from "@modules/users/presentation/components/home/metrics-cards.component";
 import { Briefcase, Box, Calendar } from "lucide-react";
@@ -29,7 +28,7 @@ export default function UsersHomeTemplate({ name, companyName, services, metrics
   const initials = initialsFrom(companyName);
 
   return (
-    <PrivateFrameLayout>
+    <>
       <div style={{ padding: 12, marginBottom: 12, borderBottom: "1px solid var(--color-divider)", display: "flex", alignItems: "center", gap: 16 }}>
         <div style={{ width: 64, height: 64, borderRadius: 12, background: "linear-gradient(135deg,var(--color-surface-2),var(--color-surface))", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "var(--shadow-sm)" }}>
           <div style={{ width: 48, height: 48, borderRadius: 10, background: "var(--color-surface)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>{initials}</div>
@@ -119,6 +118,6 @@ export default function UsersHomeTemplate({ name, companyName, services, metrics
 
         <ServicesCards services={services ?? []} />
       </div>
-    </PrivateFrameLayout>
+    </>
   );
 }

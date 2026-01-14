@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import { TemplateShell } from "../home/home.template.styles";
 import { ScheduleEventModal } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-event-modal.component";
@@ -42,7 +41,7 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <TemplateShell>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 24 }}>
               <div>
@@ -68,7 +67,7 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
               initialDate={undefined}
             />
           </TemplateShell>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

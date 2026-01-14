@@ -1,6 +1,5 @@
 import React from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import { Tabs, Row, Col, Avatar, Button, Form, Input, Radio, InputNumber } from "antd";
 import styled from "styled-components";
 
@@ -160,7 +159,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, comp
     </Row>
   );
 
-  return <BaseTemplate content={<PrivateFrameLayout>{content}</PrivateFrameLayout>} />;
+  return <BaseTemplate content={content} />;
 };
 
 export default ProfileTemplate;

@@ -1,5 +1,4 @@
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 import { ServicesFinanceList } from "@modules/finance/presentation/components/services-finance-list/services-finance-list.component";
 import { Grid } from "@modules/users/presentation/templates/login/login.template.styles";
 import { FinanceKpis } from "@modules/finance/presentation/components/finance-kpis/finance-kpis.component";
@@ -10,7 +9,7 @@ export function SuggestionsTemplate() {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <Shell className="surface">
             <HeaderRow>
               <HeaderText>
@@ -39,7 +38,7 @@ export function SuggestionsTemplate() {
               <AsideColumn />
             </Grid>
           </Shell>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

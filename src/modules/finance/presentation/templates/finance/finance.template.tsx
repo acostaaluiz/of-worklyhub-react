@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 import {
   PageStack,
@@ -102,7 +101,7 @@ export function FinanceTemplate() {
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <PageStack>
             <TemplateTitleRow>
               <TemplateTitleBlock>
@@ -257,7 +256,7 @@ export function FinanceTemplate() {
               </DashboardGrid>
             </DashboardShell>
           </PageStack>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );

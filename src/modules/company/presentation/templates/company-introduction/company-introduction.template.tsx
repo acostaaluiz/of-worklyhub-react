@@ -1,7 +1,6 @@
 import type { ReactElement } from "react";
 
 import { BaseTemplate } from "@shared/base/base.template";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 import { FormStepWizard } from "@shared/ui/components/form-step/form-step.component";
 
@@ -68,7 +67,7 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
   return (
     <BaseTemplate
       content={
-        <PrivateFrameLayout>
+        <>
           <TemplateShell>
             <HeaderRow>
               <TemplateTitle>Company setup</TemplateTitle>
@@ -99,7 +98,7 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
               />
             ) : null}
           </TemplateShell>
-        </PrivateFrameLayout>
+        </>
       }
     />
   );
