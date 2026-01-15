@@ -143,7 +143,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
   componentDidUpdate(prevProps: ScheduleEventModalProps): void {
     const { open, initialDate, initialStartTime, categories } = this.props;
 
-    if (open && !prevProps.open) {
+    if (open && !prevProps.open && !this.props.initialDraft) {
       const base = initialDate ? dayjs(initialDate, "YYYY-MM-DD") : dayjs();
       const dayPart = initialStartTime
         ? (Number(initialStartTime.split(":")[0]) < 12
@@ -179,6 +179,8 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
             : "evening")
         : "morning";
 
+      const resolvedCategoryId = d.categoryId ?? categories?.[0]?.id ?? "";
+
       this.setSafeState({
         weekAnchor: base,
         selectedDay: base,
@@ -187,7 +189,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         slotPage: 0,
         title: d.title ?? "",
         description: d.description ?? "",
-        categoryId: d.categoryId ?? categories?.[0]?.id ?? "",
+        categoryId: resolvedCategoryId,
         durationMinutes: d.durationMinutes ?? 25,
         priceCents: d.totalPriceCents ?? 5000,
         selectedServiceIds: d.serviceIds ?? [],
@@ -197,7 +199,12 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
     }
 
     if (categories !== prevProps.categories) {
-      this.setSafeState({ categoryId: categories?.[0]?.id ?? "" });
+      // Avoid overwriting categoryId when opening the modal to edit an existing event
+      // If an initialDraft is present we already populated categoryId from it.
+      // Also avoid resetting when state already contains a categoryId (preserve user's selection).
+      if (!this.props.initialDraft && !this.state.categoryId) {
+        this.setSafeState({ categoryId: categories?.[0]?.id ?? "" });
+      }
     }
   }
 

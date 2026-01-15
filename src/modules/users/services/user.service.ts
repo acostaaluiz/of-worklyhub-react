@@ -11,12 +11,20 @@ export class UsersService {
   private subject = new BehaviorSubject<UserProfile>(this.loadFromStorage());
   private api = new UsersApi(httpClient);
 
-  async uploadProfilePhoto(file: File, onProgress?: (percent: number) => void): Promise<string> {
+  async uploadProfilePhoto(
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<string> {
     // request signature from backend
-    const sig = await this.api.requestProfilePhotoSignature({ contentType: file.type, filename: file.name });
+    const sig = await this.api.requestProfilePhotoSignature({
+      contentType: file.type,
+      filename: file.name,
+    });
 
-    if (!sig || !sig.url || !sig.path) throw new Error("Invalid signature response");
-    if (sig.maxSize && file.size > sig.maxSize) throw new Error("File exceeds maximum allowed size");
+    if (!sig || !sig.url || !sig.path)
+      throw new Error("Invalid signature response");
+    if (sig.maxSize && file.size > sig.maxSize)
+      throw new Error("File exceeds maximum allowed size");
 
     // upload using XHR to allow progress reporting
     await new Promise<void>((resolve, reject) => {
@@ -45,7 +53,10 @@ export class UsersService {
     try {
       const current = this.getProfileValue();
       if (current) {
-        const updated = { ...current, photoUrl: sig.path } as UserProfileResponse;
+        const updated = {
+          ...current,
+          photoUrl: sig.path,
+        } as UserProfileResponse;
         this.subject.next(updated);
         try {
           localStorageProvider.set(PROFILE_KEY, JSON.stringify(updated));
@@ -80,8 +91,7 @@ export class UsersService {
 
   async fetchByEmail(email: string): Promise<UserProfile> {
     try {
-       
-      console.debug("usersService.fetchByEmail", { email });
+      console.log("usersService.fetchByEmail", { email });
       const profile = await this.api.getByEmail(email);
       // update subject and persist result so subscribers receive update
       this.subject.next(profile);
@@ -92,7 +102,6 @@ export class UsersService {
       }
       return profile;
     } catch (err) {
-       
       console.error("usersService.fetchByEmail error", err);
       throw err;
     }

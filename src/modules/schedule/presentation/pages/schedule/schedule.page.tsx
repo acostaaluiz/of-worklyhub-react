@@ -2,7 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
-import { useScheduleApi, getNextSchedulesForWorkspace, getStatuses } from "@modules/schedule/services/schedule.service";
+import {
+  useScheduleApi,
+  getNextSchedulesForWorkspace,
+  getStatuses,
+} from "@modules/schedule/services/schedule.service";
 import { ScheduleTemplate } from "../../templates/schedule/schedule.template";
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
 import { companyService } from "@modules/company/services/company.service";
@@ -19,7 +23,9 @@ import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 type SchedulePageState = BasePageState & {
   services?: CompanyServiceModel[];
   employees?: EmployeeModel[];
-  categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
+  categories?:
+    | import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[]
+    | null;
   nextSchedules?: NextScheduleItem[];
   statuses?: Array<{ id: string; code?: string; label?: string }> | null;
 };
@@ -31,7 +37,10 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
   };
 
   protected override renderPage(): React.ReactNode {
-    const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+    const ws = companyService.getWorkspaceValue() as {
+      workspaceId?: string;
+      id?: string;
+    } | null;
     const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
 
     const services = this.state.services;
@@ -43,9 +52,14 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
     function Wrapper(): React.ReactElement {
       const api = useScheduleApi();
       const [events, setEvents] = useState<ScheduleEvent[]>([]);
-    const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<Record<string, boolean>>({});
+      const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<
+        Record<string, boolean>
+      >({});
+      const [selectedStatusIds, setSelectedStatusIds] = React.useState<
+        Record<string, boolean>
+      >({});
 
-        const categoryCounts = (() => {
+      const categoryCounts = (() => {
         const out: Record<string, number> = {};
         const cats = (categories ?? []) as { id: string; code?: string }[];
         for (const c of cats) out[c.id] = 0;
@@ -53,7 +67,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         for (const e of events) {
           let cid: string | undefined;
           const evCat = (e as any).category;
-          if (evCat && typeof evCat === 'object') {
+          if (evCat && typeof evCat === "object") {
             // if event category id already matches an app category, use it
             if (cats.find((c) => c.id === evCat.id)) {
               cid = evCat.id;
@@ -77,6 +91,37 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         return out;
       })();
 
+      const statusCounts = (() => {
+        const out: Record<string, number> = {};
+        const sts = (statuses ?? []) as { id: string; code?: string }[];
+        for (const s of sts) out[s.id] = 0;
+
+        for (const e of events) {
+          let sid: string | undefined;
+          const evStatus = (e as any).status as
+            | Record<string, any>
+            | undefined
+            | null;
+          if (evStatus && typeof evStatus === "object") {
+            if (evStatus.id) sid = evStatus.id;
+            else if (evStatus.code) {
+              const match = sts.find((c) => c.code === evStatus.code);
+              if (match) sid = match.id;
+            }
+          }
+
+          if (!sid && (e as any).statusId) {
+            const sidTry = (e as any).statusId as string;
+            if (sts.find((s) => s.id === sidTry)) sid = sidTry;
+          }
+
+          if (!sid) continue;
+          out[sid] = (out[sid] ?? 0) + 1;
+        }
+
+        return out;
+      })();
+
       // ensure we have an initial selection map (all selected) when categories load
       React.useEffect(() => {
         if (!categories || (categories && categories.length === 0)) return;
@@ -90,66 +135,119 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         });
       }, [categories?.length]);
 
-      const onToggleCategory = React.useCallback((id: string, checked: boolean) => {
-        try { console.debug('SchedulePage.onToggleCategory', { id, checked }); } catch (err) { console.debug(err); }
-        setSelectedCategoryIds((prev) => ({ ...prev, [id]: checked }));
-      }, []);
-
+      // ensure we have an initial selection map (all selected) when statuses load
       React.useEffect(() => {
-        try { console.debug('SchedulePage.selectedCategoryIds', selectedCategoryIds); } catch (err) { console.debug(err); }
-      }, [selectedCategoryIds]);
+        if (!statuses || (statuses && statuses.length === 0)) return;
+        setSelectedStatusIds((prev) => {
+          const keys = Object.keys(prev);
+          if (keys.length === (statuses ?? []).length) return prev;
+          const map: Record<string, boolean> = {};
+          for (const s of statuses ?? []) map[s.id] = true;
+          return map;
+        });
+      }, [statuses?.length]);
 
-      React.useEffect(() => {
-        try { console.debug('SchedulePage.categoryCounts', categoryCounts); } catch (err) { console.debug(err); }
-      }, [categoryCounts]);
+      const onToggleCategory = React.useCallback(
+        (id: string, checked: boolean) => {
+          setSelectedCategoryIds((prev) => ({ ...prev, [id]: checked }));
+        },
+        []
+      );
 
       const filteredEvents = React.useMemo(() => {
         // if no selection provided yet, return all events
-        if (!selectedCategoryIds || Object.keys(selectedCategoryIds).length === 0) return events;
+        const hasCategorySelection =
+          selectedCategoryIds && Object.keys(selectedCategoryIds).length > 0;
+        const hasStatusSelection =
+          selectedStatusIds && Object.keys(selectedStatusIds).length > 0;
+        if (!hasCategorySelection && !hasStatusSelection) return events;
+
         return events.filter((e) => {
-          const cid = (e as any).categoryId as string | undefined;
-          // show event when its category is selected (default true)
-          return (cid ? (selectedCategoryIds[cid] ?? true) : true);
-        });
-      }, [events, selectedCategoryIds]);
+          // category filter
+          if (hasCategorySelection) {
+            const cid = (e as any).categoryId as string | undefined;
+            if (cid && !(selectedCategoryIds[cid] ?? true)) return false;
+          }
 
-      const fetchRange = React.useCallback(async (from: string, to: string) => {
-        // ensure we request the full month range: first day -> last day
-        const monthFrom = dayjs(from).startOf("month").format("YYYY-MM-DD");
-        const monthTo = dayjs(to).endOf("month").format("YYYY-MM-DD");
-        loadingService.show();
-        try {
-          const ev = await api.getEvents({ from: monthFrom, to: monthTo, workspaceId: workspaceId ?? null });
-          console.debug("SchedulePage.fetchRange: fetched events for month", monthFrom, monthTo, ev.length, ev.map((x: any) => ({ id: x.id, date: x.date, startTime: x.startTime })));
-
-          // normalize event.categoryId to match application categories when possible (match by code or id)
-          const mapped = (ev ?? []).map((e: any) => {
-            try {
-              const evCat = e?.category as Record<string, any> | undefined | null;
-              let appCatId: string | undefined;
-              if (categories && categories.length > 0) {
-                if (evCat && evCat.code) {
-                  const foundByCode = (categories ?? []).find((c: any) => c.code === evCat.code);
-                  if (foundByCode) appCatId = foundByCode.id;
-                }
-                if (!appCatId && e?.categoryId) {
-                  const foundById = (categories ?? []).find((c: any) => c.id === e.categoryId);
-                  if (foundById) appCatId = foundById.id;
-                }
+          // status filter
+          if (hasStatusSelection) {
+            let sid: string | undefined;
+            const evStatus = (e as any).status as
+              | Record<string, any>
+              | undefined
+              | null;
+            if (evStatus && typeof evStatus === "object") {
+              if (evStatus.id) sid = evStatus.id;
+              else if (evStatus.code) {
+                const match = (statuses ?? []).find(
+                  (c: any) => c.code === evStatus.code
+                );
+                if (match) sid = match.id;
               }
-              return { ...e, categoryId: appCatId ?? e.categoryId } as ScheduleEvent;
-            } catch (err) {
-              return e as ScheduleEvent;
             }
-          });
+            if (!sid && (e as any).statusId)
+              sid = (e as any).statusId as string;
+            if (sid && !(selectedStatusIds[sid] ?? true)) return false;
+          }
 
-          setEvents(mapped);
-        } catch (err) {
-          console.debug("SchedulePage.fetchRange error", err);
-        } finally {
-          loadingService.hide();
-        }
-      }, [api]);
+          return true;
+        });
+      }, [events, selectedCategoryIds, selectedStatusIds, statuses]);
+
+      const fetchRange = React.useCallback(
+        async (from: string, to: string) => {
+          // ensure we request the full month range: first day -> last day
+          const monthFrom = dayjs(from).startOf("month").format("YYYY-MM-DD");
+          const monthTo = dayjs(to).endOf("month").format("YYYY-MM-DD");
+          loadingService.show();
+          try {
+            const ev = await api.getEvents({
+              from: monthFrom,
+              to: monthTo,
+              workspaceId: workspaceId ?? null,
+            });
+            // fetched events for month
+
+            // normalize event.categoryId to match application categories when possible (match by code or id)
+            const mapped = (ev ?? []).map((e: any) => {
+              try {
+                const evCat = e?.category as
+                  | Record<string, any>
+                  | undefined
+                  | null;
+                let appCatId: string | undefined;
+                if (categories && categories.length > 0) {
+                  if (evCat && evCat.code) {
+                    const foundByCode = (categories ?? []).find(
+                      (c: any) => c.code === evCat.code
+                    );
+                    if (foundByCode) appCatId = foundByCode.id;
+                  }
+                  if (!appCatId && e?.categoryId) {
+                    const foundById = (categories ?? []).find(
+                      (c: any) => c.id === e.categoryId
+                    );
+                    if (foundById) appCatId = foundById.id;
+                  }
+                }
+                return {
+                  ...e,
+                  categoryId: appCatId ?? e.categoryId,
+                } as ScheduleEvent;
+              } catch (err) {
+                return e as ScheduleEvent;
+              }
+            });
+
+            setEvents(mapped);
+          } catch (err) {
+            // fetchRange error
+          } finally {
+            loadingService.hide();
+          }
+        },
+        [api]
+      );
 
       const initialFetchedRef = React.useRef(false);
 
@@ -163,15 +261,23 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         })();
       }, [fetchRange]);
 
-      const handleCreate = async (draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => {
-        const toCreate: Omit<import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent, "id"> & { durationMinutes?: number | null } = {
+      const handleCreate = async (
+        draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft
+      ) => {
+        const toCreate: Omit<
+          import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent,
+          "id"
+        > & { durationMinutes?: number | null } = {
           title: draft.title,
           date: draft.date,
           startTime: draft.startTime,
           endTime: draft.endTime,
           categoryId: draft.categoryId,
           // derive categoryCode from application categories when available
-          categoryCode: (categories ?? []).find((c: any) => c.id === draft.categoryId)?.code ?? (categories ?? []).find((c: any) => c.id === draft.categoryId)?.id,
+          categoryCode:
+            (categories ?? []).find((c: any) => c.id === draft.categoryId)
+              ?.code ??
+            (categories ?? []).find((c: any) => c.id === draft.categoryId)?.id,
           description: draft.description,
           durationMinutes: draft.durationMinutes ?? null,
         };
@@ -190,11 +296,28 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         await fetchRange(from, to);
       };
 
-      const handleUpdate = async (args: { id: string; event: Omit<import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => {
+      const handleUpdate = async (args: {
+        id: string;
+        event: Omit<
+          import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent,
+          "id"
+        >;
+        serviceIds?: string[];
+        employeeIds?: string[];
+        totalPriceCents?: number;
+        workspaceId?: string | null;
+      }) => {
         try {
           loadingService.show();
           if ((api as any).updateEvent) {
-            await (api as any).updateEvent({ id: args.id, event: args.event, serviceIds: args.serviceIds, employeeIds: args.employeeIds, totalPriceCents: args.totalPriceCents, workspaceId: args.workspaceId });
+            await (api as any).updateEvent({
+              id: args.id,
+              event: args.event,
+              serviceIds: args.serviceIds,
+              employeeIds: args.employeeIds,
+              totalPriceCents: args.totalPriceCents,
+              workspaceId: args.workspaceId,
+            });
           }
 
           // refresh current month
@@ -202,13 +325,42 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           const to = dayjs().endOf("month").format("YYYY-MM-DD");
           await fetchRange(from, to);
         } catch (err) {
-          console.error('handleUpdate failed', err);
+          // handleUpdate failed
         } finally {
           loadingService.hide();
         }
       };
 
-      return <ScheduleTemplate availableServices={services} availableEmployees={employees} workspaceId={workspaceId ?? null} onCreate={handleCreate} onUpdate={handleUpdate} events={filteredEvents} onRangeChange={fetchRange} categories={categories ?? null} categoryCounts={categoryCounts} selectedCategoryIds={selectedCategoryIds} onToggleCategory={onToggleCategory} nextSchedules={nextSchedules ?? null} statuses={ (statuses ?? null) } />;
+      return (
+        <ScheduleTemplate
+          availableServices={services}
+          availableEmployees={employees}
+          workspaceId={workspaceId ?? null}
+          onCreate={handleCreate}
+          onUpdate={handleUpdate}
+          events={filteredEvents}
+          onRangeChange={fetchRange}
+          categories={categories ?? null}
+          categoryCounts={categoryCounts}
+          selectedCategoryIds={selectedCategoryIds}
+          onToggleCategory={onToggleCategory}
+          nextSchedules={nextSchedules ?? null}
+          statuses={
+            statuses
+              ? statuses.map((s) => ({
+                  id: String(s.id),
+                  code: s.code ?? "",
+                  label: s.label ?? "",
+                }))
+              : null
+          }
+          statusCounts={statusCounts}
+          selectedStatusIds={selectedStatusIds}
+          onToggleStatus={(id: string, checked: boolean) =>
+            setSelectedStatusIds((prev) => ({ ...prev, [id]: checked }))
+          }
+        />
+      );
     }
 
     return <Wrapper />;
@@ -224,24 +376,44 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           const employees = await peopleService.listEmployees();
           // also fetch shared application event categories and expose to template via window fallback
           try {
-            const appCats = await import("@core/application/application.service").then((m) => m.applicationService.fetchEventCategories());
-              // also fetch statuses for schedule updates
-              try {
-                const sts = await getStatuses();
-                this.setSafeState({ services, employees, categories: appCats ?? null, statuses: sts ?? null });
-              } catch (e) {
-                this.setSafeState({ services, employees, categories: appCats ?? null });
-              }
+            const appCats =
+              await import("@core/application/application.service").then((m) =>
+                m.applicationService.fetchEventCategories()
+              );
+            // also fetch statuses for schedule updates
             try {
-              const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
-              const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
-              const next = await getNextSchedulesForWorkspace(workspaceId ?? null, 3);
+              const sts = await getStatuses();
+              this.setSafeState({
+                services,
+                employees,
+                categories: appCats ?? null,
+                statuses: sts ?? null,
+              });
+            } catch (e) {
+              this.setSafeState({
+                services,
+                employees,
+                categories: appCats ?? null,
+              });
+            }
+            try {
+              const ws = companyService.getWorkspaceValue() as {
+                workspaceId?: string;
+                id?: string;
+              } | null;
+              const workspaceId = (ws?.workspaceId ?? ws?.id) as
+                | string
+                | undefined;
+              const next = await getNextSchedulesForWorkspace(
+                workspaceId ?? null,
+                3
+              );
               this.setSafeState({ nextSchedules: next ?? null });
             } catch (e) {
-              console.debug('failed to fetch next schedules', e);
+              // failed to fetch next schedules
             }
           } catch (e) {
-            console.debug(e);
+            // appCats import failed
             // attempt to fetch statuses even when appCats import fails
             try {
               const sts = await getStatuses();
@@ -250,16 +422,24 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
               this.setSafeState({ services, employees });
             }
             try {
-              const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
-              const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
-              const next = await getNextSchedulesForWorkspace(workspaceId ?? null, 3);
+              const ws = companyService.getWorkspaceValue() as {
+                workspaceId?: string;
+                id?: string;
+              } | null;
+              const workspaceId = (ws?.workspaceId ?? ws?.id) as
+                | string
+                | undefined;
+              const next = await getNextSchedulesForWorkspace(
+                workspaceId ?? null,
+                3
+              );
               this.setSafeState({ nextSchedules: next ?? null });
             } catch (e) {
-              console.debug('failed to fetch next schedules', e);
+              // failed to fetch next schedules
             }
           }
         } catch (err) {
-          console.debug(err);
+          // init error
         }
       });
     } finally {

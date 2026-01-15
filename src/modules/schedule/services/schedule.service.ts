@@ -37,7 +37,7 @@ export async function getNextSchedulesForWorkspace(workspaceId?: string | null, 
       const rows = await schedulesApi.nextSchedules(workspaceId, max);
       return rows ?? [];
     } catch (err) {
-      console.debug('schedulesApi.nextSchedules failed, falling back to local store', err);
+      // schedulesApi.nextSchedules failed, falling back to local store
     }
   }
 
@@ -88,7 +88,7 @@ export async function getNextSchedulesForWorkspace(workspaceId?: string | null, 
 
     return upcoming;
   } catch (err) {
-    console.debug('getNextSchedulesForWorkspace fallback failed', err);
+    // getNextSchedulesForWorkspace fallback failed
     return [] as NextScheduleItem[];
   }
 }
@@ -212,7 +212,7 @@ export async function getStatuses(): Promise<import("./schedules-api").ScheduleS
     const rows = await schedulesApi.getStatuses();
     return rows ?? [];
   } catch (err) {
-    console.debug('schedulesApi.getStatuses failed', err);
+    // schedulesApi.getStatuses failed
     return [];
   }
 }
@@ -229,10 +229,9 @@ export function useScheduleApi() {
     const { from, to, workspaceId } = params;
 
     // if workspaceId is provided, attempt to load from backend schedules API
-    if (workspaceId) {
+      if (workspaceId) {
       try {
         const rows = await schedulesApi.listSchedules(workspaceId, { from, to });
-        console.log("useScheduleApi.getEvents: fetched rows", (rows ?? []).length, rows);
         // rows expected to be Schedule[] with ISO start/end
         const mapped = (rows ?? []).map((r) => r as Record<string, unknown>).map((s) => {
           const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
@@ -260,11 +259,11 @@ export function useScheduleApi() {
             startTime,
             endTime,
             // prefer categoryId from API if provided; backend may return a `category` object
-            categoryId:
-              (s["categoryId"] as string) ??
-              ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
-              (s["calendarId"] as string) ??
-              "schedule",
+              categoryId:
+                (s["categoryId"] as string) ??
+                ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
+                (s["calendarId"] as string) ??
+                undefined,
             // preserve the backend category object when available (contains code/label)
             category: (s["category"] as Record<string, unknown> | null) ?? null,
             categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
@@ -277,6 +276,26 @@ export function useScheduleApi() {
           } as ScheduleEvent;
         });
 
+        // try to preserve categoryId for events where backend did not return it
+        try {
+          for (let i = 0; i < mapped.length; i++) {
+            const m = mapped[i];
+            if (!m.categoryId) {
+              const found = store.events.find((se) => se.id === m.id) as ScheduleEvent | undefined | null;
+              if (found && found.categoryId) {
+                mapped[i] = {
+                  ...m,
+                  categoryId: found.categoryId,
+                  category: found.category ?? null,
+                  categoryCode: found.categoryCode ?? found.category?.code ?? undefined,
+                } as ScheduleEvent;
+              }
+            }
+          }
+        } catch (err) {
+          // preserve categoryId fallback failed
+        }
+
         // filter by date string (YYYY-MM-DD) to match backend day boundaries
         const filtered = mapped.filter((e) => {
           if (!e.date) return false;
@@ -284,8 +303,6 @@ export function useScheduleApi() {
         });
 
         const result = filtered.map((e) => e as ScheduleEvent);
-
-        console.log("useScheduleApi.getEvents: mapped -> filtered -> result", mapped.length, filtered.length, result.length, result.map((r) => ({ id: r.id, date: r.date, startTime: r.startTime })));
         return result;
       } catch (err) {
         // fallback to local store if backend fails
@@ -351,19 +368,19 @@ export function useScheduleApi() {
       });
 
       return created;
-    } catch (err) {
-      // fallback to local store on error
-      const next = store.addEvent({ ...payload, id: `e-${Math.random().toString(16).slice(2)}` });
-      return {
-        id: next.id,
-        title: next.title,
-        date: next.date,
-        startTime: next.startTime ?? "09:00",
-        endTime: next.endTime ?? "09:30",
-        categoryId: next.categoryId ?? "schedule",
-        description: next.description,
-      };
-    }
+      } catch (err) {
+        // fallback to local store on error
+        const next = store.addEvent({ ...payload, id: `e-${Math.random().toString(16).slice(2)}` });
+        return {
+          id: next.id,
+          title: next.title,
+          date: next.date,
+          startTime: next.startTime ?? "09:00",
+          endTime: next.endTime ?? "09:30",
+          categoryId: next.categoryId ?? "schedule",
+          description: next.description,
+        };
+      }
   }, [store]);
 
   const removeEvent = useCallback(async (id: string): Promise<boolean> => {
@@ -372,13 +389,13 @@ export function useScheduleApi() {
       try {
         await schedulesApi.deleteSchedule(id);
       } catch (err) {
-        console.debug('schedulesApi.deleteSchedule failed, falling back to local store', err);
+        // schedulesApi.deleteSchedule failed, falling back to local store
       }
 
       store.removeEvent(id);
       return true;
     } catch (err) {
-      console.error('removeEvent failed', err);
+      // removeEvent failed
       return false;
     }
   }, [store]);
@@ -500,8 +517,13 @@ export function useScheduleApi() {
         // no-op
       }
 
-      const evtMeta = event as unknown as { categoryCode?: string | null };
-      body.categoryCode = evtMeta.categoryCode ?? event.categoryId ?? null;
+      // For updates send categoryId (backend expects categoryCode only on create).
+      try {
+        const evtRec = event as unknown as Record<string, unknown>;
+        (body as Record<string, unknown>)['categoryId'] = (evtRec['categoryId'] as string | undefined) ?? null;
+      } catch (err) {
+        // no-op
+      }
 
       if (typeof totalPriceCents === "number") {
         if (body.services && body.services.length > 0) {
@@ -528,7 +550,7 @@ export function useScheduleApi() {
       try {
         store.removeEvent(newId);
       } catch (err) {
-        console.debug('store.removeEvent failed during updateEvent cleanup', err);
+        // store.removeEvent failed during updateEvent cleanup
       }
       store.addEvent({
         id: updated.id,
@@ -543,11 +565,10 @@ export function useScheduleApi() {
       return updated;
     } catch (err) {
       // fallback: update local store
-      console.debug('updateEvent failed, falling back to local store', err);
       try {
         store.removeEvent(id);
       } catch (e) {
-        console.debug('store.removeEvent failed in fallback', e);
+        // store.removeEvent failed in fallback
       }
       const next = store.addEvent({ ...event, id });
       return {

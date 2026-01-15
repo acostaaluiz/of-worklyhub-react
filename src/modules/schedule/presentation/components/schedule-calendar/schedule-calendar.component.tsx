@@ -21,10 +21,20 @@ import {
   CalendarHost,
   ToastUIGlobalStyles,
 } from "./schedule-calendar.component.styles";
+import {
+  getStatusColor,
+  getCategoryColor,
+  suitableBorderForContrast,
+  categoryColorMap,
+} from "../../../constants/colors";
 
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
 import ScheduleEventPopup from "./schedule-event-popup.component";
-import { normalizeCssColor, escapeHtml, buildCalendarOptions } from "./schedule-calendar.factory";
+import {
+  normalizeCssColor,
+  escapeHtml,
+  buildCalendarOptions,
+} from "./schedule-calendar.factory";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
 
 type ViewMode = "month";
@@ -33,12 +43,28 @@ type ScheduleCalendarProps = {
   availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
   availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
   workspaceId?: string | null;
-  onCreate?: (draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
-  onUpdate?: (args: { id: string; event: Omit<import("../../../interfaces/schedule-event.model").ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => Promise<void>;
+  onCreate?: (
+    draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft
+  ) => Promise<void>;
+  onUpdate?: (args: {
+    id: string;
+    event: Omit<
+      import("../../../interfaces/schedule-event.model").ScheduleEvent,
+      "id"
+    >;
+    serviceIds?: string[];
+    employeeIds?: string[];
+    totalPriceCents?: number;
+    workspaceId?: string | null;
+  }) => Promise<void>;
   events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
-  categories?: import("../../../interfaces/schedule-category.model").ScheduleCategory[] | null;
-  statuses?: import("@modules/schedule/services/schedules-api").ScheduleStatus[] | null;
+  categories?:
+    | import("../../../interfaces/schedule-category.model").ScheduleCategory[]
+    | null;
+  statuses?:
+    | import("@modules/schedule/services/schedules-api").ScheduleStatus[]
+    | null;
 };
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
@@ -55,7 +81,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   );
   const [search, setSearch] = useState("");
 
-  const [categories, setCategories] = useState<ScheduleCategory[]>(props.categories ?? []);
+  const [categories, setCategories] = useState<ScheduleCategory[]>(
+    props.categories ?? []
+  );
   const [events, setEvents] = useState<ScheduleEvent[]>(props.events ?? []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -65,15 +93,28 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const [modalInitialStartTime, setModalInitialStartTime] = useState<
     string | undefined
   >(undefined);
-  const [modalInitialDraft, setModalInitialDraft] = useState<import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & { id?: string } | undefined>(undefined);
+  const [modalInitialDraft, setModalInitialDraft] = useState<
+    | (import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & {
+        id?: string;
+      })
+    | undefined
+  >(undefined);
 
   // React-controlled popup state (replacement for native detail popup)
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
-  const [popupPosition, setPopupPosition] = useState<{ left: number; top: number } | null>(null);
+  const [popupPosition, setPopupPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(null);
 
-
-
-  const { events: propEvents, workspaceId: propWorkspaceId, onRangeChange: propOnRangeChange, onCreate: propOnCreate, availableServices: propAvailableServices, availableEmployees: propAvailableEmployees } = props;
+  const {
+    events: propEvents,
+    workspaceId: propWorkspaceId,
+    onRangeChange: propOnRangeChange,
+    onCreate: propOnCreate,
+    availableServices: propAvailableServices,
+    availableEmployees: propAvailableEmployees,
+  } = props;
 
   const tuiCalendars = useMemo(() => {
     return categories.map((c) => ({
@@ -98,44 +139,67 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
   const tuiEvents = useMemo<EventObject[]>(() => {
     const out: EventObject[] = [];
-    const root = typeof document !== 'undefined' ? document.documentElement : null;
-    const themeText = root ? getComputedStyle(root).getPropertyValue('--toastui-calendar-text').trim() : '';
-    const themeOnPrimary = root ? getComputedStyle(root).getPropertyValue('--toastui-calendar-on-primary').trim() : '';
-    const themePrimary = root ? getComputedStyle(root).getPropertyValue('--toastui-calendar-primary').trim() : '';
+    const root =
+      typeof document !== "undefined" ? document.documentElement : null;
+    const themeText = root
+      ? getComputedStyle(root)
+          .getPropertyValue("--toastui-calendar-text")
+          .trim()
+      : "";
+    const themeOnPrimary = root
+      ? getComputedStyle(root)
+          .getPropertyValue("--toastui-calendar-on-primary")
+          .trim()
+      : "";
+    const themePrimary = root
+      ? getComputedStyle(root)
+          .getPropertyValue("--toastui-calendar-primary")
+          .trim()
+      : "";
 
-    // Status colors (chosen to contrast with category card colors)
-    const statusColorMap: Record<string, string> = {
-      completed: "#16A34A",   // green
-      pending: "#F59E0B",     // amber
-      in_progress: "#DC2626", // red
-      confirmed: "#06B6D4",   // cyan
-      cancelled: "#F97316",   // orange
-    };
-
-    
+    // use shared status/category colors and contrast helpers
 
     filteredEvents.forEach((e) => {
       const start = dayjs(`${e.date}T${e.startTime}`).toDate();
       const end = dayjs(`${e.date}T${e.endTime}`).toDate();
 
       if (!start || isNaN((start as any).getTime())) {
-        console.debug("ScheduleCalendar: skipping event with invalid start", e);
         return;
       }
 
       if (!end || isNaN((end as any).getTime())) {
-        console.debug("ScheduleCalendar: skipping event with invalid end", e);
         return;
       }
 
       // match category by stringified id to avoid mismatches (number vs string)
-      const category = categories.find((c) => String(c.id) === String(e.categoryId));
-      const rawCategoryColor = category?.color ?? themePrimary ?? '#1e70ff';
-      const categoryColor = normalizeCssColor(rawCategoryColor) ?? rawCategoryColor;
+      // also try matching by category object or by category code to cover responses
+      // that return codes instead of ids or embed the category object only.
+      const rawCat = (e as any).category as
+        | Record<string, any>
+        | undefined
+        | null;
+      const category = categories.find((c) => {
+        const cid = String(c.id ?? "");
+        const ccode = String((c as any).code ?? "");
+        const eCatId = e.categoryId ? String(e.categoryId) : "";
+        const eRawCatId = rawCat && rawCat.id ? String(rawCat.id) : "";
+        const eRawCatCode = rawCat && rawCat.code ? String(rawCat.code) : "";
+        return (
+          cid === eCatId ||
+          cid === eRawCatId ||
+          ccode === eCatId ||
+          ccode === eRawCatCode
+        );
+      });
+      const rawCategoryColor = category?.color ?? themePrimary ?? "#1e70ff";
+      const categoryColor =
+        normalizeCssColor(rawCategoryColor) ?? rawCategoryColor;
       const statusCode = (e as any)?.status?.code ?? null;
-      const statusColorRaw = statusCode ? (statusColorMap[statusCode] ?? themePrimary ?? '#7c3aed') : undefined;
+      const statusColorRaw = statusCode
+        ? (getStatusColor(statusCode) ?? themePrimary ?? "#7c3aed")
+        : undefined;
       const statusColor = normalizeCssColor(statusColorRaw) ?? statusColorRaw;
-      const textColor = themeOnPrimary || themeText || '#ffffff';
+      const textColor = themeOnPrimary || themeText || "#ffffff";
 
       const startText = dayjs(start).format("YYYY.MM.DD HH:mm");
       const endText = dayjs(end).format("HH:mm");
@@ -143,9 +207,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         <div style="background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:var(--shadow-md);border-radius:8px;padding:12px;width:250px;font-family:inherit;overflow:hidden;">
           <div style="font-weight:800;margin-bottom:6px;color:var(--color-text);">${escapeHtml(e.title)}</div>
           <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:8px;">${startText} — ${endText}</div>
-          <div style="font-size:13px;color:var(--color-text);">${escapeHtml(e.description ?? '')}</div>
+          <div style="font-size:13px;color:var(--color-text);">${escapeHtml(e.description ?? "")}</div>
         </div>
       `;
+
+      // prefer category color for the main card; only fallback to status when category color is missing
+      const preferCategory = (c?: string | undefined) =>
+        c && String(c).trim() ? c : undefined;
 
       out.push({
         id: e.id,
@@ -156,12 +224,12 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         start,
         end,
         // visual properties supported by toast-ui Calendar
-        // prefer category color for the event card; fall back to status color
-        backgroundColor: categoryColor ?? statusColor,
-        borderColor: categoryColor ?? statusColor,
+        // prefer category color for the event card; fall back to status color only when category color is missing/empty
+        backgroundColor: preferCategory(categoryColor) ?? statusColor,
+        borderColor: preferCategory(categoryColor) ?? statusColor,
         color: textColor,
-        dragBackgroundColor: categoryColor ?? statusColor,
-        customStyle: { fontWeight: '700' },
+        dragBackgroundColor: preferCategory(categoryColor) ?? statusColor,
+        customStyle: { fontWeight: "700" },
         // provide a full HTML body (inline styles using app CSS variables)
         body: bodyHtml,
         raw: {
@@ -181,26 +249,70 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         onEdit: () => {
           try {
             const raw = (e as any) || {};
-            const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & { id?: string } = {
+            // resolve categoryId robustly from multiple potential sources so backend always receives it
+            const resolvedCategoryId = (() => {
+              const byEvent = e.categoryId ? String(e.categoryId) : undefined;
+              const byRawId =
+                raw.category && raw.category.id
+                  ? String(raw.category.id)
+                  : undefined;
+              const byRawCode =
+                raw.category && raw.category.code
+                  ? String(raw.category.code)
+                  : undefined;
+              if (byEvent) return byEvent;
+              if (byRawId) return byRawId;
+              // try to match raw.code against known categories
+              if (byRawCode) {
+                const found = categories.find(
+                  (c) =>
+                    String(c.code ?? "") === byRawCode ||
+                    String(c.id ?? "") === byRawCode
+                );
+                if (found) return String(found.id);
+              }
+              // fallback to first available category
+              if (categories && categories.length > 0)
+                return String(categories[0].id);
+              return "";
+            })();
+
+            const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & {
+              id?: string;
+            } = {
               id: e.id,
               title: e.title ?? "",
               description: raw.description ?? undefined,
-              categoryId: e.categoryId ?? String((raw.category && raw.category.id) ?? ""),
+              categoryId: resolvedCategoryId,
               date: e.date,
               startTime: e.startTime ?? "09:00",
               endTime: e.endTime ?? "09:30",
               durationMinutes: (e as any).durationMinutes ?? undefined,
-              serviceIds: Array.isArray(raw.services) ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean) : undefined,
-              employeeIds: Array.isArray(raw.workers) ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean) : undefined,
-              totalPriceCents: Array.isArray(raw.services) ? raw.services.reduce((acc: number, s: any) => acc + (s.priceCents ?? 0), 0) : undefined,
-              statusId: (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
+              serviceIds: Array.isArray(raw.services)
+                ? raw.services
+                    .map((s: any) => s.serviceId ?? s.id)
+                    .filter(Boolean)
+                : undefined,
+              employeeIds: Array.isArray(raw.workers)
+                ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean)
+                : undefined,
+              totalPriceCents: Array.isArray(raw.services)
+                ? raw.services.reduce(
+                    (acc: number, s: any) => acc + (s.priceCents ?? 0),
+                    0
+                  )
+                : undefined,
+              statusId:
+                (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
             };
 
             setModalInitialDraft(draft);
             setModalInitialDate(draft.date);
             setModalInitialStartTime(draft.startTime);
             setIsModalOpen(true);
-          } catch (err) { console.debug('openEditModal failed', err); }
+          } catch (err) {
+            void err;
+          }
         },
       } as any);
     });
@@ -210,14 +322,18 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       const map = new Map<string, string>();
       out.forEach((ev) => {
         const id = ev.id as string;
-        const bgRaw = (ev as any).backgroundColor || (ev as any).raw?.categoryColor || (ev as any).raw?.statusColor || '';
+        const rawCategory = (ev as any).raw?.categoryColor;
+        const rawStatus = (ev as any).raw?.statusColor;
+        const bgRaw =
+          (ev as any).backgroundColor || rawCategory || rawStatus || "";
         const bg = normalizeCssColor(bgRaw) ?? bgRaw;
         if (id && bg) map.set(id, bg as string);
       });
       eventColorMapRef.current = map;
-    } catch (err) { console.debug(err); }
+    } catch (err) {
+      void err;
+    }
 
-    console.debug("ScheduleCalendar: tuiEvents generated", out.length, out.map((x) => ({ id: x.id, start: x.start, bg: (x as any).backgroundColor, rawStatus: (x as any).raw?.status })));
     return out;
   }, [filteredEvents]);
 
@@ -250,8 +366,6 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     };
   }, []);
 
- 
-
   const syncHostHeight = () => {
     const wrap = wrapRef.current;
     const host = hostRef.current;
@@ -280,46 +394,91 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             const el = n as HTMLElement;
             // prefer explicit color from the eventColorMap (normalized), then raw values
             const fromMap = eventColorMapRef.current.get(id);
-            const statusColor = (ev as unknown as any).raw?.statusColor;
-            const categoryColor = (ev as any).raw?.categoryColor || (ev as unknown as any).backgroundColor;
-            const preferredColor = fromMap || categoryColor || statusColor;
+            const categoryColor =
+              (ev as any).raw?.categoryColor ||
+              (ev as unknown as any).backgroundColor;
+            const preferCategory = (c?: string | undefined) =>
+              c && String(c).trim() ? c : undefined;
+            const preferredColor = fromMap || preferCategory(categoryColor);
 
             try {
               if (preferredColor) {
-                el.style.setProperty('background-color', preferredColor, 'important');
+                el.style.setProperty(
+                  "background-color",
+                  preferredColor,
+                  "important"
+                );
                 el.style.background = preferredColor;
                 // expose applied color as data attribute for debugging
-                el.setAttribute('data-applied-color', preferredColor);
+                el.setAttribute("data-applied-color", preferredColor);
               }
             } catch (err) {
-              console.debug(err);
               if (preferredColor) el.style.background = preferredColor;
             }
 
-            try { console.debug('applyEventDomColors: event', id, { preferredColor, categoryColor, statusColor }); } catch (err) { console.debug(err); }
-
             // ensure any template popup width is enforced and remove stray max-width
             try {
-              const popups = document.querySelectorAll<HTMLElement>('.tui-custom-popup');
+              const popups =
+                document.querySelectorAll<HTMLElement>(".tui-custom-popup");
               popups.forEach((p) => {
                 try {
-                  p.style.removeProperty('max-width');
-                  p.style.setProperty('width', '250px', 'important');
-                } catch (err) { console.debug(err); }
+                  p.style.removeProperty("max-width");
+                  p.style.setProperty("width", "250px", "important");
+                } catch (err) {
+                  void err;
+                }
               });
-            } catch (err) { console.debug(err); }
+            } catch (err) {
+              void err;
+            }
 
-            const dot = el.querySelector('.toastui-calendar-weekday-event-dot, .tui-custom-dot, .toastui-calendar-monthly-event-dot') as HTMLElement | null;
+            const dot = el.querySelector(
+              ".toastui-calendar-weekday-event-dot, .tui-custom-dot, .toastui-calendar-monthly-event-dot"
+            ) as HTMLElement | null;
             if (dot) {
               try {
                 // prefer status color for the dot so it clearly indicates event status
-                const dotColorRaw = statusColor || categoryColor;
+                const dotColorRaw =
+                  (ev as any).raw?.statusColor ||
+                  (ev as any).raw?.categoryColor ||
+                  (ev as any).backgroundColor;
                 const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
-                if (dotColor) dot.style.setProperty('background-color', dotColor, 'important');
-                if (dotColor) dot.style.background = dotColor;
+                if (dotColor) {
+                  dot.style.setProperty(
+                    "background-color",
+                    dotColor,
+                    "important"
+                  );
+                  dot.style.background = dotColor;
+                }
+                // if contrast between dot and category is low, add a thin border to improve visibility
+                try {
+                  const catCol =
+                    (ev as any).raw?.categoryColor ||
+                    (ev as any).backgroundColor;
+                  const border = suitableBorderForContrast(dotColor, catCol);
+                  if (border) {
+                    dot.style.setProperty(
+                      "border",
+                      `2px solid ${border}`,
+                      "important"
+                    );
+                    dot.style.setProperty(
+                      "box-sizing",
+                      "border-box",
+                      "important"
+                    );
+                  } else {
+                    dot.style.removeProperty("border");
+                  }
+                } catch (err) {
+                  // ignore
+                }
               } catch (err) {
-                console.debug(err);
-                const dotColorRaw = statusColor || categoryColor;
+                const dotColorRaw =
+                  (ev as any).raw?.statusColor ||
+                  (ev as any).raw?.categoryColor ||
+                  (ev as any).backgroundColor;
                 const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
                 if (dotColor) dot.style.background = dotColor;
               }
@@ -327,9 +486,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           });
         });
 
-        try { console.debug('applyEventDomColors applied', { count: tuiEvents.length }); } catch (err) { console.debug(err); }
+        try {
+          void 0;
+        } catch (err) {
+          void err;
+        }
       } catch (err) {
-        console.debug(err);
+        void err;
       }
     });
   };
@@ -370,12 +533,15 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     if (propOnRangeChange) {
       await propOnRangeChange(from, to);
     } else {
-      const ev = await api.getEvents({ from, to, workspaceId: propWorkspaceId ?? null });
+      const ev = await api.getEvents({
+        from,
+        to,
+        workspaceId: propWorkspaceId ?? null,
+      });
       setEvents(ev);
     }
   };
 
-   
   useEffect(() => {
     (async () => {
       // prefer categories passed from props (page/sidebar). Only fetch when not provided.
@@ -384,14 +550,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         setCategories(cats);
       } else {
         // normalize incoming categories to ensure each has a usable, unique color
-        // explicit distinct colors to avoid similar shades; we'll move these to theme later
-        // explicit distinct colors to avoid similar shades; work=green, personal=blue
-        const codeColorMap: Record<string, string> = {
-          work: "#10B981",       // green
-          personal: "#0EA5E9",   // blue
-          schedule: "#A78BFA",   // violet
-          gaming: "#E9AB13",     // gold-ish
-        };
+        // prefer shared category map so calendar and sidebar share the same palette
+        const codeColorMap: Record<string, string> = categoryColorMap;
         const palette = [
           "#F59E0B",
           "#06B6D4",
@@ -406,7 +566,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         const used = new Set<string>();
         const mapped = (props.categories ?? []).map((c, idx) => {
           const code = c.code ?? "";
-          let chosen = c.color ?? codeColorMap[code] ?? palette[idx % palette.length];
+          let chosen =
+            c.color ??
+            getCategoryColor(code) ??
+            codeColorMap[code] ??
+            palette[idx % palette.length];
           // normalize CSS variable references to concrete colors
           chosen = normalizeCssColor(chosen) ?? chosen;
           // if exact color already used, pick first unused palette entry
@@ -424,7 +588,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
         // use mapped colors (prefer explicit category color or codeColorMap)
         setCategories(mapped);
-        try { console.debug('ScheduleCalendar: mapped categories', mapped.map(c => ({ id: c.id, code: c.code, color: c.color }))); } catch (err) { console.debug(err); }
+        try {
+          void 0;
+        } catch (err) {
+          void err;
+        }
       }
 
       // Only fetch initial events here when parent did not provide `events`.
@@ -434,7 +602,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         if (props.onRangeChange) {
           await props.onRangeChange(from, to);
         } else {
-          const ev = await api.getEvents({ from, to, workspaceId: props.workspaceId ?? null });
+          const ev = await api.getEvents({
+            from,
+            to,
+            workspaceId: props.workspaceId ?? null,
+          });
           setEvents(ev);
         }
       }
@@ -453,51 +625,77 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     syncHostHeight();
 
     // create calendar once on mount
-    const inst = new Calendar(hostRef.current, buildCalendarOptions({ viewMode, tuiCalendars, tuiEvents, calendarTheme }));
+    const inst = new Calendar(
+      hostRef.current,
+      buildCalendarOptions({ viewMode, tuiCalendars, tuiEvents, calendarTheme })
+    );
 
     inst.on("clickEvent", (e: any) => {
-      console.debug("ScheduleCalendar.clickEvent", { e });
       const ev = e?.event;
       if (!ev) {
-        console.debug("ScheduleCalendar.clickEvent: no ev found");
         return;
       }
       // show React popup anchored to click position
       const dom = e?.domEvent || e?.nativeEvent || null;
       if (dom && wrapRef.current) {
         const rect = wrapRef.current.getBoundingClientRect();
-        const clientX = dom.clientX ?? (dom.touches && dom.touches[0] && dom.touches[0].clientX) ?? null;
-        const clientY = dom.clientY ?? (dom.touches && dom.touches[0] && dom.touches[0].clientY) ?? null;
+        const clientX =
+          dom.clientX ??
+          (dom.touches && dom.touches[0] && dom.touches[0].clientX) ??
+          null;
+        const clientY =
+          dom.clientY ??
+          (dom.touches && dom.touches[0] && dom.touches[0].clientY) ??
+          null;
         if (clientX != null && clientY != null) {
           const x = clientX - rect.left;
           const y = clientY - rect.top;
           setPopupPosition({ left: Math.max(8, x), top: Math.max(8, y) });
         } else {
           // fallback center
-          setPopupPosition({ left: Math.floor(rect.width / 2), top: Math.floor(rect.height / 2) });
+          setPopupPosition({
+            left: Math.floor(rect.width / 2),
+            top: Math.floor(rect.height / 2),
+          });
         }
       } else if (wrapRef.current) {
         // fallback: center in calendar
         const rect = wrapRef.current.getBoundingClientRect();
-        setPopupPosition({ left: Math.floor(rect.width / 2), top: Math.floor(rect.height / 2) });
+        setPopupPosition({
+          left: Math.floor(rect.width / 2),
+          top: Math.floor(rect.height / 2),
+        });
       }
       // attach an onEdit handler directly to the selected event object so Toast UI's internal cloning
       // won't remove function refs. This opens the edit modal prefilled with the event data.
       try {
         const raw = (ev as any).raw || {};
-        const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & { id?: string } = {
+        const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & {
+          id?: string;
+        } = {
           id: ev.id,
           title: ev.title ?? "",
           description: raw.description ?? undefined,
-          categoryId: (ev as any).calendarId ?? (ev as any).raw?.category?.id ?? "",
+          categoryId:
+            (ev as any).calendarId ?? (ev as any).raw?.category?.id ?? "",
           date: raw.date ?? "",
           startTime: raw.startTime ?? "09:00",
           endTime: raw.endTime ?? "09:30",
           durationMinutes: (raw.durationMinutes as number) ?? undefined,
-          serviceIds: Array.isArray(raw.services) ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean) : undefined,
-          employeeIds: Array.isArray(raw.workers) ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean) : undefined,
-          totalPriceCents: Array.isArray(raw.services) ? raw.services.reduce((acc: number, s: any) => acc + (s.priceCents ?? 0), 0) : undefined,
-          statusId: (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
+          serviceIds: Array.isArray(raw.services)
+            ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean)
+            : undefined,
+          employeeIds: Array.isArray(raw.workers)
+            ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean)
+            : undefined,
+          totalPriceCents: Array.isArray(raw.services)
+            ? raw.services.reduce(
+                (acc: number, s: any) => acc + (s.priceCents ?? 0),
+                0
+              )
+            : undefined,
+          statusId:
+            (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
         };
 
         const augmented = {
@@ -512,14 +710,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               setSelectedEvent(null);
               setPopupPosition(null);
             } catch (err) {
-              console.debug('onEdit handler failed', err);
+              void err;
             }
           },
         } as any;
 
         setSelectedEvent(augmented);
       } catch (err) {
-        console.debug('failed to attach onEdit to event', err);
         setSelectedEvent(ev);
       }
     });
@@ -547,20 +744,44 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       observer = new MutationObserver((mutations) => {
         let found = false;
         for (const m of mutations) {
-          if (m.addedNodes && m.addedNodes.length > 0) { found = true; break; }
-          if (m.type === 'attributes' && (m as any).attributeName?.includes('data-event')) { found = true; break; }
+          if (m.addedNodes && m.addedNodes.length > 0) {
+            found = true;
+            break;
+          }
+          if (
+            m.type === "attributes" &&
+            (m as any).attributeName?.includes("data-event")
+          ) {
+            found = true;
+            break;
+          }
         }
         if (found) {
-          try { applyEventDomColors(); } catch (err) { console.debug(err); }
+          try {
+            applyEventDomColors();
+          } catch (err) {
+            void err;
+          }
         }
       });
-      observer.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-event-id'] });
-    } catch (err) { console.debug(err); }
+      observer.observe(host, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["data-event-id"],
+      });
+    } catch (err) {
+      void err;
+    }
 
     return () => {
       instanceRef.current?.destroy?.();
       instanceRef.current = null;
-      try { observer?.disconnect(); } catch (err) { console.debug(err); }
+      try {
+        observer?.disconnect();
+      } catch (err) {
+        void err;
+      }
     };
     // mount only
   }, []);
@@ -571,29 +792,46 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     if (!inst) return;
     try {
       // Toast UI Calendar may expose setCalendars/createCalendars - try a few options
-      if (typeof inst.setCalendars === 'function') {
+      if (typeof inst.setCalendars === "function") {
         inst.setCalendars(tuiCalendars);
-      } else if (typeof inst.createCalendars === 'function') {
+      } else if (typeof inst.createCalendars === "function") {
         // remove all then recreate
-        try { inst.clearCalendars?.(); } catch (err) { console.debug(err); }
+        try {
+          inst.clearCalendars?.();
+        } catch (err) {
+          void err;
+        }
         inst.createCalendars(tuiCalendars);
       } else {
         // fallback: update options and rerender
-        try { (inst as any).options.calendars = tuiCalendars; } catch (err) { console.debug(err); }
+        try {
+          (inst as any).options.calendars = tuiCalendars;
+        } catch (err) {
+          void err;
+        }
       }
       // ensure events & DOM colors are refreshed
       try {
-        if (typeof inst.clear === 'function' && typeof inst.createEvents === 'function') {
+        if (
+          typeof inst.clear === "function" &&
+          typeof inst.createEvents === "function"
+        ) {
           inst.clear();
           if (tuiEvents && tuiEvents.length > 0) inst.createEvents(tuiEvents);
         }
-      } catch (err) { console.debug(err); }
+      } catch (err) {
+        void err;
+      }
       inst.render?.();
       // apply DOM color overrides after a tick
       requestAnimationFrame(() => applyEventDomColors());
-      try { console.debug('ScheduleCalendar: updated instance calendars', tuiCalendars.map((c) => ({ id: c.id, bg: c.backgroundColor }))) } catch (err) { console.debug(err); }
+      try {
+        void 0;
+      } catch (err) {
+        void err;
+      }
     } catch (err) {
-      console.debug('ScheduleCalendar: failed to update calendars', err);
+      void err;
     }
   }, [tuiCalendars, tuiEvents]);
 
@@ -604,7 +842,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
     // prefer instance methods to update events in-place
     try {
-      if (typeof inst.clear === "function" && typeof inst.createEvents === "function") {
+      if (
+        typeof inst.clear === "function" &&
+        typeof inst.createEvents === "function"
+      ) {
         inst.clear();
         if (tuiEvents && tuiEvents.length > 0) inst.createEvents(tuiEvents);
         inst.render?.();
@@ -614,7 +855,6 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         return;
       }
     } catch (err) {
-      console.debug(err);
       // fallthrough to recreate fallback
     }
 
@@ -627,9 +867,21 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         instanceRef.current = null;
         return;
       }
-      const next = new Calendar(host, buildCalendarOptions({ viewMode, tuiCalendars, tuiEvents, calendarTheme }));
+      const next = new Calendar(
+        host,
+        buildCalendarOptions({
+          viewMode,
+          tuiCalendars,
+          tuiEvents,
+          calendarTheme,
+        })
+      );
       if (prevDate) {
-        try { (next as any).setDate?.(prevDate); } catch (err) { console.debug(err); }
+        try {
+          (next as any).setDate?.(prevDate);
+        } catch (err) {
+          void err;
+        }
       }
       instanceRef.current = next;
       refreshHeaderLabel();
@@ -638,7 +890,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       applyEventDomColors();
       // styling handled via styled-components in CalendarHost
     } catch (err) {
-      console.error("ScheduleCalendar: failed to update events", err);
+      // ScheduleCalendar: failed to update events
     }
   }, [tuiEvents]);
 
@@ -663,10 +915,12 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     const onClick = async (ev: MouseEvent) => {
       const target = ev.target as HTMLElement | null;
       if (!target) return;
-      const btn = target.closest('.tui-custom-popup-delete') as HTMLElement | null;
+      const btn = target.closest(
+        ".tui-custom-popup-delete"
+      ) as HTMLElement | null;
       if (!btn) return;
       // find nearest popup container
-      const popup = btn.closest('.tui-custom-popup') as HTMLElement | null;
+      const popup = btn.closest(".tui-custom-popup") as HTMLElement | null;
       if (!popup) return;
 
       // attempt to find event id: check data-event-id on siblings or searched elements
@@ -674,8 +928,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       // look for attribute on popup or parent nodes
       let node: HTMLElement | null = popup;
       while (node && !id) {
-        if (node.hasAttribute && node.hasAttribute('data-event-id')) {
-          id = node.getAttribute('data-event-id');
+        if (node.hasAttribute && node.hasAttribute("data-event-id")) {
+          id = node.getAttribute("data-event-id");
           break;
         }
         node = node.parentElement;
@@ -683,16 +937,18 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       // fallback: match by title text inside popup
       if (!id) {
-        const titleEl = popup.querySelector('.tui-custom-popup-title');
-        const titleText = titleEl ? titleEl.textContent?.trim() ?? '' : '';
+        const titleEl = popup.querySelector(".tui-custom-popup-title");
+        const titleText = titleEl ? (titleEl.textContent?.trim() ?? "") : "";
         if (titleText) {
-          const found = (eventsRef.current || events).find((e) => e.title === titleText);
+          const found = (eventsRef.current || events).find(
+            (e) => e.title === titleText
+          );
           if (found) id = found.id;
         }
       }
 
       if (!id) {
-        message.error('Could not determine event to delete');
+        message.error("Could not determine event to delete");
         return;
       }
 
@@ -700,14 +956,18 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         loadingService.show();
         const ok = await api.removeEvent(id);
         if (ok) {
-          try { await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); }
-          message.success('Event deleted');
+          try {
+            await loadMonthEventsFromInstance();
+          } catch (e) {
+            void e;
+          }
+          message.success("Event deleted");
         } else {
-          message.error('Failed to delete event');
+          message.error("Failed to delete event");
         }
       } catch (err) {
-        console.error(err);
-        message.error('Failed to delete event');
+        // delete event failed
+        message.error("Failed to delete event");
       } finally {
         loadingService.hide();
         setSelectedEvent(null);
@@ -715,17 +975,14 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       }
     };
 
-    document.addEventListener('click', onClick);
-    return () => document.removeEventListener('click', onClick);
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
   }, [events, api]);
 
   // debug popup state changes
-  useEffect(() => {
-    console.debug("ScheduleCalendar.popupState", { selectedEvent, popupPosition });
-  }, [selectedEvent, popupPosition]);
+  useEffect(() => {}, [selectedEvent, popupPosition]);
   // styling is provided via styled-components in the styles file
 
-   
   useEffect(() => {
     const node = wrapRef.current;
     if (!node) return;
@@ -739,22 +996,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   }, []);
 
   // Ensure popups created later by Toast UI do not carry unwanted inline max-width.
-   
+
   useEffect(() => {
     const enforcePopup = (el: HTMLElement) => {
       try {
-        el.style.removeProperty('max-width');
-        el.style.setProperty('width', '250px', 'important');
+        el.style.removeProperty("max-width");
+        el.style.setProperty("width", "250px", "important");
       } catch (err) {
-        console.debug(err);
+        void err;
       }
     };
 
     const scanAndFix = () => {
       try {
-        const popups = document.querySelectorAll<HTMLElement>('.tui-custom-popup');
+        const popups =
+          document.querySelectorAll<HTMLElement>(".tui-custom-popup");
         popups.forEach((p) => enforcePopup(p));
-      } catch (err) { console.debug(err); }
+      } catch (err) {
+        void err;
+      }
     };
 
     // initial scan
@@ -762,30 +1022,40 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
-        if (m.type === 'childList' && m.addedNodes && m.addedNodes.length) {
+        if (m.type === "childList" && m.addedNodes && m.addedNodes.length) {
           m.addedNodes.forEach((n) => {
             try {
               if (!(n instanceof HTMLElement)) return;
-              if (n.classList && n.classList.contains('tui-custom-popup')) enforcePopup(n as HTMLElement);
+              if (n.classList && n.classList.contains("tui-custom-popup"))
+                enforcePopup(n as HTMLElement);
               // if the added node contains popups deeper
-              const inner = n.querySelectorAll && n.querySelectorAll('.tui-custom-popup');
-              if (inner && inner.length) inner.forEach((el: any) => enforcePopup(el as HTMLElement));
-            } catch (err) { console.debug(err); }
+              const inner =
+                n.querySelectorAll && n.querySelectorAll(".tui-custom-popup");
+              if (inner && inner.length)
+                inner.forEach((el: any) => enforcePopup(el as HTMLElement));
+            } catch (err) {
+              void err;
+            }
           });
         }
-        if (m.type === 'attributes' && m.target instanceof HTMLElement) {
+        if (m.type === "attributes" && m.target instanceof HTMLElement) {
           const t = m.target as HTMLElement;
-          if (t.classList && t.classList.contains('tui-custom-popup')) enforcePopup(t);
+          if (t.classList && t.classList.contains("tui-custom-popup"))
+            enforcePopup(t);
         }
       }
     });
 
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    });
 
     return () => observer.disconnect();
   }, []);
 
-   
   useEffect(() => {
     safeRender();
   }, [isModalOpen]);
@@ -823,7 +1093,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   };
 
   const handleConfirmModal = async (draft: ScheduleEventDraft) => {
-    const toCreate: Omit<ScheduleEvent, "id"> & { durationMinutes?: number | null } = {
+    const toCreate: Omit<ScheduleEvent, "id"> & {
+      durationMinutes?: number | null;
+    } = {
       title: draft.title,
       date: draft.date,
       startTime: draft.startTime,
@@ -833,18 +1105,40 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       durationMinutes: draft.durationMinutes ?? null,
     };
 
-      try {
+    // include statusId when provided by the modal draft so backend receives updated status
+    try {
+      if ((draft as any).statusId)
+        (toCreate as any).statusId = (draft as any).statusId;
+    } catch (err) {
+      // no-op
+    }
+
+    try {
       loadingService.show();
       // if editing an existing draft, delegate to page-level update handler
       if (modalInitialDraft && modalInitialDraft.id) {
         if (props.onUpdate) {
-          await props.onUpdate({ id: modalInitialDraft.id, event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+          await props.onUpdate({
+            id: modalInitialDraft.id,
+            event: toCreate,
+            serviceIds: draft.serviceIds,
+            employeeIds: draft.employeeIds,
+            totalPriceCents: draft.totalPriceCents,
+            workspaceId: propWorkspaceId ?? null,
+          });
         } else {
           // fallback to calling api.updateEvent directly
           if ((api as any).updateEvent) {
-            await (api as any).updateEvent({ id: modalInitialDraft.id, event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+            await (api as any).updateEvent({
+              id: modalInitialDraft.id,
+              event: toCreate,
+              serviceIds: draft.serviceIds,
+              employeeIds: draft.employeeIds,
+              totalPriceCents: draft.totalPriceCents,
+              workspaceId: propWorkspaceId ?? null,
+            });
           } else {
-            console.debug('No update handler available');
+            void 0;
           }
         }
       } else {
@@ -853,7 +1147,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           await propOnCreate(draft);
         } else {
           // fallback to local create if no handler provided
-          await api.createSchedule({ event: toCreate, serviceIds: draft.serviceIds, employeeIds: draft.employeeIds, totalPriceCents: draft.totalPriceCents, workspaceId: propWorkspaceId ?? null });
+          await api.createSchedule({
+            event: toCreate,
+            serviceIds: draft.serviceIds,
+            employeeIds: draft.employeeIds,
+            totalPriceCents: draft.totalPriceCents,
+            workspaceId: propWorkspaceId ?? null,
+          });
         }
       }
 
@@ -865,15 +1165,23 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       if (propOnRangeChange) {
         await propOnRangeChange(from, to);
       } else {
-        const ev = await api.getEvents({ from, to, workspaceId: propWorkspaceId ?? null });
+        const ev = await api.getEvents({
+          from,
+          to,
+          workspaceId: propWorkspaceId ?? null,
+        });
         setEvents(ev);
       }
 
-      message.success(modalInitialDraft && modalInitialDraft.id ? "Schedule updated" : "Schedule created");
+      message.success(
+        modalInitialDraft && modalInitialDraft.id
+          ? "Schedule updated"
+          : "Schedule created"
+      );
       setIsModalOpen(false);
       setModalInitialDraft(undefined);
     } catch (err) {
-      console.error(err);
+      // create/update schedule failed
       message.error("Failed to create schedule");
     } finally {
       loadingService.hide();
@@ -922,9 +1230,21 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             <ScheduleEventPopup
               event={selectedEvent}
               position={popupPosition}
-              onClose={() => { setSelectedEvent(null); setPopupPosition(null); }}
-              onDeleted={async () => { try { await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); } }}
-              categories={categories.map((c) => ({ ...c, color: c.color ?? 'var(--color-surface)' }))}
+              onClose={() => {
+                setSelectedEvent(null);
+                setPopupPosition(null);
+              }}
+              onDeleted={async () => {
+                try {
+                  await loadMonthEventsFromInstance();
+                } catch (e) {
+                  void e;
+                }
+              }}
+              categories={categories.map((c) => ({
+                ...c,
+                color: c.color ?? "var(--color-surface)",
+              }))}
               loadMonthEventsFromInstance={loadMonthEventsFromInstance}
             />
           ) : null}
@@ -935,13 +1255,24 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         open={isModalOpen}
         onClose={handleCloseModal}
         onConfirm={handleConfirmModal}
-        categories={categories.map((c) => ({ ...c, color: c.color ?? 'var(--color-surface)' }))}
+        categories={categories.map((c) => ({
+          ...c,
+          color: c.color ?? "var(--color-surface)",
+        }))}
         initialDate={modalInitialDate}
         initialStartTime={modalInitialStartTime}
         initialDraft={modalInitialDraft}
-          availableServices={propAvailableServices}
-          availableEmployees={propAvailableEmployees}
-          statuses={props.statuses}
+        availableServices={propAvailableServices}
+        availableEmployees={propAvailableEmployees}
+        statuses={
+          props.statuses
+            ? props.statuses.map((s: any) => ({
+                id: String(s.id),
+                code: s.code,
+                label: s.label,
+              }))
+            : undefined
+        }
       />
     </>
   );

@@ -18,7 +18,7 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
 
   private profileSub?: Subscription;
 
-  public state = { isLoading: false, initialized: false, error: undefined, name: undefined, services: undefined };
+  public state = { isLoading: false, initialized: false, error: undefined, name: undefined, services: undefined, metrics: undefined };
 
   private async computeAndSetMetrics(): Promise<void> {
     try {
@@ -133,6 +133,8 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
         case "dollar-sign":
           return <DollarSign />;
         case "box":
+        case "inventory":
+        case "stock":
           return <Box />;
         default:
           return <Briefcase />;
@@ -140,6 +142,16 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
     };
 
     const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = apiServices.map((s: ApplicationServiceItem) => ({ id: s.uid, title: s.name, subtitle: s.description, icon: mapIcon(s.icon) }));
+
+    // Ensure inventory module card is available in the quick modules section.
+    const hasInventory = services.some((s) => {
+      const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
+      return key.includes("inventory") || key.includes("stock");
+    });
+
+    if (!hasInventory) {
+      services.push({ id: "inventory", title: "Inventory", subtitle: "Manage stock and supplies", icon: mapIcon("inventory") });
+    }
 
     const ws = companyService.getWorkspaceValue();
     const companyName =

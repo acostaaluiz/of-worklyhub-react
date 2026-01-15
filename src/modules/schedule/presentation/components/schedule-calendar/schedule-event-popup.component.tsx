@@ -36,14 +36,14 @@ export const ScheduleEventPopup: React.FC<Props> = ({ event, position, onClose, 
       loadingService.show();
       const ok = await api.removeEvent(event.id);
       if (ok) {
-        try { if (loadMonthEventsFromInstance) await loadMonthEventsFromInstance(); } catch (e) { console.debug(e); }
+        try { if (loadMonthEventsFromInstance) await loadMonthEventsFromInstance(); } catch (e) { /* ignore load errors */ }
         message.success('Event deleted');
         if (onDeleted) onDeleted();
       } else {
         message.error('Failed to delete event');
       }
     } catch (err) {
-      console.error(err);
+      // delete error
       message.error('Failed to delete event');
     } finally {
       loadingService.hide();

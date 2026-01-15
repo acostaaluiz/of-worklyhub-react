@@ -37,7 +37,7 @@ export const normalizeCssColor = (value?: string | null): string | undefined => 
 export const buildCalendarTemplates = () => ({
   monthGridEvent: (model: any) => {
     try {
-      try { console.debug('tui.monthGridEvent model', model); } catch (err) { console.debug(err); }
+      // monthGridEvent template
       const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
       const dotColorRaw = model?.raw?.statusColor || model?.raw?.categoryColor || model.backgroundColor || `var(--color-primary)`;
       const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;

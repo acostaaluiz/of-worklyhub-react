@@ -7,6 +7,12 @@ import { Plus } from "lucide-react";
 import { useScheduleApi } from "../../../services/schedule.service";
 
 import {
+  categoryColorMap,
+  getStatusColor,
+  getCategoryColor,
+} from "../../../constants/colors";
+
+import {
   SidebarHeaderRow,
   SidebarTitle,
   Block,
@@ -21,17 +27,28 @@ import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
 
-
 type ScheduleSidebarProps = {
   availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
   availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
   workspaceId?: string | null;
-  onCreate?: (draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
-  categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
+  onCreate?: (
+    draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft
+  ) => Promise<void>;
+  categories?:
+    | import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[]
+    | null;
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
-  nextSchedules?: import("@modules/schedule/services/schedules-api").NextScheduleItem[] | null;
+  nextSchedules?:
+    | import("@modules/schedule/services/schedules-api").NextScheduleItem[]
+    | null;
+  statuses?:
+    | import("@modules/schedule/services/schedules-api").ScheduleStatus[]
+    | null;
+  statusCounts?: Record<string, number> | null;
+  selectedStatusIds?: Record<string, boolean> | null;
+  onToggleStatus?: (id: string, checked: boolean) => void;
 };
 
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
@@ -44,12 +61,17 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
       h = h & h;
     }
     const hue = Math.abs(h) % 360;
-    const sat = 64 + (idx * 11) % 20; // vary saturation slightly by index
-    const light = 48 + (idx * 7) % 6;
+    const sat = 64 + ((idx * 11) % 20); // vary saturation slightly by index
+    const light = 48 + ((idx * 7) % 6);
     return `hsl(${hue} ${sat}% ${light}%)`;
   };
+
   const [categories, setCategories] = useState<ScheduleCategory[]>([]);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
+
+  const [localStatusSelection, setLocalStatusSelection] = useState<
+    Record<string, boolean>
+  >({});
 
   const [selectedDate, _setSelectedDate] = useState<Dayjs>(dayjs());
   // local fallback selection used only when parent does not provide control
@@ -65,12 +87,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
       // prefer categories passed from page (fetched from application service)
       if (props.categories && Array.isArray(props.categories)) {
         // map incoming categories to include a display color when missing
-        const codeColorMap: Record<string, string> = {
-          work: "var(--color-primary)",
-          personal: "var(--color-secondary)",
-          schedule: "var(--color-tertiary)",
-          gaming: "rgba(233, 171, 19, 0.95)",
-        };
+        const codeColorMap: Record<string, string> = categoryColorMap;
         // explicit palette of contrasting colors to avoid near-duplicates
         const palette = [
           "#F59E0B", // amber
@@ -92,8 +109,9 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
           if (explicit && !explicit.startsWith("var(")) chosen = explicit;
 
           // next try code map if it provides a concrete color
-          const mappedByCode = codeColorMap[code];
-          if (!chosen && mappedByCode && !mappedByCode.startsWith("var(")) chosen = mappedByCode;
+          const mappedByCode = getCategoryColor(code) ?? codeColorMap[code];
+          if (!chosen && mappedByCode && !mappedByCode.startsWith("var("))
+            chosen = mappedByCode;
 
           // otherwise pick from palette
           if (!chosen) chosen = palette[idx % palette.length];
@@ -127,13 +145,12 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
     const counts: Record<string, number> = {};
     for (const c of categories) counts[c.id] = 0;
-    for (const e of events) counts[e.categoryId] = (counts[e.categoryId] ?? 0) + 1;
+    for (const e of events)
+      counts[e.categoryId] = (counts[e.categoryId] ?? 0) + 1;
     return counts;
   }, [categories, events, props.categoryCounts]);
   const onToggleCategory = (id: string, checked: boolean) => {
-    try {
-      console.debug("ScheduleSidebar.onToggleCategory called", { id, checked, hasProp: !!props.onToggleCategory });
-    } catch (err) { console.debug(err); }
+    // toggle category selection
     if (props.onToggleCategory) {
       props.onToggleCategory(id, checked);
       return;
@@ -142,11 +159,21 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     setLocalCategorySelection((prev) => ({ ...prev, [id]: checked }));
   };
 
+  const onToggleStatus = (id: string, checked: boolean) => {
+    if (props.onToggleStatus) {
+      props.onToggleStatus(id, checked);
+      return;
+    }
+    setLocalStatusSelection((prev) => ({ ...prev, [id]: checked }));
+  };
+
   const handleCreate = async (payload: ScheduleEventDraft) => {
     if (props.onCreate) {
       await props.onCreate(payload);
     } else {
-      const toCreate: Omit<ScheduleEvent, "id"> & { durationMinutes?: number | null } = {
+      const toCreate: Omit<ScheduleEvent, "id"> & {
+        durationMinutes?: number | null;
+      } = {
         title: payload.title,
         date: payload.date,
         startTime: payload.startTime,
@@ -200,16 +227,51 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
         <List>
           {categories.map((c) => (
-            <CategoryRow key={c.id} $color={c.color}>
+            <CategoryRow key={c.id} $color={c.color ?? "var(--color-surface)"}>
               <div className="left">
                 <Checkbox
-                  checked={(props.selectedCategoryIds?.[c.id] ?? localCategorySelection[c.id]) ?? true}
+                  checked={
+                    props.selectedCategoryIds?.[c.id] ??
+                    localCategorySelection[c.id] ??
+                    true
+                  }
                   onChange={(e) => onToggleCategory(c.id, e.target.checked)}
                 />
                 <span className="dot" />
                 <span className="name">{c.label}</span>
               </div>
               <span className="count">{countsByCategory[c.id] ?? 0}</span>
+            </CategoryRow>
+          ))}
+        </List>
+      </Block>
+
+      <div style={{ height: 10 }} />
+
+      <Block>
+        <BlockHeader>
+          <div className="label">Statuses</div>
+        </BlockHeader>
+
+        <List>
+          {(props.statuses ?? []).map((s, idx) => (
+            <CategoryRow
+              key={s.id}
+              $color={getStatusColor(s.code) ?? colorFromId(s.id, idx)}
+            >
+              <div className="left">
+                <Checkbox
+                  checked={
+                    props.selectedStatusIds?.[s.id] ??
+                    localStatusSelection[s.id] ??
+                    true
+                  }
+                  onChange={(e) => onToggleStatus(s.id, e.target.checked)}
+                />
+                <span className="dot" />
+                <span className="name">{s.label}</span>
+              </div>
+              <span className="count">{props.statusCounts?.[s.id] ?? 0}</span>
             </CategoryRow>
           ))}
         </List>
@@ -223,9 +285,11 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
           <List>
             {nextSchedules.map((n) => (
               <NextCard key={n.id}>
-                <div className="time">{dayjs(n.start).format('HH:mm')}</div>
-                <div className="title">{n.title ?? 'Untitled'}</div>
-                <div className="meta">{n.startsIn ?? `${n.startsInMinutes} minutes`}</div>
+                <div className="time">{dayjs(n.start).format("HH:mm")}</div>
+                <div className="title">{n.title ?? "Untitled"}</div>
+                <div className="meta">
+                  {n.startsIn ?? `${n.startsInMinutes} minutes`}
+                </div>
               </NextCard>
             ))}
           </List>
@@ -235,7 +299,11 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
       <ScheduleEventModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        categories={categories}
+        categories={categories.map((c) => ({
+          id: c.id,
+          label: c.label,
+          color: c.color ?? "var(--color-surface)",
+        }))}
         initialDate={selectedDate.format("YYYY-MM-DD")}
         onConfirm={handleCreate}
         availableServices={props.availableServices}

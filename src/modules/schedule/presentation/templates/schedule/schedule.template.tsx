@@ -28,6 +28,9 @@ type ScheduleTemplateProps = {
   onToggleCategory?: (id: string, checked: boolean) => void;
   nextSchedules?: import("@modules/schedule/services/schedules-api").NextScheduleItem[] | null;
   statuses?: import("@modules/schedule/services/schedules-api").ScheduleStatus[] | null;
+  statusCounts?: Record<string, number> | null;
+  selectedStatusIds?: Record<string, boolean> | null;
+  onToggleStatus?: (id: string, checked: boolean) => void;
 };
 
 export function ScheduleTemplate(props: ScheduleTemplateProps) {
@@ -60,6 +63,10 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   selectedCategoryIds={props.selectedCategoryIds}
                   onToggleCategory={props.onToggleCategory}
                   nextSchedules={props.nextSchedules}
+                  statuses={props.statuses}
+                  statusCounts={props.statusCounts}
+                  selectedStatusIds={props.selectedStatusIds}
+                  onToggleStatus={props.onToggleStatus}
                 />
               </SidebarCard>
 
