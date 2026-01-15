@@ -153,6 +153,16 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
       services.push({ id: "inventory", title: "Inventory", subtitle: "Manage stock and supplies", icon: mapIcon("inventory") });
     }
 
+    // Ensure people (staff/team) module card is available in the quick modules section.
+    const hasPeople = services.some((s) => {
+      const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
+      return key.includes("people") || key.includes("team") || key.includes("staff");
+    });
+
+    if (!hasPeople) {
+      services.push({ id: "people", title: "People", subtitle: "Manage staff and team", icon: mapIcon("users") });
+    }
+
     const ws = companyService.getWorkspaceValue();
     const companyName =
       // prefer explicit name field if present

@@ -10,7 +10,15 @@ export const inventoryStackRoutes: RouteObject[] = [
     id: "inventory",
     path: "/inventory",
     children: [
-      // root path intentionally left empty or can redirect to /inventory/home via router if desired
+      // make Inventory Home the default for `/inventory`
+      {
+        index: true,
+        element: (
+          <React.Suspense fallback={null}>
+            <InventoryHomePage />
+          </React.Suspense>
+        ),
+      },
       {
         id: "inventory.categories",
         path: "categories",

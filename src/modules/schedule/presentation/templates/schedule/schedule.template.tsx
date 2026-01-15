@@ -13,7 +13,6 @@ import {
 
 import { ScheduleCalendar } from "../../components/schedule-calendar/schedule-calendar.component";
 import { ScheduleSidebar } from "../../components/schedule-sidebar/schedule-sidebar.component";
-
 type ScheduleTemplateProps = {
   availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
   availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
@@ -33,17 +32,24 @@ type ScheduleTemplateProps = {
   onToggleStatus?: (id: string, checked: boolean) => void;
 };
 
+import React from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
+
 export function ScheduleTemplate(props: ScheduleTemplateProps) {
   return (
-    <BaseTemplate
-      content={
-        <>
-          <PageStack>
+    <>
+      <BaseTemplate
+        content={
+          <>
+            <PageStack>
             <TemplateTitleRow>
               <TemplateTitleBlock>
-                <Typography.Title level={2} style={{ margin: 0 }}>
-                  My Calendar
-                </Typography.Title>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <CalendarIcon size={24} />
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    My Calendar
+                  </Typography.Title>
+                </div>
                 <Typography.Text type="secondary">
                   Manage events, categories and your company agenda in one
                   place.
@@ -86,7 +92,8 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
             </Shell>
           </PageStack>
         </>
-      }
-    />
+          }
+      />
+    </>
   );
 }

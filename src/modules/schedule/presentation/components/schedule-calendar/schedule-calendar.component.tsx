@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Segmented, Typography, message } from "antd";
 import dayjs from "dayjs";
-import { ChevronLeft, ChevronRight, Search, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
 
 import Calendar from "@toast-ui/calendar";
 import type { EventObject } from "@toast-ui/calendar";
@@ -15,8 +15,6 @@ import type { ScheduleEvent } from "../../../interfaces/schedule-event.model";
 import {
   CalendarShell,
   ToolbarRow,
-  ToolbarLeft,
-  ToolbarRight,
   CalendarWrap,
   CalendarHost,
   ToastUIGlobalStyles,
@@ -36,8 +34,6 @@ import {
   buildCalendarOptions,
 } from "./schedule-calendar.factory";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
-
-type ViewMode = "month";
 
 type ScheduleCalendarProps = {
   availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
@@ -65,6 +61,7 @@ type ScheduleCalendarProps = {
   statuses?:
     | import("@modules/schedule/services/schedules-api").ScheduleStatus[]
     | null;
+  // internal view mode only; parent no longer controls it
 };
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
@@ -75,7 +72,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const instanceRef = useRef<Calendar | null>(null);
   const eventColorMapRef = useRef<Map<string, string>>(new Map());
 
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [viewMode, setViewMode] = useState<string>("month");
   const [headerLabel, setHeaderLabel] = useState<string>(
     dayjs().format("MMMM YYYY")
   );
@@ -737,6 +734,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     // ensure DOM nodes receive color styles
     applyEventDomColors();
 
+    // After (re)creating the calendar, ensure events for the current range are loaded
+    try {
+      void loadMonthEventsFromInstance();
+    } catch (err) {
+      void err;
+    }
+
     // Observe DOM mutations under host and reapply colors when event nodes are added/changed
     let observer: MutationObserver | null = null;
     try {
@@ -783,8 +787,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         void err;
       }
     };
-    // mount only
-  }, []);
+    // re-create calendar when `viewMode` changes so handlers/observers are attached correctly
+  }, [viewMode]);
+
+  // sync external viewMode prop into internal state so changes from parent take effect
+  // NOTE: viewMode is internal to this component; parent no longer controls it.
 
   // When calendar definitions change (colors/categories), try to update the existing instance
   useEffect(() => {
@@ -1192,34 +1199,55 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     <>
       <ToastUIGlobalStyles />
       <CalendarShell>
-        <ToolbarRow>
-          <ToolbarLeft>
-            <Typography.Title level={3} style={{ margin: 0 }}>
-              {headerLabel}
-            </Typography.Title>
+        <ToolbarRow style={{ flexDirection: "column", alignItems: "stretch" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <CalendarIcon size={20} />
+              <Typography.Title level={3} style={{ margin: 0 }}>
+                {headerLabel}
+              </Typography.Title>
+            </div>
 
-            <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
-            <Button icon={<ChevronRight size={18} />} onClick={handleNext} />
-            <Button onClick={handleToday}>Today</Button>
-          </ToolbarLeft>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+              <Input
+                value={search}
+                onChange={(ev) => setSearch(ev.target.value)}
+                placeholder="Search events..."
+                prefix={<Search size={16} />}
+                style={{ width: 220 }}
+              />
+            </div>
+          </div>
 
-          <ToolbarRight>
-            <Segmented
-              value={viewMode}
-              onChange={(v) => setViewMode(v as ViewMode)}
-              options={[{ label: "Month", value: "month" }]}
-            />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
+              <Button icon={<ChevronRight size={18} />} onClick={handleNext} />
+              <Button onClick={handleToday}>Today</Button>
+            </div>
 
-            <Input
-              value={search}
-              onChange={(ev) => setSearch(ev.target.value)}
-              placeholder="Search events..."
-              prefix={<Search size={16} />}
-              style={{ width: 220 }}
-            />
-
-            <Button icon={<Settings size={18} />} />
-          </ToolbarRight>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+              <div
+                style={{
+                  borderRadius: "var(--radius-sm)",
+                  overflow: "hidden",
+                  boxSizing: "border-box",
+                  padding: 2,
+                  background: "transparent",
+                }}
+              >
+                <Segmented
+                  value={viewMode}
+                  onChange={(v) => setViewMode(String(v))}
+                  options={[
+                    { label: "Month", value: "month" },
+                    { label: "Week", value: "week" },
+                    { label: "Day", value: "day" },
+                  ]}
+                />
+              </div>
+            </div>
+          </div>
         </ToolbarRow>
 
         <CalendarWrap ref={wrapRef}>

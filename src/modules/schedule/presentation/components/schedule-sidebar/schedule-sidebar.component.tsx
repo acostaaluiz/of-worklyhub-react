@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button, Checkbox } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
-import { Plus } from "lucide-react";
+import { Plus, Tag, CheckSquare } from "lucide-react";
 
 import { useScheduleApi } from "../../../services/schedule.service";
 
@@ -221,7 +221,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
       <Block>
         <BlockHeader>
-          <div className="label">Categories</div>
+          <div className="label"><Tag size={14} style={{ marginRight: 8 }} />Categories</div>
           <Button size="small">Edit</Button>
         </BlockHeader>
 
@@ -250,7 +250,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
       <Block>
         <BlockHeader>
-          <div className="label">Statuses</div>
+          <div className="label"><CheckSquare size={14} style={{ marginRight: 8 }} />Statuses</div>
         </BlockHeader>
 
         <List>

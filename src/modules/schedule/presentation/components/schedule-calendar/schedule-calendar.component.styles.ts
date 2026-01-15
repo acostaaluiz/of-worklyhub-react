@@ -36,14 +36,58 @@ export const ToolbarRight = styled.div`
 
   .ant-segmented {
     height: 36px;
+    /* small internal padding so inner selected item can match outer rounding precisely */
     padding: 2px;
     border-radius: var(--radius-sm);
+    background: transparent;
   }
 
   .ant-segmented-item-label {
     height: 32px;
     line-height: 32px;
     padding-inline: 12px;
+  }
+
+  /* Make inner segmented items visually flush with outer container
+     - remove item radiuses by default
+     - apply radius only to first/last item labels so the rounded corners match
+  */
+  .ant-segmented-item {
+    border-radius: 0;
+    margin: 0;
+    overflow: visible;
+    background: transparent;
+    border: none;
+  }
+
+  .ant-segmented-item-label {
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0 !important;
+  }
+
+  /* Rounded corners only on extreme item labels so they visually match the outer radius */
+  .ant-segmented-item:first-child .ant-segmented-item-label {
+    border-top-left-radius: calc(var(--radius-sm) - 2px) !important;
+    border-bottom-left-radius: calc(var(--radius-sm) - 2px) !important;
+  }
+
+  .ant-segmented-item:last-child .ant-segmented-item-label {
+    border-top-right-radius: calc(var(--radius-sm) - 2px) !important;
+    border-bottom-right-radius: calc(var(--radius-sm) - 2px) !important;
+  }
+
+  /* Active/checked item styling: fill the inner area and remove borders so edges align exactly */
+  .ant-segmented-item-checked .ant-segmented-item-label {
+    background: var(--color-surface-2);
+    color: var(--color-text) !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   .ant-input-affix-wrapper {
