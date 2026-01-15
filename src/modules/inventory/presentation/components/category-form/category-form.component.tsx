@@ -12,16 +12,16 @@ export function CategoryFormComponent({ initial, onSubmit, submitting }: Props) 
   const [form] = Form.useForm();
   return (
     <Form form={form} layout="vertical" initialValues={{ active: true, ...initial }} onFinish={(v) => onSubmit(v as any)}>
-      <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
+      <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
 
-      <Form.Item name="description" label="Descrição">
+      <Form.Item name="description" label="Description">
         <Input.TextArea rows={2} />
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={submitting}>Salvar</Button>
+        <Button type="primary" htmlType="submit" loading={submitting}>Save</Button>
       </Form.Item>
     </Form>
   );

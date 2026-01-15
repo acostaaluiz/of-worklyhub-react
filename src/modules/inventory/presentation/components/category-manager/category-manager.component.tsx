@@ -27,22 +27,22 @@ export function CategoryManagerComponent() {
   }, [load]);
 
   async function handleCreate(payload: Omit<CategoryModel, "id" | "createdAt">) {
-    try {
-      await InventoryService.createCategory(payload);
-      message.success("Categoria criada");
-      load();
-    } catch (e) {
-      message.error("Erro ao criar categoria");
-    }
+      try {
+        await InventoryService.createCategory(payload);
+        message.success("Category created");
+        load();
+      } catch (e) {
+        message.error("Failed to create category");
+      }
   }
 
   async function handleDeactivate(c: CategoryModel) {
     try {
       await InventoryService.deactivateCategory(c.id);
-      message.success("Categoria inativada");
+      message.success("Category deactivated");
       load();
     } catch (e) {
-      message.error("Erro ao inativar categoria");
+      message.error("Failed to deactivate category");
     }
   }
 
@@ -50,17 +50,17 @@ export function CategoryManagerComponent() {
     if (!editing) return;
     try {
       await InventoryService.updateCategory(editing.id, payload);
-      message.success("Categoria atualizada");
+      message.success("Category updated");
       setEditing(null);
       load();
     } catch (e) {
-      message.error("Erro ao atualizar categoria");
+      message.error("Failed to update category");
     }
   }
 
   return (
     <Card bordered={false} loading={loading}>
-      <h3>Categorias</h3>
+      <h3>Categories</h3>
       <CategoryFormComponent onSubmit={handleCreate} />
       <Divider />
       <CategoryListComponent categories={categories} onEdit={setEditing} onDeactivate={handleDeactivate} />

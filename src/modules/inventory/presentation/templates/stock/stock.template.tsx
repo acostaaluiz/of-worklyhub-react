@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function StockTemplate(props: Props) {
-  const { title = "Estoque", children, showFilter = false, filterValue, onFilterChange, categories } = props;
+  const { title = "Stock", children, showFilter = false, filterValue, onFilterChange, categories } = props;
 
   return (
     <BaseTemplate

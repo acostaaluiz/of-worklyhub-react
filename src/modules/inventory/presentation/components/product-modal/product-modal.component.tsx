@@ -64,7 +64,7 @@ export class ProductModal extends BaseComponent<Props, State> {
       const dupMessage = details?.error?.message ?? details?.message;
 
       if (status === 409 && code === "DUPLICATE_NAME") {
-        const msg = dupMessage ?? "Já existe um produto com este nome. Por favor escolha outro nome.";
+        const msg = dupMessage ?? "A product with this name already exists. Please choose another name.";
         message.error(msg);
         try {
           this.formRef.current?.setFields([{ name: "name", errors: [msg] }]);
@@ -74,7 +74,7 @@ export class ProductModal extends BaseComponent<Props, State> {
         return;
       }
 
-      message.error((err as any)?.message ?? "Falha ao salvar item");
+      message.error((err as any)?.message ?? "Failed to save item");
       throw err;
     }
   };
@@ -83,16 +83,16 @@ export class ProductModal extends BaseComponent<Props, State> {
     const { open, onClose, initial } = this.props;
     return (
       <ModalOverrides>
-        <Modal
-          open={open}
-          onCancel={onClose}
-          footer={null}
-          centered
-          width={720}
-          closeIcon={<CloseOutlined />}
-          className="wh-product-modal"
-          title={<Typography.Title level={4} style={{ margin: 0 }}>{initial ? "Editar Produto" : "Novo Produto"}</Typography.Title>}
-        >
+          <Modal
+            open={open}
+            onCancel={onClose}
+            footer={null}
+            centered
+            width={720}
+            closeIcon={<CloseOutlined />}
+            className="wh-product-modal"
+            title={<Typography.Title level={4} style={{ margin: 0 }}>{initial ? "Edit Product" : "New Product"}</Typography.Title>}
+          >
           <div style={{ paddingTop: "var(--space-3)" }}>
             <Form
               ref={this.formRef}
@@ -102,7 +102,7 @@ export class ProductModal extends BaseComponent<Props, State> {
             >
               <Row gutter={16}>
                 <Col span={12}>
-                  <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
+                  <Form.Item name="name" label="Name" rules={[{ required: true }]}>
                     <Input />
                   </Form.Item>
 
@@ -110,16 +110,16 @@ export class ProductModal extends BaseComponent<Props, State> {
                     <Input />
                   </Form.Item>
 
-                  <Form.Item name="description" label="Descrição">
+                  <Form.Item name="description" label="Description">
                     <Input.TextArea rows={4} />
                   </Form.Item>
 
-                  <Form.Item name="priceCents" label="Preço (centavos)">
+                  <Form.Item name="priceCents" label="Price (cents)">
                     <InputNumber style={{ width: "100%" }} min={0} />
                   </Form.Item>
 
-                  <Form.Item name="categoryId" label="Categoria">
-                    <Select allowClear placeholder="Selecione uma categoria">
+                  <Form.Item name="categoryId" label="Category">
+                    <Select allowClear placeholder="Select a category">
                       {(this.props as any).categories?.map((c: any) => (
                         <Select.Option key={c.id} value={c.id}>
                           {c.name}
@@ -130,36 +130,36 @@ export class ProductModal extends BaseComponent<Props, State> {
                 </Col>
 
                 <Col span={12}>
-                  <Form.Item name="stock" label="Estoque inicial">
+                  <Form.Item name="stock" label="Initial stock">
                     <InputNumber style={{ width: "100%" }} min={0} />
                   </Form.Item>
 
-                  <Form.Item name="barcode" label="Código de barras">
+                  <Form.Item name="barcode" label="Barcode">
                     <Input />
                   </Form.Item>
 
-                  <Form.Item name="costCents" label="Custo (centavos)">
+                  <Form.Item name="costCents" label="Cost (cents)">
                     <InputNumber style={{ width: "100%" }} min={0} />
                   </Form.Item>
 
-                  <Form.Item name="minStock" label="Estoque mínimo">
+                  <Form.Item name="minStock" label="Minimum stock">
                     <InputNumber style={{ width: "100%" }} min={0} />
                   </Form.Item>
 
-                  <Form.Item name="location" label="Localização">
+                  <Form.Item name="location" label="Location">
                     <Input />
                   </Form.Item>
 
-                  <Form.Item name="active" label="Ativo" valuePropName="checked">
+                  <Form.Item name="active" label="Active" valuePropName="checked">
                     <Switch />
                   </Form.Item>
                 </Col>
               </Row>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                <Button onClick={() => this.props.onClose()}>Cancelar</Button>
+                <Button onClick={() => this.props.onClose()}>Cancel</Button>
                 <Button type="primary" htmlType="submit" loading={this.state.submitting}>
-                  Salvar
+                  Save
                 </Button>
               </div>
             </Form>

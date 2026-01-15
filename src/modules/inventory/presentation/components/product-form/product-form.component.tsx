@@ -32,7 +32,7 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
   }, [service]);
   return (
     <Form form={form} layout="vertical" initialValues={{ stock: 0, unit: "un", active: true, ...initial }} onFinish={(v) => onSubmit(v as any)}>
-      <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
+      <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>
 
@@ -40,16 +40,16 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         <Input />
       </Form.Item>
 
-      <Form.Item name="description" label="Descrição">
+      <Form.Item name="description" label="Description">
         <Input.TextArea rows={3} />
       </Form.Item>
 
-      <Form.Item name="priceCents" label="Preço (centavos)">
+      <Form.Item name="priceCents" label="Price (cents)">
         <InputNumber style={{ width: "100%" }} min={0} />
       </Form.Item>
 
-      <Form.Item name="categoryId" label="Categoria">
-        <Select allowClear placeholder="Selecione uma categoria">
+      <Form.Item name="categoryId" label="Category">
+        <Select allowClear placeholder="Select a category">
           {categories.map((c) => (
             <Select.Option key={c.id} value={c.id}>
               {c.name}
@@ -58,32 +58,32 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         </Select>
       </Form.Item>
 
-      <Form.Item name="stock" label="Estoque inicial">
+      <Form.Item name="stock" label="Initial stock">
         <InputNumber style={{ width: "100%" }} min={0} />
       </Form.Item>
       
-      <Form.Item name="barcode" label="Código de barras">
+      <Form.Item name="barcode" label="Barcode">
         <Input />
       </Form.Item>
 
-      <Form.Item name="costCents" label="Custo (centavos)">
+      <Form.Item name="costCents" label="Cost (cents)">
         <InputNumber style={{ width: "100%" }} min={0} />
       </Form.Item>
 
-      <Form.Item name="minStock" label="Estoque mínimo">
+      <Form.Item name="minStock" label="Minimum stock">
         <InputNumber style={{ width: "100%" }} min={0} />
       </Form.Item>
 
-      <Form.Item name="location" label="Localização">
+      <Form.Item name="location" label="Location">
         <Input />
       </Form.Item>
 
-      <Form.Item name="active" label="Ativo" valuePropName="checked">
+      <Form.Item name="active" label="Active" valuePropName="checked">
         <Switch />
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={submitting}>Salvar</Button>
+        <Button type="primary" htmlType="submit" loading={submitting}>Save</Button>
       </Form.Item>
     </Form>
   );

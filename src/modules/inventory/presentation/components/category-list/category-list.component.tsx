@@ -10,16 +10,16 @@ type Props = {
 
 export function CategoryListComponent({ categories, onEdit, onDeactivate }: Props) {
   const cols = [
-    { title: "Nome", dataIndex: "name", key: "name" },
-    { title: "Descrição", dataIndex: "description", key: "description" },
-    { title: "Ativo", dataIndex: "active", key: "active", render: (v: boolean) => (v ? "Sim" : "Não") },
+    { title: "Name", dataIndex: "name", key: "name" },
+    { title: "Description", dataIndex: "description", key: "description" },
+    { title: "Active", dataIndex: "active", key: "active", render: (v: boolean) => (v ? "Yes" : "No") },
     {
-      title: "Ações",
+      title: "Actions",
       key: "actions",
       render: (_: any, record: CategoryModel) => (
         <Space>
-          <Button onClick={() => onEdit(record)}>Editar</Button>
-          <Button danger onClick={() => onDeactivate(record)}>Inativar</Button>
+          <Button onClick={() => onEdit(record)}>Edit</Button>
+          <Button danger onClick={() => onDeactivate(record)}>Deactivate</Button>
         </Space>
       ),
     },
