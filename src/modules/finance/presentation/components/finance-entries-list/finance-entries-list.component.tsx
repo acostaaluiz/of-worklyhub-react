@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { loadingService } from "@shared/ui/services/loading.service";
-import { List, Card, Button, Typography, Popconfirm, message } from "antd";
+import { Card, Button, Typography, message } from "antd";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
 
 export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
   const api = useFinanceApi();
   const [items, setItems] = useState<any[]>([]);
+  const [page, setPage] = useState<number>(0);
+  const pageSize = 3;
 
   async function load() {
     try {
@@ -24,47 +26,74 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceId]);
 
-  async function handleDelete(id: string) {
-    try {
-      loadingService.show();
-      const ok = await api.removeEntry(id);
-      if (ok) {
-        message.success("Entry removed");
-        await load();
-      } else {
-        message.error("Could not remove entry");
-      }
-    } catch (err) {
-      message.error("Could not remove entry");
-    } finally {
-      loadingService.hide();
-    }
+  // Helpers
+  function stripCodeFromDescription(desc?: string) {
+    if (!desc) return "";
+    // remove UUIDs (common pattern) and long hex-like tokens
+    return desc.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "").trim();
   }
 
+  function formatDateToUS(d?: string) {
+    if (!d) return "";
+    const dt = new Date(d);
+    if (Number.isNaN(dt.getTime())) return d;
+    return dt.toLocaleDateString("en-US");
+  }
+
+  const totalPages = Math.ceil(items.length / pageSize);
+  const start = page * pageSize;
+  const visibleItems = items.slice(start, start + pageSize);
+
   return (
-    <List
-      dataSource={items}
-      renderItem={(it) => (
-        <List.Item>
-          <Card className="surface" style={{ width: "100%", minHeight: 110, padding: '18px' }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
+    <div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'stretch', marginBottom: 12 }}>
+        {visibleItems.map((it) => (
+          <Card key={it.id} className="surface" style={{ width: '100%', minHeight: 100, padding: '10px' }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <div style={{ flex: '1 1 auto', minWidth: 0 }}>
-                <Typography.Text strong style={{ display: 'block', fontSize: 16 }}>{it.description ?? "Entry"}</Typography.Text>
-                <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{it.date}</div>
+                <Typography.Text strong style={{ display: 'block', fontSize: 16 }}>{stripCodeFromDescription(it.description) ?? "Entry"}</Typography.Text>
+                <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{formatDateToUS(it.date)}</div>
               </div>
               <div style={{ textAlign: "right", minWidth: 120 }}>
-                <div style={{ fontWeight: 600, fontSize: 16 }}>R$ {Number(it.amount ?? 0).toFixed(2)}</div>
+                {(() => {
+                  const amountNum = Number(it.amount ?? 0);
+                  const isNegative = amountNum < 0;
+                  const formatted = Math.abs(amountNum).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                  let color = 'inherit';
+                  if (it.type === 'income') color = 'var(--color-success)';
+                  else if (it.type === 'expense') color = 'var(--color-warning)';
+                  else if (isNegative) color = 'var(--color-danger)';
+                  return (
+                    <div style={{ fontWeight: 600, fontSize: 16 }}>
+                      {isNegative && <span style={{ color: 'var(--color-danger)', marginRight: 4 }}>-</span>}
+                      <span style={{ color }}>R$ {formatted}</span>
+                    </div>
+                  );
+                })()}
+
                 <div style={{ marginTop: 8 }}>
-                  <Popconfirm title="Remove entry?" onConfirm={() => handleDelete(it.id)}>
-                    <Button size="small" danger>Remove</Button>
-                  </Popconfirm>
+                  <Button size="small" type="primary" shape="round" onClick={() => message.info('Entry info')}>Info</Button>
                 </div>
               </div>
             </div>
           </Card>
-        </List.Item>
-      )}
-    />
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 8 }}>
+        {page > 0 && (
+          <Button onClick={() => setPage(page - 1)}>VOLTAR</Button>
+        )}
+
+        {page !== 0 && (
+          <Button onClick={() => setPage(0)}>INÍCIO</Button>
+        )}
+
+        {page < totalPages - 1 && (
+          <Button type="primary" onClick={() => setPage(page + 1)}>VER MAIS</Button>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -80,6 +80,12 @@ export class SchedulesApi extends BaseHttpService {
     return res?.data ?? [];
   }
 
+  async todaySchedules(workspaceId: string): Promise<ScheduleServiceItem[]> {
+    const q: Record<string, unknown> = { workspaceId };
+    const res = await this.get<ScheduleListResponse>('/schedule/internal/schedules/today', q);
+    return res?.data ?? [];
+  }
+
   async getStatuses(): Promise<ScheduleStatus[]> {
     const res = await this.get<ScheduleStatusesResponse>('/schedule/internal/statuses');
     return res?.data ?? [];

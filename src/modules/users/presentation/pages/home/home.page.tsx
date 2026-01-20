@@ -9,6 +9,7 @@ import { usersService } from "@modules/users/services/user.service";
 import { applicationService } from "@core/application/application.service";
 import { companyService } from "@modules/company/services/company.service";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
+import { FinanceService } from "@modules/finance/services/finance.service";
 import { loadingService } from "@shared/ui/services/loading.service";
 import { message } from "antd";
 import { navigateTo } from "@core/navigation/navigation.service";
@@ -23,6 +24,7 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
   private async computeAndSetMetrics(): Promise<void> {
     try {
       const schedule = new ScheduleService();
+      const finance = new FinanceService();
       const now = new Date();
       const pad = (n: number) => n.toString().padStart(2, "0");
       const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
@@ -31,8 +33,11 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
       week.setDate(now.getDate() + 7);
       const weekStr = `${week.getFullYear()}-${pad(week.getMonth() + 1)}-${pad(week.getDate())}`;
 
-      const eventsToday = await schedule.getEvents({ from: todayStr, to: todayStr });
-      const eventsWeek = await schedule.getEvents({ from: todayStr, to: weekStr });
+      const ws = companyService.getWorkspaceValue();
+      const workspaceId = (ws as any)?.workspaceId ?? (ws as any)?.id ?? undefined;
+
+      const eventsToday = await schedule.getEvents({ from: todayStr, to: todayStr, workspaceId });
+      const eventsWeek = await schedule.getEvents({ from: todayStr, to: weekStr, workspaceId });
 
       const appointmentsToday = Array.isArray(eventsToday) ? eventsToday.length : 0;
 
@@ -46,7 +51,16 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
         nextAppointment = { title: first.title, date: first.date, time: first.startTime };
       }
 
-      this.setSafeState({ metrics: { appointmentsToday, revenueThisMonthCents: null, nextAppointment } });
+      // try to compute revenue for current month
+      let revenueThisMonthCents: number | null = null;
+      try {
+        const rev = await finance.getRevenueForMonth(workspaceId ?? null);
+        revenueThisMonthCents = typeof rev === "number" ? rev : null;
+      } catch (e) {
+        revenueThisMonthCents = null;
+      }
+
+      this.setSafeState({ metrics: { appointmentsToday, revenueThisMonthCents, nextAppointment } });
     } catch (e) {
       console.debug("metrics fetch failed", e);
     }
@@ -74,37 +88,10 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
       const services = await applicationService.fetchServices();
       this.setSafeState({ services: services ?? [] });
 
-      // Fetch schedule events to compute simple metrics (appointments today, next appointment)
+      // compute metrics (schedule + finance)
       try {
-        const schedule = new ScheduleService();
-        const now = new Date();
-        const pad = (n: number) => n.toString().padStart(2, "0");
-        const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-
-        const week = new Date(now);
-        week.setDate(now.getDate() + 7);
-        const weekStr = `${week.getFullYear()}-${pad(week.getMonth() + 1)}-${pad(week.getDate())}`;
-
-        const eventsToday = await schedule.getEvents({ from: todayStr, to: todayStr });
-        const eventsWeek = await schedule.getEvents({ from: todayStr, to: weekStr });
-
-        const appointmentsToday = Array.isArray(eventsToday) ? eventsToday.length : 0;
-
-        // find next upcoming event in week (prefer nearest date/time)
-        let nextAppointment;
-        if (Array.isArray(eventsWeek) && eventsWeek.length > 0) {
-          // naive sort by date+time
-          const sorted = eventsWeek.slice().sort((a, b) => {
-            if (a.date !== b.date) return a.date < b.date ? -1 : 1;
-            return (a.startTime ?? "") < (b.startTime ?? "") ? -1 : 1;
-          });
-          const first = sorted[0];
-          nextAppointment = { title: first.title, date: first.date, time: first.startTime };
-        }
-
-        this.setSafeState({ metrics: { appointmentsToday, revenueThisMonthCents: null, nextAppointment } });
+        await this.computeAndSetMetrics();
       } catch (e) {
-        // ignore metrics errors
         console.debug("metrics fetch failed", e);
       }
 

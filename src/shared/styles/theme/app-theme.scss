@@ -26,6 +26,14 @@
   --icon-color: currentColor;
   --icon-color-muted: var(--color-text-muted);
 
+  /* semantic colors */
+  --color-success: #10b981; /* green */
+  --on-success: #ffffff;
+  --color-warning: #f59e0b; /* yellow */
+  --on-warning: #071318;
+  --color-danger: #ef4444; /* red */
+  --on-danger: #ffffff;
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.12);
   --shadow-elevated: 0 18px 60px rgba(15, 23, 42, 0.16);
@@ -97,6 +105,14 @@
     );
 
   --color-glass-surface: rgba(15, 23, 42, 0.03);
+
+  /* semantic colors (light) */
+  --color-success: #059669;
+  --on-success: #ffffff;
+  --color-warning: #b45309;
+  --on-warning: #ffffff;
+  --color-danger: #dc2626;
+  --on-danger: #ffffff;
 }
 
 :root[data-theme="dark"] {
@@ -164,6 +180,14 @@
     );
 
   --color-glass-surface: rgba(230, 241, 244, 0.05);
+
+  /* semantic colors (dark) */
+  --color-success: #2dd4bf;
+  --on-success: #071318;
+  --color-warning: #fbbf24;
+  --on-warning: #071318;
+  --color-danger: #ff6b6b;
+  --on-danger: #071318;
 }
 
 html,

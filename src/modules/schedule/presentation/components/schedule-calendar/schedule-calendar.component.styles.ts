@@ -189,10 +189,97 @@ export const CalendarHost = styled.div`
     font-weight: 800;
   }
 
+  /* Collapse non-time panels (milestone / task / allday) in week view so only the time grid is visible
+     Use height:0 and visibility:hidden instead of display:none to preserve layout calculations. */
+  .toastui-calendar-week-view {
+    .toastui-calendar-panel:not(.toastui-calendar-time) {
+      height: 0 !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .toastui-calendar-panel:not(.toastui-calendar-time) * {
+      display: none !important;
+    }
+  }
+
+  /* Ensure the time panel fills the available space when other panels are hidden */
+  .toastui-calendar-week-view {
+    .toastui-calendar-panel.toastui-calendar-time {
+      display: block !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      overflow: hidden !important;
+    }
+
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-panel-grid-wrapper,
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-panel-grid,
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-panel-event-wrapper,
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-timegrid,
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-timegrid .toastui-calendar-timegrid-scroll-area {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+
+    /* Ensure inner columns/scroll area fill available space and allow internal scrolling */
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-timegrid {
+      height: 100% !important;
+      min-height: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-timegrid .toastui-calendar-columns {
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+
+    .toastui-calendar-panel.toastui-calendar-time .toastui-calendar-panel-event-wrapper {
+      height: 100% !important;
+      min-height: 0 !important;
+      padding-bottom: 64px !important; /* avoid events being cut off by footer/bottom border */
+      padding-top: 12px !important;
+      overflow: auto !important;
+      box-sizing: border-box !important;
+    }
+
+    /* Reduce the fixed min-height coming from the library to prevent extra bottom overflow */
+    .toastui-calendar-timegrid {
+      /* ensure a usable vertical spacing for week rows on typical desktop screens */
+        min-height: 1100px !important;
+    }
+
+    /* Make individual hour rows slightly taller so events are readable and not visually squashed */
+      .toastui-calendar-timegrid .toastui-calendar-timegrid-hour-rows {
+        min-height: 1100px !important;
+        height: 100% !important;
+      }
+
+    /* Ensure weekday events have a reasonable min-height and padding */
+      .toastui-calendar-weekday-event,
+      .toastui-calendar-weekday-schedule .tui-schedule,
+      .toastui-calendar-weekday .toastui-calendar-weekday-event {
+        min-height: 32px !important;
+        padding: 6px 8px !important;
+        box-sizing: border-box !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+  }
+
   .toastui-calendar-grid-selection,
   .toastui-calendar-selection {
     background: var(--toastui-calendar-glass);
     border-color: var(--toastui-calendar-primary);
+  }
+
+  /* Ensure the left-hand hour labels are high-contrast (white) */
+  .toastui-calendar-timegrid-time-column .toastui-calendar-timegrid-time {
+    color: var(--toastui-calendar-text) !important;
   }
 
   .toastui-calendar-detail-popup,

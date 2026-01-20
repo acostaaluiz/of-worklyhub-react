@@ -1,6 +1,6 @@
 import React from "react";
 import { loadingService } from "@shared/ui/services/loading.service";
-import { Card, Statistic, Row, Col } from "antd";
+import { Card, Row, Col } from "antd";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
 
 export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
@@ -25,21 +25,34 @@ export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
   const despesa = entries.filter(e => e.type === "expense").reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
   const lucro = receita - despesa;
 
+  function formatBR(val: number) {
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
       <Col span={8}>
         <Card bordered={false} style={{ minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Statistic title={<span style={{ fontSize: 12 }}>Income</span>} value={receita} precision={2} prefix="R$" valueStyle={{ fontSize: 18 }} />
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12 }}>Income</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-success)' }}>R$ {formatBR(receita)}</div>
+          </div>
         </Card>
       </Col>
       <Col span={8}>
         <Card bordered={false} style={{ minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Statistic title={<span style={{ fontSize: 12 }}>Expense</span>} value={despesa} precision={2} prefix="R$" valueStyle={{ fontSize: 18 }} />
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12 }}>Expense</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-warning)' }}>R$ {formatBR(despesa)}</div>
+          </div>
         </Card>
       </Col>
       <Col span={8}>
         <Card bordered={false} style={{ minHeight: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Statistic title={<span style={{ fontSize: 12 }}>Profit</span>} value={lucro} precision={2} prefix="R$" valueStyle={{ fontSize: 18, whiteSpace: 'nowrap' }} />
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12 }}>Profit</div>
+            <div style={{ fontSize: 18, fontWeight: 600, whiteSpace: 'nowrap', color: lucro < 0 ? 'var(--color-danger)' : 'inherit' }}>R$ {formatBR(lucro)}</div>
+          </div>
         </Card>
       </Col>
     </Row>

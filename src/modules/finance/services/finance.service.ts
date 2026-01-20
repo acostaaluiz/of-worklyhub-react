@@ -126,6 +126,17 @@ export class FinanceService {
     }
   }
 
+  async getRevenueForMonth(workspaceId?: string | null): Promise<number | null> {
+    try {
+      // prefer backend revenue endpoint with period=month
+      const res = await this.api.getRevenue(workspaceId ?? undefined, { period: "month" });
+      if (!res || typeof res.revenue_cents !== "number") return null;
+      return Math.round(res.revenue_cents);
+    } catch (err) {
+      return null;
+    }
+  }
+
   private buildPoints(from: dayjs.Dayjs, to: dayjs.Dayjs, groupBy: "day" | "week" | "month") {
     const points: Array<{ label: string; seed: number }> = [];
 

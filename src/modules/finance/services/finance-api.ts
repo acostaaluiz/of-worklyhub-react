@@ -29,6 +29,29 @@ export class FinanceApi extends BaseHttpService {
     if (workspaceId) headers["x-workspace-id"] = workspaceId;
     return this.get<unknown[]>(`/finance/entries`, query, headers).catch(() => []);
   }
+
+  async getRevenue(workspaceId?: string, params?: { period?: string; start?: string; end?: string }): Promise<{ revenue_cents: number; period?: string | null; start?: string | null; end?: string | null } | null> {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (workspaceId) headers["x-workspace-id"] = workspaceId;
+
+    const query: Record<string, unknown> = {};
+    if (params?.period) query.period = params.period;
+    if (params?.start) query.start = params.start;
+    if (params?.end) query.end = params.end;
+
+    try {
+      const res = await this.get<{ revenue_cents: number; period?: string | null; start?: string | null; end?: string | null }>(`/finance/revenue`, query, headers);
+      return res ?? null;
+    } catch (err) {
+      // fallback to internal path
+      try {
+        const res2 = await this.get<{ revenue_cents: number; period?: string | null; start?: string | null; end?: string | null }>(`/finance/internal/revenue`, query, headers);
+        return res2 ?? null;
+      } catch (e) {
+        return null;
+      }
+    }
+  }
 }
 
 export default FinanceApi;

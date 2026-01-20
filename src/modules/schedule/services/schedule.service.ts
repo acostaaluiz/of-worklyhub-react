@@ -170,8 +170,67 @@ export class ScheduleService {
   }
 
   async getEvents(params: GetEventsParams): Promise<ScheduleEvent[]> {
-    const { from, to, categoryIds } = params;
+    const { from, to, categoryIds, workspaceId } = params;
 
+    // if workspaceId provided try backend first
+    if (workspaceId) {
+      try {
+        // use dedicated today endpoint when requesting a single date
+        const useTodayEndpoint = from === to;
+        const rows = useTodayEndpoint ? await schedulesApi.todaySchedules(workspaceId) : await schedulesApi.listSchedules(workspaceId, { from, to });
+
+        const mapped = (rows ?? []).map((r) => r as Record<string, unknown>).map((s) => {
+          const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
+          const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
+
+          const pad = (n: number) => n.toString().padStart(2, "0");
+          let date = "";
+          let startTime = "09:00";
+          let endTime = "09:30";
+          if (startIso) {
+            const d = new Date(startIso);
+            date = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+            startTime = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+          }
+          if (endIso) {
+            const e = new Date(endIso);
+            endTime = `${pad(e.getUTCHours())}:${pad(e.getUTCMinutes())}`;
+          }
+
+          return {
+            id: String(s["id"] ?? ""),
+            title: (s["title"] as string) ?? "Untitled",
+            date,
+            startTime,
+            endTime,
+            categoryId:
+              (s["categoryId"] as string) ??
+              ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
+              (s["calendarId"] as string) ??
+              undefined,
+            category: (s["category"] as Record<string, unknown> | null) ?? null,
+            categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
+            description: (s["description"] as string) ?? undefined,
+            status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
+            workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+          } as ScheduleEvent;
+        });
+
+        const filtered = mapped.filter((e) => {
+          if (!e.date) return false;
+          const inRange = e.date >= from && e.date <= to;
+          const allowedCategory = !categoryIds || categoryIds.length === 0 ? true : categoryIds.includes(e.categoryId ?? "");
+          return inRange && allowedCategory;
+        });
+
+        return filtered as ScheduleEvent[];
+      } catch (err) {
+        // fallback to local in-memory DB
+      }
+    }
+
+    // fallback to local mock events
     const fromKey = from;
     const toKey = to;
 

@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Row, Col } from "antd";
 import { Calendar, DollarSign, Clock } from "lucide-react";
+import { formatMoney } from "@core/utils/currency";
 
 type NextAppointment = { title?: string; date?: string; time?: string } | undefined;
 
@@ -11,10 +12,7 @@ type Props = {
 };
 
 export default function MetricsCards({ appointmentsToday, revenueThisMonthCents, nextAppointment }: Props) {
-  const formatMoney = (cents?: number | null) => {
-    if (cents == null) return "—";
-    return `R$ ${(cents / 100).toFixed(2)}`;
-  };
+  // use shared util for currency formatting
 
   return (
     <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
