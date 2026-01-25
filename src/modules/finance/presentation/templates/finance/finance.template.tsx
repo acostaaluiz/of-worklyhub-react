@@ -2,9 +2,8 @@ import { Typography } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 
-import { BaseTemplate } from "@shared/base/base.template";
-
 import {
+  FinanceTemplateShell,
   PageStack,
   TemplateTitleRow,
   TemplateTitleBlock,
@@ -13,14 +12,10 @@ import {
   DashboardGrid,
   GridSpan12,
   GridSpan6,
-  GridSpan4,
-  GridSpan8,
 } from "./finance.template.styles";
 import { FinanceFilters } from "../../components/finance-filters/finance-filters.component";
 import { FinanceKpiRow } from "../../components/finance-kpi-row/finance-kpi-row.component";
 import { CashflowTableWidget } from "../../components/widgets/cashflow-table/cashflow-table.widget";
-import { ExpensesBreakdownWidget } from "../../components/widgets/expenses-breakdown/expenses-breakdown.widget";
-import { ProfitTrendWidget } from "../../components/widgets/profit-trend/profit-trend.widget";
 import { RevenueTrendWidget } from "../../components/widgets/revenue-trend/revenue-trend.widget";
 import { TopServicesTableWidget } from "../../components/widgets/top-services-table/top-services-table.widget";
 
@@ -52,6 +47,7 @@ const emptyResponse = (): FinanceResponseModel => ({
 
 export function FinanceTemplate() {
   const service = useMemo(() => new FinanceService(), []);
+  const availableViews: FinanceView[] = ["overview", "revenue", "cashflow"];
 
   const [query, setQuery] = useState<FinanceQueryModel>(() => defaultQuery());
   const [view, setView] = useState<FinanceView>("overview");
@@ -62,6 +58,12 @@ export function FinanceTemplate() {
   useEffect(() => {
     setQuery((prev) => ({ ...prev, view }));
   }, [view]);
+
+  useEffect(() => {
+    if (!availableViews.includes(view)) {
+      setView(availableViews[0]);
+    }
+  }, [availableViews, view]);
 
   useEffect(() => {
     let alive = true;
@@ -83,11 +85,11 @@ export function FinanceTemplate() {
   }, [service, query]);
 
   const handleChangeQuery = (next: Partial<FinanceQueryModel>) => {
-    setQuery((prev: any) => ({ ...prev, ...next }));
+    setQuery((prev) => ({ ...prev, ...next }));
   };
 
   const handleRefresh = () => {
-    setQuery((prev: any) => ({ ...prev }));
+    setQuery((prev) => ({ ...prev }));
   };
 
   const handleChangeGroupBy = (groupBy: FinanceGroupBy) => {
@@ -99,7 +101,7 @@ export function FinanceTemplate() {
   };
 
   return (
-    <BaseTemplate
+    <FinanceTemplateShell
       content={
         <>
           <PageStack>
@@ -109,8 +111,8 @@ export function FinanceTemplate() {
                   Finance
                 </Typography.Title>
                 <Typography.Text type="secondary">
-                  Track revenue, expenses, profit and cashflow with stable,
-                  contained dashboards.
+                  Track revenue, services, and cashflow with the latest finance
+                  dashboard data.
                 </Typography.Text>
               </TemplateTitleBlock>
             </TemplateTitleRow>
@@ -122,6 +124,7 @@ export function FinanceTemplate() {
                 view={view}
                 groupBy={query.groupBy}
                 loading={loading}
+                availableViews={availableViews}
                 onChangePeriod={handleChangePeriod}
                 onChangeView={setView}
                 onChangeGroupBy={handleChangeGroupBy}
@@ -136,24 +139,14 @@ export function FinanceTemplate() {
               <DashboardGrid>
                 {view === "overview" && (
                   <>
-                    <GridSpan8>
+                    <GridSpan12>
                       <RevenueTrendWidget
                         className="surface"
                         series={data.revenueSeries}
                         loading={loading}
                         subtitle="Revenue trend for the selected period."
                       />
-                    </GridSpan8>
-
-                    <GridSpan4>
-                      <ExpensesBreakdownWidget
-                        className="surface"
-                        items={data.expensesByCategory}
-                        loading={loading}
-                        subtitle="How expenses are distributed."
-                      />
-                    </GridSpan4>
-
+                    </GridSpan12>
                     <GridSpan6>
                       <TopServicesTableWidget
                         className="surface"
@@ -162,7 +155,6 @@ export function FinanceTemplate() {
                         subtitle="Top services by revenue."
                       />
                     </GridSpan6>
-
                     <GridSpan6>
                       <CashflowTableWidget
                         className="surface"
@@ -201,42 +193,6 @@ export function FinanceTemplate() {
                         subtitle="Incoming/outgoing records impacting revenue."
                       />
                     </GridSpan6>
-                  </>
-                )}
-
-                {view === "expenses" && (
-                  <>
-                    <GridSpan6>
-                      <ExpensesBreakdownWidget
-                        className="surface"
-                        items={data.expensesByCategory}
-                        loading={loading}
-                        subtitle="Expense breakdown by category."
-                      />
-                    </GridSpan6>
-                    <GridSpan6>
-                      <CashflowTableWidget
-                        className="surface"
-                        items={data.cashflow}
-                        loading={loading}
-                        subtitle="Outgoing records and pending payments."
-                      />
-                    </GridSpan6>
-                  </>
-                )}
-
-                {view === "profit" && (
-                  <>
-                    <GridSpan12>
-                      <ProfitTrendWidget
-                        className="surface"
-                        revenue={data.revenueSeries}
-                        expenses={data.expensesSeries}
-                        profit={data.profitSeries}
-                        loading={loading}
-                        subtitle="Profit derived from revenue minus expenses."
-                      />
-                    </GridSpan12>
                   </>
                 )}
 

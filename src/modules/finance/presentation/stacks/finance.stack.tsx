@@ -4,6 +4,9 @@ import type { RouteObject } from "react-router-dom";
 const FinancePage = lazy(
   () => import("@modules/finance/presentation/pages/finance/finance.page")
 );
+const FinanceLandingPage = lazy(
+  () => import("@modules/finance/presentation/pages/landing/landing.page")
+);
 const ServicesFinancePage = lazy(
   () => import("@modules/finance/presentation/pages/services-finance/services-finance.page")
 );
@@ -19,6 +22,15 @@ export const financeStackRoutes: RouteObject[] = [
     id: "finance",
     path: "/finance",
     children: [
+      {
+        id: "finance.landing",
+        path: "landing",
+        element: (
+          <React.Suspense fallback={null}>
+            <FinanceLandingPage />
+          </React.Suspense>
+        ),
+      },
       {
         id: "finance.home",
         path: "",

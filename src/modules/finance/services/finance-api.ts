@@ -1,5 +1,6 @@
 import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
+import type { FinanceDashboardResponseApi } from "@modules/finance/interfaces/finance-dashboard.model";
 
 export type FinanceEntryType = {
   id: string;
@@ -51,6 +52,23 @@ export class FinanceApi extends BaseHttpService {
         return null;
       }
     }
+  }
+
+  async getDashboard(
+    workspaceId: string | undefined,
+    query: {
+      start: string;
+      end: string;
+      period?: string;
+      bucket?: string;
+      cashflowLimit?: number;
+      topLimit?: number;
+    }
+  ): Promise<FinanceDashboardResponseApi> {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (workspaceId) headers["x-workspace-id"] = workspaceId;
+
+    return this.get<FinanceDashboardResponseApi>(`/finance/dashboard`, query, headers);
   }
 }
 

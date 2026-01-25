@@ -8,12 +8,28 @@ const DashboardPage = lazy(() =>
     })
   )
 );
+const DashboardLandingPage = lazy(() =>
+  import("@modules/dashboard/presentation/pages/landing/landing.page").then(
+    (m: any) => ({
+      default: m.default ?? m.DashboardLandingPage,
+    })
+  )
+);
 
 export const dashboardStackRoutes: RouteObject[] = [
   {
     id: "dashboard",
     path: "/dashboard",
     children: [
+      {
+        id: "dashboard.landing",
+        path: "landing",
+        element: (
+          <React.Suspense fallback={null}>
+            <DashboardLandingPage />
+          </React.Suspense>
+        ),
+      },
       {
         id: "dashboard.home",
         path: "",

@@ -1,7 +1,7 @@
 import React from "react";
 import { BaseTemplate } from "@shared/base/base.template";
 import { Tabs, Row, Col, Avatar, Button, Form, Input, Radio, InputNumber } from "antd";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 const { TabPane } = Tabs;
 
@@ -10,6 +10,50 @@ const AvatarWrap = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 12px;
+`;
+
+const shimmer = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+`;
+
+const SkeletonBlock = styled.div<{ $width?: string; $height: number; $radius?: number }>`
+  width: ${({ $width }) => $width ?? "100%"};
+  height: ${({ $height }) => `${$height}px`};
+  border-radius: ${({ $radius }) => ($radius != null ? `${$radius}px` : "8px")};
+  background: var(--color-surface-2);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: ${shimmer} 1.2s ease-in-out infinite;
+  }
+`;
+
+const WallpaperFrame = styled.div`
+  margin-bottom: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 160px;
+  width: 100%;
+  background: var(--color-surface-2);
+`;
+
+const WallpaperImage = styled.div<{ $imageUrl: string }>`
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-image: url(${({ $imageUrl }) => $imageUrl});
 `;
 
 export type PersonalModel = {
@@ -36,6 +80,8 @@ export type CompanyModel = {
 export type ProfileTemplateProps = {
   personal: PersonalModel;
   company?: CompanyModel;
+  isAvatarLoading?: boolean;
+  isWallpaperLoading?: boolean;
   isSavingPersonal?: boolean;
   isSavingCompany?: boolean;
   onOpenAvatar: () => void;
@@ -46,7 +92,18 @@ export type ProfileTemplateProps = {
 
 const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
 
-export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, company, onOpenAvatar, onOpenWallpaper, onSavePersonal, onSaveCompany, isSavingPersonal, isSavingCompany }) => {
+export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
+  personal,
+  company,
+  isAvatarLoading,
+  isWallpaperLoading,
+  onOpenAvatar,
+  onOpenWallpaper,
+  onSavePersonal,
+  onSaveCompany,
+  isSavingPersonal,
+  isSavingCompany,
+}) => {
   const [personalForm] = Form.useForm();
   const [companyForm] = Form.useForm();
 
@@ -77,7 +134,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, comp
     <Row gutter={24} style={{ marginTop: 8 }}>
       <Col xs={24} md={8}>
         <AvatarWrap>
-          <Avatar size={120} src={personal?.photoUrl} />
+          {isAvatarLoading ? (
+            <SkeletonBlock $width="120px" $height={120} $radius={60} />
+          ) : (
+            <Avatar size={120} src={personal?.photoUrl} />
+          )}
           <div style={{ textAlign: "center" }}>
             <div style={{ fontWeight: 600 }}>{personal?.fullName}</div>
             <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>{personal?.email}</div>
@@ -90,10 +151,14 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({ personal, comp
         </AvatarWrap>
       </Col>
       <Col xs={24} md={16}>
-        {company?.wallpaperUrl ? (
-          <div style={{ marginBottom: 12, borderRadius: 8, overflow: "hidden" }}>
-            <div style={{ height: 160, backgroundSize: "cover", backgroundPosition: "center", backgroundImage: `url(${company.wallpaperUrl})` }} />
-          </div>
+        {isWallpaperLoading || company?.wallpaperUrl ? (
+          <WallpaperFrame>
+            {isWallpaperLoading ? (
+              <SkeletonBlock $height={160} />
+            ) : (
+              <WallpaperImage $imageUrl={company?.wallpaperUrl ?? ""} />
+            )}
+          </WallpaperFrame>
         ) : null}
         <Tabs defaultActiveKey="personal">
           <TabPane tab="Personal info" key="personal">

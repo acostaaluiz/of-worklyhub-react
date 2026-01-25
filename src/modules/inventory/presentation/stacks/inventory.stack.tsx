@@ -4,12 +4,22 @@ import type { RouteObject } from "react-router-dom";
 // Overview and products pages removed - keeping only categories and home for now
 const InventoryCategoriesPage = lazy(() => import("@modules/inventory/presentation/pages/categories/categories.page"));
 const InventoryHomePage = lazy(() => import("@modules/inventory/presentation/pages/home/home.page"));
+const InventoryLandingPage = lazy(() => import("@modules/inventory/presentation/pages/landing/landing.page"));
 
 export const inventoryStackRoutes: RouteObject[] = [
   {
     id: "inventory",
     path: "/inventory",
     children: [
+      {
+        id: "inventory.landing",
+        path: "landing",
+        element: (
+          <React.Suspense fallback={null}>
+            <InventoryLandingPage />
+          </React.Suspense>
+        ),
+      },
       // make Inventory Home the default for `/inventory`
       {
         index: true,

@@ -18,6 +18,7 @@ type Props = {
   view: FinanceView;
   groupBy: FinanceGroupBy;
   loading?: boolean;
+  availableViews?: FinanceView[];
 
   onChangePeriod: (from: string, to: string) => void;
   onChangeView: (view: FinanceView) => void;
@@ -35,7 +36,20 @@ export function FinanceFilters({
   onChangeView,
   onChangeGroupBy,
   onRefresh,
+  availableViews,
 }: Props) {
+  const viewOptions: Array<{ label: string; value: FinanceView }> = [
+    { label: "Overview", value: "overview" },
+    { label: "Revenue", value: "revenue" },
+    { label: "Expenses", value: "expenses" },
+    { label: "Profit", value: "profit" },
+    { label: "Cashflow", value: "cashflow" },
+  ];
+
+  const options = availableViews?.length
+    ? viewOptions.filter((opt) => availableViews.includes(opt.value))
+    : viewOptions;
+
   return (
     <Row>
       <Left>
@@ -57,13 +71,7 @@ export function FinanceFilters({
         <Segmented
           value={view}
           onChange={(v) => onChangeView(v as FinanceView)}
-          options={[
-            { label: "Overview", value: "overview" },
-            { label: "Revenue", value: "revenue" },
-            { label: "Expenses", value: "expenses" },
-            { label: "Profit", value: "profit" },
-            { label: "Cashflow", value: "cashflow" },
-          ]}
+          options={options}
         />
       </Left>
 

@@ -329,6 +329,8 @@ export class ProfilePage extends BasePage<{}, State> {
         <ProfileTemplate
           personal={this.state.personal}
           company={this.state.company}
+          isAvatarLoading={this.state.isAvatarLoading}
+          isWallpaperLoading={this.state.isWallpaperLoading}
           isSavingPersonal={this.state.isSavingPersonal}
           isSavingCompany={this.state.isSavingCompany}
           onOpenAvatar={this.handleOpenAvatar}

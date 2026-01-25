@@ -7,8 +7,6 @@ import { AppFooter } from "@shared/ui/components/footer/footer.component";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { companyService } from "@modules/company/services/company.service";
 import { useEffect, useState } from "react";
-import usePageHeight from '@shared/ui/hooks/usePageHeight';
-
 import { PrivateFrame, PrivatePageShell, ContentShell } from "./private-frame.component.styles";
 
 
@@ -39,7 +37,7 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   const menuItems: MenuProps["items"] = [
     // Show Company setup only when user does NOT have a workspace yet
     ...(hasWorkspace ? [] : [{ key: "/company/introduction", label: "Company setup" }]),
-    { key: "/billing/plans", label: "Billing" },
+    { key: "/billing/landing", label: "Billing" },
     { key: "/users", label: "Users" },
   ];
 
@@ -63,7 +61,7 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
 
       <ContentShell>
         <div className="container">
-          <PrivateFrame style={{ minWidth: 900, height: usePageHeight() }}>
+          <PrivateFrame style={{ minWidth: 900 }}>
             {children ?? <Outlet />}
           </PrivateFrame>
         </div>

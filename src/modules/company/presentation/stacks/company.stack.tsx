@@ -7,17 +7,32 @@ const CompanyIntroductionPage = lazy(
       "@modules/company/presentation/pages/company-introduction.page"
     )
 );
+const CompanyLandingPage = lazy(
+  () => import("@modules/company/presentation/pages/landing/landing.page")
+);
 
 const CompanyProfilePage = lazy(
   () => import("@modules/company/presentation/pages/profile/profile.page")
 );
 const CompanyServicesAdminPage = lazy(() => import('@modules/company/presentation/pages/services/services.page'));
+const SlaByEmployeePage = lazy(
+  () => import("@modules/slas/presentation/pages/sla-by-employee/sla-by-employee.page")
+);
 
 export const companyStackRoutes: RouteObject[] = [
   {
     id: "company",
     path: "/company",
     children: [
+      {
+        id: "company.landing",
+        path: "landing",
+        element: (
+          <React.Suspense fallback={null}>
+            <CompanyLandingPage />
+          </React.Suspense>
+        ),
+      },
       {
         id: "company.introduction",
         path: "introduction",
@@ -42,6 +57,15 @@ export const companyStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <CompanyServicesAdminPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "company.slas",
+        path: "slas",
+        element: (
+          <React.Suspense fallback={null}>
+            <SlaByEmployeePage />
           </React.Suspense>
         ),
       },

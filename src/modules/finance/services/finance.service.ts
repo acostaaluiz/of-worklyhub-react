@@ -6,9 +6,12 @@ import { CompanyServicesService } from "@modules/company/services/company-servic
 import type { FinanceQueryModel } from "@modules/finance/interfaces/finance-query.model";
 import type { FinanceResponseModel } from "@modules/finance/interfaces/finance-response.model";
 import type { FinanceSeries } from "@modules/finance/interfaces/finance-series.model";
+import type { FinanceCashflowRow, FinanceTopServiceRow } from "@modules/finance/interfaces/finance-table.model";
+import type { FinanceDashboardResponseApi } from "@modules/finance/interfaces/finance-dashboard.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
 import { FinanceApi, type FinanceEntryType } from "@modules/finance/services/finance-api";
 import { httpClient } from "@core/http/client.instance";
+import { companyService, type Workspace } from "@modules/company/services/company.service";
 
 // Simple per-workspace in-flight/cached promise map to avoid duplicate requests
 const entryTypesCache = new Map<string, Promise<FinanceEntryType[]>>();
@@ -22,6 +25,19 @@ function makeId(prefix = "fe") {
 }
 
 const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
+const centsToValue = (value: number | null | undefined) => (typeof value === "number" ? value / 100 : 0);
+const normalizeRatio = (value: number | null | undefined): number | undefined => {
+  if (value == null || Number.isNaN(value)) return undefined;
+  return Math.abs(value) > 1 ? value / 100 : value;
+};
+const getWorkspaceId = (ws: Workspace): string | undefined => {
+  if (!ws) return undefined;
+  if (typeof ws.id === "string" && ws.id.trim().length > 0) return ws.id;
+  const raw = ws.workspaceId as unknown;
+  if (typeof raw === "string" && raw.trim().length > 0) return raw;
+  if (typeof raw === "number") return String(raw);
+  return undefined;
+};
 
 export class FinanceService {
   private companyService = new CompanyServicesService();
@@ -81,48 +97,22 @@ export class FinanceService {
   // Analytics (mocked)
   async getFinance(query: FinanceQueryModel): Promise<FinanceResponseModel> {
     try {
-      await new Promise((r) => setTimeout(r, 450));
+      const workspaceId = getWorkspaceId(companyService.getWorkspaceValue());
+      const dashboard = await this.api.getDashboard(workspaceId, {
+        start: query.from,
+        end: query.to,
+        bucket: query.groupBy,
+        cashflowLimit: 12,
+        topLimit: 8,
+      });
 
-      const from = dayjs(query.from);
-      const to = dayjs(query.to);
-
-      const points = this.buildPoints(from, to, query.groupBy);
-      const revenue = this.makeSeries("revenue", points, 1800, 9800, 0.22);
-      const expenses = this.makeSeries("expenses", points, 800, 5400, 0.28);
-      const profit = this.makeProfitSeries(revenue, expenses);
-
-      const totalRevenue = revenue.points.reduce((a, p) => a + p.value, 0);
-      const totalExpenses = expenses.points.reduce((a, p) => a + p.value, 0);
-      const totalProfit = totalRevenue - totalExpenses;
-      const margin = totalRevenue > 0 ? totalProfit / totalRevenue : 0;
-
-      const expensesByCategory = [
-        { id: "rent", category: "Rent", value: clamp(totalExpenses * 0.22, 0, totalExpenses) },
-        { id: "payroll", category: "Payroll", value: clamp(totalExpenses * 0.36, 0, totalExpenses) },
-        { id: "supplies", category: "Supplies", value: clamp(totalExpenses * 0.14, 0, totalExpenses) },
-        { id: "tools", category: "Tools", value: clamp(totalExpenses * 0.09, 0, totalExpenses) },
-        { id: "other", category: "Other", value: clamp(totalExpenses * 0.19, 0, totalExpenses) },
-      ];
-
-      const cashflow = this.makeCashflow(from, to);
-      const topServices = this.makeTopServices(totalRevenue);
-
-      return {
-        kpis: [
-          { id: "revenue", label: "Revenue", value: totalRevenue, format: "money", delta: 0.08 },
-          { id: "expenses", label: "Expenses", value: totalExpenses, format: "money", delta: 0.03 },
-          { id: "profit", label: "Profit", value: totalProfit, format: "money", delta: 0.11 },
-          { id: "margin", label: "Margin", value: margin, format: "percent", delta: 0.02 },
-        ],
-        revenueSeries: revenue,
-        expensesSeries: expenses,
-        profitSeries: profit,
-        expensesByCategory,
-        cashflow,
-        topServices,
-      } as FinanceResponseModel;
+      return this.mapDashboard(dashboard);
     } catch (err) {
-      throw toAppError(err);
+      try {
+        return await this.getMockFinance(query);
+      } catch (fallbackErr) {
+        throw toAppError(fallbackErr ?? err);
+      }
     }
   }
 
@@ -135,6 +125,105 @@ export class FinanceService {
     } catch (err) {
       return null;
     }
+  }
+
+  private mapDashboard(dashboard: FinanceDashboardResponseApi): FinanceResponseModel {
+    const kpis = dashboard.kpis;
+    const variation = dashboard.variation;
+
+    const revenueValue = centsToValue(kpis?.revenue_cents ?? 0);
+    const expenseValue = centsToValue(kpis?.expense_cents ?? 0);
+    const profitValue = centsToValue(kpis?.profit_cents ?? 0);
+    const marginValue = normalizeRatio(kpis?.margin_pct ?? 0) ?? 0;
+
+    const revenueSeries: FinanceSeries = {
+      key: "revenue",
+      points: (dashboard.trend ?? []).map((point) => ({
+        label: point.bucket,
+        value: centsToValue(point.revenue_cents),
+      })),
+    };
+
+    const cashflow: FinanceCashflowRow[] = (dashboard.cashflow ?? []).map((row) => {
+      const normalized = row.type_name.toLowerCase();
+      const isOut = normalized.includes("expense") || normalized.includes("out") || row.amount_cents < 0;
+      const amount = Math.abs(row.amount_cents ?? 0);
+      return {
+        id: row.id,
+        date: dayjs(row.occurred_at).format("YYYY-MM-DD"),
+        description: row.description || row.type_name || "Entry",
+        type: isOut ? "out" : "in",
+        category: row.type_name || "General",
+        amount: centsToValue(amount),
+        status: "paid",
+      };
+    });
+
+    const topServices: FinanceTopServiceRow[] = (dashboard.top_services ?? []).map((row) => ({
+      id: row.service_id,
+      serviceName: row.service_name,
+      orders: row.orders,
+      revenue: centsToValue(row.revenue_cents),
+      avgTicket: centsToValue(row.avg_ticket_cents),
+    }));
+
+    return {
+      kpis: [
+        { id: "revenue", label: "Revenue", value: revenueValue, format: "money", delta: normalizeRatio(variation?.revenue_pct ?? undefined) },
+        { id: "expenses", label: "Expenses", value: expenseValue, format: "money", delta: normalizeRatio(variation?.expense_pct ?? undefined) },
+        { id: "profit", label: "Profit", value: profitValue, format: "money", delta: normalizeRatio(variation?.profit_pct ?? undefined) },
+        { id: "margin", label: "Margin", value: marginValue, format: "percent", delta: normalizeRatio(variation?.margin_pct_points ?? undefined) },
+      ],
+      revenueSeries,
+      expensesSeries: { key: "expenses", points: [] },
+      profitSeries: { key: "profit", points: [] },
+      expensesByCategory: [],
+      cashflow,
+      topServices,
+    };
+  }
+
+  private async getMockFinance(query: FinanceQueryModel): Promise<FinanceResponseModel> {
+    await new Promise((r) => setTimeout(r, 450));
+
+    const from = dayjs(query.from);
+    const to = dayjs(query.to);
+
+    const points = this.buildPoints(from, to, query.groupBy);
+    const revenue = this.makeSeries("revenue", points, 1800, 9800, 0.22);
+    const expenses = this.makeSeries("expenses", points, 800, 5400, 0.28);
+    const profit = this.makeProfitSeries(revenue, expenses);
+
+    const totalRevenue = revenue.points.reduce((a, p) => a + p.value, 0);
+    const totalExpenses = expenses.points.reduce((a, p) => a + p.value, 0);
+    const totalProfit = totalRevenue - totalExpenses;
+    const margin = totalRevenue > 0 ? totalProfit / totalRevenue : 0;
+
+    const expensesByCategory = [
+      { id: "rent", category: "Rent", value: clamp(totalExpenses * 0.22, 0, totalExpenses) },
+      { id: "payroll", category: "Payroll", value: clamp(totalExpenses * 0.36, 0, totalExpenses) },
+      { id: "supplies", category: "Supplies", value: clamp(totalExpenses * 0.14, 0, totalExpenses) },
+      { id: "tools", category: "Tools", value: clamp(totalExpenses * 0.09, 0, totalExpenses) },
+      { id: "other", category: "Other", value: clamp(totalExpenses * 0.19, 0, totalExpenses) },
+    ];
+
+    const cashflow = this.makeCashflow(from, to);
+    const topServices = this.makeTopServices(totalRevenue);
+
+    return {
+      kpis: [
+        { id: "revenue", label: "Revenue", value: totalRevenue, format: "money", delta: 0.08 },
+        { id: "expenses", label: "Expenses", value: totalExpenses, format: "money", delta: 0.03 },
+        { id: "profit", label: "Profit", value: totalProfit, format: "money", delta: 0.11 },
+        { id: "margin", label: "Margin", value: margin, format: "percent", delta: 0.02 },
+      ],
+      revenueSeries: revenue,
+      expensesSeries: expenses,
+      profitSeries: profit,
+      expensesByCategory,
+      cashflow,
+      topServices,
+    };
   }
 
   private buildPoints(from: dayjs.Dayjs, to: dayjs.Dayjs, groupBy: "day" | "week" | "month") {

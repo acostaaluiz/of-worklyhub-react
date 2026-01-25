@@ -106,7 +106,7 @@ export function TopServicesTableWidget({
               dataSource={items}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: 520, y: 260 }}
+              scroll={{ x: 520, y: 180 }}
             />
           </Wrap>
         )}

@@ -18,7 +18,7 @@ type FooterLinkItem = {
 
 const links: FooterLinkItem[] = [
   { label: "Company setup", to: "/company/introduction" },
-  { label: "Billing", to: "/billing/plans" },
+  { label: "Billing", to: "/billing/landing" },
   { label: "Users", to: "/users" },
 ];
 

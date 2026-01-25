@@ -1,12 +1,18 @@
 import styled from "styled-components";
+import { BaseTemplate } from "@shared/base/base.template";
+
+export const FinanceTemplateShell = styled(BaseTemplate)`
+  height: 100%;
+  min-height: 0;
+`;
 
 export const PageStack = styled.div`
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 
-  /* CRITICAL: stable height chain for desktop */
-  height: calc(100vh - var(--private-header-height, 72px));
+  /* CRITICAL: fill the private-frame height without overflowing */
+  height: 100%;
   min-height: 0;
 
   @media (max-width: 1024px) {

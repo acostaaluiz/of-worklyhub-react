@@ -9,6 +9,7 @@ type Props = {
   name?: string;
   companyName?: string;
   services: ServiceItem[];
+  servicesCount?: number;
   metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } };
   description?: string;
   onEditCompany?: () => void;
@@ -24,7 +25,7 @@ function initialsFrom(name?: string) {
     .toUpperCase();
 }
 
-export default function UsersHomeTemplate({ name, companyName, services, metrics, description, onEditCompany }: Props) {
+export default function UsersHomeTemplate({ name, companyName, services, servicesCount, metrics, description, onEditCompany }: Props) {
   const initials = initialsFrom(companyName);
 
   return (
@@ -95,7 +96,7 @@ export default function UsersHomeTemplate({ name, companyName, services, metrics
             </div>
             <div>
               <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 6 }}>Available modules</div>
-              <div style={{ fontWeight: 600 }}>{services?.length ?? 0}</div>
+              <div style={{ fontWeight: 600 }}>{servicesCount ?? services?.length ?? 0}</div>
             </div>
           </div>
 

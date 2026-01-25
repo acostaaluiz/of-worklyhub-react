@@ -15,9 +15,18 @@ export const ContentShell = styled.main`
   width: 100%;
   padding: var(--space-6) 0 var(--space-8);
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
 
   @media (max-width: 768px) {
     padding: var(--space-5) 0 var(--space-7);
+  }
+
+  & > .container {
+    flex: 1;
+    display: flex;
+    min-height: 0;
   }
 `;
 
@@ -32,18 +41,46 @@ export const PrivateFrame = styled.div`
   box-shadow: var(--shadow-elevated);
 
   padding: var(--space-4);
-  /* allow children popups (calendar, tooltips) to escape the frame and not be clipped */
-  overflow: visible;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable;
 
 
   margin-top: var(--space-2);
-  min-height: 420px;
+  min-height: min(420px, 100%);
   transition: min-height 240ms ease, opacity 160ms ease;
 
   @media (max-width: 768px) {
     padding: var(--space-3);
     margin-top: var(--space-2);
-    min-height: 320px;
+    min-height: min(320px, 100%);
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-muted) transparent;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-text-muted);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text);
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 `;
 

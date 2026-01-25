@@ -1,7 +1,7 @@
 import React from "react";
 import { BasePage } from "@shared/base/base.page";
 import UsersHomeTemplate from "@modules/users/presentation/templates/home/home.template";
-import { Briefcase, Calendar, Users, DollarSign, Box } from "lucide-react";
+import { Briefcase, Calendar, Users, DollarSign, Box, LayoutGrid } from "lucide-react";
 import type { ApplicationServiceItem } from "@core/application/application-api";
 import type { ReactNode } from "react";
 import { Subscription } from "rxjs";
@@ -140,27 +140,71 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
       }
     };
 
-    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = apiServices.map((s: ApplicationServiceItem) => ({ id: s.uid, title: s.name, subtitle: s.description, icon: mapIcon(s.icon) }));
+    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = apiServices.map((s: ApplicationServiceItem) => ({
+      id: s.uid,
+      title: s.name,
+      subtitle: s.description,
+      icon: mapIcon(s.icon),
+    }));
 
-    // Ensure inventory module card is available in the quick modules section.
-    const hasInventory = services.some((s) => {
-      const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
-      return key.includes("inventory") || key.includes("stock");
+    const findByKeywords = (keywords: string[]) => {
+      return services.find((s) => {
+        const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
+        return keywords.some((k) => key.includes(k));
+      });
+    };
+
+    const withFallbackIcon = (item: { id: string; title: string; subtitle?: string; icon?: ReactNode }, fallbackIcon: ReactNode) => {
+      if (item.icon) return item;
+      return { ...item, icon: fallbackIcon };
+    };
+
+    const scheduleModule = withFallbackIcon(
+      findByKeywords(["schedule", "calendar"]) ?? {
+        id: "schedule",
+        title: "Schedule",
+        subtitle: "Manage appointments and availability",
+        icon: mapIcon("calendar"),
+      },
+      <Calendar />
+    );
+
+    const inventoryModule = withFallbackIcon(
+      findByKeywords(["inventory", "stock"]) ?? {
+        id: "inventory",
+        title: "Inventory",
+        subtitle: "Manage stock and supplies",
+        icon: mapIcon("inventory"),
+      },
+      <Box />
+    );
+
+    const financeModule = withFallbackIcon(
+      findByKeywords(["finance", "payment"]) ?? {
+        id: "finance",
+        title: "Finance",
+        subtitle: "Track revenue and expenses",
+        icon: mapIcon("dollar-sign"),
+      },
+      <DollarSign />
+    );
+
+    const quickModules: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = [
+      scheduleModule,
+      inventoryModule,
+      financeModule,
+      { id: "all-modules", title: "See all", subtitle: "View all available modules", icon: <LayoutGrid /> },
+    ];
+
+    const uniqueServices = new Map<string, { id: string; title: string; subtitle?: string; icon?: ReactNode }>();
+    services.forEach((s) => {
+      const key = `${s.id ?? ""}|${s.title ?? ""}`.toLowerCase();
+      uniqueServices.set(key, s);
     });
-
-    if (!hasInventory) {
-      services.push({ id: "inventory", title: "Inventory", subtitle: "Manage stock and supplies", icon: mapIcon("inventory") });
-    }
-
-    // Ensure people (staff/team) module card is available in the quick modules section.
-    const hasPeople = services.some((s) => {
-      const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
-      return key.includes("people") || key.includes("team") || key.includes("staff");
+    [scheduleModule, inventoryModule, financeModule].forEach((s) => {
+      const key = `${s.id ?? ""}|${s.title ?? ""}`.toLowerCase();
+      uniqueServices.set(key, s);
     });
-
-    if (!hasPeople) {
-      services.push({ id: "people", title: "People", subtitle: "Manage staff and team", icon: mapIcon("users") });
-    }
 
     const ws = companyService.getWorkspaceValue();
     const companyName =
@@ -178,7 +222,8 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
         name={this.state.name}
         companyName={companyName}
         description={description}
-        services={services}
+        services={quickModules}
+        servicesCount={uniqueServices.size}
         metrics={this.state.metrics}
         onEditCompany={() => {
           navigateTo("/company/introduction");
