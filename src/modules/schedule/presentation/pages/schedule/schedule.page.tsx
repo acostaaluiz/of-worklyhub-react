@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from "react";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
 import {
@@ -199,7 +200,6 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // ensure we request the full month range: first day -> last day
           const monthFrom = dayjs(from).startOf("month").format("YYYY-MM-DD");
           const monthTo = dayjs(to).endOf("month").format("YYYY-MM-DD");
-          loadingService.show();
           try {
             const ev = await api.getEvents({
               from: monthFrom,
@@ -242,8 +242,6 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             setEvents(mapped);
           } catch (err) {
             // fetchRange error
-          } finally {
-            loadingService.hide();
           }
         },
         [api]
@@ -367,84 +365,61 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
   }
 
   protected override async onInit(): Promise<void> {
-    loadingService.show();
-    try {
+    await this.runAsync(async () => {
       await super.onInit?.();
-      await this.runAsync(async () => {
+      try {
+        const services = await companyWorkspaceService.listServices();
+        const employees = await peopleService.listEmployees();
+        // also fetch shared application event categories and expose to template via window fallback
         try {
-          const services = await companyWorkspaceService.listServices();
-          const employees = await peopleService.listEmployees();
-          // also fetch shared application event categories and expose to template via window fallback
+          const appCats = await import("@core/application/application.service").then((m) =>
+            m.applicationService.fetchEventCategories()
+          );
+          // also fetch statuses for schedule updates
           try {
-            const appCats =
-              await import("@core/application/application.service").then((m) =>
-                m.applicationService.fetchEventCategories()
-              );
-            // also fetch statuses for schedule updates
-            try {
-              const sts = await getStatuses();
-              this.setSafeState({
-                services,
-                employees,
-                categories: appCats ?? null,
-                statuses: sts ?? null,
-              });
-            } catch (e) {
-              this.setSafeState({
-                services,
-                employees,
-                categories: appCats ?? null,
-              });
-            }
-            try {
-              const ws = companyService.getWorkspaceValue() as {
-                workspaceId?: string;
-                id?: string;
-              } | null;
-              const workspaceId = (ws?.workspaceId ?? ws?.id) as
-                | string
-                | undefined;
-              const next = await getNextSchedulesForWorkspace(
-                workspaceId ?? null,
-                3
-              );
-              this.setSafeState({ nextSchedules: next ?? null });
-            } catch (e) {
-              // failed to fetch next schedules
-            }
+            const sts = await getStatuses();
+            this.setSafeState({ services, employees, categories: appCats ?? null, statuses: sts ?? null });
           } catch (e) {
-            // appCats import failed
-            // attempt to fetch statuses even when appCats import fails
-            try {
-              const sts = await getStatuses();
-              this.setSafeState({ services, employees, statuses: sts ?? null });
-            } catch (err) {
-              this.setSafeState({ services, employees });
-            }
-            try {
-              const ws = companyService.getWorkspaceValue() as {
-                workspaceId?: string;
-                id?: string;
-              } | null;
-              const workspaceId = (ws?.workspaceId ?? ws?.id) as
-                | string
-                | undefined;
-              const next = await getNextSchedulesForWorkspace(
-                workspaceId ?? null,
-                3
-              );
-              this.setSafeState({ nextSchedules: next ?? null });
-            } catch (e) {
-              // failed to fetch next schedules
-            }
+            this.setSafeState({ services, employees, categories: appCats ?? null });
           }
-        } catch (err) {
-          // init error
+          try {
+            const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+            const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+            const next = await getNextSchedulesForWorkspace(workspaceId ?? null, 3);
+            this.setSafeState({ nextSchedules: next ?? null });
+          } catch (e) {
+            // failed to fetch next schedules
+          }
+        } catch (e) {
+          // appCats import failed
+          // attempt to fetch statuses even when appCats import fails
+          try {
+            const sts = await getStatuses();
+            this.setSafeState({ services, employees, statuses: sts ?? null });
+          } catch (err) {
+            this.setSafeState({ services, employees });
+          }
+          try {
+            const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+            const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
+            const next = await getNextSchedulesForWorkspace(workspaceId ?? null, 3);
+            this.setSafeState({ nextSchedules: next ?? null });
+          } catch (e) {
+            // failed to fetch next schedules
+          }
         }
-      });
-    } finally {
-      loadingService.hide();
+      } catch (err) {
+        // init error
+      }
+    }, { setLoading: true });
+  }
+
+  protected override renderLoading(): React.ReactNode {
+    function Wrapper() {
+      return <PageSkeleton mainRows={2} sideRows={2} height="100%" />;
     }
+
+    return <Wrapper />;
   }
 }
 

@@ -10,8 +10,8 @@ import { applicationService } from "@core/application/application.service";
 import { companyService } from "@modules/company/services/company.service";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
 import { FinanceService } from "@modules/finance/services/finance.service";
-import { loadingService } from "@shared/ui/services/loading.service";
 import { message } from "antd";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { navigateTo } from "@core/navigation/navigation.service";
 
 export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; name?: string; services?: ApplicationServiceItem[] | null; metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } } }> {
@@ -19,7 +19,7 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
 
   private profileSub?: Subscription;
 
-  public state = { isLoading: false, initialized: false, error: undefined, name: undefined, services: undefined, metrics: undefined };
+  public state = { isLoading: true, initialized: false, error: undefined, name: undefined, services: undefined, metrics: undefined };
 
   private async computeAndSetMetrics(): Promise<void> {
     try {
@@ -78,29 +78,41 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
     const existing = applicationService.getServicesValue();
     if (existing != null) {
       this.setSafeState({ services: existing });
-      // still compute metrics even when services are cached
-      void this.computeAndSetMetrics();
+      // still compute metrics even when services are cached — keep skeleton visible while computing
+      await this.runAsync(async () => {
+        try {
+          await this.computeAndSetMetrics();
+        } catch (e) {
+          console.debug("metrics fetch failed", e);
+        }
+      }, { setLoading: true });
       return;
     }
 
-    loadingService.show();
-    try {
-      const services = await applicationService.fetchServices();
-      this.setSafeState({ services: services ?? [] });
-
-      // compute metrics (schedule + finance)
+    await this.runAsync(async () => {
       try {
-        await this.computeAndSetMetrics();
-      } catch (e) {
-        console.debug("metrics fetch failed", e);
-      }
+        const services = await applicationService.fetchServices();
+        this.setSafeState({ services: services ?? [] });
 
-    } catch (err) {
-      console.error("failed to fetch application services", err);
-      message.error("Failed to load application services");
-    } finally {
-      loadingService.hide();
+        // compute metrics (schedule + finance)
+        try {
+          await this.computeAndSetMetrics();
+        } catch (e) {
+          console.debug("metrics fetch failed", e);
+        }
+      } catch (err) {
+        console.error("failed to fetch application services", err);
+        message.error("Failed to load application services");
+      }
+    }, { setLoading: true });
+  }
+
+  protected override renderLoading(): React.ReactNode {
+    function Wrapper() {
+      return <PageSkeleton height="100%" />;
     }
+
+    return <Wrapper />;
   }
 
   override componentWillUnmount(): void {
