@@ -9,6 +9,21 @@ export type UserProfileResponse = {
   photoUrl?: string;
 };
 
+export type UserProfileUpdatePayload = {
+  fullName: string;
+  email: string;
+  phone?: string;
+};
+
+export type UserProfileUpdateResponse = {
+  user: {
+    name: string;
+    email: string;
+    phone?: string;
+    planId?: number;
+  };
+};
+
 export class UsersApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "users-api" });
@@ -21,6 +36,10 @@ export class UsersApi extends BaseHttpService {
   async setPlan(email: string, planId: number): Promise<void> {
     // endpoint returns 204 No Content on success
     await this.post<void, { email: string; planId: number }>("users/internal/users/plan", { email, planId });
+  }
+
+  async updateProfile(payload: UserProfileUpdatePayload): Promise<UserProfileUpdateResponse> {
+    return await this.put<UserProfileUpdateResponse, UserProfileUpdatePayload>("users/internal/users/profile", payload);
   }
 
   async requestProfilePhotoSignature(body: { contentType: string; filename?: string }) {

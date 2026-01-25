@@ -5,8 +5,11 @@ import { usersAuthService } from "@modules/users/services/auth.service";
 import { usersService } from "@modules/users/services/user.service";
 import { companyService } from "@modules/company/services/company.service";
 import { applicationService } from "@core/application/application.service";
+import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import AvatarUploadModal from "@shared/ui/components/avatar-upload/avatar-upload.modal";
 import { message } from "antd";
+import { loadingService } from "@shared/ui/services/loading.service";
+import { isAppError } from "@core/errors/is-app-error";
 
 type State = {
   isLoading: boolean;
@@ -21,6 +24,8 @@ type State = {
   isSavingCompany?: boolean;
   isAvatarLoading?: boolean;
   isWallpaperLoading?: boolean;
+  categories?: ApplicationCategoryItem[];
+  industries?: ApplicationIndustryItem[];
 };
 
 export class ProfilePage extends BasePage<{}, State> {
@@ -44,6 +49,8 @@ export class ProfilePage extends BasePage<{}, State> {
     isSavingCompany: false,
     isAvatarLoading: false,
     isWallpaperLoading: false,
+    categories: undefined,
+    industries: undefined,
   };
 
   private preloadImage = (url: string): Promise<void> => {
@@ -89,8 +96,97 @@ export class ProfilePage extends BasePage<{}, State> {
     }
   }
 
+  private mapWorkspaceToCompany(
+    workspace: unknown,
+    fallback?: CompanyModel,
+    options?: { preserveWallpaper?: boolean }
+  ): { company: CompanyModel; wallpaperCandidate?: string } {
+    const ws: any = workspace ?? {};
+    const cp: any = ws.company_profile ?? {};
+
+    const accountType =
+      (ws.workspace_type as "individual" | "company") ??
+      (ws.accountType as "individual" | "company") ??
+      fallback?.accountType ??
+      "individual";
+
+    const legalName =
+      (cp.legal_name as string) ??
+      (cp.legalName as string) ??
+      (ws.legal_name as string) ??
+      (ws.legalName as string) ??
+      fallback?.legalName;
+
+    const tradeName =
+      (cp.trade_name as string) ??
+      (cp.tradeName as string) ??
+      (ws.trade_name as string) ??
+      (ws.tradeName as string) ??
+      (ws.name as string) ??
+      (ws.companyName as string) ??
+      fallback?.tradeName;
+
+    const employees =
+      (cp.employees_count as number) ??
+      (cp.employeesCount as number) ??
+      (ws.employees_count as number) ??
+      (ws.employeesCount as number) ??
+      fallback?.employees;
+
+    const primaryService =
+      (cp.primary_service as string) ??
+      (cp.primaryService as string) ??
+      (ws.primary_service as string) ??
+      (ws.primaryService as string) ??
+      fallback?.primaryService;
+
+    const industry = (cp.industry as string) ?? (ws.industry as string) ?? fallback?.industry;
+
+    const description = (cp.description as string) ?? (ws.description as string) ?? fallback?.description;
+
+    const wallpaperCandidate =
+      (cp.wallpaperUrl as string) ??
+      (cp.wallpaper_url as string) ??
+      (ws.wallpaperUrl as string) ??
+      (ws.wallpaper_url as string) ??
+      fallback?.wallpaperUrl;
+
+    const company: CompanyModel = {
+      accountType,
+      legalName,
+      tradeName,
+      employees,
+      primaryService,
+      industry,
+      description,
+      wallpaperUrl: options?.preserveWallpaper ? fallback?.wallpaperUrl : undefined,
+    };
+
+    return { company, wallpaperCandidate };
+  }
+
   protected override async onInit(): Promise<void> {
     await this.runAsync(async () => {
+      let categories = applicationService.getCategoriesValue() ?? undefined;
+      let industries = applicationService.getIndustriesValue() ?? undefined;
+
+      if (!categories) {
+        try {
+          categories = (await applicationService.fetchCategories()) ?? undefined;
+        } catch {
+          categories = undefined;
+        }
+      }
+
+      if (!industries) {
+        try {
+          industries = (await applicationService.fetchIndustries()) ?? undefined;
+        } catch {
+          industries = undefined;
+        }
+      }
+
+      this.setSafeState({ categories, industries });
       const session = usersAuthService.getSessionValue();
 
       const personal: PersonalModel = {
@@ -157,32 +253,9 @@ export class ProfilePage extends BasePage<{}, State> {
         try {
           const cached = companyService.getWorkspaceValue();
           if (cached) {
-            const ws: any = cached;
-            const cp: any = ws.company_profile ?? {};
-            const company = {
-              accountType:
-                (ws.workspace_type as "individual" | "company") ??
-                (ws.accountType as "individual" | "company") ??
-                "individual",
-              companyName:
-                (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
-              tradeName:
-                (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
-              employees:
-                (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
-              primaryService:
-                (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
-              industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
-              description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-              // delay wallpaper until fully loaded to avoid partial render
-              wallpaperUrl: undefined as any,
-            } as CompanyModel;
-
-            this.setSafeState({ personal, company });
-            // if there is a wallpaper candidate, preload and set when ready
-            const wallpaperCandidate =
-              (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined;
-            if (wallpaperCandidate) this.preloadAndSetWallpaper(wallpaperCandidate).catch(() => {});
+            const mapped = this.mapWorkspaceToCompany(cached, undefined, { preserveWallpaper: false });
+            this.setSafeState({ personal, company: mapped.company, categories, industries });
+            if (mapped.wallpaperCandidate) this.preloadAndSetWallpaper(mapped.wallpaperCandidate).catch(() => {});
             return;
           }
 
@@ -190,30 +263,9 @@ export class ProfilePage extends BasePage<{}, State> {
           const workspace = await companyService.fetchWorkspaceByEmail(session.email);
           if (workspace) {
             console.log(`workspace fetched for email ${session.email}:`, workspace);
-            const ws: any = workspace;
-            const cp: any = ws.company_profile ?? {};
-            const company = {
-              accountType:
-                (ws.workspace_type as "individual" | "company") ??
-                (ws.accountType as "individual" | "company") ??
-                "individual",
-              companyName:
-                (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
-              tradeName:
-                (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
-              employees:
-                (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
-              primaryService:
-                (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
-              industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
-              description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-              wallpaperUrl: undefined as any,
-            } as CompanyModel;
-
-            this.setSafeState({ personal, company });
-            const wallpaperCandidate =
-              (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined;
-            if (wallpaperCandidate) this.preloadAndSetWallpaper(wallpaperCandidate).catch(() => {});
+            const mapped = this.mapWorkspaceToCompany(workspace, undefined, { preserveWallpaper: false });
+            this.setSafeState({ personal, company: mapped.company, categories, industries });
+            if (mapped.wallpaperCandidate) this.preloadAndSetWallpaper(mapped.wallpaperCandidate).catch(() => {});
             return;
           }
         } catch {
@@ -222,7 +274,7 @@ export class ProfilePage extends BasePage<{}, State> {
       }
 
       // fallback: set personal only
-      this.setSafeState({ personal, company: undefined });
+      this.setSafeState({ personal, company: undefined, categories, industries });
     });
   }
 
@@ -239,7 +291,7 @@ export class ProfilePage extends BasePage<{}, State> {
     if (files.length === 0) return;
     this.setSafeState({ isUploadingAvatar: true });
 
-      try {
+    try {
       // Only support single-file profile photo (maxFiles=1)
       const file = files[0];
 
@@ -270,30 +322,9 @@ export class ProfilePage extends BasePage<{}, State> {
       // update company preview from cached workspace if available
       const cached = companyService.getWorkspaceValue();
       if (cached) {
-        const ws: any = cached;
-        const cp: any = ws.company_profile ?? {};
-        const company = {
-          accountType:
-            (ws.workspace_type as "individual" | "company") ??
-            (ws.accountType as "individual" | "company") ??
-            "individual",
-          companyName:
-            (ws.name as string) ?? (ws.companyName as string) ?? (cp.name as string) ?? undefined,
-          tradeName:
-            (cp.trade_name as string) ?? (cp.tradeName as string) ?? (ws.trade_name as string) ?? (ws.tradeName as string) ?? undefined,
-          employees:
-            (cp.employees_count as number) ?? (cp.employeesCount as number) ?? (ws.employees_count as number) ?? (ws.employeesCount as number) ?? undefined,
-          primaryService:
-            (cp.primary_service as string) ?? (cp.primaryService as string) ?? (ws.primary_service as string) ?? (ws.primaryService as string) ?? undefined,
-          industry: (cp.industry as string) ?? (ws.industry as string) ?? undefined,
-          description: (cp.description as string) ?? (ws.description as string) ?? undefined,
-          wallpaperUrl: undefined as any,
-        } as any;
-
-        this.setSafeState({ company });
-        const wallpaperCandidate =
-          (cp.wallpaperUrl as string) ?? (cp.wallpaper_url as string) ?? (ws.wallpaperUrl as string) ?? (ws.wallpaper_url as string) ?? undefined;
-        if (wallpaperCandidate) await this.preloadAndSetWallpaper(wallpaperCandidate);
+        const mapped = this.mapWorkspaceToCompany(cached, this.state.company, { preserveWallpaper: false });
+        this.setSafeState({ company: mapped.company });
+        if (mapped.wallpaperCandidate) await this.preloadAndSetWallpaper(mapped.wallpaperCandidate);
       }
 
       message.success("Wallpaper uploaded successfully");
@@ -306,21 +337,72 @@ export class ProfilePage extends BasePage<{}, State> {
   };
 
   private handleSavePersonal = async (values: PersonalModel) => {
-    await this.runAsync(async () => {
-      this.setSafeState({ personal: values, isSavingPersonal: true });
-      // UI-only: simulate save
-      await new Promise((r) => setTimeout(r, 600));
+    this.setSafeState({ isSavingPersonal: true });
+    loadingService.show();
+
+    try {
+      const updated = await usersService.updateProfile({
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone,
+      });
+
+      const nextPersonal: PersonalModel = {
+        ...values,
+        fullName: updated.name ?? values.fullName,
+        email: updated.email ?? values.email,
+        phone: updated.phone ?? values.phone,
+        photoUrl: this.state.personal.photoUrl,
+        planId: updated.planId ?? this.state.personal.planId,
+        planName: this.state.personal.planName,
+        planPrice: this.state.personal.planPrice,
+      };
+
+      this.setSafeState({ personal: nextPersonal });
       message.success("Personal information saved");
-    }, { setLoading: false }).finally(() => this.setSafeState({ isSavingPersonal: false }));
+    } catch (err) {
+      console.error(err);
+      message.error(isAppError(err) ? err.message : "Failed to save personal information");
+    } finally {
+      this.setSafeState({ isSavingPersonal: false });
+      loadingService.hide();
+    }
   };
 
   private handleSaveCompany = async (values: CompanyModel) => {
-    await this.runAsync(async () => {
-      this.setSafeState({ company: values, isSavingCompany: true });
-      // UI-only: simulate save
-      await new Promise((r) => setTimeout(r, 600));
+    this.setSafeState({ isSavingCompany: true });
+    loadingService.show();
+
+    try {
+      const updatedWorkspace = await companyService.updateWorkspaceProfile({
+        accountType: values.accountType,
+        legalName: values.legalName,
+        tradeName: values.tradeName,
+        employeesCount: values.employees,
+        industry: values.industry,
+        primaryService: values.primaryService,
+        description: values.description,
+      });
+
+      if (updatedWorkspace) {
+        const fallback: CompanyModel = { ...values, wallpaperUrl: this.state.company?.wallpaperUrl };
+        const mapped = this.mapWorkspaceToCompany(updatedWorkspace, fallback, { preserveWallpaper: true });
+        this.setSafeState({ company: mapped.company });
+        if (mapped.wallpaperCandidate && mapped.wallpaperCandidate !== mapped.company.wallpaperUrl) {
+          await this.preloadAndSetWallpaper(mapped.wallpaperCandidate);
+        }
+      } else {
+        this.setSafeState({ company: values });
+      }
+
       message.success("Company information saved");
-    }, { setLoading: false }).finally(() => this.setSafeState({ isSavingCompany: false }));
+    } catch (err) {
+      console.error(err);
+      message.error(isAppError(err) ? err.message : "Failed to save company information");
+    } finally {
+      this.setSafeState({ isSavingCompany: false });
+      loadingService.hide();
+    }
   };
 
   protected override renderPage(): React.ReactNode {
@@ -329,6 +411,8 @@ export class ProfilePage extends BasePage<{}, State> {
         <ProfileTemplate
           personal={this.state.personal}
           company={this.state.company}
+          categories={this.state.categories}
+          industries={this.state.industries}
           isAvatarLoading={this.state.isAvatarLoading}
           isWallpaperLoading={this.state.isWallpaperLoading}
           isSavingPersonal={this.state.isSavingPersonal}

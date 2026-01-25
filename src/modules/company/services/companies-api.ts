@@ -26,12 +26,37 @@ export type WorkspaceModel = {
   industry?: string;
   primaryService?: string;
   description?: string;
+  workspace_type?: string;
+  name?: string;
+  company_profile?: {
+    legal_name?: string;
+    trade_name?: string;
+    employees_count?: number;
+    industry?: string;
+    primary_service?: string;
+    description?: string;
+    wallpaperUrl?: string | null;
+    wallpaper_url?: string | null;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 };
 
 export type WorkspaceCreateResponse = WorkspaceModel;
 
 export type WorkspaceGetResponse = { workspace: WorkspaceModel | null };
+
+export type WorkspaceProfileUpdatePayload = {
+  accountType: "individual" | "company";
+  legalName?: string;
+  tradeName?: string;
+  employeesCount?: number;
+  industry?: string;
+  primaryService?: string;
+  description?: string;
+};
+
+export type WorkspaceProfileUpdateResponse = { workspace: WorkspaceModel | null };
 
 export class CompaniesApi extends BaseHttpService {
   constructor(http: HttpClient) {
@@ -61,6 +86,13 @@ export class CompaniesApi extends BaseHttpService {
 
   async updateWorkspaceService(workspaceId: string, serviceId: string, body: unknown): Promise<unknown> {
     return this.put<unknown, unknown>(`/company/internal/workspaces/${workspaceId}/services/${serviceId}`, body);
+  }
+
+  async updateWorkspaceProfile(workspaceId: string, payload: WorkspaceProfileUpdatePayload): Promise<WorkspaceProfileUpdateResponse> {
+    return this.put<WorkspaceProfileUpdateResponse, WorkspaceProfileUpdatePayload>(
+      `/company/internal/workspaces/${workspaceId}/profile`,
+      payload
+    );
   }
 
   async requestWallpaperSignature(contentType: string, filename: string): Promise<{ url: string; path: string; maxSize?: number } | null> {

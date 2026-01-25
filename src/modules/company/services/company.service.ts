@@ -1,10 +1,11 @@
 import { BehaviorSubject } from "rxjs";
-import { CompaniesApi, type WorkspaceCreatePayload, type WorkspaceCreateResponse, type WorkspaceGetResponse } from "./companies-api";
+import { CompaniesApi, type WorkspaceCreatePayload, type WorkspaceCreateResponse, type WorkspaceGetResponse, type WorkspaceProfileUpdatePayload, type WorkspaceProfileUpdateResponse } from "./companies-api";
 import { httpClient } from "@core/http/client.instance";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
 import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import type { WorkspaceModel } from "./companies-api";
+import { toAppError } from "@core/errors/to-app-error";
 
 export type Workspace = WorkspaceModel | null;
 
@@ -97,6 +98,30 @@ export class CompanyService {
     } catch {
       // on error, treat as no workspace (do not throw to avoid breaking auth flow)
       return null;
+    }
+  }
+
+  async updateWorkspaceProfile(payload: WorkspaceProfileUpdatePayload): Promise<Workspace | null> {
+    try {
+      const ws = this.getWorkspaceValue();
+      const w = ws as { workspaceId?: string; id?: string } | null;
+      const workspaceId = (w?.workspaceId ?? w?.id) as string | undefined;
+      if (!workspaceId) throw new Error("No workspace available");
+
+      const res: WorkspaceProfileUpdateResponse = await this.api.updateWorkspaceProfile(workspaceId, payload);
+      const workspace = res?.workspace ?? null;
+      if (workspace) {
+        try {
+          localStorageProvider.set(WORKSPACE_KEY, JSON.stringify(workspace));
+        } catch {
+          // ignore storage errors
+        }
+        this.subject.next(workspace);
+      }
+
+      return workspace;
+    } catch (err) {
+      throw toAppError(err);
     }
   }
 

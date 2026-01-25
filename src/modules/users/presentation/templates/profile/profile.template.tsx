@@ -1,7 +1,8 @@
 import React from "react";
 import { BaseTemplate } from "@shared/base/base.template";
-import { Tabs, Row, Col, Avatar, Button, Form, Input, Radio, InputNumber } from "antd";
+import { Tabs, Row, Col, Avatar, Button, Form, Input, Radio, InputNumber, Select, Tooltip } from "antd";
 import styled, { keyframes } from "styled-components";
+import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 
 const { TabPane } = Tabs;
 
@@ -68,7 +69,7 @@ export type PersonalModel = {
 
 export type CompanyModel = {
   accountType: "individual" | "company";
-  companyName?: string;
+  legalName?: string;
   employees?: number;
   primaryService?: string;
   industry?: string;
@@ -80,6 +81,8 @@ export type CompanyModel = {
 export type ProfileTemplateProps = {
   personal: PersonalModel;
   company?: CompanyModel;
+  categories?: ApplicationCategoryItem[];
+  industries?: ApplicationIndustryItem[];
   isAvatarLoading?: boolean;
   isWallpaperLoading?: boolean;
   isSavingPersonal?: boolean;
@@ -91,10 +94,36 @@ export type ProfileTemplateProps = {
 };
 
 const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+const fallbackIndustryOptions: { value: string; label: string }[] = [
+  { value: "health", label: "Health" },
+  { value: "finance", label: "Finance" },
+  { value: "retail", label: "Retail" },
+  { value: "education", label: "Education" },
+  { value: "services", label: "Services" },
+  { value: "other", label: "Other" },
+];
+
+const CompanyColumns = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 24px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ColumnStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
 
 export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   personal,
   company,
+  categories,
+  industries,
   isAvatarLoading,
   isWallpaperLoading,
   onOpenAvatar,
@@ -106,6 +135,25 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
 }) => {
   const [personalForm] = Form.useForm();
   const [companyForm] = Form.useForm();
+  const serviceOptions = React.useMemo(() => {
+    const base = (categories ?? []).map((c) => ({ value: c.uid, label: c.name }));
+    const current = company?.primaryService;
+    if (current && !base.some((opt) => opt.value === current)) {
+      return [{ value: current, label: current }, ...base];
+    }
+    return base;
+  }, [categories, company?.primaryService]);
+
+  const industryOptions = React.useMemo(() => {
+    const base = (industries && industries.length > 0)
+      ? industries.map((i) => ({ value: i.uid, label: i.name }))
+      : fallbackIndustryOptions;
+    const current = company?.industry;
+    if (current && !base.some((opt) => opt.value === current)) {
+      return [{ value: current, label: current }, ...base];
+    }
+    return base;
+  }, [industries, company?.industry]);
 
   React.useEffect(() => {
     // schedule update after render to avoid "not connected to any Form" warning
@@ -169,52 +217,90 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
               <Form.Item name="email" label="Email">
                 <Input disabled />
               </Form.Item>
-              <Form.Item name="phone" label="Phone">
+              <Form.Item
+                name="phone"
+                label={
+                  <span>
+                    Phone{" "}
+                    <Tooltip title="Include country code (e.g. +55 11 99999-9999)">
+                      <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
+                    </Tooltip>
+                  </span>
+                }
+              >
                 <Input placeholder="Phone" />
               </Form.Item>
               <Form.Item>
-                <Button type="primary" htmlType="submit" loading={isSavingPersonal}>Save personal</Button>
+                <Tooltip title="Save your personal profile changes">
+                  <span>
+                    <Button type="primary" htmlType="submit" loading={isSavingPersonal}>Save personal</Button>
+                  </span>
+                </Tooltip>
               </Form.Item>
             </Form>
           </TabPane>
 
           <TabPane tab="Company info" key="company" forceRender>
             <Form form={companyForm} initialValues={company ?? { accountType: "individual" }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSaveCompany(v as CompanyModel)}>
-              <Form.Item name="accountType" label="Account type">
-                <Radio.Group>
-                  <Radio value="individual">Individual</Radio>
-                  <Radio value="company">Company</Radio>
-                </Radio.Group>
-              </Form.Item>
+              <CompanyColumns>
+                <ColumnStack>
+                  <Form.Item name="accountType" label="Account type">
+                    <Radio.Group>
+                      <Radio value="individual">Individual</Radio>
+                      <Radio value="company">Company</Radio>
+                    </Radio.Group>
+                  </Form.Item>
 
-              <Form.Item name="companyName" label="Company name">
-                <Input placeholder="Company name" />
-              </Form.Item>
+                  <Form.Item
+                    name="legalName"
+                    label={
+                      <span>
+                        Legal name{" "}
+                        <Tooltip title="Official registered company name">
+                          <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
+                        </Tooltip>
+                      </span>
+                    }
+                  >
+                    <Input placeholder="Legal name" />
+                  </Form.Item>
 
-              <Form.Item name="tradeName" label="Trade name">
-                <Input placeholder="Trade name" />
-              </Form.Item>
+                  <Form.Item name="tradeName" label="Trade name">
+                    <Input placeholder="Trade name" />
+                  </Form.Item>
 
-              <Form.Item name="employees" label="Employees">
-                <InputNumber style={{ width: 160 }} min={0} />
-              </Form.Item>
+                  <Form.Item name="employees" label="Employees">
+                    <InputNumber style={{ width: 160 }} min={0} />
+                  </Form.Item>
+                </ColumnStack>
 
-              <Form.Item name="primaryService" label="Primary service">
-                <Input placeholder="Primary service" />
-              </Form.Item>
+                <ColumnStack>
+                  <Form.Item name="primaryService" label="Primary service">
+                    <Select placeholder="Select primary service" options={serviceOptions} />
+                  </Form.Item>
 
-              <Form.Item name="industry" label="Industry">
-                <Input placeholder="Industry" />
-              </Form.Item>
+                  <Form.Item name="industry" label="Industry">
+                    <Select placeholder="Select an industry" options={industryOptions} />
+                  </Form.Item>
 
-              <Form.Item name="description" label="Description">
-                <Input.TextArea rows={4} />
-              </Form.Item>
+                  <Form.Item name="description" label="Description">
+                    <Input.TextArea rows={4} />
+                  </Form.Item>
+                </ColumnStack>
+              </CompanyColumns>
 
               <Form.Item>
                 <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <Button type="default" onClick={onOpenWallpaper}>Change wallpaper</Button>
-                  <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
+                  <Tooltip title="Upload a new company wallpaper">
+                    <span>
+                      <Button type="default" onClick={onOpenWallpaper}>Change wallpaper</Button>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title="Save your company profile changes">
+                    <span>
+                      <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
+                    </span>
+                  </Tooltip>
                 </div>
               </Form.Item>
             </Form>

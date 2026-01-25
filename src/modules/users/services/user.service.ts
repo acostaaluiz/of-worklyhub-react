@@ -1,7 +1,8 @@
 import { BehaviorSubject } from "rxjs";
-import { UsersApi, type UserProfileResponse } from "./users-api";
+import { UsersApi, type UserProfileResponse, type UserProfileUpdatePayload } from "./users-api";
 import { httpClient } from "@core/http/client.instance";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
+import { toAppError } from "@core/errors/to-app-error";
 
 export type UserProfile = UserProfileResponse | null;
 
@@ -125,6 +126,33 @@ export class UsersService {
     } catch (err) {
       console.error("usersService.setPlan error", err);
       throw err;
+    }
+  }
+
+  async updateProfile(payload: UserProfileUpdatePayload): Promise<UserProfileResponse> {
+    try {
+      const res = await this.api.updateProfile(payload);
+      const user = res?.user;
+
+      const current = this.getProfileValue();
+      const updated: UserProfileResponse = {
+        name: user?.name ?? payload.fullName,
+        email: user?.email ?? payload.email,
+        phone: user?.phone ?? payload.phone,
+        planId: user?.planId ?? current?.planId,
+        photoUrl: current?.photoUrl,
+      };
+
+      this.subject.next(updated);
+      try {
+        localStorageProvider.set(PROFILE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore storage errors
+      }
+
+      return updated;
+    } catch (err) {
+      throw toAppError(err);
     }
   }
 
