@@ -1,5 +1,7 @@
 import { BaseTemplate } from "@shared/base/base.template";
 import { PublicFrameLayout } from "@shared/ui/layout/public-frame/public-frame.component";
+import { worklyHubLogoUrl } from "@shared/assets/brand";
+import { Svg } from "@shared/ui/components/svg/svg.component";
 
 import {
   Grid,
@@ -31,7 +33,9 @@ export function LoginTemplate({ onSubmit, onRegister }: Props) {
             <LeftPanel aria-label="Login hero panel">
               <div>
                 <BrandRow>
-                  <BrandMark aria-label="WorklyHub Logo">WH</BrandMark>
+                  <BrandMark aria-label="WorklyHub Logo">
+                    <Svg src={worklyHubLogoUrl} alt="WorklyHub" size={52} loading="eager" />
+                  </BrandMark>
                   <div>
                     <BrandTitle>WorklyHub</BrandTitle>
                     <BrandSubtitle>

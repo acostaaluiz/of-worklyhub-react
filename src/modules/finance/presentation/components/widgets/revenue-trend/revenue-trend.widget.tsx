@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { formatMoney } from "@core/utils/mask";
 
 import type { FinanceSeries } from "../../../../interfaces/finance-series.model";
 import {
@@ -16,6 +17,7 @@ import {
   WidgetCard,
   WidgetHeader,
 } from "../finance-widgets.shared.styles";
+import { getFinanceValueColor } from "../../../../utils/finance-value-status";
 
 type Props = {
   className?: string;
@@ -25,23 +27,17 @@ type Props = {
   heightHint?: "default" | "full";
 };
 
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const v = payload?.[0]?.value ?? 0;
+  const color = getFinanceValueColor(v, { context: "income" });
 
   return (
     <TooltipCard>
       <div className="tTitle">{label}</div>
       <div className="tRow">
         <div className="k">Revenue</div>
-        <div className="v">{formatMoney(v)}</div>
+        <div className="v" style={{ color }}>{formatMoney(v)}</div>
       </div>
     </TooltipCard>
   );

@@ -1,7 +1,8 @@
 import React from "react";
 import { Table, Button, Space, Tag } from "antd";
-import type { ProductModel } from "@modules/inventory/interfaces/product.model";
+import { formatMoneyFromCents } from "@core/utils/mask";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
+import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 
 type Props = {
   products: ProductModel[];
@@ -23,7 +24,7 @@ export function ProductListComponent({ products, categories = [], onEdit, onEntr
     { title: "Stock", dataIndex: "stock", key: "stock", render: (v: number, r: ProductModel) => <b style={{ color: r.stock <= (r.minStock ?? 0) ? "#d4380d" : undefined }}>{v}</b>, onCell: () => ({ style: cellBorder }) },
     { title: "Minimum stock", dataIndex: "minStock", key: "minStock", onCell: () => ({ style: cellBorder }) },
     { title: "Location", dataIndex: "location", key: "location", onCell: () => ({ style: cellBorder }) },
-    { title: "Price", dataIndex: "priceCents", key: "priceCents", render: (v?: number) => (v ? `R$ ${(v / 100).toFixed(2)}` : "-"), onCell: () => ({ style: cellBorder }) },
+    { title: "Price", dataIndex: "priceCents", key: "priceCents", render: (v?: number) => (typeof v === "number" ? formatMoneyFromCents(v) : "-"), onCell: () => ({ style: cellBorder }) },
     { title: "Active", dataIndex: "active", key: "active", render: (v?: boolean) => (v ? <Tag color="green">Yes</Tag> : <Tag>No</Tag>), onCell: () => ({ style: cellBorder }) },
     {
       title: "Actions",

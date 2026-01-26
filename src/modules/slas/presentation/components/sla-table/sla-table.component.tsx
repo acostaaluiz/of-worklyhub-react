@@ -1,7 +1,6 @@
 import { Empty, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import dayjs from "dayjs";
-
+import { formatDate } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { BaseState } from "@shared/base/interfaces/base-state.interface";
@@ -69,8 +68,7 @@ export class SlaTable extends BaseComponent<Props, State> {
   }
 
   private formatDate(value: string): string {
-    const parsed = dayjs(value, "YYYY-MM-DD", true);
-    return parsed.isValid() ? parsed.format("MMM D, YYYY") : value;
+    return formatDate(value);
   }
 
   private formatHours(value: number): string {

@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Card, Button, Typography, message, Skeleton } from "antd";
+import { formatDate, formatMoney } from "@core/utils/mask";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
+import {
+  type FinanceValueContext,
+  getFinanceSignedValue,
+  getFinanceValueColor,
+} from "@modules/finance/utils/finance-value-status";
 
 export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
   const api = useFinanceApi();
@@ -33,11 +39,12 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
     return desc.replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, "").trim();
   }
 
-  function formatDateToUS(d?: string) {
-    if (!d) return "";
-    const dt = new Date(d);
-    if (Number.isNaN(dt.getTime())) return d;
-    return dt.toLocaleDateString("en-US");
+  function getEntryContext(type?: string): FinanceValueContext | undefined {
+    const normalized = (type ?? "").toString().toLowerCase();
+    if (normalized === "income" || normalized === "in") return "income";
+    if (normalized === "expense" || normalized === "out") return "expense";
+    if (normalized === "fixed") return "fixed";
+    return undefined;
   }
 
   const totalPages = Math.ceil(items.length / pageSize);
@@ -58,21 +65,20 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: "1 1 auto", minWidth: 0 }}>
                     <Typography.Text strong style={{ display: "block", fontSize: 16 }}>{stripCodeFromDescription(it.description) ?? "Entry"}</Typography.Text>
-                    <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{formatDateToUS(it.date)}</div>
+                    <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{formatDate(it.date)}</div>
                   </div>
                   <div style={{ textAlign: "right", minWidth: 120 }}>
                     {(() => {
                       const amountNum = Number(it.amount ?? 0);
-                      const isNegative = amountNum < 0;
-                      const formatted = Math.abs(amountNum).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                      let color = "inherit";
-                      if (it.type === "income") color = "var(--color-success)";
-                      else if (it.type === "expense") color = "var(--color-warning)";
-                      else if (isNegative) color = "var(--color-danger)";
+                      const context = getEntryContext(it.type);
+                      const signedValue = getFinanceSignedValue(amountNum, context);
+                      const isNegative = signedValue < 0;
+                      const formatted = formatMoney(Math.abs(amountNum));
+                      const color = getFinanceValueColor(amountNum, { context });
                       return (
                         <div style={{ fontWeight: 600, fontSize: 16 }}>
-                          {isNegative && <span style={{ color: "var(--color-danger)", marginRight: 4 }}>-</span>}
-                          <span style={{ color }}>R$ {formatted}</span>
+                          {isNegative && <span style={{ color, marginRight: 4 }}>-</span>}
+                          <span style={{ color }}>{formatted}</span>
                         </div>
                       );
                     })()}

@@ -35,6 +35,14 @@ export const Brand = styled.div`
   letter-spacing: -0.02em;
   cursor: pointer;
   user-select: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+
+  .brand-logo {
+    display: block;
+    flex-shrink: 0;
+  }
 `;
 
 export const Right = styled.div`

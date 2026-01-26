@@ -1,10 +1,11 @@
 import React from "react";
 import { Button, DatePicker, Input, TimePicker, Form, message } from "antd";
 import dayjs from "dayjs";
+import { getDateFormat } from "@core/utils/mask";
+import { BaseComponent } from "@shared/base/base.component";
+import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
-import { BaseComponent } from "@shared/base/base.component";
 
 type Props = {
   service: ServiceModel;
@@ -17,6 +18,7 @@ type State = {
 
 export class BookingForm extends BaseComponent<Props, State> {
   private serviceApi = new ScheduleService();
+  private dateFormat = getDateFormat();
 
   protected override state: State = { isSubmitting: false };
 
@@ -51,7 +53,7 @@ export class BookingForm extends BaseComponent<Props, State> {
     return (
       <Form layout="vertical" onFinish={this.handleFinish} initialValues={{ timeRange: [dayjs().hour(10), dayjs().hour(11)] }}>
         <Form.Item label="Data" name="date" rules={[{ required: true }]}>
-          <DatePicker style={{ width: "100%" }} />
+          <DatePicker style={{ width: "100%" }} format={this.dateFormat} />
         </Form.Item>
 
         <Form.Item label="Horário" name="timeRange" rules={[{ required: true }]}>

@@ -1,11 +1,12 @@
 import React from "react";
 import { Form, Input, InputNumber, Button, Switch } from "antd";
-import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
-import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import { centsToMoney, getMoneyInput, moneyToCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { BaseState } from "@shared/base/interfaces/base-state.interface";
-import { FormStack, FieldRow, FieldRow3, ContinueWrap } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
 import DurationTimeSelector from "@shared/ui/components/duration-time-selector/duration-time-selector.component";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import { FormStack, FieldRow, FieldRow3, ContinueWrap } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
 
 type Props = BaseProps & {
   initial?: Partial<CompanyServiceModel>;
@@ -20,8 +21,22 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
 
   protected override renderView(): React.ReactNode {
     const { initial, onSubmit, submitting } = this.props;
+    const moneyInput = getMoneyInput();
     return (
-      <Form ref={this.formRef} layout="vertical" initialValues={{ durationMinutes: 30, active: true, ...initial }} onFinish={(v) => onSubmit(v as any)}>
+      <Form
+        ref={this.formRef}
+        layout="vertical"
+        initialValues={{ durationMinutes: 30, active: true, ...initial, priceCents: typeof initial?.priceCents === "number" ? centsToMoney(initial.priceCents) : undefined }}
+        onFinish={(v) => {
+          const prepared = { ...(v as any) };
+          if (typeof v.priceCents === "number" && Number.isFinite(v.priceCents)) {
+            prepared.priceCents = moneyToCents(v.priceCents);
+          } else {
+            prepared.priceCents = undefined;
+          }
+          onSubmit(prepared);
+        }}
+      >
         <FormStack>
           <Form.Item name="title" label="Title" rules={[{ required: true }]}> 
             <Input size="large" />
@@ -36,8 +51,8 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
               <DurationTimeSelector mode="duration" size="large" chipMinWidth={72} />
             </Form.Item>
 
-            <Form.Item name="priceCents" label="Price (cents)">
-              <InputNumber min={0} style={{ width: "100%" }} size="large" />
+            <Form.Item name="priceCents" label="Price">
+              <InputNumber min={0} style={{ width: "100%" }} size="large" step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
             </Form.Item>
 
             <Form.Item name="capacity" label="Capacity">

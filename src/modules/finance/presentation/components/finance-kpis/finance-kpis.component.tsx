@@ -1,6 +1,11 @@
 import React from "react";
 import { Card, Row, Col, Skeleton } from "antd";
+import { formatMoney } from "@core/utils/mask";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
+import {
+  type FinanceValueContext,
+  getFinanceValueColor,
+} from "@modules/finance/utils/finance-value-status";
 
 export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
   const api = useFinanceApi();
@@ -25,15 +30,16 @@ export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
   const despesa = entries.filter((e) => e.type === "expense").reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
   const lucro = receita - despesa;
 
-  function formatBR(val: number) {
-    return val.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-
-  const renderCard = (label: string, value: string, color?: string) => (
+  const renderCard = (
+    label: string,
+    value: string,
+    rawValue: number,
+    context: FinanceValueContext
+  ) => (
     <Card bordered={false} style={{ minHeight: 96, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 12 }}>{label}</div>
-        <div style={{ fontSize: 18, fontWeight: 600, color }}>{value}</div>
+        <div style={{ fontSize: 18, fontWeight: 600, color: getFinanceValueColor(rawValue, { context }) }}>{value}</div>
       </div>
     </Card>
   );
@@ -62,9 +68,9 @@ export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
 
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
-      <Col span={8}>{renderCard("Income", `R$ ${formatBR(receita)}`, "var(--color-success)")}</Col>
-      <Col span={8}>{renderCard("Expense", `R$ ${formatBR(despesa)}`, "var(--color-warning)")}</Col>
-      <Col span={8}>{renderCard("Profit", `R$ ${formatBR(lucro)}`, lucro < 0 ? "var(--color-danger)" : undefined)}</Col>
+      <Col span={8}>{renderCard("Income", formatMoney(receita), receita, "income")}</Col>
+      <Col span={8}>{renderCard("Expense", formatMoney(despesa), despesa, "expense")}</Col>
+      <Col span={8}>{renderCard("Profit", formatMoney(lucro), lucro, "neutral")}</Col>
     </Row>
   );
 }

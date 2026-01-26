@@ -1,5 +1,6 @@
 import { Skeleton } from "antd";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { formatMoney } from "@core/utils/mask";
 
 import {
   ChartWrap,
@@ -8,6 +9,7 @@ import {
   WidgetCard,
   WidgetHeader,
 } from "../finance-widgets.shared.styles";
+import { getFinanceValueColor } from "../../../../utils/finance-value-status";
 
 type Item = { id: string; category: string; value: number };
 
@@ -26,24 +28,18 @@ const palette = [
   "var(--color-info)",
 ];
 
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload as Item | undefined;
   if (!p) return null;
+  const color = getFinanceValueColor(p.value, { context: "expense" });
 
   return (
     <TooltipCard>
       <div className="tTitle">{p.category}</div>
       <div className="tRow">
         <div className="k">Expenses</div>
-        <div className="v">{formatMoney(p.value)}</div>
+        <div className="v" style={{ color }}>{formatMoney(p.value)}</div>
       </div>
     </TooltipCard>
   );

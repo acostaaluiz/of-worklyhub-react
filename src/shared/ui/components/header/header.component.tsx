@@ -1,9 +1,11 @@
 import React from "react";
 import { Avatar, Input, Menu, Button, Space, Dropdown, type MenuProps } from "antd";
 import { Search } from "lucide-react";
+import { worklyHubLogoUrl } from "@shared/assets/brand";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import { BaseComponent } from "@shared/base/base.component";
 import { FieldIcon } from "@shared/styles/global";
+import { Svg } from "@shared/ui/components/svg/svg.component";
 
 import {
   HeaderShell,
@@ -56,7 +58,14 @@ export class AppHeader extends BaseComponent<Props> {
           <HeaderInner>
             <Left>
               <Brand onClick={() => this.props.onNavigate?.("/")} role="button" tabIndex={0}>
-                WorklyHub
+                <Svg
+                  src={worklyHubLogoUrl}
+                  alt="WorklyHub"
+                  size={48}
+                  loading="eager"
+                  className="brand-logo"
+                />
+                <span>WorklyHub</span>
               </Brand>
             </Left>
 

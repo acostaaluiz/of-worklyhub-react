@@ -1,10 +1,11 @@
 import React from "react";
 import { List, Card, Typography, Button, Drawer } from "antd";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
-import { ServicesGrid } from "./company-services.component.styles";
-import { ServiceSelector } from "./service-selector.component";
-import { CartBar } from "./cart-bar.component";
+import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+import { CartBar } from "./cart-bar.component";
+import { ServiceSelector } from "./service-selector.component";
+import { ServicesGrid } from "./company-services.component.styles";
 
 type Props = {
   services?: ServiceModel[];
@@ -66,7 +67,9 @@ export class CompanyServices extends BaseComponent<Props, State> {
                     </div>
 
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontWeight: 700 }}>{s.priceFormatted}</div>
+                      <div style={{ fontWeight: 700 }}>
+                        {typeof s.priceCents === "number" ? formatMoneyFromCents(s.priceCents) : s.priceFormatted}
+                      </div>
                       <Button type="default" size="small" style={{ marginTop: 8 }} onClick={() => this.handleAdd(s)}>
                         Adicionar
                       </Button>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Button, Segmented, Space, Typography } from "antd";
 import { Check, Sparkles } from "lucide-react";
+import { formatMoney } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 
 import {
@@ -104,11 +105,7 @@ export class PlanSelector extends BaseComponent<
   }
 
   private formatPrice(value: number) {
-    return value.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      maximumFractionDigits: 0,
-    });
+    return formatMoney(value);
   }
 
   private discountLabel = "Save 15%";

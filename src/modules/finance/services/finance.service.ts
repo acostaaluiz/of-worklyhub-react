@@ -41,7 +41,7 @@ const getWorkspaceId = (ws: Workspace): string | undefined => {
 
 export class FinanceService {
   private companyService = new CompanyServicesService();
-  private api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
+  private api = new FinanceApi(httpClient);
 
   // Entries
   async listEntries(): Promise<FinanceEntryModel[]> {
@@ -326,7 +326,7 @@ export function useFinanceApi() {
 
     const p = (async () => {
       try {
-        const api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
+        const api = new FinanceApi(httpClient);
 
         const query: Record<string, unknown> = {};
         if (opts?.typeId) query.typeId = opts.typeId;
@@ -340,7 +340,7 @@ export function useFinanceApi() {
         // try to map typeId -> type key/name for UI convenience
         const types = await (async () => {
           try {
-            return await (new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient)).listEntryTypes(opts?.workspaceId);
+            return await (new FinanceApi(httpClient)).listEntryTypes(opts?.workspaceId);
           } catch {
             return [] as FinanceEntryType[];
           }
@@ -384,7 +384,7 @@ export function useFinanceApi() {
   const createEntry = useCallback(async (payload: { serviceId?: string; type?: string; typeId?: string; amount: number; date: string; note?: string; workspaceId?: string }) => {
     // Try remote creation via API; fall back to mock store on error
     try {
-      const api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
+      const api = new FinanceApi(httpClient);
 
       const occurredAt = payload.date ? dayjs(payload.date).toISOString() : dayjs().toISOString();
       const amountCents = Math.round((Number(payload.amount) || 0) * 100);
@@ -429,7 +429,7 @@ export function useFinanceApi() {
 
     const p = (async () => {
       try {
-        const api = new FinanceApi(httpClient as unknown as import("@core/http/interfaces/http-client.interface").HttpClient);
+        const api = new FinanceApi(httpClient);
         const rows = await api.listEntryTypes(workspaceId);
         if (Array.isArray(rows) && rows.length > 0) return rows;
       } catch (err) {

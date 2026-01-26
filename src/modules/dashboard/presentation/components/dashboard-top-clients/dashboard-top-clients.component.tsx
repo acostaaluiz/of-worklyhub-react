@@ -1,5 +1,6 @@
 import { Skeleton, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { formatMoney } from "@core/utils/mask";
 
 import type { DashboardClientRankModel } from "../../../interfaces/dashboard-client-rank.model";
 import {
@@ -11,13 +12,6 @@ type Props = {
   items: DashboardClientRankModel[];
   loading?: boolean;
 };
-
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
 
 export function DashboardTopClients(props: Props) {
   const { items, loading } = props;

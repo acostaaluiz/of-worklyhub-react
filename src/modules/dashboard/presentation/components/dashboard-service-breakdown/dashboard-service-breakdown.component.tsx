@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { formatMoney } from "@core/utils/mask";
 
 import type { DashboardServiceSalesModel } from "../../../interfaces/dashboard-service-sales.model";
 import {
@@ -21,13 +22,6 @@ type Props = {
   items: DashboardServiceSalesModel[];
   loading?: boolean;
 };
-
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
 
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;

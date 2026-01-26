@@ -2,6 +2,7 @@ import { Button, DatePicker, Select } from "antd";
 import type { RangePickerProps } from "antd/es/date-picker";
 import dayjs from "dayjs";
 
+import { getDateFormat } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { BaseState } from "@shared/base/interfaces/base-state.interface";
@@ -22,6 +23,7 @@ type State = BaseState;
 
 export class SlaFilters extends BaseComponent<Props, State> {
   public state: State = { isLoading: false, error: undefined };
+  private dateFormat = getDateFormat();
 
   protected renderView(): React.ReactNode {
     const { filters, employees, loading } = this.props;
@@ -51,6 +53,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
               value={rangeValue}
               onChange={this.handleRangeChange}
               allowClear={false}
+              format={this.dateFormat}
             />
           </FilterField>
         </FiltersGroup>

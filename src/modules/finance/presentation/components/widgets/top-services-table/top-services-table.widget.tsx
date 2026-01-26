@@ -1,6 +1,8 @@
 import { Skeleton, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import styled from "styled-components";
+import { formatMoney } from "@core/utils/mask";
+import { getFinanceValueColor } from "../../../../utils/finance-value-status";
 
 import type { FinanceTopServiceRow } from "../../../../interfaces/finance-table.model";
 import {
@@ -40,13 +42,6 @@ const Wrap = styled.div`
   }
 `;
 
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
 export function TopServicesTableWidget({
   className,
   items,
@@ -73,7 +68,11 @@ export function TopServicesTableWidget({
       key: "revenue",
       width: 130,
       align: "right",
-      render: (v) => formatMoney(v),
+      render: (v) => (
+        <span style={{ color: getFinanceValueColor(v, { context: "income" }) }}>
+          {formatMoney(v)}
+        </span>
+      ),
     },
     {
       title: "Avg Ticket",
@@ -81,7 +80,11 @@ export function TopServicesTableWidget({
       key: "avgTicket",
       width: 120,
       align: "right",
-      render: (v) => formatMoney(v),
+      render: (v) => (
+        <span style={{ color: getFinanceValueColor(v, { context: "income" }) }}>
+          {formatMoney(v)}
+        </span>
+      ),
     },
   ];
 

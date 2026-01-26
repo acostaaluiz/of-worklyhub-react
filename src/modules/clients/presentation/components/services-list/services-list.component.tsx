@@ -1,10 +1,11 @@
 import React from "react";
 import { List, Card, Typography, Empty, Input, Tag, Space } from "antd";
 import { Search, Heart } from "lucide-react";
-import { getAvailableServices } from "@modules/clients/services/clients.service";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import { TitleBlock } from "@shared/styles/global";
+import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+import { getAvailableServices } from "@modules/clients/services/clients.service";
 import {
   ServicesWrap,
   ServiceCard,
@@ -98,7 +99,9 @@ export class ServicesList extends BaseComponent<{}, State> {
                       </Typography.Paragraph>
 
                       <ActionsRow>
-                        <div style={{ fontWeight: 600 }}>{item.priceFormatted}</div>
+                        <div style={{ fontWeight: 600 }}>
+                          {typeof item.priceCents === "number" ? formatMoneyFromCents(item.priceCents) : item.priceFormatted}
+                        </div>
                         <div style={{ marginLeft: 8 }}>
                           <Heart size={16} />
                         </div>

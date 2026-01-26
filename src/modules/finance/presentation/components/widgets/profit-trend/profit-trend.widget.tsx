@@ -7,6 +7,7 @@ import {
   YAxis,
   Tooltip,
 } from "recharts";
+import { formatMoney } from "@core/utils/mask";
 
 import type { FinanceSeries } from "../../../../interfaces/finance-series.model";
 import {
@@ -16,6 +17,7 @@ import {
   WidgetCard,
   WidgetHeader,
 } from "../finance-widgets.shared.styles";
+import { getFinanceValueColor } from "../../../../utils/finance-value-status";
 
 type Props = {
   className?: string;
@@ -26,33 +28,35 @@ type Props = {
   subtitle?: string;
 };
 
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
 
   const get = (k: string) =>
     payload.find((p: any) => p.dataKey === k)?.value ?? 0;
+  const revenue = get("revenue");
+  const expenses = get("expenses");
+  const profit = get("profit");
 
   return (
     <TooltipCard>
       <div className="tTitle">{label}</div>
       <div className="tRow">
         <div className="k">Revenue</div>
-        <div className="v">{formatMoney(get("revenue"))}</div>
+        <div className="v" style={{ color: getFinanceValueColor(revenue, { context: "income" }) }}>
+          {formatMoney(revenue)}
+        </div>
       </div>
       <div className="tRow">
         <div className="k">Expenses</div>
-        <div className="v">{formatMoney(get("expenses"))}</div>
+        <div className="v" style={{ color: getFinanceValueColor(expenses, { context: "expense" }) }}>
+          {formatMoney(expenses)}
+        </div>
       </div>
       <div className="tRow">
         <div className="k">Profit</div>
-        <div className="v">{formatMoney(get("profit"))}</div>
+        <div className="v" style={{ color: getFinanceValueColor(profit, { context: "neutral" }) }}>
+          {formatMoney(profit)}
+        </div>
       </div>
     </TooltipCard>
   );

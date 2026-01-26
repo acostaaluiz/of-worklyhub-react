@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Segmented, Typography, message } from "antd";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
+import { formatDateTime } from "@core/utils/mask";
 
 import Calendar from "@toast-ui/calendar";
 import type { EventObject } from "@toast-ui/calendar";
@@ -198,7 +199,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       const statusColor = normalizeCssColor(statusColorRaw) ?? statusColorRaw;
       const textColor = themeOnPrimary || themeText || "#ffffff";
 
-      const startText = dayjs(start).format("YYYY.MM.DD HH:mm");
+      const startText = formatDateTime(start);
       const endText = dayjs(end).format("HH:mm");
       const bodyHtml = `
         <div style="background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:var(--shadow-md);border-radius:8px;padding:12px;width:250px;font-family:inherit;overflow:hidden;">

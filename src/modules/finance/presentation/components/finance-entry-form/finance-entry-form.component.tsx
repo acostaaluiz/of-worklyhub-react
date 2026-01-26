@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Form, Input, InputNumber, Select, Button, DatePicker, message } from "antd";
-import { loadingService } from "@shared/ui/services/loading.service";
 import dayjs from "dayjs";
+import { getDateFormat, getMaskConfig, getMoneyInput } from "@core/utils/mask";
+import { loadingService } from "@shared/ui/services/loading.service";
 import type { FinanceEntryCreatePayload } from "@modules/finance/interfaces/finance-entry.model";
-import { useFinanceApi } from "@modules/finance/services/finance.service";
 import type { FinanceEntryType } from "@modules/finance/services/finance-api";
+import { useFinanceApi } from "@modules/finance/services/finance.service";
 
 type Props = {
   initial?: Partial<FinanceEntryCreatePayload>;
@@ -16,6 +17,9 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
   const [form] = Form.useForm();
   const api = useFinanceApi();
   const [types, setTypes] = useState<FinanceEntryType[]>([]);
+  const moneyInput = getMoneyInput();
+  const dateFormat = getDateFormat();
+  const currencyCode = getMaskConfig().currencyCode;
 
   useEffect(() => {
     let mounted = true;
@@ -73,12 +77,12 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
         />
       </Form.Item>
 
-      <Form.Item name="amount" label="Amount (BRL)" rules={[{ required: true }]}>
-        <InputNumber style={{ width: "100%" }} min={0} step={0.01} />
+      <Form.Item name="amount" label={`Amount (${currencyCode})`} rules={[{ required: true }]}>
+        <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
       </Form.Item>
 
       <Form.Item name="date" label="Date">
-        <DatePicker style={{ width: "100%" }} />
+        <DatePicker style={{ width: "100%" }} format={dateFormat} />
       </Form.Item>
 
       <Form.Item name="description" label="Description">

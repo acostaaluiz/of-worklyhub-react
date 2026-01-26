@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { formatDateShort } from "@core/utils/mask";
 
 import type { DashboardQueryModel } from "../interfaces/dashboard-query.model";
 import type { DashboardKpiModel } from "../interfaces/dashboard-kpi.model";
@@ -52,7 +53,7 @@ export class DashboardService {
         query.groupBy === "month"
           ? from.add(i, "month").format("MMM")
           : query.groupBy === "week"
-            ? from.add(i, "week").startOf("week").format("DD/MM")
+            ? formatDateShort(from.add(i, "week").startOf("week"))
             : from.add(i, "day").format("DD");
 
       const rev = money(4200, i + steps);

@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { RefreshCw } from "lucide-react";
 import { useMemo } from "react";
+import { getDateFormat } from "@core/utils/mask";
 
 import type {
   DashboardQueryModel,
@@ -32,6 +33,7 @@ type Props = {
 
 export function DashboardFilters(props: Props) {
   const { value, onChange, loading, view, onViewChange } = props;
+  const dateFormat = getDateFormat();
 
   const rangeValue = useMemo<[Dayjs, Dayjs]>(() => {
     return [dayjs(value.from, "YYYY-MM-DD"), dayjs(value.to, "YYYY-MM-DD")];
@@ -58,7 +60,7 @@ export function DashboardFilters(props: Props) {
     <FiltersCard className="surface">
       <FiltersLeft>
         <Typography.Text strong>Period</Typography.Text>
-        <DatePicker.RangePicker value={rangeValue} onChange={setRange as any} />
+        <DatePicker.RangePicker value={rangeValue} onChange={setRange as any} format={dateFormat} />
         <ViewSegment
           value={view}
           onChange={(v) => onViewChange(v as DashboardView)}

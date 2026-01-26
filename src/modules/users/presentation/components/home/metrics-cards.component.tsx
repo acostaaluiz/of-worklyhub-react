@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Row, Col } from "antd";
 import { Calendar, DollarSign, Clock } from "lucide-react";
+import { formatDate } from "@core/utils/mask";
 import { formatMoney } from "@core/utils/currency";
 
 type NextAppointment = { title?: string; date?: string; time?: string } | undefined;
@@ -13,6 +14,16 @@ type Props = {
 
 export default function MetricsCards({ appointmentsToday, revenueThisMonthCents, nextAppointment }: Props) {
   // use shared util for currency formatting
+  const formatNextLabel = (next?: NextAppointment) => {
+    if (!next) return "-";
+    const rawTitle = (next.title ?? "").trim();
+    const category = rawTitle.includes(":")
+      ? rawTitle.split(":")[0].trim()
+      : (rawTitle || "Appointment");
+    const date = formatDate(next.date, "DD/MM");
+    const time = next.time ?? "";
+    return `${category} - ${date} ${time}`.trim();
+  };
 
   return (
     <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
@@ -52,7 +63,9 @@ export default function MetricsCards({ appointmentsToday, revenueThisMonthCents,
             </div>
             <div>
               <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Next appointment</div>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>{nextAppointment ? `${nextAppointment.title ?? "Appointment"} • ${nextAppointment.date ?? ""} ${nextAppointment.time ?? ""}` : "—"}</div>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>
+                {formatNextLabel(nextAppointment)}
+              </div>
             </div>
           </div>
         </Card>

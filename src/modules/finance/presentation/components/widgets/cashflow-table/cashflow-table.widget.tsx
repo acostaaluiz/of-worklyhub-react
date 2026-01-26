@@ -1,13 +1,17 @@
 import { Skeleton, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-
+import styled from "styled-components";
+import { formatDate, formatMoney } from "@core/utils/mask";
 import type { FinanceCashflowRow } from "../../../../interfaces/finance-table.model";
+import {
+  getFinanceSignedValue,
+  getFinanceValueColor,
+} from "../../../../utils/finance-value-status";
 import {
   WidgetBody,
   WidgetCard,
   WidgetHeader,
 } from "../finance-widgets.shared.styles";
-import styled from "styled-components";
 
 type Props = {
   className?: string;
@@ -42,13 +46,6 @@ const Wrap = styled.div`
   }
 `;
 
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-
 export function CashflowTableWidget({
   className,
   items,
@@ -63,6 +60,7 @@ export function CashflowTableWidget({
       key: "date",
       width: 120,
       ellipsis: true,
+      render: (v) => formatDate(v),
     },
     {
       title: "Description",
@@ -90,7 +88,14 @@ export function CashflowTableWidget({
       key: "amount",
       width: 120,
       align: "right",
-      render: (v) => formatMoney(v),
+      render: (v, row) => {
+        const context = row.type === "out" ? "out" : "in";
+        const numeric = Number(v ?? 0);
+        const signed = getFinanceSignedValue(numeric, context);
+        const color = getFinanceValueColor(numeric, { context });
+        const prefix = signed < 0 ? "-" : "";
+        return <span style={{ color }}>{prefix}{formatMoney(Math.abs(numeric))}</span>;
+      },
     },
     {
       title: "Status",

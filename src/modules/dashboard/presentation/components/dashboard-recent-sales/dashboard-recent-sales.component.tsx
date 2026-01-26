@@ -1,5 +1,6 @@
 import { Skeleton, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { formatDateTime, formatMoney } from "@core/utils/mask";
 
 import type { DashboardSaleItemModel } from "../../../interfaces/dashboard-sale-item.model";
 import {
@@ -11,13 +12,6 @@ type Props = {
   items: DashboardSaleItemModel[];
   loading?: boolean;
 };
-
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
 
 const statusLabel: Record<string, string> = {
   paid: "Paid",
@@ -46,7 +40,7 @@ export function DashboardRecentSales(props: Props) {
       key: "dateTime",
       width: 170,
       render: (v: string) => (
-        <Typography.Text type="secondary">{v}</Typography.Text>
+        <Typography.Text type="secondary">{formatDateTime(v)}</Typography.Text>
       ),
     },
     {

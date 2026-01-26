@@ -1,35 +1,54 @@
 import { useEffect, useState } from "react";
 import { BaseTemplate } from "@shared/base/base.template";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
 import { TemplateShell } from "../home/home.template.styles";
 import { ScheduleEventModal } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-event-modal.component";
 import { useScheduleApi } from "@modules/schedule/services/schedule.service";
 import { Button, message } from "antd";
+import type { ScheduleEventDraft, ScheduleEventModalProps } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-event-modal.form.types";
+
+type ModalCategory = ScheduleEventModalProps["categories"][number];
 
 type Props = {
   service: ServiceModel;
-  onBooked?: (ev: any) => void;
+  onBooked?: (ev: ScheduleEvent) => void;
 };
 
 export function ServiceDetailTemplate({ service, onBooked }: Props) {
   const [isOpen, setIsOpen] = useState(false);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<ScheduleEventModalProps["categories"]>([]);
   const api = useScheduleApi();
 
   useEffect(() => {
     (async () => {
       try {
         const cats = await api.getCategories();
-        setCategories(cats);
+        const mapped = (cats ?? []).map<ModalCategory>((c) => ({
+          id: c.id,
+          label: c.label,
+          color: c.color ?? "var(--color-primary)",
+        }));
+        setCategories(mapped);
       } catch (err) {
         // ignore
       }
     })();
   }, [api]);
 
-  const handleConfirm = async (draft: any) => {
+  const handleConfirm = async (draft: ScheduleEventDraft) => {
     try {
-      const created = await api.createEvent(draft);
+      const payload: Omit<ScheduleEvent, "id"> = {
+        title: draft.title,
+        description: draft.description,
+        categoryId: draft.categoryId,
+        date: draft.date,
+        startTime: draft.startTime,
+        endTime: draft.endTime,
+        durationMinutes: draft.durationMinutes,
+      };
+
+      const created = await api.createEvent(payload);
       message.success("Agendamento criado");
       setIsOpen(false);
       onBooked?.(created);

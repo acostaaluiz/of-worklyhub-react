@@ -4,7 +4,6 @@ import type { ScheduleCategory } from "../interfaces/schedule-category.model";
 import type { ScheduleEvent } from "../interfaces/schedule-event.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
 import { httpClient } from "@core/http/client.instance";
-import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import { SchedulesApi } from "./schedules-api";
 import type { NextScheduleItem } from "./schedules-api";
 
@@ -26,7 +25,7 @@ type CreateSchedulePayload = {
   statusId?: string | null;
 };
 
-const schedulesApi = new SchedulesApi(httpClient as unknown as HttpClient);
+const schedulesApi = new SchedulesApi(httpClient);
 
 export async function getNextSchedulesForWorkspace(workspaceId?: string | null, limit = 3): Promise<NextScheduleItem[]> {
   const max = Math.min(Math.max(1, limit ?? 3), 3);

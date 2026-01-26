@@ -40,17 +40,9 @@ export const Brand = styled.div`
 
   color: var(--color-text);
 
-  .logo-mark {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 800;
-    box-shadow: 0 6px 18px rgba(6,22,33,0.12);
+  .brand-logo {
+    display: block;
+    flex-shrink: 0;
   }
 `;
 

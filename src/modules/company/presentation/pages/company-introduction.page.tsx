@@ -1,16 +1,17 @@
 import type React from "react";
-import { BasePage } from "@shared/base/base.page";
-import { CompanyIntroductionTemplate } from "../templates/company-introduction/company-introduction.template";
+import { message } from "antd";
 import { applicationService } from "@core/application/application.service";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
-import { usersService } from "@modules/users/services/user.service";
-import { usersAuthService } from "@modules/users/services/auth.service";
-import type { CompanyIntroductionValues } from "../templates/company-introduction/../../steps/personal-info.step";
+import { navigateTo } from "@core/navigation/navigation.service";
+import { unmaskPhone } from "@core/utils/mask";
+import { BasePage } from "@shared/base/base.page";
 import { loadingService } from "@shared/ui/services/loading.service";
-import { message } from "antd";
 import { companyService } from "@modules/company/services/company.service";
 import type { WorkspaceCreatePayload } from "@modules/company/services/companies-api";
-import { navigateTo } from "@core/navigation/navigation.service";
+import { usersAuthService } from "@modules/users/services/auth.service";
+import { usersService } from "@modules/users/services/user.service";
+import { CompanyIntroductionTemplate } from "../templates/company-introduction/company-introduction.template";
+import type { CompanyIntroductionValues } from "../templates/company-introduction/../../steps/personal-info.step";
 
 type ResponseModalState = { open: boolean; title: string; description?: string } | undefined;
 
@@ -96,7 +97,7 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
         accountType: values?.accountType ?? "individual",
         fullName: values?.fullName ?? "",
         email: values?.email ?? "",
-        phone: values?.phone ?? undefined,
+        phone: values?.phone ? unmaskPhone(values.phone) : undefined,
         tradeName: values?.companyName ?? undefined,
         employeesCount: values?.employees ?? undefined,
         industry: values?.industry ?? undefined,

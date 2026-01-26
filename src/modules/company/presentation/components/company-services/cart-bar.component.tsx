@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "antd";
 import styled from "styled-components";
+import { formatMoneyFromCents } from "@core/utils/mask";
 
 const Bar = styled.div`
   position: fixed;
@@ -28,7 +29,7 @@ export function CartBar({ count, totalCents, onOpen }: Props) {
     <Bar>
       <div>
         <div style={{ fontWeight: 700 }}>{count} serviços selecionados</div>
-        <div style={{ color: "var(--color-text-muted)" }}>{(totalCents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+        <div style={{ color: "var(--color-text-muted)" }}>{formatMoneyFromCents(totalCents)}</div>
       </div>
 
       <div>

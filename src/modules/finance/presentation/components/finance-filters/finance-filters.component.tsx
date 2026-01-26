@@ -1,6 +1,7 @@
 import { Button, DatePicker, Segmented } from "antd";
 import dayjs from "dayjs";
 import { RefreshCcw } from "lucide-react";
+import { getDateFormat } from "@core/utils/mask";
 
 import type { FinanceGroupBy } from "../../../interfaces/finance-groupby.model";
 import type { FinanceView } from "../../../interfaces/finance-query.model";
@@ -38,6 +39,7 @@ export function FinanceFilters({
   onRefresh,
   availableViews,
 }: Props) {
+  const dateFormat = getDateFormat();
   const viewOptions: Array<{ label: string; value: FinanceView }> = [
     { label: "Overview", value: "overview" },
     { label: "Revenue", value: "revenue" },
@@ -64,6 +66,7 @@ export function FinanceFilters({
               onChangePeriod(a, b);
             }}
             allowClear={false}
+            format={dateFormat}
           />
         </PeriodGroup>
 

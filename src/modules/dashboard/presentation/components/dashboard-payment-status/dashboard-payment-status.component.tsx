@@ -1,5 +1,6 @@
 import { Skeleton } from "antd";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { formatMoney } from "@core/utils/mask";
 
 import type { DashboardPaymentStatusModel } from "../../../interfaces/dashboard-payment-status.model";
 import {
@@ -13,13 +14,6 @@ type Props = {
   items: DashboardPaymentStatusModel[];
   loading?: boolean;
 };
-
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
 
 const statusLabel: Record<string, string> = {
   paid: "Paid",

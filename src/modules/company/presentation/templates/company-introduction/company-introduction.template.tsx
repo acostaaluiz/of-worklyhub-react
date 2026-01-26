@@ -1,8 +1,16 @@
 import type { ReactElement } from "react";
 
+import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
+import { maskPhone } from "@core/utils/mask";
 import { BaseTemplate } from "@shared/base/base.template";
-
 import { FormStepWizard } from "@shared/ui/components/form-step/form-step.component";
+import ResponseModal, { type ResponseVariant } from "@shared/ui/components/response-modal/response-modal.component";
+
+import { companyInfoStep } from "../../steps/company-info.step";
+import { personalInfoStep } from "../../steps/personal-info.step";
+import { servicesInfoStep } from "../../steps/services-info.step";
+import { summaryStep } from "../../steps/summary.step";
+import type { CompanyIntroductionValues } from "../../steps/personal-info.step";
 
 import {
   TemplateShell,
@@ -10,15 +18,6 @@ import {
   TemplateSubtitle,
   TemplateTitle,
 } from "./company-introduction.template.styles";
-
-import { personalInfoStep } from "../../steps/personal-info.step";
-import { companyInfoStep } from "../../steps/company-info.step";
-import { servicesInfoStep } from "../../steps/services-info.step";
-import { summaryStep } from "../../steps/summary.step";
-
-import type { CompanyIntroductionValues } from "../../steps/personal-info.step";
-import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
-import ResponseModal, { type ResponseVariant } from "@shared/ui/components/response-modal/response-modal.component";
 
 type Props = {
   onFinish?: (values: CompanyIntroductionValues) => Promise<void> | void;
@@ -62,6 +61,7 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
   const initialValues: CompanyIntroductionValues = {
     ...defaultValues,
     ...(initialValuesProp ?? {}),
+    phone: maskPhone(initialValuesProp?.phone ?? defaultValues.phone ?? ""),
   };
 
   return (

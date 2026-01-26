@@ -1,8 +1,9 @@
 import React from "react";
-import { BaseTemplate } from "@shared/base/base.template";
 import { Tabs, Row, Col, Avatar, Button, Form, Input, Radio, InputNumber, Select, Tooltip } from "antd";
 import styled, { keyframes } from "styled-components";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
+import { maskPhone } from "@core/utils/mask";
+import { BaseTemplate } from "@shared/base/base.template";
 
 const { TabPane } = Tabs;
 
@@ -159,7 +160,8 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
     // schedule update after render to avoid "not connected to any Form" warning
     Promise.resolve().then(() => {
       try {
-        personalForm.setFieldsValue(personal ?? {});
+        const maskedPersonal = { ...personal, phone: maskPhone(personal?.phone) };
+        personalForm.setFieldsValue(maskedPersonal ?? {});
       } catch {
         // ignore
       }
@@ -210,7 +212,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
         ) : null}
         <Tabs defaultActiveKey="personal">
           <TabPane tab="Personal info" key="personal">
-            <Form form={personalForm} initialValues={personal} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
+            <Form form={personalForm} initialValues={{ ...personal, phone: maskPhone(personal?.phone) }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
               <Form.Item name="fullName" label="Full name" rules={[{ required: true, message: "Please enter your full name" }]}>
                 <Input placeholder="Full name" />
               </Form.Item>
@@ -227,6 +229,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     </Tooltip>
                   </span>
                 }
+                normalize={(value) => maskPhone(String(value ?? ""))}
               >
                 <Input placeholder="Phone" />
               </Form.Item>

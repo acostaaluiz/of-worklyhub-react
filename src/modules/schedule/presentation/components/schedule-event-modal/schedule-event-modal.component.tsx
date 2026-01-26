@@ -1,11 +1,12 @@
 import React from "react";
 import { Button, Input, Modal, Select, Segmented, Typography, Tag } from "antd";
-import DurationTimeSelector from "@shared/ui/components/duration-time-selector/duration-time-selector.component";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
-import SelectCardModal from "@shared/ui/components/select-card-modal/select-card-modal.component";
+import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import DurationTimeSelector from "@shared/ui/components/duration-time-selector/duration-time-selector.component";
+import SelectCardModal from "@shared/ui/components/select-card-modal/select-card-modal.component";
 
 import type {
   DayPart,
@@ -48,13 +49,6 @@ const DURATION_OPTIONS: DurationOption[] = [
   { label: "45 min", minutes: 45 },
   { label: "60 min", minutes: 60 },
 ];
-
-const formatMoney = (value: number) =>
-  value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  });
 
 function addMinutes(date: Dayjs, minutes: number) {
   return date.add(minutes, "minute");
@@ -489,7 +483,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                             const total = next.reduce((acc, sid) => acc + (servicesList.find((ss) => ss.id === sid)?.priceCents ?? 0), 0);
                             this.setSafeState({ selectedServiceIds: next, priceCents: total });
                           }}>
-                            {s.title} {s.priceCents ? `- ${formatMoney((s.priceCents ?? 0) / 100)}` : ""}
+                            {s.title} {s.priceCents ? `- ${formatMoneyFromCents(s.priceCents ?? 0)}` : ""}
                           </Tag>
                         );
                       })}
@@ -516,7 +510,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
             <SelectCardModal
               open={this.state.selectModalOpen === "services"}
               title="Adicionar serviço"
-              items={(this.props.availableServices ?? []).map((s) => ({ id: s.id, title: s.title, subtitle: s.description, right: s.priceCents ? formatMoney((s.priceCents ?? 0) / 100) : undefined }))}
+              items={(this.props.availableServices ?? []).map((s) => ({ id: s.id, title: s.title, subtitle: s.description, right: s.priceCents ? formatMoneyFromCents(s.priceCents ?? 0) : undefined }))}
               multiple={true}
               initialSelected={this.state.selectedServiceIds}
               onCancel={() => this.setSafeState({ selectModalOpen: null })}
@@ -546,7 +540,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
               <FooterTotal>
                 <div className="label">Total</div>
-                <div className="value">{formatMoney((this.state.priceCents ?? 0) / 100)}</div>
+                <div className="value">{formatMoneyFromCents(this.state.priceCents ?? 0)}</div>
                 <div className="sub">{this.state.durationMinutes} min</div>
               </FooterTotal>
             </FooterBar>

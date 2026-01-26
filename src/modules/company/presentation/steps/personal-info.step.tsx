@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Form, Input } from "antd";
 import { Mail, User } from "lucide-react";
 
+import { maskPhone } from "@core/utils/mask";
 import type { WizardStep } from "@shared/ui/components/form-step/form-step.component";
 import { FieldIcon } from "@shared/styles/global";
 
@@ -58,7 +59,7 @@ export function personalInfoStep(): WizardStep {
         />
       </Form.Item>
 
-      <Form.Item label="Phone (optional)" name="phone">
+      <Form.Item label="Phone (optional)" name="phone" normalize={(value) => maskPhone(String(value ?? ""))}>
         <Input size="large" placeholder="Enter your phone number" />
       </Form.Item>
     </>

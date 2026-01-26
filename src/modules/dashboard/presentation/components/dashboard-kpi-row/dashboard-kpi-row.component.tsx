@@ -1,4 +1,5 @@
 import { Skeleton } from "antd";
+import { formatMoneyCompact, formatNumberCompact } from "@core/utils/mask";
 import type { DashboardKpiModel } from "../../../interfaces/dashboard-kpi.model";
 import {
   KpiGrid,
@@ -14,28 +15,12 @@ type Props = {
   loading?: boolean;
 };
 
-const formatCompactMoney = (value: number) => {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-    notation: "compact",
-  } as any);
-};
-
-const formatCompactNumber = (value: number) => {
-  return value.toLocaleString("en-US", {
-    maximumFractionDigits: 0,
-    notation: "compact",
-  } as any);
-};
-
 export function DashboardKpiRow(props: Props) {
   const { kpis, loading } = props;
 
   const renderValue = (id: string, value: number) => {
-    if (id === "orders") return formatCompactNumber(value);
-    return formatCompactMoney(value);
+    if (id === "orders") return formatNumberCompact(value);
+    return formatMoneyCompact(value, { precision: 0 });
   };
 
   return (

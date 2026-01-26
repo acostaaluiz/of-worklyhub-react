@@ -64,14 +64,14 @@ export const BrandRow = styled.div`
 export const BrandMark = styled.div`
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-sm);
-  background: var(--color-tertiary);
-  color: var(--on-tertiary);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 900;
-  letter-spacing: 0.4px;
+  flex-shrink: 0;
+
+  img {
+    display: block;
+  }
 `;
 
 export const BrandTitle = styled.div`

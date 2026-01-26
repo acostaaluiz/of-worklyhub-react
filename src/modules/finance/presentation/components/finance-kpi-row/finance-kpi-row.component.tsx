@@ -1,5 +1,10 @@
 import { Skeleton } from "antd";
+import { formatMoneyCompact, formatNumberCompact } from "@core/utils/mask";
 import type { FinanceKpiModel } from "../../../interfaces/finance-kpi.model";
+import {
+  type FinanceValueContext,
+  getFinanceValueColor,
+} from "../../../utils/finance-value-status";
 import {
   KpiCard,
   KpiGrid,
@@ -13,36 +18,27 @@ type Props = {
   loading?: boolean;
 };
 
-const formatCompactMoney = (value: number) => {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  });
-};
-
-const formatCompactNumber = (value: number) => {
-  return value.toLocaleString("en-US", {
-    notation: "compact",
-    maximumFractionDigits: 1,
-  });
-};
-
 const formatPercent = (value: number) => {
   return `${(value * 100).toFixed(1)}%`;
 };
 
 const formatKpiValue = (kpi: FinanceKpiModel) => {
-  if (kpi.format === "money") return formatCompactMoney(kpi.value);
+  if (kpi.format === "money") return formatMoneyCompact(kpi.value, { precision: 1 });
   if (kpi.format === "percent") return formatPercent(kpi.value);
-  return formatCompactNumber(kpi.value);
+  return formatNumberCompact(kpi.value);
 };
 
 const formatDelta = (delta?: number) => {
-  if (delta === undefined) return null;
+  if (delta === undefined || !Number.isFinite(delta)) return null;
   const sign = delta >= 0 ? "+" : "";
   return `${sign}${(delta * 100).toFixed(1)}% vs prev.`;
+};
+
+const kpiContextMap: Record<FinanceKpiModel["id"], FinanceValueContext> = {
+  revenue: "income",
+  expenses: "expense",
+  profit: "neutral",
+  margin: "neutral",
 };
 
 const fallbackKpis: FinanceKpiModel[] = [
@@ -63,11 +59,29 @@ export function FinanceKpiRow({ kpis, loading }: Props) {
             <Skeleton active paragraph={{ rows: 1 }} />
           ) : (
             <KpiTop>
-              <KpiMeta>
-                <div className="label">{k.label}</div>
-                <div className="delta">{formatDelta(k.delta) ?? "\u00A0"}</div>
-              </KpiMeta>
-              <KpiValue>{formatKpiValue(k)}</KpiValue>
+              {(() => {
+                const context = kpiContextMap[k.id] ?? "neutral";
+                const valueColor = getFinanceValueColor(k.value, { context });
+                const deltaText = formatDelta(k.delta);
+                const deltaColor =
+                  deltaText == null
+                    ? "var(--color-text-muted)"
+                    : getFinanceValueColor(k.delta ?? 0, { context });
+
+                return (
+                  <>
+                    <KpiMeta>
+                      <div className="label">{k.label}</div>
+                      <div className="delta" style={{ color: deltaColor }}>
+                        {deltaText ?? "\u00A0"}
+                      </div>
+                    </KpiMeta>
+                    <KpiValue style={{ color: valueColor }}>
+                      {formatKpiValue(k)}
+                    </KpiValue>
+                  </>
+                );
+              })()}
             </KpiTop>
           )}
         </KpiCard>

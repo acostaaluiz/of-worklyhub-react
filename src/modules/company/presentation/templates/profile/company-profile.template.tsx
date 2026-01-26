@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseTemplate } from "@shared/base/base.template";
-
+import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
+import { companyService } from "@modules/company/services/company.service";
 import { CompanyOverview } from "@modules/company/presentation/components/company-overview/company-overview.component";
 import { CompanyServices } from "@modules/company/presentation/components/company-services/company-services.component";
 import { CompanyReviews } from "@modules/company/presentation/components/company-reviews/company-reviews.component";
-import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
-import { useParams } from "react-router-dom";
 import TemplateShell from "./company-profile.template.styles";
-import { companyService } from "@modules/company/services/company.service";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 
 export function CompanyProfileTemplate() {
   const { id } = useParams();
@@ -52,7 +52,7 @@ export function CompanyProfileTemplate() {
                 priceCents: typeof priceCents === "number" ? priceCents : undefined,
                 priceFormatted:
                   typeof priceCents === "number"
-                    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(priceCents / 100)
+                    ? formatMoneyFromCents(priceCents)
                     : undefined,
                 tags: Array.isArray(s.tags) ? s.tags.map((t: any) => String(t)) : undefined,
               } as ServiceModel;

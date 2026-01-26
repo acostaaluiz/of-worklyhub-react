@@ -1,5 +1,4 @@
 import { httpClient } from "@core/http/client.instance";
-import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import { toAppError } from "@core/errors/to-app-error";
 import InventoryApi, { CreateInventoryItemPayload, InventoryItem } from "./inventory-api";
 
@@ -9,7 +8,7 @@ import InventoryApi, { CreateInventoryItemPayload, InventoryItem } from "./inven
  * wraps the lower-level Api class and converts errors to AppError.
  */
 export class InventoryHttpService {
-  private api = new InventoryApi(httpClient as unknown as HttpClient);
+  private api = new InventoryApi(httpClient);
 
   async createItem(payload: CreateInventoryItemPayload): Promise<InventoryItem> {
     try {

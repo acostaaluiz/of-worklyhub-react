@@ -1,15 +1,16 @@
 import React from "react";
-import { BasePage } from "@shared/base/base.page";
-import ProfileTemplate, { type PersonalModel, type CompanyModel } from "@modules/users/presentation/templates/profile/profile.template";
-import { usersAuthService } from "@modules/users/services/auth.service";
-import { usersService } from "@modules/users/services/user.service";
-import { companyService } from "@modules/company/services/company.service";
+import { message } from "antd";
 import { applicationService } from "@core/application/application.service";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
-import AvatarUploadModal from "@shared/ui/components/avatar-upload/avatar-upload.modal";
-import { message } from "antd";
-import { loadingService } from "@shared/ui/services/loading.service";
 import { isAppError } from "@core/errors/is-app-error";
+import { formatMoney, maskPhone, unmaskPhone } from "@core/utils/mask";
+import { BasePage } from "@shared/base/base.page";
+import AvatarUploadModal from "@shared/ui/components/avatar-upload/avatar-upload.modal";
+import { loadingService } from "@shared/ui/services/loading.service";
+import { companyService } from "@modules/company/services/company.service";
+import { usersAuthService } from "@modules/users/services/auth.service";
+import { usersService } from "@modules/users/services/user.service";
+import ProfileTemplate, { type PersonalModel, type CompanyModel } from "@modules/users/presentation/templates/profile/profile.template";
 
 type State = {
   isLoading: boolean;
@@ -235,7 +236,7 @@ export class ProfilePage extends BasePage<{}, State> {
                   const price = found.monthly_amount ?? found.yearly_amount ?? 0;
                   personal.planId = Number(found.id);
                   personal.planName = found.title;
-                  personal.planPrice = (price as number).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }) + "/month";
+                  personal.planPrice = `${formatMoney(price as number, { precision: 0 })}/month`;
                 } else {
                   personal.planId = Number(planId);
                 }
@@ -341,17 +342,19 @@ export class ProfilePage extends BasePage<{}, State> {
     loadingService.show();
 
     try {
+      const payloadPhone = values.phone ? unmaskPhone(values.phone) : undefined;
       const updated = await usersService.updateProfile({
         fullName: values.fullName,
         email: values.email,
-        phone: values.phone,
+        phone: payloadPhone,
       });
 
+      const nextPhone = maskPhone(updated.phone ?? values.phone ?? "");
       const nextPersonal: PersonalModel = {
         ...values,
         fullName: updated.name ?? values.fullName,
         email: updated.email ?? values.email,
-        phone: updated.phone ?? values.phone,
+        phone: nextPhone || undefined,
         photoUrl: this.state.personal.photoUrl,
         planId: updated.planId ?? this.state.personal.planId,
         planName: this.state.personal.planName,

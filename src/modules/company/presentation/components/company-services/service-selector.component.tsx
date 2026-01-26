@@ -1,8 +1,9 @@
 import React from "react";
 import { List, Checkbox, Space, InputNumber, Button, Typography, Divider } from "antd";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
-import { SelectorShell, SelectorFooter } from "./service-selector.component.styles";
+import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+import { SelectorFooter, SelectorShell } from "./service-selector.component.styles";
 
 type Props = {
   services: ServiceModel[];
@@ -59,7 +60,9 @@ export class ServiceSelector extends BaseComponent<Props, State> {
                 </div>
 
                 <div style={{ width: 120, textAlign: "right" }}>
-                  <div style={{ fontWeight: 700 }}>{s.priceFormatted}</div>
+                  <div style={{ fontWeight: 700 }}>
+                    {typeof s.priceCents === "number" ? formatMoneyFromCents(s.priceCents) : s.priceFormatted}
+                  </div>
                   <div style={{ marginTop: 6 }}>
                     <InputNumber
                       min={1}
@@ -79,7 +82,7 @@ export class ServiceSelector extends BaseComponent<Props, State> {
         <SelectorFooter>
           <div>
             <Typography.Text type="secondary">Total</Typography.Text>
-            <div style={{ fontWeight: 800 }}>{(this.total / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</div>
+            <div style={{ fontWeight: 800 }}>{formatMoneyFromCents(this.total)}</div>
           </div>
 
           <Space>

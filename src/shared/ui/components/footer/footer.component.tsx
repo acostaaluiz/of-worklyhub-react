@@ -1,6 +1,8 @@
 import { Divider, Space, Typography } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { worklyHubLogoUrl } from "@shared/assets/brand";
+import { Svg } from "@shared/ui/components/svg/svg.component";
 import {
   FooterShell,
   FooterInner,
@@ -37,7 +39,10 @@ export function AppFooter() {
         <FooterInner>
           <Left>
             <Space orientation="vertical" size={4}>
-              <Brand onClick={() => handleNavigate("/")}>WorklyHub</Brand>
+              <Brand onClick={() => handleNavigate("/")}>
+                <Svg src={worklyHubLogoUrl} alt="WorklyHub" size={28} className="brand-logo" />
+                <span>WorklyHub</span>
+              </Brand>
               <Typography.Text
                 type="secondary"
                 style={{ fontSize: "var(--font-size-sm)" }}
