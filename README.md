@@ -1,5 +1,7 @@
-# 📄 Documento de Produto — V1  
-## Hub de Gestão para Negócios de Serviço  
+# 📄 Documento de Produto — V1
+
+## Hub de Gestão para Negócios de Serviço
+
 **O.F. Consulting**
 
 ---
@@ -15,6 +17,7 @@ O produto será oferecido no modelo SaaS (Software as a Service), com cobrança 
 ## 2. Problema a Ser Resolvido
 
 Hoje, a maioria dos negócios de serviço opera com:
+
 - WhatsApp para agendamento
 - Google Agenda ou papel
 - Planilhas para controle financeiro
@@ -22,6 +25,7 @@ Hoje, a maioria dos negócios de serviço opera com:
 - Processos manuais e descentralizados
 
 Isso gera:
+
 - Perda de tempo
 - Erros financeiros
 - Agenda mal aproveitada
@@ -32,6 +36,7 @@ Isso gera:
 ## 3. Público-Alvo (V1)
 
 Negócios de serviço que dependem de agenda e atendimento humano, como:
+
 - Estúdios (tatuagem, estética, barbearia)
 - Clínicas pequenas
 - Profissionais autônomos
@@ -39,6 +44,7 @@ Negócios de serviço que dependem de agenda e atendimento humano, como:
 - Prestadores de serviço recorrente
 
 Fora do escopo da V1:
+
 - Varejo
 - Restaurante
 - PDV fiscal
@@ -51,6 +57,7 @@ Fora do escopo da V1:
 Centralize agenda, clientes e financeiro do seu negócio em um sistema simples, sem planilhas e sem complicação.
 
 Principais benefícios:
+
 - Organização operacional
 - Visibilidade financeira
 - Ganho de tempo
@@ -61,24 +68,25 @@ Principais benefícios:
 
 ## 5. Princípios do Produto
 
-1. Agenda é o centro do negócio  
-2. Configuração é melhor que customização  
-3. Simplicidade antes de poder  
-4. Financeiro operacional, não contábil  
-5. Produto genérico por design, específico por configuração  
+1. Agenda é o centro do negócio
+2. Configuração é melhor que customização
+3. Simplicidade antes de poder
+4. Financeiro operacional, não contábil
+5. Produto genérico por design, específico por configuração
 
 ---
 
 ## 6. Estrutura Modular do Produto (V1)
 
-Core  
-- Empresa  
-- Usuários & Perfis  
-- Clientes  
-- Serviços  
-- Agenda  
-- Financeiro  
-- Dashboard  
+Core
+
+- Empresa
+- Usuários & Perfis
+- Clientes
+- Serviços
+- Agenda
+- Financeiro
+- Dashboard
 
 ---
 
@@ -89,6 +97,7 @@ Core
 Objetivo: contextualizar o sistema para cada cliente.
 
 Funcionalidades:
+
 - Cadastro da empresa
 - Seleção da categoria do negócio
 - Horário de funcionamento
@@ -105,11 +114,13 @@ A categoria da empresa define nomenclaturas, comportamentos e habilitação futu
 Objetivo: controle de acesso e responsabilidades.
 
 Perfis V1:
+
 - Administrador (dono)
 - Profissional
 - Operador (opcional)
 
 Funcionalidades:
+
 - Convite por e-mail
 - Ativação e desativação
 - Associação à empresa
@@ -122,12 +133,14 @@ Funcionalidades:
 Objetivo: manter histórico e relacionamento.
 
 Funcionalidades:
+
 - Cadastro básico
 - Observações livres
 - Histórico de atendimentos
 - Status ativo ou inativo
 
 Campos V1:
+
 - Nome
 - Contato
 - Observações
@@ -139,6 +152,7 @@ Campos V1:
 Objetivo: definir o que é vendido ou agendado.
 
 Funcionalidades:
+
 - Cadastro de serviços
 - Duração
 - Valor
@@ -146,6 +160,7 @@ Funcionalidades:
 - Status ativo ou inativo
 
 Campos principais:
+
 - Nome
 - Categoria
 - Tempo estimado
@@ -158,6 +173,7 @@ Campos principais:
 Objetivo: organizar atendimentos.
 
 Funcionalidades V1:
+
 - Visualização diária e semanal
 - Agendamento manual
 - Vínculo com cliente, serviço e profissional
@@ -168,6 +184,7 @@ Funcionalidades V1:
   - Realizado
 
 Regras:
+
 - Respeitar horário de funcionamento
 - Evitar conflitos de agenda
 
@@ -178,6 +195,7 @@ Regras:
 Objetivo: dar visibilidade financeira sem complexidade.
 
 Funcionalidades:
+
 - Registro automático ao concluir atendimento
 - Lançamentos manuais
 - Entradas e saídas
@@ -185,6 +203,7 @@ Funcionalidades:
 - Total mensal
 
 Relatórios V1:
+
 - Faturamento mensal
 - Resumo diário de caixa
 
@@ -195,6 +214,7 @@ Relatórios V1:
 Objetivo: visão rápida e executiva do negócio.
 
 Indicadores V1:
+
 - Faturamento do mês
 - Próximos atendimentos
 - Quantidade de atendimentos realizados
@@ -204,28 +224,32 @@ Indicadores V1:
 
 ## 8. Fluxos Críticos da V1
 
-Fluxo 1 — Onboarding  
-1. Cadastro do usuário  
-2. Criação da empresa  
-3. Seleção da categoria  
-4. Cadastro inicial de serviços  
-5. Primeiro agendamento  
+Fluxo 1 — Onboarding
 
-Fluxo 2 — Atendimento  
-1. Agendamento  
-2. Atendimento realizado  
-3. Registro automático no financeiro  
+1. Cadastro do usuário
+2. Criação da empresa
+3. Seleção da categoria
+4. Cadastro inicial de serviços
+5. Primeiro agendamento
 
-Fluxo 3 — Operação diária  
-1. Visualização da agenda  
-2. Execução dos atendimentos  
-3. Acompanhamento do caixa  
+Fluxo 2 — Atendimento
+
+1. Agendamento
+2. Atendimento realizado
+3. Registro automático no financeiro
+
+Fluxo 3 — Operação diária
+
+1. Visualização da agenda
+2. Execução dos atendimentos
+3. Acompanhamento do caixa
 
 ---
 
 ## 9. Fora do Escopo da V1
 
 Explicitamente não incluído na V1:
+
 - Estoque
 - PDV fiscal
 - Nota fiscal
@@ -243,11 +267,13 @@ Explicitamente não incluído na V1:
 Modelo: assinatura mensal (SaaS)
 
 Planos iniciais (sugestão):
+
 - Starter
 - Pro
 - Business
 
 Critérios de cobrança:
+
 - Número de profissionais
 - Módulos habilitados
 - Volume de uso (futuro)
@@ -257,6 +283,7 @@ Critérios de cobrança:
 ## 11. Visão de Evolução
 
 V2:
+
 - Confirmação automática de agendamentos
 - Pagamentos online
 - Relatórios avançados
@@ -264,6 +291,7 @@ V2:
 - Exportações de dados
 
 V3:
+
 - Aplicativo mobile
 - Automação de mensagens
 - Multi-unidade
@@ -286,6 +314,7 @@ V3:
 ## 13. Status do Documento
 
 Documento de Visão e Escopo da V1, servindo como base para:
+
 - Roadmap do produto
 - Arquitetura técnica
 - UX e UI
@@ -293,9 +322,77 @@ Documento de Visão e Escopo da V1, servindo como base para:
 
 ---
 
-## Próximos Passos
+## Instalação e execução local (desenvolvedores)
 
-1. Modelagem de dados (entidades e relacionamentos)
-2. Definição de fluxos UX críticos
-3. Arquitetura SaaS multi-tenant
-4. Roadmap técnico de 90 dias
+Seguem instruções rápidas para configurar o ambiente de desenvolvimento local.
+
+- Pré-requisitos:
+  - Node.js 18+ recomendado
+  - npm (vem com o Node) — `npm` também funciona bem
+
+- Clonar o repositório:
+
+```bash
+git clone <repo-url>
+cd of-worklyhub-react
+```
+
+- Instalar dependências:
+
+```bash
+npm install
+# ou, se preferir instalação determinística em CI:
+npm ci
+```
+
+- Variáveis de ambiente:
+  - Esta aplicação usa variáveis `VITE_*` (por exemplo `VITE_CURRENCY_LOCALE`, `VITE_FINANCE_ALERT_MIN`).
+  - Crie um arquivo `.env` ou `.env.local` na raiz com as chaves necessárias. Exemplo mínimo:
+
+```text
+# .env.local
+VITE_CURRENCY_LOCALE=en-US
+VITE_CURRENCY_CODE=USD
+VITE_CURRENCY_PRECISION=2
+# VITE_FINANCE_ALERT_MIN=...
+# VITE_FINANCE_ALERT_MAX=...
+```
+
+- Executar em modo de desenvolvimento (Vite):
+
+```bash
+npm run dev
+```
+
+- Build de produção:
+
+```bash
+npm run build
+```
+
+- Rodar linter:
+
+```bash
+npm run lint
+# para aplicar correções automáticas quando possível:
+npm run lint -- --fix
+```
+
+- Preview do build:
+
+```bash
+npm run preview
+```
+
+- Commits e hooks:
+  - Este repositório usa `husky`, `lint-staged` e `commitizen`.
+  - Configure hooks com `npm run prepare` (geralmente já executado ao instalar).
+  - Para criar um commit seguindo o padrão, execute:
+
+```bash
+npm run commit
+```
+
+- Dicas adicionais:
+  - Use `npm run build` antes de abrir um PR para garantir que a compilação TypeScript está OK.
+  - Execute `npm run lint` e corrija problemas antes de subir o branch.
