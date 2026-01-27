@@ -5,7 +5,7 @@ import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.
 import { TemplateShell } from "../home/home.template.styles";
 import { ScheduleEventModal } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-event-modal.component";
 import { useScheduleApi } from "@modules/schedule/services/schedule.service";
-import { Button, message } from "antd";
+import { Button, Tabs, message } from "antd";
 import type { ScheduleEventDraft, ScheduleEventModalProps } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-event-modal.form.types";
 
 type ModalCategory = ScheduleEventModalProps["categories"][number];
@@ -62,12 +62,69 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
       content={
         <>
           <TemplateShell>
+            <div
+              style={{
+                height: 220,
+                borderRadius: 16,
+                backgroundImage: `linear-gradient(180deg, rgba(6,16,22,0.1), rgba(6,16,22,0.7)), url(${service.imageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                marginBottom: 20,
+              }}
+            />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 24 }}>
               <div>
                 <h2>{service.providerName}</h2>
                 <h3 style={{ marginTop: 4 }}>{service.title}</h3>
                 <p style={{ color: "var(--muted)" }}>{service.address}</p>
-                <p>{service.description}</p>
+                <Tabs
+                  defaultActiveKey="details"
+                  items={[
+                    {
+                      key: "details",
+                      label: "Detalhes",
+                      children: (
+                        <div>
+                          <p>{service.description}</p>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "reviews",
+                      label: "Avaliações",
+                      children: (
+                        <div>
+                          <p>
+                            {service.rating?.toFixed(1) ?? "--"} · {service.reviewsCount ?? 0} avaliações
+                          </p>
+                          <p>Em breve: comentários e notas detalhadas.</p>
+                        </div>
+                      ),
+                    },
+                    {
+                      key: "photos",
+                      label: "Fotos",
+                      children: (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+                          {service.imageUrl ? (
+                            <div
+                              style={{
+                                height: 120,
+                                borderRadius: 10,
+                                backgroundImage: `url(${service.imageUrl})`,
+                                backgroundSize: "cover",
+                                backgroundPosition: "center",
+                                gridColumn: "span 2",
+                              }}
+                            />
+                          ) : (
+                            <p>Nenhuma foto disponÃ­vel.</p>
+                          )}
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
               </div>
 
               <div>
