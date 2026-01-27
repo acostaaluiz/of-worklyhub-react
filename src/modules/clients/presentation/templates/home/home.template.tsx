@@ -10,8 +10,6 @@ export function ClientsHomeTemplate() {
       content={
         <>
           <TemplateShell>
-            <h2>Serviços disponíveis</h2>
-            <p>Consulte os serviços oferecidos pelas empresas cadastradas.</p>
             <ServicesList />
           </TemplateShell>
         </>
