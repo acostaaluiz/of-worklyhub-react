@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 import { formatMoney } from "@core/utils/mask";
+import { BarChart3 } from "lucide-react";
 
 import type { FinanceSeries } from "../../../../interfaces/finance-series.model";
 import {
@@ -55,7 +56,12 @@ export function RevenueTrendWidget({
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
-        <div className="title">Revenue Trend</div>
+        <div className="titleRow">
+          <div className="title">Revenue Trend</div>
+          <div className="titleIcon">
+            <BarChart3 size={16} />
+          </div>
+        </div>
         <div className="subtitle">{subtitle ?? "Revenue over time."}</div>
       </WidgetHeader>
 

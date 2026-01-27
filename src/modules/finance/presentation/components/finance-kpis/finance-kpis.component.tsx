@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, Row, Col, Skeleton } from "antd";
+import { DollarSign, CreditCard, TrendingUp } from "lucide-react";
 import { formatMoney } from "@core/utils/mask";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
 import {
@@ -34,11 +35,19 @@ export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
     label: string,
     value: string,
     rawValue: number,
-    context: FinanceValueContext
+    context: FinanceValueContext,
+    icon?: React.ReactNode
   ) => (
-    <Card bordered={false} style={{ minHeight: 96, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div style={{ textAlign: "center" }}>
+    <Card
+      bordered={false}
+      style={{ minHeight: 96, display: "flex", flexDirection: "column", padding: 12 }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div style={{ fontSize: 12 }}>{label}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{icon}</div>
+      </div>
+
+      <div style={{ textAlign: "center", flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontSize: 18, fontWeight: 600, color: getFinanceValueColor(rawValue, { context }) }}>{value}</div>
       </div>
     </Card>
@@ -68,9 +77,15 @@ export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
 
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
-      <Col span={8}>{renderCard("Income", formatMoney(receita), receita, "income")}</Col>
-      <Col span={8}>{renderCard("Expense", formatMoney(despesa), despesa, "expense")}</Col>
-      <Col span={8}>{renderCard("Profit", formatMoney(lucro), lucro, "neutral")}</Col>
+      <Col span={8}>
+        {renderCard("Income", formatMoney(receita), receita, "income", <DollarSign size={16} />)}
+      </Col>
+      <Col span={8}>
+        {renderCard("Expense", formatMoney(despesa), despesa, "expense", <CreditCard size={16} />)}
+      </Col>
+      <Col span={8}>
+        {renderCard("Profit", formatMoney(lucro), lucro, "neutral", <TrendingUp size={16} />)}
+      </Col>
     </Row>
   );
 }

@@ -43,6 +43,7 @@ export function FinanceFilters({
   const viewOptions: Array<{ label: string; value: FinanceView }> = [
     { label: "Overview", value: "overview" },
     { label: "Revenue", value: "revenue" },
+    { label: "Services", value: "top-services" },
     { label: "Expenses", value: "expenses" },
     { label: "Profit", value: "profit" },
     { label: "Cashflow", value: "cashflow" },

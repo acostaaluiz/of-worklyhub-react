@@ -1,4 +1,5 @@
 import { Typography } from "antd";
+import { BarChart3 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 
@@ -11,7 +12,6 @@ import {
   DashboardShell,
   DashboardGrid,
   GridSpan12,
-  GridSpan6,
 } from "./finance.template.styles";
 import { FinanceFilters } from "../../components/finance-filters/finance-filters.component";
 import { FinanceKpiRow } from "../../components/finance-kpi-row/finance-kpi-row.component";
@@ -47,7 +47,7 @@ const emptyResponse = (): FinanceResponseModel => ({
 
 export function FinanceTemplate() {
   const service = useMemo(() => new FinanceService(), []);
-  const availableViews: FinanceView[] = ["overview", "revenue", "cashflow"];
+  const availableViews: FinanceView[] = ["overview", "revenue", "top-services", "cashflow"];
 
   const [query, setQuery] = useState<FinanceQueryModel>(() => defaultQuery());
   const [view, setView] = useState<FinanceView>("overview");
@@ -107,13 +107,18 @@ export function FinanceTemplate() {
           <PageStack>
             <TemplateTitleRow>
               <TemplateTitleBlock>
-                <Typography.Title level={2} style={{ margin: 0 }}>
-                  Finance
-                </Typography.Title>
-                <Typography.Text type="secondary">
-                  Track revenue, services, and cashflow with the latest finance
-                  dashboard data.
-                </Typography.Text>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <BarChart3 size={36} />
+                  <div>
+                    <Typography.Title level={2} style={{ margin: 0 }}>
+                      Finance
+                    </Typography.Title>
+                    <Typography.Text type="secondary">
+                      Track revenue, services, and cashflow with the latest finance
+                      dashboard data.
+                    </Typography.Text>
+                  </div>
+                </div>
               </TemplateTitleBlock>
             </TemplateTitleRow>
 
@@ -147,22 +152,6 @@ export function FinanceTemplate() {
                         subtitle="Revenue trend for the selected period."
                       />
                     </GridSpan12>
-                    <GridSpan6>
-                      <TopServicesTableWidget
-                        className="surface"
-                        items={data.topServices}
-                        loading={loading}
-                        subtitle="Top services by revenue."
-                      />
-                    </GridSpan6>
-                    <GridSpan6>
-                      <CashflowTableWidget
-                        className="surface"
-                        items={data.cashflow}
-                        loading={loading}
-                        subtitle="Latest cashflow entries."
-                      />
-                    </GridSpan6>
                   </>
                 )}
 
@@ -177,22 +166,19 @@ export function FinanceTemplate() {
                         heightHint="full"
                       />
                     </GridSpan12>
-                    <GridSpan6>
+                  </>
+                )}
+
+                {view === "top-services" && (
+                  <>
+                    <GridSpan12>
                       <TopServicesTableWidget
                         className="surface"
                         items={data.topServices}
                         loading={loading}
-                        subtitle="Top services contributing to revenue."
+                        subtitle="Top services by revenue."
                       />
-                    </GridSpan6>
-                    <GridSpan6>
-                      <CashflowTableWidget
-                        className="surface"
-                        items={data.cashflow}
-                        loading={loading}
-                        subtitle="Incoming/outgoing records impacting revenue."
-                      />
-                    </GridSpan6>
+                    </GridSpan12>
                   </>
                 )}
 

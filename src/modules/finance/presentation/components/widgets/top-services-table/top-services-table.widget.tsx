@@ -10,6 +10,7 @@ import {
   WidgetCard,
   WidgetHeader,
 } from "../finance-widgets.shared.styles";
+import { Briefcase } from "lucide-react";
 
 type Props = {
   className?: string;
@@ -91,10 +92,13 @@ export function TopServicesTableWidget({
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
-        <div className="title">Top Services</div>
-        <div className="subtitle">
-          {subtitle ?? "Best performing services."}
+        <div className="titleRow">
+          <div className="title">Top Services</div>
+          <div className="titleIcon">
+            <Briefcase size={16} />
+          </div>
         </div>
+        <div className="subtitle">{subtitle ?? "Best performing services."}</div>
       </WidgetHeader>
 
       <WidgetBody>

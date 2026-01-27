@@ -12,14 +12,27 @@ export const WidgetCard = styled.div`
 export const WidgetHeader = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   margin-bottom: var(--space-3);
   min-width: 0;
+
+  .titleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
 
   .title {
     font-size: 14px;
     font-weight: 900;
     letter-spacing: -0.01em;
+  }
+
+  .titleIcon {
+    color: var(--color-text-muted);
+    display: inline-flex;
+    align-items: center;
   }
 
   .subtitle {

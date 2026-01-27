@@ -5,6 +5,7 @@ export type FinanceView =
   | "revenue"
   | "expenses"
   | "profit"
+  | "top-services"
   | "cashflow";
 
 export type FinanceQueryModel = {

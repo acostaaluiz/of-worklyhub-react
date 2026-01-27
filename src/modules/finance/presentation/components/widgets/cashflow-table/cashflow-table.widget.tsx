@@ -12,6 +12,7 @@ import {
   WidgetCard,
   WidgetHeader,
 } from "../finance-widgets.shared.styles";
+import { DollarSign } from "lucide-react";
 
 type Props = {
   className?: string;
@@ -109,10 +110,13 @@ export function CashflowTableWidget({
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
-        <div className="title">Cashflow</div>
-        <div className="subtitle">
-          {subtitle ?? "Latest incoming and outgoing records."}
+        <div className="titleRow">
+          <div className="title">Cashflow</div>
+          <div className="titleIcon">
+            <DollarSign size={16} />
+          </div>
         </div>
+        <div className="subtitle">{subtitle ?? "Latest incoming and outgoing records."}</div>
       </WidgetHeader>
 
       <WidgetBody>
