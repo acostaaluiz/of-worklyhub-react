@@ -1,4 +1,5 @@
 import { Typography } from "antd";
+import { CreditCard } from "lucide-react";
 
 import { BaseTemplate } from "@shared/base/base.template";
 
@@ -22,9 +23,12 @@ export function CheckoutTemplate() {
           <Shell className="surface">
             <HeaderRow>
               <HeaderText>
-                <Typography.Title level={2} style={{ margin: 0 }}>
-                  Checkout
-                </Typography.Title>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <CreditCard size={22} />
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    Checkout
+                  </Typography.Title>
+                </div>
                 <Typography.Text type="secondary">
                   Review your plan and finish the payment securely.
                 </Typography.Text>

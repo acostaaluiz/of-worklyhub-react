@@ -6,7 +6,7 @@ import type { ApplicationPlanItem } from "@core/application/application-api";
 
 type Props = {
   plans?: ApplicationPlanItem[];
-  onSelectPlan?: (planId: string) => void;
+  onSelectPlan?: (planId: string, interval?: "monthly" | "yearly") => void;
   recommendedPlanId?: string;
 };
 

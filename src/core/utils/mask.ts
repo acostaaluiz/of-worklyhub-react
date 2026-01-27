@@ -47,6 +47,8 @@ export function getMaskConfig(): MaskConfig {
   if (cachedConfig) return cachedConfig;
 
   const phoneMask = readEnvString("VITE_PHONE_MASK") ?? DEFAULT_CONFIG.phoneMask;
+  // ensure mask contains placeholder; fall back to default if misconfigured
+  const safePhoneMask = phoneMask && phoneMask.includes("#") ? phoneMask : DEFAULT_CONFIG.phoneMask;
   const dateFormat = readEnvString("VITE_DATE_FORMAT") ?? DEFAULT_CONFIG.dateFormat;
   const currencyLocale =
     readEnvString("VITE_CURRENCY_LOCALE") ??
@@ -57,7 +59,7 @@ export function getMaskConfig(): MaskConfig {
     readEnvNumber("VITE_CURRENCY_PRECISION") ?? DEFAULT_CONFIG.currencyPrecision;
 
   cachedConfig = {
-    phoneMask,
+    phoneMask: safePhoneMask,
     dateFormat,
     currencyLocale,
     currencyCode,
@@ -72,19 +74,58 @@ export function stripMask(value: string): string {
 }
 
 export function applyMask(value: string, mask: string, placeholder = "#"): string {
-  const digits = stripMask(value);
+  const str = value == null ? "" : String(value);
+  const digits = stripMask(str);
   if (!digits) return "";
+
+  // if there are more digits than placeholders in the mask, try to expand
+  // a placeholder group (prefer the middle group) so we can fit all digits.
+  let useMask = mask;
+  // find groups with positions so we can replace the exact occurrence
+  const groupsInfo: { start: number; length: number }[] = [];
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] === placeholder) {
+      let j = i;
+      while (j < mask.length && mask[j] === placeholder) j++;
+      groupsInfo.push({ start: i, length: j - i });
+      i = j - 1;
+    }
+  }
+
+  const totalPlaceholders = groupsInfo.reduce((s, g) => s + g.length, 0);
+  // Special-case: common BR mobile pattern — when mask is (###) ###-#### (3,3,4)
+  // and we have exactly one extra digit (11 total), shift one placeholder
+  // from the first group to the second to produce (##) #####-####.
+  if (
+    // explicit common BR case: original mask groups 3,3,4 and input has 11 digits
+    digits.length === 11 &&
+    groupsInfo.length === 3 &&
+    groupsInfo[0].length === 3 &&
+    groupsInfo[1].length === 3 &&
+    groupsInfo[2].length === 4
+  ) {
+    // use (##) #####-####
+    useMask = "(##) #####-####";
+  } else if (digits.length > totalPlaceholders && groupsInfo.length > 0) {
+    const extra = digits.length - totalPlaceholders;
+    const groupIndex = groupsInfo.length >= 3 ? 1 : groupsInfo.length - 1;
+    const target = groupsInfo[groupIndex];
+    const newLen = target.length + extra;
+    // build new mask by replacing the specific group's range
+    useMask = mask.slice(0, target.start) + placeholder.repeat(newLen) + mask.slice(target.start + target.length);
+  }
 
   let out = "";
   let di = 0;
 
-  for (const ch of mask) {
+  for (const ch of useMask) {
     if (ch === placeholder) {
       if (di >= digits.length) break;
       out += digits[di];
       di += 1;
       continue;
     }
+    // append separators only while there are remaining digits to place
     if (di >= digits.length) break;
     out += ch;
   }
@@ -93,14 +134,16 @@ export function applyMask(value: string, mask: string, placeholder = "#"): strin
 }
 
 export function maskPhone(value?: string | null): string {
-  if (!value) return "";
+  const str = value == null ? "" : String(value);
+  if (!str) return "";
   const { phoneMask } = getMaskConfig();
-  return applyMask(value, phoneMask);
+  return applyMask(str, phoneMask);
 }
 
 export function unmaskPhone(value?: string | null): string {
-  if (!value) return "";
-  return stripMask(value);
+  const str = value == null ? "" : String(value);
+  if (!str) return "";
+  return stripMask(str);
 }
 
 function escapeRegExp(value: string): string {

@@ -229,9 +229,18 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     </Tooltip>
                   </span>
                 }
-                normalize={(value) => maskPhone(String(value ?? ""))}
               >
-                <Input placeholder="Phone" />
+                <Input
+                  placeholder="Phone"
+                  onBlur={(e) => {
+                    try {
+                      // apply mask on blur so the user can type freely while editing
+                      personalForm.setFieldsValue({ phone: maskPhone(String(e.target.value ?? "")) });
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                />
               </Form.Item>
               <Form.Item>
                 <Tooltip title="Save your personal profile changes">

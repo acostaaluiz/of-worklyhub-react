@@ -2,6 +2,9 @@ import React from "react";
 import { Divider, Space, Typography, Button } from "antd";
 import { Check } from "lucide-react";
 import { BaseComponent } from "@shared/base/base.component";
+import { applicationService } from "@core/application/application.service";
+import type { ApplicationPlanItem } from "@core/application/application-api";
+import { formatMoney } from "@core/utils/currency";
 
 import {
   SummaryCard,
@@ -27,8 +30,38 @@ const mockPlan = {
   ],
 };
 
-export class OrderSummary extends BaseComponent {
+type OrderSummaryState = { isLoading: boolean; error?: unknown; plan?: ApplicationPlanItem | null; interval?: "monthly" | "yearly" };
+
+export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
+  public override state: OrderSummaryState = { isLoading: false, error: undefined, plan: undefined, interval: undefined };
+
+  componentDidMount(): void {
+    this.runAsync(async () => {
+      try {
+        const selected = sessionStorage.getItem("billing.selectedPlanId");
+        const interval = (sessionStorage.getItem("billing.selectedPlanInterval") as "monthly" | "yearly") ?? undefined;
+
+        let plans = applicationService.getPlansValue();
+        if (!plans) {
+          plans = (await applicationService.fetchPlans()) ?? [];
+        }
+
+        const found = plans?.find((p) => String(p.id) === String(selected));
+        this.setSafeState({ plan: found ?? null, interval });
+      } catch {
+        // ignore
+      }
+    }, { setLoading: false, swallowError: true });
+  }
   protected override renderView(): React.ReactNode {
+    // prefer freshest values from sessionStorage (selection just happened)
+    const selectedId = sessionStorage.getItem("billing.selectedPlanId");
+    const sessionInterval = (sessionStorage.getItem("billing.selectedPlanInterval") as "monthly" | "yearly") ?? undefined;
+
+    const plans = applicationService.getPlansValue();
+    const displayPlan = plans?.find((p) => String(p.id) === String(selectedId)) ?? this.state.plan ?? null;
+    const interval = sessionInterval ?? this.state.interval ?? undefined;
+
     return (
       <SummaryCard className="surface" styles={{ body: { padding: 0 } }}>
         <CardBody>
@@ -43,24 +76,25 @@ export class OrderSummary extends BaseComponent {
             <Divider style={{ margin: "var(--space-4) 0" }} />
 
             <Line>
-              <Typography.Text strong>{mockPlan.name}</Typography.Text>
-              <Badge>{mockPlan.cycle}</Badge>
+              <Typography.Text strong>{displayPlan ? displayPlan.title : mockPlan.name}</Typography.Text>
+              <Badge>{displayPlan ? (interval === "yearly" ? "Yearly" : "Monthly") : mockPlan.cycle}</Badge>
             </Line>
 
             <PriceRow>
               <Typography.Title level={3} style={{ margin: 0 }}>
-                {mockPlan.currencySymbol}
-                {mockPlan.price}
+                {displayPlan
+                  ? formatMoney((interval === "yearly" ? displayPlan.yearly_amount ?? displayPlan.monthly_amount : displayPlan.monthly_amount ?? displayPlan.yearly_amount) * 100)
+                  : `${mockPlan.currencySymbol}${mockPlan.price}`}
               </Typography.Title>
-              <Typography.Text type="secondary">/ year</Typography.Text>
+              <Typography.Text type="secondary">/ {displayPlan ? (interval === "yearly" ? "year" : "month") : "year"}</Typography.Text>
             </PriceRow>
 
-            <Typography.Text type="secondary">{mockPlan.savingsLabel}</Typography.Text>
+            <Typography.Text type="secondary">{displayPlan ? "" : mockPlan.savingsLabel}</Typography.Text>
 
             <Divider style={{ margin: "var(--space-4) 0" }} />
 
             <Space orientation="vertical" size={8} style={{ width: "100%" }}>
-              {mockPlan.features.map((item) => (
+              {(displayPlan ? (displayPlan.supports ?? []) : mockPlan.features).map((item) => (
                 <Line key={item}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     <Check size={16} />
@@ -75,8 +109,9 @@ export class OrderSummary extends BaseComponent {
             <TotalRow>
               <Typography.Text strong>Total</Typography.Text>
               <Typography.Text strong>
-                {mockPlan.currencySymbol}
-                {mockPlan.price}
+                {displayPlan
+                  ? formatMoney((interval === "yearly" ? displayPlan.yearly_amount ?? displayPlan.monthly_amount : displayPlan.monthly_amount ?? displayPlan.yearly_amount) * 100)
+                  : `${mockPlan.currencySymbol}${mockPlan.price}`}
               </Typography.Text>
             </TotalRow>
 

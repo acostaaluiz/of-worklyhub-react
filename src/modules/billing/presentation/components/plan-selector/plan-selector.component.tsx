@@ -35,7 +35,7 @@ import type { ApplicationPlanItem } from "@core/application/application-api";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 
 export class PlanSelector extends BaseComponent<
-  BaseProps & { plans?: ApplicationPlanItem[]; onSelectPlan?: (planId: string) => void; recommendedPlanId?: string },
+  BaseProps & { plans?: ApplicationPlanItem[]; onSelectPlan?: (planId: string, interval?: BillingInterval) => void; recommendedPlanId?: string },
   { isLoading: boolean; error?: unknown; interval: BillingInterval; selectedPlanId?: string }
 > {
   public override state = { isLoading: false, error: undefined, interval: "monthly" as BillingInterval, selectedPlanId: undefined };
@@ -113,7 +113,7 @@ export class PlanSelector extends BaseComponent<
   private handleSelectPlan = (planId: string) => {
     this.setState({ selectedPlanId: planId });
     console.log("Selected plan:", planId, "interval:", this.state.interval);
-    this.props.onSelectPlan?.(planId);
+    this.props.onSelectPlan?.(planId, this.state.interval);
   };
 
   override componentDidUpdate(prevProps: Readonly<BaseProps & { plans?: ApplicationPlanItem[]; recommendedPlanId?: string }>): void {

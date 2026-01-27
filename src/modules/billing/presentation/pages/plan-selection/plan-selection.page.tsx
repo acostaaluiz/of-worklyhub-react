@@ -7,6 +7,7 @@ import { ConfirmationModal } from "@shared/ui/components/confirmation-modal/conf
 import { usersService } from "@modules/users/services/user.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { message } from "antd";
+import { navigateTo } from "@core/navigation/navigation.service";
 
 export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; plans?: ApplicationPlanItem[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
   protected override options = {
@@ -113,9 +114,14 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
     );
   }
 
-  private handleSelectPlan = (planId: string) => {
+  private handleSelectPlan = (planId: string, interval?: "monthly" | "yearly") => {
     const plan = this.state.plans?.find((p) => String(p.id) === planId);
     const name = plan?.title ?? planId;
+    try {
+      sessionStorage.setItem("billing.selectedPlanInterval", interval ?? "monthly");
+    } catch {
+      // ignore
+    }
     this.setSafeState({ confirmOpen: true, pendingPlanId: planId, pendingPlanName: name });
   };
 
@@ -128,6 +134,22 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
     if (!planId) {
       this.handleCloseConfirm();
       return;
+    }
+
+    // persist selected plan for checkout page to read
+    try {
+      sessionStorage.setItem("billing.selectedPlanId", String(planId));
+      // also ensure interval is present (in case selection step failed to set it)
+      const maybeInterval = sessionStorage.getItem("billing.selectedPlanInterval");
+      if (!maybeInterval) {
+        try {
+          sessionStorage.setItem("billing.selectedPlanInterval", "monthly");
+        } catch {
+          // ignore
+        }
+      }
+    } catch {
+      // ignore
     }
 
     const session = usersAuthService.getSessionValue();
@@ -186,6 +208,12 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
         this.setSafeState({ confirmOpen: false, pendingPlanId: undefined, pendingPlanName: undefined });
       }
       message.success("Plan updated successfully");
+      // navigate to checkout so user can continue with payment flow
+      try {
+        navigateTo("/billing/checkout");
+      } catch {
+        // ignore navigation errors
+      }
     });
   };
 }
