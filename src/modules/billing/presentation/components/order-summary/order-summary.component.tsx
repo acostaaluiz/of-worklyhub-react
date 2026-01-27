@@ -65,7 +65,7 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     return (
       <SummaryCard className="surface" styles={{ body: { padding: 0 } }}>
         <CardBody>
-          <Space orientation="vertical" size={12} style={{ width: "100%" }}>
+          <Space orientation="vertical" size={12} style={{ width: "100%", flex: 1 }}>
             <div>
               <Typography.Title level={4} style={{ margin: 0 }}>
                 Order summary
@@ -119,9 +119,11 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
               Taxes may apply depending on your region.
             </Typography.Text>
 
-            <Button size="large" block style={{ borderRadius: "var(--radius-sm)" }}>
-              Change plan
-            </Button>
+            <div style={{ marginTop: "auto" }}>
+              <Button size="large" block style={{ borderRadius: "var(--radius-sm)" }}>
+                Change plan
+              </Button>
+            </div>
           </Space>
         </CardBody>
       </SummaryCard>

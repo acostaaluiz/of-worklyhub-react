@@ -49,6 +49,16 @@ export const Grid = styled.div`
 export const MainColumn = styled.div`
   grid-column: span 7 / span 7;
 
+  display: flex;
+  flex-direction: column;
+
+  .surface {
+    /* make the card fill the column so both columns match height */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
   @media (max-width: 1024px) {
     grid-column: span 6 / span 6;
   }
@@ -60,6 +70,15 @@ export const MainColumn = styled.div`
 
 export const AsideColumn = styled.div`
   grid-column: span 5 / span 5;
+
+  display: flex;
+  flex-direction: column;
+
+  .surface {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 
   @media (max-width: 1024px) {
     grid-column: span 6 / span 6;

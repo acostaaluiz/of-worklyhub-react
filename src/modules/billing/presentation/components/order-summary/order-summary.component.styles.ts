@@ -11,6 +11,10 @@ export const SummaryCard = styled(Card)`
 
 export const CardBody = styled.div`
   padding: var(--space-6);
+  /* allow the body to grow so the card fills the column height */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 
   @media (max-width: 480px) {
     padding: var(--space-5);

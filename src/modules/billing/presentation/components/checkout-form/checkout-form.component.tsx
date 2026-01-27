@@ -64,7 +64,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     return (
       <FormCard className="surface" styles={{ body: { padding: 0 } }}>
         <CardBody>
-          <Space orientation="vertical" size={14} style={{ width: "100%" }}>
+          <Space orientation="vertical" size={14} style={{ width: "100%", flex: 1 }}>
             <div>
               <Typography.Title level={4} style={{ margin: 0 }}>
                 Payment details
@@ -91,81 +91,82 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
               }}
               onFinish={handleSubmit}
               onValuesChange={this.handleValuesChange}
-              style={{ width: "100%" }}
+              style={{ width: "100%", display: "flex", flexDirection: "column", flex: 1 }}
             >
-              <SectionTitle>
-                <Typography.Text strong>Contact</Typography.Text>
-              </SectionTitle>
+              {step === 1 && (
+                <>
+                  <SectionTitle>
+                    <Typography.Text strong>Contact</Typography.Text>
+                  </SectionTitle>
 
-              <Row>
-                <Form.Item<CheckoutValues>
-                  label="Full name"
-                  name="fullName"
-                  rules={[{ required: true, message: "Full name is required" }]}
-                  style={{ marginBottom: 0, flex: 1 }}
-                >
-                  <Input
-                    size="large"
-                    placeholder="Enter your full name"
-                    prefix={
-                      <FieldIcon aria-hidden>
-                        <User size={18} />
-                      </FieldIcon>
-                    }
-                  />
-                </Form.Item>
-              </Row>
+                  <Row>
+                    <Form.Item<CheckoutValues>
+                      label="Full name"
+                      name="fullName"
+                      rules={[{ required: true, message: "Full name is required" }]}
+                      style={{ marginBottom: 0, flex: 1 }}
+                    >
+                      <Input
+                        size="large"
+                        placeholder="Enter your full name"
+                        prefix={
+                          <FieldIcon aria-hidden>
+                            <User size={18} />
+                          </FieldIcon>
+                        }
+                      />
+                    </Form.Item>
+                  </Row>
 
-              <Row>
-                <Form.Item<CheckoutValues>
-                  label="Email"
-                  name="email"
-                  rules={[
-                    { required: true, message: "Email is required" },
-                    { type: "email", message: "Enter a valid email" },
-                  ]}
-                  style={{ marginBottom: 0, flex: 1 }}
-                >
-                  <Input
-                    size="large"
-                    placeholder="Enter your email"
-                    autoComplete="email"
-                    prefix={
-                      <FieldIcon aria-hidden>
-                        <Mail size={18} />
-                      </FieldIcon>
-                    }
-                  />
-                </Form.Item>
-              </Row>
+                  <Row>
+                    <Form.Item<CheckoutValues>
+                      label="Email"
+                      name="email"
+                      rules={[
+                        { required: true, message: "Email is required" },
+                        { type: "email", message: "Enter a valid email" },
+                      ]}
+                      style={{ marginBottom: 0, flex: 1 }}
+                    >
+                      <Input
+                        size="large"
+                        placeholder="Enter your email"
+                        autoComplete="email"
+                        prefix={
+                          <FieldIcon aria-hidden>
+                            <Mail size={18} />
+                          </FieldIcon>
+                        }
+                      />
+                    </Form.Item>
+                  </Row>
 
-              <Row>
-                <Form.Item<CheckoutValues>
-                  label="Company (optional)"
-                  name="company"
-                  style={{ marginBottom: 0, flex: 1 }}
-                >
-                  <Input
-                    size="large"
-                    placeholder="Company name"
-                    prefix={
-                      <FieldIcon aria-hidden>
-                        <Building2 size={18} />
-                      </FieldIcon>
-                    }
-                  />
-                </Form.Item>
-              </Row>
+                  <Row>
+                    <Form.Item<CheckoutValues>
+                      label="Company (optional)"
+                      name="company"
+                      style={{ marginBottom: 0, flex: 1 }}
+                    >
+                      <Input
+                        size="large"
+                        placeholder="Company name"
+                        prefix={
+                          <FieldIcon aria-hidden>
+                            <Building2 size={18} />
+                          </FieldIcon>
+                        }
+                      />
+                    </Form.Item>
+                  </Row>
+                </>
+              )}
 
-              <Divider style={{ margin: "var(--space-5) 0" }} />
-
-              <SectionTitle>
-                <Typography.Text strong>Payment method</Typography.Text>
-              </SectionTitle>
-
-              {/* only render payment method and card fields on step 2 */}
               {step === 2 && (
                 <>
+                  <SectionTitle>
+                    <Typography.Text strong>Payment method</Typography.Text>
+                  </SectionTitle>
+
                   <PaymentMethodsField />
 
                   {method === "card" && (
@@ -250,8 +251,14 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
 
               <Divider style={{ margin: "var(--space-5) 0" }} />
 
-              <Row style={{ justifyContent: "space-between" }}>
-                <SecondaryButton size="large">Back</SecondaryButton>
+              <Row style={{ justifyContent: "space-between", marginTop: "auto" }}>
+                {step === 2 ? (
+                  <SecondaryButton size="large" onClick={this.handlePrevious}>
+                    Previous
+                  </SecondaryButton>
+                ) : (
+                  <div />
+                )}
 
                 {step === 1 ? (
                   <PrimaryButton type="button" size="large" onClick={this.handleNext}>
@@ -259,10 +266,6 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   </PrimaryButton>
                 ) : (
                   <div style={{ display: "flex", gap: 8 }}>
-                    <SecondaryButton size="large" onClick={this.handlePrevious}>
-                      Previous
-                    </SecondaryButton>
-
                     <PrimaryButton type="primary" htmlType="submit" size="large">
                       <ButtonIcon aria-hidden>
                         <Lock size={18} />
