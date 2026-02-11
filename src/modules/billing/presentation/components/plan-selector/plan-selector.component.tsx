@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Segmented, Space, Typography } from "antd";
 import { Check, Sparkles } from "lucide-react";
-import { formatMoney } from "@core/utils/mask";
+import { formatMoney } from "@core/utils/currency";
 import { BaseComponent } from "@shared/base/base.component";
 
 import {
@@ -24,18 +24,19 @@ type Plan = {
   id: string;
   name: string;
   description: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
+  monthlyPriceCents: number;
+  yearlyPriceCents: number;
+  currency?: string;
   highlight?: boolean;
   cta: string;
   features: string[];
 };
 
-import type { ApplicationPlanItem } from "@core/application/application-api";
+import type { BillingPlan } from "@modules/billing/services/billing-api";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 
 export class PlanSelector extends BaseComponent<
-  BaseProps & { plans?: ApplicationPlanItem[]; onSelectPlan?: (planId: string, interval?: BillingInterval) => void; recommendedPlanId?: string },
+  BaseProps & { plans?: BillingPlan[]; onSelectPlan?: (planId: string, interval?: BillingInterval) => void; recommendedPlanId?: string },
   { isLoading: boolean; error?: unknown; interval: BillingInterval; selectedPlanId?: string }
 > {
   public override state = { isLoading: false, error: undefined, interval: "monthly" as BillingInterval, selectedPlanId: undefined };
@@ -45,8 +46,9 @@ export class PlanSelector extends BaseComponent<
       id: "starter",
       name: "Starter",
       description: "For solo professionals getting started.",
-      monthlyPrice: 29,
-      yearlyPrice: 299,
+      monthlyPriceCents: 2900,
+      yearlyPriceCents: 29900,
+      currency: "USD",
       cta: "Choose Starter",
       features: [
         "1 user",
@@ -60,8 +62,9 @@ export class PlanSelector extends BaseComponent<
       id: "standard",
       name: "Standard",
       description: "Best value for small teams.",
-      monthlyPrice: 59,
-      yearlyPrice: 599,
+      monthlyPriceCents: 5900,
+      yearlyPriceCents: 59900,
+      currency: "USD",
       highlight: true,
       cta: "Choose Standard",
       features: [
@@ -76,8 +79,9 @@ export class PlanSelector extends BaseComponent<
       id: "premium",
       name: "Premium",
       description: "For growing businesses and multiple locations.",
-      monthlyPrice: 99,
-      yearlyPrice: 999,
+      monthlyPriceCents: 9900,
+      yearlyPriceCents: 99900,
+      currency: "USD",
       cta: "Choose Premium",
       features: [
         "Unlimited users",
@@ -89,23 +93,24 @@ export class PlanSelector extends BaseComponent<
     },
   ];
 
-  private mapExternalPlans(plans?: ApplicationPlanItem[]): Plan[] | undefined {
+  private mapExternalPlans(plans?: BillingPlan[]): Plan[] | undefined {
     if (!plans || plans.length === 0) return undefined;
 
     return plans.map((p) => ({
       id: String(p.id),
-      name: p.title,
-      description: p.subtitle ?? "",
-      monthlyPrice: p.monthly_amount,
-      yearlyPrice: p.yearly_amount,
-      highlight: !!(p as any).highlight,
-      cta: `Choose ${p.title}`,
-      features: p.supports ?? [],
+      name: p.name,
+      description: p.description ?? "",
+      monthlyPriceCents: p.priceCents.monthly,
+      yearlyPriceCents: p.priceCents.yearly,
+      currency: p.currency,
+      highlight: !!(p.recommended ?? (p as any).highlight),
+      cta: `Choose ${p.name}`,
+      features: p.features ?? [],
     }));
   }
 
-  private formatPrice(value: number) {
-    return formatMoney(value);
+  private formatPrice(value: number, currency?: string) {
+    return formatMoney(value, currency ? { currency } : undefined);
   }
 
   private discountLabel = "Save 15%";
@@ -116,7 +121,7 @@ export class PlanSelector extends BaseComponent<
     this.props.onSelectPlan?.(planId, this.state.interval);
   };
 
-  override componentDidUpdate(prevProps: Readonly<BaseProps & { plans?: ApplicationPlanItem[]; recommendedPlanId?: string }>): void {
+  override componentDidUpdate(prevProps: Readonly<BaseProps & { plans?: BillingPlan[]; recommendedPlanId?: string }>): void {
     const plansChanged = prevProps.plans !== this.props.plans;
     const recommendedChanged = prevProps.recommendedPlanId !== this.props.recommendedPlanId;
     if (!plansChanged && !recommendedChanged) return;
@@ -204,7 +209,7 @@ export class PlanSelector extends BaseComponent<
 
         <PlanGrid>
           {renderPlans.map((plan) => {
-            const price = interval === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
+            const price = interval === "monthly" ? plan.monthlyPriceCents : plan.yearlyPriceCents;
             const isSelected = plan.id === selectedId;
 
             return (
@@ -225,7 +230,7 @@ export class PlanSelector extends BaseComponent<
 
                   <PriceRow>
                     <Typography.Title level={2} style={{ margin: 0 }}>
-                      {this.formatPrice(price)}
+                      {this.formatPrice(price, plan.currency)}
                     </Typography.Title>
                     <Typography.Text type="secondary">/{interval === "monthly" ? "month" : "year"}</Typography.Text>
                   </PriceRow>

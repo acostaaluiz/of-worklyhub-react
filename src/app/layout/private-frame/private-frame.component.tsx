@@ -1,13 +1,16 @@
-import { type PropsWithChildren } from "react";
-import { useNavigate, useLocation, Outlet } from "react-router-dom";
-
-import AppHeader from "@shared/ui/components/header/header.component";
+import { type PropsWithChildren, useEffect, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import type { MenuProps } from "antd";
-import { AppFooter } from "@shared/ui/components/footer/footer.component";
-import { usersAuthService } from "@modules/users/services/auth.service";
+
 import { companyService } from "@modules/company/services/company.service";
-import { useEffect, useState } from "react";
-import { PrivateFrame, PrivatePageShell, ContentShell } from "./private-frame.component.styles";
+import { usersAuthService } from "@modules/users/services/auth.service";
+import { AppFooter } from "@shared/ui/components/footer/footer.component";
+import AppHeader from "./header.component";
+import {
+  ContentShell,
+  PrivateFrame,
+  PrivatePageShell,
+} from "./private-frame.component.styles";
 
 
 export function PrivateFrameLayout({ children }: PropsWithChildren) {

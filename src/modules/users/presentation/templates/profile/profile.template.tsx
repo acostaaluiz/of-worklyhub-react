@@ -170,7 +170,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
 
   React.useEffect(() => {
     // always set company form values (use sensible defaults) so fields render filled when possible
-    const defaults = { accountType: "individual" } as Partial<import(".").CompanyModel>;
+    const defaults = { accountType: "individual" } as Partial<CompanyModel>;
     Promise.resolve().then(() => {
       try {
         companyForm.setFieldsValue(company ?? defaults);

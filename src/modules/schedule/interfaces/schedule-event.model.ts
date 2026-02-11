@@ -2,6 +2,11 @@ export type ScheduleEventId = string;
 
 export type ScheduleCategoryId = string;
 
+export type InventoryItemLine = {
+  itemId: string;
+  quantity?: number;
+};
+
 export type ScheduleEvent = {
   id: ScheduleEventId;
   title: string;
@@ -25,4 +30,7 @@ export type ScheduleEvent = {
     code?: string;
     label?: string;
   } | null;
+  // optional inventory lines returned by backend
+  inventoryInputs?: InventoryItemLine[] | null;
+  inventoryOutputs?: InventoryItemLine[] | null;
 };

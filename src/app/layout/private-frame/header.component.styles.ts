@@ -100,13 +100,13 @@ export const SearchWrap = styled.div`
     border-radius: 999px;
     background: var(--color-glass-surface);
     border: 1px solid var(--color-border);
-    transition: box-shadow .15s, transform .12s;
+    transition: box-shadow .15s, background .12s;
   }
 
   .ant-input-affix-wrapper:focus,
   .ant-input-affix-wrapper:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+    background: rgba(255, 255, 255, 0.02);
   }
 `;
 

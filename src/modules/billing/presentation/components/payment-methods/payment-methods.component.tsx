@@ -2,18 +2,18 @@ import { Form, Radio, Typography } from "antd";
 
 import { MethodsHint, MethodsWrap } from "./payment-methods.component.styles";
 
-type PaymentMethodValue = "card" | "pix";
+type PaymentMethodValue = "card" | "hosted";
 
 type PaymentMethodsProps = {
   value?: PaymentMethodValue;
   onChange?: (value: PaymentMethodValue) => void;
-  disablePix?: boolean;
+  disableHosted?: boolean;
 };
 
 export function PaymentMethods({
   value,
   onChange,
-  disablePix = true,
+  disableHosted = false,
 }: PaymentMethodsProps) {
   return (
     <MethodsWrap>
@@ -23,14 +23,14 @@ export function PaymentMethods({
         style={{ width: "100%" }}
       >
         <Radio value="card">Card</Radio>
-        <Radio value="pix" disabled={disablePix}>
-          Pix (soon)
+        <Radio value="hosted" disabled={disableHosted}>
+          Hosted checkout
         </Radio>
       </Radio.Group>
 
       <MethodsHint>
         <Typography.Text type="secondary">
-          You can change the payment method later.
+          Card keeps the user here; hosted redirects to Mercado Pago.
         </Typography.Text>
       </MethodsHint>
     </MethodsWrap>

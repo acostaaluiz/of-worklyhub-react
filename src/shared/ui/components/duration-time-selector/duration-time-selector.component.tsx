@@ -1,7 +1,8 @@
 import React from "react";
 import { Select } from "antd";
+import type { SelectProps } from "antd";
 import { BaseComponent } from "@shared/base/base.component";
-import { SlotsRail, TimeChip } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
+import { SlotsRail, TimeChip } from "./duration-time-selector.styles";
 
 export type DurationTimeOption = { value: string | number; label: string };
 
@@ -79,7 +80,7 @@ export class DurationTimeSelector extends BaseComponent<Props, object> {
           size={this.props.size}
           value={this.props.value}
           onChange={(v) => this.props.onChange && this.props.onChange(v as string | number)}
-          options={opts as import("antd").SelectProps<DurationTimeOption>["options"]}
+          options={opts as SelectProps<DurationTimeOption>["options"]}
           style={{ width: "100%" }}
         />
       );

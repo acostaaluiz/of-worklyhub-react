@@ -4,10 +4,11 @@ import type { ModuleLandingItem } from "@shared/ui/components/module-landing/mod
 
 type Props = {
   items: ModuleLandingItem[];
+  planTitle?: string;
 };
 
-export function AllModulesTemplate({ items }: Props) {
-  return <BaseTemplate content={<AllModulesComponent items={items} />} />;
+export function AllModulesTemplate({ items, planTitle }: Props) {
+  return <BaseTemplate content={<AllModulesComponent items={items} planTitle={planTitle} />} />;
 }
 
 export default AllModulesTemplate;

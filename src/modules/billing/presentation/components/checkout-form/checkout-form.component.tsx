@@ -1,5 +1,5 @@
 import React from "react";
-import { Divider, Form, Input, Space, Typography } from "antd";
+import { Divider, Form, Input, Space, Typography, message, Alert } from "antd";
 import { CreditCard, Lock, User, Mail, Building2 } from "lucide-react";
 
 import { FieldIcon, ButtonIcon, HelperCenter } from "@shared/styles/global.ts";
@@ -16,29 +16,105 @@ import {
 } from "./checkout-form.component.styles";
 
 import { PaymentMethodsField } from "../payment-methods/payment-methods.component";
+import { billingService } from "@modules/billing/services/billing.service";
+import type { BillingPlan, BillingCycle } from "@modules/billing/services/billing-api";
 
 type CheckoutValues = {
   fullName: string;
   email: string;
   company?: string;
-  method: "card" | "pix";
+  method: "card" | "hosted";
   cardNumber?: string;
   cardName?: string;
   cardExpiry?: string;
   cardCvv?: string;
 };
 
-type CheckoutState = BaseState & { method: "card" | "pix"; step: 1 | 2 };
+type CheckoutState = BaseState & {
+  method: "card" | "hosted";
+  step: 1 | 2;
+  submitting: boolean;
+  selectedPlanId?: string | null;
+  selectedPlan?: BillingPlan | null;
+  interval?: BillingCycle;
+  publicKey?: string;
+  paymentConfigured?: boolean;
+};
+
+type MPInstance = { cards: { createToken: (payload: any) => Promise<{ id?: string }> } };
+
+let mpScriptPromise: Promise<void> | null = null;
+let mpInstance: MPInstance | null = null;
+let mpInstanceKey: string | null = null;
 
 export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
   private formRef = React.createRef<any>();
 
-  public override state: CheckoutState = { isLoading: false, error: undefined, method: "card", step: 1 };
+  public override state: CheckoutState = {
+    isLoading: false,
+    error: undefined,
+    method: "card",
+    step: 1,
+    submitting: false,
+    selectedPlanId: undefined,
+    selectedPlan: undefined,
+    interval: "monthly",
+    publicKey: undefined,
+    paymentConfigured: true,
+  };
 
   private handleValuesChange = (_: any, values: Partial<CheckoutValues>) => {
     if (values.method && values.method !== this.state.method) {
-      this.setState({ method: values.method as "card" | "pix" });
+      this.setState({ method: values.method as "card" | "hosted" });
     }
+  };
+
+  override componentDidMount(): void {
+    super.componentDidMount();
+    this.bootstrap();
+  }
+
+  override componentDidUpdate(_prevProps: Readonly<{}>, prevState: Readonly<CheckoutState>): void {
+    if (prevState.method !== this.state.method) {
+      try {
+        this.formRef.current?.setFieldsValue({ method: this.state.method });
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  private bootstrap = async () => {
+    await this.runAsync(async () => {
+      const selectedPlanId = sessionStorage.getItem("billing.selectedPlanId") ?? undefined;
+      const interval = (sessionStorage.getItem("billing.selectedPlanInterval") as BillingCycle) ?? "monthly";
+
+      const plansState = await billingService.fetchPlans();
+      const selectedPlan =
+        plansState?.plans?.find((p) => String(p.id) === String(selectedPlanId)) ??
+        plansState?.plans?.find((p) => p.recommended) ??
+        plansState?.plans?.[0] ??
+        null;
+
+      const method = plansState?.payment?.configured ? "card" : "hosted";
+
+      this.setSafeState({
+        selectedPlanId: selectedPlan ? String(selectedPlan.id) : selectedPlanId ?? null,
+        selectedPlan,
+        interval,
+        publicKey: plansState?.payment?.publicKey ?? undefined,
+        paymentConfigured: plansState?.payment?.configured ?? false,
+        method,
+      });
+
+      try {
+        if (plansState?.payment?.publicKey) {
+          await this.ensureMercadoPago(plansState.payment.publicKey);
+        }
+      } catch {
+        // SDK load issues will be surfaced on submit
+      }
+    }, { swallowError: true, setLoading: false });
   };
 
   private handleNext = async () => {
@@ -54,12 +130,125 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     this.setState({ step: 1 });
   };
 
+  private parseExpiry(raw?: string): { month?: string; year?: string } {
+    if (!raw) return {};
+    const cleaned = raw.replace(/\s+/g, "");
+    const parts = cleaned.split(/[/]/);
+    const month = parts[0]?.padStart(2, "0");
+    let year = parts[1];
+    if (year && year.length === 2) year = `20${year}`;
+    return { month, year };
+  }
+
+  private async ensureMercadoPago(publicKey: string): Promise<MPInstance> {
+    if (!publicKey) throw new Error("Payment gateway public key is missing.");
+
+    if (!mpScriptPromise) {
+      mpScriptPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://sdk.mercadopago.com/js/v2";
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Failed to load Mercado Pago SDK"));
+        document.body.appendChild(script);
+      });
+    }
+
+    await mpScriptPromise;
+
+    if (!mpInstance || mpInstanceKey !== publicKey) {
+      const MP = (window as any).MercadoPago;
+      if (!MP) throw new Error("Mercado Pago SDK not available.");
+      mpInstance = new MP(publicKey, { locale: "en-US" });
+      mpInstanceKey = publicKey;
+    }
+
+    return mpInstance as MPInstance;
+  }
+
+  private buildHostedReturnUrls(): { successUrl: string; failureUrl: string; pendingUrl: string } {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://app.worklyhub.com";
+    return {
+      successUrl: `${origin}/billing/checkout?status=success`,
+      failureUrl: `${origin}/billing/checkout?status=failure`,
+      pendingUrl: `${origin}/billing/checkout?status=pending`,
+    };
+  }
+
   protected override renderView(): React.ReactNode {
-    const handleSubmit = (_values: CheckoutValues) => {
-      return;
+    const handleSubmit = async (values: CheckoutValues) => {
+      if (!this.state.selectedPlanId) {
+        message.error("Select a plan before finishing payment.");
+        return;
+      }
+
+      const billingCycle = (this.state.interval ?? "monthly") as BillingCycle;
+
+      if (!this.state.paymentConfigured) {
+        message.error("Payment provider is not configured. Please try again later.");
+        return;
+      }
+
+      this.setSafeState({ submitting: true, error: undefined });
+
+      try {
+        let cardToken: string | undefined;
+
+        if (values.method === "card") {
+          const { month, year } = this.parseExpiry(values.cardExpiry);
+          if (!month || !year) throw new Error("Enter card expiry in MM/YY format.");
+          const mp = await this.ensureMercadoPago(this.state.publicKey ?? "");
+          const tokenRes = await mp.cards.createToken({
+            cardNumber: values.cardNumber?.replace(/\s+/g, ""),
+            cardholderName: values.cardName,
+            cardExpirationMonth: month,
+            cardExpirationYear: year,
+            securityCode: values.cardCvv,
+          });
+          cardToken = tokenRes?.id;
+          if (!cardToken) throw new Error("Unable to tokenize the card. Please check the data and try again.");
+        }
+
+        const hostedUrls = this.buildHostedReturnUrls();
+
+        const res = await billingService.createCheckout({
+          planId: this.state.selectedPlanId,
+          billingCycle,
+          payer: { email: values.email, fullName: values.fullName, company: values.company },
+          paymentMethod: values.method === "hosted" ? "hosted" : "card",
+          cardToken,
+          installments: 1,
+          successUrl: hostedUrls.successUrl,
+          failureUrl: hostedUrls.failureUrl,
+          pendingUrl: hostedUrls.pendingUrl,
+          metadata: { origin: "web" },
+        });
+
+        const data = res?.data;
+        if (data?.type === "preference" && data.checkoutUrl) {
+          message.info("Redirecting to the payment provider...");
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+
+        if (data?.status === "approved") {
+          message.success("Payment approved!");
+        } else if (data?.status === "pending") {
+          message.info("Payment pending confirmation. We will notify you once it is approved.");
+        } else {
+          message.success("Checkout created.");
+        }
+      } catch (err) {
+        console.error("checkout error", err);
+        const msg = (err as any)?.message ?? "Failed to create checkout.";
+        message.error(msg);
+        this.setError(err);
+      } finally {
+        this.setSafeState({ submitting: false });
+      }
     };
 
-    const { method, step } = this.state;
+    const { method, step, paymentConfigured } = this.state;
 
     return (
       <FormCard className="surface" styles={{ body: { padding: 0 } }}>
@@ -74,6 +263,15 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                 phase.
               </Typography.Text>
             </div>
+
+            {!paymentConfigured ? (
+              <Alert
+                type="warning"
+                showIcon
+                message="Payment temporarily unavailable"
+                description="Gateway credentials are not configured yet. You can review your plan, but payment will fail until the provider is configured."
+              />
+            ) : null}
 
             <Form<CheckoutValues>
               ref={this.formRef}
@@ -261,12 +459,12 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                 )}
 
                 {step === 1 ? (
-                  <PrimaryButton type="button" size="large" onClick={this.handleNext}>
+                  <PrimaryButton htmlType="button" size="large" onClick={this.handleNext}>
                     Next
                   </PrimaryButton>
                 ) : (
                   <div style={{ display: "flex", gap: 8 }}>
-                    <PrimaryButton type="primary" htmlType="submit" size="large">
+                    <PrimaryButton type="primary" htmlType="submit" size="large" loading={this.state.submitting} disabled={!paymentConfigured}>
                       <ButtonIcon aria-hidden>
                         <Lock size={18} />
                       </ButtonIcon>

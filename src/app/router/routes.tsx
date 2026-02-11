@@ -1,10 +1,10 @@
 import { createBrowserRouter, type RouteObject } from "react-router-dom";
-import { publicStackRoutes } from "@app/router/stacks/public.stack";
+import { PrivateFrameLayout } from "@app/layout/private-frame/private-frame.component";
+import RedirectIfAuthenticated from "@app/router/guards/redirect-if-authenticated";
+import RequireAuth from "@app/router/guards/require-auth";
 import { privateStackRoutes } from "@app/router/stacks/private.stack";
+import { publicStackRoutes } from "@app/router/stacks/public.stack";
 import { NavigationBoot } from "@core/navigation/navigation.boot";
-import RedirectIfAuthenticated from "@shared/providers/auth/redirect-if-authenticated";
-import RequireAuth from "@shared/providers/auth/require-auth";
-import { PrivateFrameLayout } from "@shared/ui/layout/private-frame/private-frame.component";
 
 function NotFound() {
   return (

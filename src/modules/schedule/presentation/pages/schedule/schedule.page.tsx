@@ -19,13 +19,54 @@ import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { NextScheduleItem } from "@modules/schedule/services/schedules-api";
 import dayjs from "dayjs";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
+import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import type { InventoryItem } from "@modules/inventory/services/inventory-api";
+import { listInventoryItems } from "@modules/inventory/services/inventory.http.service";
+import type { ScheduleEventDraft } from "../../components/schedule-event-modal/schedule-event-modal.form.types";
+import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
+
+// Simple memoized fetches to avoid duplicate requests on double mount (e.g., StrictMode)
+const servicesPromise = companyWorkspaceService.listServices();
+const employeesPromise = peopleService.listEmployees();
+const statusesPromise = getStatuses().catch(() => []);
+const inventoryPromisesByWs = new Map<string, Promise<InventoryItem[]>>();
+const nextByWs = new Map<string, Promise<NextScheduleItem[]>>();
+const categoriesPromise = import("@core/application/application.service")
+  .then((m) => m.applicationService.fetchEventCategories())
+  .catch(() => null);
+const initialEventsByWorkspace = new Map<string, ScheduleEvent[]>();
+const initialFetchByWorkspace = new Set<string>();
+
+function mapCategoriesWithColor(cats: Array<{ id: string; code?: string; label: string; color?: string | null }>): typeof cats {
+  const palette = [
+    "#06B6D4", // cyan
+    "#A78BFA", // purple
+    "#10B981", // green
+    "#F59E0B", // amber
+    "#F97316", // orange
+    "#EF4444", // red
+    "#0EA5E9", // blue
+    "#7C3AED", // indigo
+  ];
+  const used = new Set<string>();
+  return cats.map((c, idx) => {
+    let chosen = c.color?.toString().trim();
+    if (!chosen || chosen.startsWith("var(")) {
+      const pick = palette[idx % palette.length];
+      chosen = used.has(pick) ? palette.find((p) => !used.has(p)) ?? pick : pick;
+    }
+    used.add(chosen);
+    return { ...c, color: chosen };
+  });
+}
 
 type SchedulePageState = BasePageState & {
   services?: CompanyServiceModel[];
   employees?: EmployeeModel[];
+  inventoryItems?: InventoryItem[];
   categories?:
-    | import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[]
+    | ScheduleCategory[]
     | null;
   nextSchedules?: NextScheduleItem[];
   statuses?: Array<{ id: string; code?: string; label?: string }> | null;
@@ -37,6 +78,8 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
     requiresAuth: true,
   };
 
+  private initialized = false;
+
   protected override renderPage(): React.ReactNode {
     const ws = companyService.getWorkspaceValue() as {
       workspaceId?: string;
@@ -46,6 +89,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
 
     const services = this.state.services;
     const employees = this.state.employees;
+    const inventoryItems = this.state.inventoryItems;
     const categories = this.state.categories;
     const nextSchedules = this.state.nextSchedules;
     const statuses = this.state.statuses;
@@ -53,6 +97,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
     function Wrapper(): React.ReactElement {
       const api = useScheduleApi();
       const [events, setEvents] = useState<ScheduleEvent[]>([]);
+      const [initialLoading, setInitialLoading] = useState<boolean>(true);
       const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<
         Record<string, boolean>
       >({});
@@ -196,7 +241,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       }, [events, selectedCategoryIds, selectedStatusIds, statuses]);
 
       const fetchRange = React.useCallback(
-        async (from: string, to: string) => {
+        async (from: string, to: string): Promise<ScheduleEvent[]> => {
           // ensure we request the full month range: first day -> last day
           const monthFrom = dayjs(from).startOf("month").format("YYYY-MM-DD");
           const monthTo = dayjs(to).endOf("month").format("YYYY-MM-DD");
@@ -240,30 +285,61 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             });
 
             setEvents(mapped);
+            return mapped;
           } catch (err) {
             // fetchRange error
+            return [];
           }
         },
         [api]
       );
+
+      // prevent double initial fetch when StrictMode remounts
+      const initialFetchKey = workspaceId ?? "__no-ws__";
+      const initialFetchDoneRef = React.useRef<boolean>(initialFetchByWorkspace.has(initialFetchKey));
 
       const initialFetchedRef = React.useRef(false);
 
       useEffect(() => {
         (async () => {
           if (initialFetchedRef.current) return;
+
+          // if another instance already fetched for this workspace, hydrate from cache and mark bootstrapped
+          if (initialFetchDoneRef.current) {
+            const cached = initialEventsByWorkspace.get(initialFetchKey);
+            if (cached) setEvents(cached);
+            setInitialLoading(false);
+            initialFetchedRef.current = true;
+            return;
+          }
+
           initialFetchedRef.current = true;
+          initialFetchDoneRef.current = true;
+          initialFetchByWorkspace.add(initialFetchKey);
           const from = dayjs().startOf("month").format("YYYY-MM-DD");
           const to = dayjs().endOf("month").format("YYYY-MM-DD");
-          await fetchRange(from, to);
+          const cached = initialEventsByWorkspace.get(initialFetchKey);
+          if (cached) {
+            setEvents(cached);
+            setInitialLoading(false);
+            return;
+          }
+          try {
+            const fetched = await fetchRange(from, to);
+            if (Array.isArray(fetched)) {
+              initialEventsByWorkspace.set(initialFetchKey, fetched);
+            }
+          } finally {
+            setInitialLoading(false);
+          }
         })();
-      }, [fetchRange]);
+      }, [fetchRange, initialFetchKey]);
 
       const handleCreate = async (
-        draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft
+        draft: ScheduleEventDraft
       ) => {
         const toCreate: Omit<
-          import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent,
+          ScheduleEvent,
           "id"
         > & { durationMinutes?: number | null } = {
           title: draft.title,
@@ -285,25 +361,33 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           serviceIds: draft.serviceIds,
           employeeIds: draft.employeeIds,
           totalPriceCents: draft.totalPriceCents,
+          inventoryInputs: draft.inventoryInputs,
+          inventoryOutputs: draft.inventoryOutputs,
           workspaceId: workspaceId ?? null,
         });
 
         // refresh current month
         const from = dayjs().startOf("month").format("YYYY-MM-DD");
         const to = dayjs().endOf("month").format("YYYY-MM-DD");
-        await fetchRange(from, to);
+        const refreshed = await fetchRange(from, to);
+        if (Array.isArray(refreshed)) {
+          initialEventsByWorkspace.set(initialFetchKey, refreshed);
+        }
+        setInitialLoading(false);
       };
 
       const handleUpdate = async (args: {
         id: string;
         event: Omit<
-          import("@modules/schedule/interfaces/schedule-event.model").ScheduleEvent,
+          ScheduleEvent,
           "id"
         >;
         serviceIds?: string[];
         employeeIds?: string[];
         totalPriceCents?: number;
         workspaceId?: string | null;
+        inventoryInputs?: InventoryItemLine[];
+        inventoryOutputs?: InventoryItemLine[];
       }) => {
         try {
           loadingService.show();
@@ -314,6 +398,8 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
               serviceIds: args.serviceIds,
               employeeIds: args.employeeIds,
               totalPriceCents: args.totalPriceCents,
+              inventoryInputs: args.inventoryInputs,
+              inventoryOutputs: args.inventoryOutputs,
               workspaceId: args.workspaceId,
             });
           }
@@ -321,7 +407,11 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // refresh current month
           const from = dayjs().startOf("month").format("YYYY-MM-DD");
           const to = dayjs().endOf("month").format("YYYY-MM-DD");
-          await fetchRange(from, to);
+          const refreshed = await fetchRange(from, to);
+          if (Array.isArray(refreshed)) {
+            initialEventsByWorkspace.set(initialFetchKey, refreshed);
+          }
+          setInitialLoading(false);
         } catch (err) {
           // handleUpdate failed
         } finally {
@@ -329,10 +419,16 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         }
       };
 
-      return (
+      const categoriesReady = Array.isArray(categories) && categories.length > 0;
+      const showSkeleton = initialLoading || !categoriesReady;
+
+      return showSkeleton ? (
+        <PageSkeleton mainRows={2} sideRows={2} height="100%" />
+      ) : (
         <ScheduleTemplate
           availableServices={services}
           availableEmployees={employees}
+          availableInventoryItems={inventoryItems}
           workspaceId={workspaceId ?? null}
           onCreate={handleCreate}
           onUpdate={handleUpdate}
@@ -365,27 +461,43 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
   }
 
   protected override async onInit(): Promise<void> {
+    if (this.initialized) return;
     await this.runAsync(async () => {
       await super.onInit?.();
       try {
-        const services = await companyWorkspaceService.listServices();
-        const employees = await peopleService.listEmployees();
+        const wsVal = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
+        const workspaceId = (wsVal?.workspaceId ?? wsVal?.id) as string | undefined;
+        const services = await servicesPromise;
+        const employees = await employeesPromise;
+        let inventoryItems: InventoryItem[] = [];
+        try {
+          if (workspaceId) {
+            const cached =
+              inventoryPromisesByWs.get(workspaceId) ??
+              listInventoryItems(workspaceId).catch(() => []);
+            inventoryPromisesByWs.set(workspaceId, cached);
+            inventoryItems = await cached;
+          }
+        } catch (err) {
+          inventoryItems = [];
+        }
         // also fetch shared application event categories and expose to template via window fallback
         try {
-          const appCats = await import("@core/application/application.service").then((m) =>
-            m.applicationService.fetchEventCategories()
-          );
+          const appCatsRaw = await categoriesPromise;
+          const appCats = appCatsRaw ? mapCategoriesWithColor(appCatsRaw as any) : null;
           // also fetch statuses for schedule updates
           try {
-            const sts = await getStatuses();
-            this.setSafeState({ services, employees, categories: appCats ?? null, statuses: sts ?? null });
+            const sts = await statusesPromise;
+            this.setSafeState({ services, employees, inventoryItems, categories: appCats ?? null, statuses: sts ?? null });
           } catch (e) {
-            this.setSafeState({ services, employees, categories: appCats ?? null });
+            this.setSafeState({ services, employees, inventoryItems, categories: appCats ?? null });
           }
           try {
-            const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
-            const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
-            const next = await getNextSchedulesForWorkspace(workspaceId ?? null, 3);
+            const nextPromise =
+              nextByWs.get(workspaceId ?? "") ??
+              getNextSchedulesForWorkspace(workspaceId ?? null, 3).catch(() => []);
+            nextByWs.set(workspaceId ?? "", nextPromise);
+            const next = await nextPromise;
             this.setSafeState({ nextSchedules: next ?? null });
           } catch (e) {
             // failed to fetch next schedules
@@ -394,15 +506,17 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // appCats import failed
           // attempt to fetch statuses even when appCats import fails
           try {
-            const sts = await getStatuses();
-            this.setSafeState({ services, employees, statuses: sts ?? null });
+            const sts = await statusesPromise;
+            this.setSafeState({ services, employees, inventoryItems, statuses: sts ?? null });
           } catch (err) {
-            this.setSafeState({ services, employees });
+            this.setSafeState({ services, employees, inventoryItems });
           }
           try {
-            const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
-            const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
-            const next = await getNextSchedulesForWorkspace(workspaceId ?? null, 3);
+            const nextPromise =
+              nextByWs.get(workspaceId ?? "") ??
+              getNextSchedulesForWorkspace(workspaceId ?? null, 3).catch(() => []);
+            nextByWs.set(workspaceId ?? "", nextPromise);
+            const next = await nextPromise;
             this.setSafeState({ nextSchedules: next ?? null });
           } catch (e) {
             // failed to fetch next schedules
@@ -412,6 +526,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         // init error
       }
     }, { setLoading: true });
+    this.initialized = true;
   }
 
   protected override renderLoading(): React.ReactNode {

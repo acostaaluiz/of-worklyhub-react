@@ -1,11 +1,11 @@
 import { useCallback, useMemo } from "react";
 import dayjs from "dayjs";
 import type { ScheduleCategory } from "../interfaces/schedule-category.model";
-import type { ScheduleEvent } from "../interfaces/schedule-event.model";
+import type { ScheduleEvent, InventoryItemLine } from "../interfaces/schedule-event.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
 import { httpClient } from "@core/http/client.instance";
 import { SchedulesApi } from "./schedules-api";
-import type { NextScheduleItem } from "./schedules-api";
+import type { NextScheduleItem, ScheduleStatus } from "./schedules-api";
 
 type CreateSchedulePayload = {
   start: string; // ISO
@@ -19,6 +19,8 @@ type CreateSchedulePayload = {
   description?: string | null;
   services?: Array<{ serviceId: string; quantity?: number; priceCents?: number }>;
   workers?: Array<{ workspaceId?: string | null; userUid: string }>;
+  inventoryInputs?: InventoryItemLine[];
+  inventoryOutputs?: InventoryItemLine[];
   // optional category code expected by backend (e.g. 'work')
   categoryCode?: string | null;
   // optional status id for updates
@@ -213,6 +215,8 @@ export class ScheduleService {
             status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
             workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
             services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            inventoryInputs: ((s["inventoryInputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            inventoryOutputs: ((s["inventoryOutputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
           } as ScheduleEvent;
         });
 
@@ -265,7 +269,7 @@ export class ScheduleService {
 }
 
 // exported helper to fetch statuses from backend
-export async function getStatuses(): Promise<import("./schedules-api").ScheduleStatus[]> {
+export async function getStatuses(): Promise<ScheduleStatus[]> {
   try {
     const rows = await schedulesApi.getStatuses();
     return rows ?? [];
@@ -331,6 +335,8 @@ export function useScheduleApi() {
             // preserve workers and services from backend for UI details
             workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
             services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            inventoryInputs: ((s["inventoryInputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            inventoryOutputs: ((s["inventoryOutputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
           } as ScheduleEvent;
         });
 
@@ -464,8 +470,10 @@ export function useScheduleApi() {
     employeeIds?: string[];
     totalPriceCents?: number;
     workspaceId?: string | null;
+    inventoryInputs?: InventoryItemLine[];
+    inventoryOutputs?: InventoryItemLine[];
   }): Promise<ScheduleEvent> => {
-    const { event, serviceIds, employeeIds, totalPriceCents, workspaceId } = args;
+    const { event, serviceIds, employeeIds, totalPriceCents, workspaceId, inventoryInputs, inventoryOutputs } = args;
 
     try {
       const startIso = new Date(`${event.date}T${event.startTime}:00.000Z`).toISOString();
@@ -480,6 +488,8 @@ export function useScheduleApi() {
         durationMinutes: (event.durationMinutes as number) ?? null,
         services: serviceIds?.map((sid) => ({ serviceId: sid, priceCents: undefined })) ?? undefined,
         workers: employeeIds?.map((eid) => ({ workspaceId: workspaceId ?? null, userUid: eid })) ?? undefined,
+        inventoryInputs: inventoryInputs ?? undefined,
+        inventoryOutputs: inventoryOutputs ?? undefined,
       };
 
       // attach categoryCode when available (prefer explicit code on event, otherwise fallback to categoryId)
@@ -539,8 +549,10 @@ export function useScheduleApi() {
     employeeIds?: string[];
     totalPriceCents?: number;
     workspaceId?: string | null;
+    inventoryInputs?: InventoryItemLine[];
+    inventoryOutputs?: InventoryItemLine[];
   }): Promise<ScheduleEvent> => {
-    const { id, event, serviceIds, employeeIds, totalPriceCents, workspaceId } = args;
+    const { id, event, serviceIds, employeeIds, totalPriceCents, workspaceId, inventoryInputs, inventoryOutputs } = args;
 
     try {
       const startIso = new Date(`${event.date}T${event.startTime}:00.000Z`).toISOString();
@@ -555,6 +567,8 @@ export function useScheduleApi() {
         durationMinutes: (event.durationMinutes as number) ?? null,
         services: serviceIds?.map((sid) => ({ serviceId: sid, priceCents: undefined })) ?? undefined,
         workers: employeeIds?.map((eid) => ({ workspaceId: workspaceId ?? null, userUid: eid })) ?? undefined,
+        inventoryInputs: inventoryInputs ?? undefined,
+        inventoryOutputs: inventoryOutputs ?? undefined,
       };
 
       // include status when provided by UI (event may include statusId or status object)

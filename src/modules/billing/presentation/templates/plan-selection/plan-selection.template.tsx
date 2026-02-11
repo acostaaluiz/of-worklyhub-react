@@ -2,10 +2,10 @@ import { BaseTemplate } from "@shared/base/base.template";
 
 import { TemplateShell } from "./plan-selection.template.styles";
 import { PlanSelector } from "../../components/plan-selector/plan-selector.component";
-import type { ApplicationPlanItem } from "@core/application/application-api";
+import type { BillingPlan } from "@modules/billing/services/billing-api";
 
 type Props = {
-  plans?: ApplicationPlanItem[];
+  plans?: BillingPlan[];
   onSelectPlan?: (planId: string, interval?: "monthly" | "yearly") => void;
   recommendedPlanId?: string;
 };

@@ -35,33 +35,37 @@ import {
   buildCalendarOptions,
 } from "./schedule-calendar.factory";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
+import type { InventoryItem } from "@modules/inventory/services/inventory-api";
+import type { InventoryItemLine } from "../../../interfaces/schedule-event.model";
+import type { ScheduleStatus } from "@modules/schedule/services/schedules-api";
 
 type ScheduleCalendarProps = {
-  availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
-  availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
+  availableServices?: CompanyServiceModel[];
+  availableEmployees?: EmployeeModel[];
+  availableInventoryItems?: InventoryItem[];
   workspaceId?: string | null;
   onCreate?: (
-    draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft
+    draft: ScheduleEventDraft
   ) => Promise<void>;
   onUpdate?: (args: {
     id: string;
     event: Omit<
-      import("../../../interfaces/schedule-event.model").ScheduleEvent,
+      ScheduleEvent,
       "id"
     >;
     serviceIds?: string[];
     employeeIds?: string[];
     totalPriceCents?: number;
     workspaceId?: string | null;
+    inventoryInputs?: InventoryItemLine[];
+    inventoryOutputs?: InventoryItemLine[];
   }) => Promise<void>;
-  events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
+  events?: ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
-  categories?:
-    | import("../../../interfaces/schedule-category.model").ScheduleCategory[]
-    | null;
-  statuses?:
-    | import("@modules/schedule/services/schedules-api").ScheduleStatus[]
-    | null;
+  categories?: ScheduleCategory[] | null;
+  statuses?: ScheduleStatus[] | null;
   // internal view mode only; parent no longer controls it
 };
 
@@ -92,9 +96,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     string | undefined
   >(undefined);
   const [modalInitialDraft, setModalInitialDraft] = useState<
-    | (import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & {
-        id?: string;
-      })
+    | (ScheduleEventDraft & { id?: string })
     | undefined
   >(undefined);
 
@@ -112,7 +114,16 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     onCreate: propOnCreate,
     availableServices: propAvailableServices,
     availableEmployees: propAvailableEmployees,
+    availableInventoryItems: propAvailableInventoryItems,
   } = props;
+
+  const inventoryNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    (propAvailableInventoryItems ?? []).forEach((item) => {
+      if (item?.id) map.set(item.id, item.name ?? item.id);
+    });
+    return map;
+  }, [propAvailableInventoryItems]);
 
   const tuiCalendars = useMemo(() => {
     return categories.map((c) => ({
@@ -201,6 +212,38 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       const startText = formatDateTime(start);
       const endText = dayjs(end).format("HH:mm");
+      const inventoryInputsRaw = (e as any).inventoryInputs ?? null;
+      const inventoryOutputsRaw = (e as any).inventoryOutputs ?? null;
+      const inventoryInputsText = Array.isArray(inventoryInputsRaw)
+        ? inventoryInputsRaw
+            .map((l: any) => {
+              const iid = l?.itemId ?? l?.id ?? "";
+              if (!iid) return null;
+              const name = inventoryNameMap.get(String(iid)) ?? String(iid);
+              const qty =
+                l?.quantity && Number(l.quantity) !== 1
+                  ? ` x${Number(l.quantity)}`
+                  : "";
+              return `${name}${qty}`;
+            })
+            .filter(Boolean)
+            .join(", ")
+        : "";
+      const inventoryOutputsText = Array.isArray(inventoryOutputsRaw)
+        ? inventoryOutputsRaw
+            .map((l: any) => {
+              const iid = l?.itemId ?? l?.id ?? "";
+              if (!iid) return null;
+              const name = inventoryNameMap.get(String(iid)) ?? String(iid);
+              const qty =
+                l?.quantity && Number(l.quantity) !== 1
+                  ? ` x${Number(l.quantity)}`
+                  : "";
+              return `${name}${qty}`;
+            })
+            .filter(Boolean)
+            .join(", ")
+        : "";
       const bodyHtml = `
         <div style="background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:var(--shadow-md);border-radius:8px;padding:12px;width:250px;font-family:inherit;overflow:hidden;">
           <div style="font-weight:800;margin-bottom:6px;color:var(--color-text);">${escapeHtml(e.title)}</div>
@@ -237,6 +280,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           endTime: e.endTime,
           services: (e as any).services ?? null,
           workers: (e as any).workers ?? null,
+          inventoryInputs: inventoryInputsRaw ?? null,
+          inventoryOutputs: inventoryOutputsRaw ?? null,
+          inventoryInputsText,
+          inventoryOutputsText,
           _bodyHtml: bodyHtml,
           status: (e as any).status ?? null,
           category: (e as any).category ?? null,
@@ -275,7 +322,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               return "";
             })();
 
-            const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & {
+            const draft: ScheduleEventDraft & {
               id?: string;
             } = {
               id: e.id,
@@ -293,6 +340,50 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 : undefined,
               employeeIds: Array.isArray(raw.workers)
                 ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean)
+                : undefined,
+              inventoryInputs: Array.isArray(raw.inventoryInputs)
+                ? raw.inventoryInputs
+                    .map((l: any) => {
+                      const iid =
+                        l?.itemId ??
+                        l?.id ??
+                        l?.inventoryItemId ??
+                        l?.item_id ??
+                        l?.productId;
+                      if (!iid) return null;
+                      return {
+                        itemId: String(iid),
+                        quantity:
+                          typeof l?.quantity === "number"
+                            ? l.quantity
+                            : l?.quantity
+                            ? Number(l.quantity)
+                            : undefined,
+                      };
+                    })
+                    .filter(Boolean) as any
+                : undefined,
+              inventoryOutputs: Array.isArray(raw.inventoryOutputs)
+                ? raw.inventoryOutputs
+                    .map((l: any) => {
+                      const iid =
+                        l?.itemId ??
+                        l?.id ??
+                        l?.inventoryItemId ??
+                        l?.item_id ??
+                        l?.productId;
+                      if (!iid) return null;
+                      return {
+                        itemId: String(iid),
+                        quantity:
+                          typeof l?.quantity === "number"
+                            ? l.quantity
+                            : l?.quantity
+                            ? Number(l.quantity)
+                            : undefined,
+                      };
+                    })
+                    .filter(Boolean) as any
                 : undefined,
               totalPriceCents: Array.isArray(raw.services)
                 ? raw.services.reduce(
@@ -594,24 +685,20 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       }
 
       // Only fetch initial events here when parent did not provide `events`.
-      if (props.events === undefined) {
+      if (props.events === undefined && !props.onRangeChange) {
         const from = dayjs().startOf("month").format("YYYY-MM-DD");
         const to = dayjs().endOf("month").format("YYYY-MM-DD");
-        if (props.onRangeChange) {
-          await props.onRangeChange(from, to);
-        } else {
-          const ev = await api.getEvents({
-            from,
-            to,
-            workspaceId: props.workspaceId ?? null,
-          });
-          setEvents(ev);
-        }
+        const ev = await api.getEvents({
+          from,
+          to,
+          workspaceId: props.workspaceId ?? null,
+        });
+        setEvents(ev);
       }
     })();
     // avoid re-running for changing onRangeChange identity - parent should provide stable callback
     // include props.categories so we react when parent provides them
-  }, [api, propWorkspaceId, props.categories]);
+  }, [api, propWorkspaceId, props.categories, props.onRangeChange, props.events]);
 
   useEffect(() => {
     setEvents(propEvents ?? []);
@@ -668,7 +755,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       // won't remove function refs. This opens the edit modal prefilled with the event data.
       try {
         const raw = (ev as any).raw || {};
-        const draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft & {
+        const draft: ScheduleEventDraft & {
           id?: string;
         } = {
           id: ev.id,
@@ -685,6 +772,50 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             : undefined,
           employeeIds: Array.isArray(raw.workers)
             ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean)
+            : undefined,
+          inventoryInputs: Array.isArray(raw.inventoryInputs)
+            ? raw.inventoryInputs
+                .map((l: any) => {
+                  const iid =
+                    l?.itemId ??
+                    l?.id ??
+                    l?.inventoryItemId ??
+                    l?.item_id ??
+                    l?.productId;
+                  if (!iid) return null;
+                  return {
+                    itemId: String(iid),
+                    quantity:
+                      typeof l?.quantity === "number"
+                        ? l.quantity
+                        : l?.quantity
+                        ? Number(l.quantity)
+                        : undefined,
+                  };
+                })
+                .filter(Boolean) as any
+            : undefined,
+          inventoryOutputs: Array.isArray(raw.inventoryOutputs)
+            ? raw.inventoryOutputs
+                .map((l: any) => {
+                  const iid =
+                    l?.itemId ??
+                    l?.id ??
+                    l?.inventoryItemId ??
+                    l?.item_id ??
+                    l?.productId;
+                  if (!iid) return null;
+                  return {
+                    itemId: String(iid),
+                    quantity:
+                      typeof l?.quantity === "number"
+                        ? l.quantity
+                        : l?.quantity
+                        ? Number(l.quantity)
+                        : undefined,
+                  };
+                })
+                .filter(Boolean) as any
             : undefined,
           totalPriceCents: Array.isArray(raw.services)
             ? raw.services.reduce(
@@ -736,10 +867,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     applyEventDomColors();
 
     // After (re)creating the calendar, ensure events for the current range are loaded
-    try {
-      void loadMonthEventsFromInstance();
-    } catch (err) {
-      void err;
+    // Only trigger here when the calendar owns its data fetching.
+    if (!props.onRangeChange && props.events === undefined) {
+      try {
+        void loadMonthEventsFromInstance();
+      } catch (err) {
+        void err;
+      }
     }
 
     // Observe DOM mutations under host and reapply colors when event nodes are added/changed
@@ -1111,18 +1245,21 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       categoryId: draft.categoryId,
       description: draft.description,
       durationMinutes: draft.durationMinutes ?? null,
+      inventoryInputs: draft.inventoryInputs ?? undefined,
+      inventoryOutputs: draft.inventoryOutputs ?? undefined,
     };
 
-    // include statusId when provided by the modal draft so backend receives updated status
-    try {
-      if ((draft as any).statusId)
-        (toCreate as any).statusId = (draft as any).statusId;
-    } catch (err) {
-      // no-op
-    }
+      // include statusId when provided by the modal draft so backend receives updated status
+      try {
+        if ((draft as any).statusId)
+          (toCreate as any).statusId = (draft as any).statusId;
+      } catch (err) {
+        // no-op
+      }
 
     try {
       loadingService.show();
+      const parentHandlesRefresh = Boolean(propOnCreate || props.onUpdate);
       // if editing an existing draft, delegate to page-level update handler
       if (modalInitialDraft && modalInitialDraft.id) {
         if (props.onUpdate) {
@@ -1132,6 +1269,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             serviceIds: draft.serviceIds,
             employeeIds: draft.employeeIds,
             totalPriceCents: draft.totalPriceCents,
+            inventoryInputs: draft.inventoryInputs,
+            inventoryOutputs: draft.inventoryOutputs,
             workspaceId: propWorkspaceId ?? null,
           });
         } else {
@@ -1143,6 +1282,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               serviceIds: draft.serviceIds,
               employeeIds: draft.employeeIds,
               totalPriceCents: draft.totalPriceCents,
+              inventoryInputs: draft.inventoryInputs,
+              inventoryOutputs: draft.inventoryOutputs,
               workspaceId: propWorkspaceId ?? null,
             });
           } else {
@@ -1160,25 +1301,29 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             serviceIds: draft.serviceIds,
             employeeIds: draft.employeeIds,
             totalPriceCents: draft.totalPriceCents,
+            inventoryInputs: draft.inventoryInputs,
+            inventoryOutputs: draft.inventoryOutputs,
             workspaceId: propWorkspaceId ?? null,
           });
         }
       }
 
-      // refresh month events
-      const inst = instanceRef.current as any;
-      const current = inst?.getDate?.();
-      const from = dayjs(current).startOf("month").format("YYYY-MM-DD");
-      const to = dayjs(current).endOf("month").format("YYYY-MM-DD");
-      if (propOnRangeChange) {
-        await propOnRangeChange(from, to);
-      } else {
-        const ev = await api.getEvents({
-          from,
-          to,
-          workspaceId: propWorkspaceId ?? null,
-        });
-        setEvents(ev);
+      // refresh month events only when parent isn't already handling data refresh
+      if (!parentHandlesRefresh) {
+        const inst = instanceRef.current as any;
+        const current = inst?.getDate?.();
+        const from = dayjs(current).startOf("month").format("YYYY-MM-DD");
+        const to = dayjs(current).endOf("month").format("YYYY-MM-DD");
+        if (propOnRangeChange) {
+          await propOnRangeChange(from, to);
+        } else {
+          const ev = await api.getEvents({
+            from,
+            to,
+            workspaceId: propWorkspaceId ?? null,
+          });
+          setEvents(ev);
+        }
       }
 
       message.success(
@@ -1288,6 +1433,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           ...c,
           color: c.color ?? "var(--color-surface)",
         }))}
+        availableInventoryItems={propAvailableInventoryItems}
         initialDate={modalInitialDate}
         initialStartTime={modalInitialStartTime}
         initialDraft={modalInitialDraft}

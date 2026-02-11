@@ -13,20 +13,29 @@ import {
 
 import { ScheduleCalendar } from "../../components/schedule-calendar/schedule-calendar.component";
 import { ScheduleSidebar } from "../../components/schedule-sidebar/schedule-sidebar.component";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
+import type { InventoryItem } from "@modules/inventory/services/inventory-api";
+import type { ScheduleEvent, InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
+import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
+import type { NextScheduleItem, ScheduleStatus } from "@modules/schedule/services/schedules-api";
+import type { ScheduleEventDraft } from "../../components/schedule-event-modal/schedule-event-modal.form.types";
+
 type ScheduleTemplateProps = {
-  availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
-  availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
+  availableServices?: CompanyServiceModel[];
+  availableEmployees?: EmployeeModel[];
+  availableInventoryItems?: InventoryItem[];
   workspaceId?: string | null;
-  onCreate?: (draft: import("../../components/schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft) => Promise<void>;
-  onUpdate?: (args: { id: string; event: Omit<import("../../../interfaces/schedule-event.model").ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null }) => Promise<void>;
-  events?: import("../../../interfaces/schedule-event.model").ScheduleEvent[];
+  onCreate?: (draft: ScheduleEventDraft) => Promise<void>;
+  onUpdate?: (args: { id: string; event: Omit<ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null; inventoryInputs?: InventoryItemLine[]; inventoryOutputs?: InventoryItemLine[] }) => Promise<void>;
+  events?: ScheduleEvent[];
   onRangeChange?: (from: string, to: string) => Promise<void>;
-  categories?: import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[] | null;
+  categories?: ScheduleCategory[] | null;
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
-  nextSchedules?: import("@modules/schedule/services/schedules-api").NextScheduleItem[] | null;
-  statuses?: import("@modules/schedule/services/schedules-api").ScheduleStatus[] | null;
+  nextSchedules?: NextScheduleItem[] | null;
+  statuses?: ScheduleStatus[] | null;
   statusCounts?: Record<string, number> | null;
   selectedStatusIds?: Record<string, boolean> | null;
   onToggleStatus?: (id: string, checked: boolean) => void;
@@ -80,6 +89,7 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                 <ScheduleCalendar
                   availableServices={props.availableServices}
                   availableEmployees={props.availableEmployees}
+                  availableInventoryItems={props.availableInventoryItems}
                   workspaceId={props.workspaceId}
                   onCreate={props.onCreate}
                   onUpdate={props.onUpdate}

@@ -30,6 +30,7 @@ module.exports = {
       "billing",
       "schedule",
       "company",
+      "work-order",
       "shared",
       "core",
       "app",

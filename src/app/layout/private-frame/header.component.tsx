@@ -1,11 +1,14 @@
 import React from "react";
-import { Avatar, Input, Menu, Button, Space, Dropdown, type MenuProps } from "antd";
-import { Search } from "lucide-react";
+import { Avatar, Menu, Button, Space, Dropdown, type MenuProps } from "antd";
+import { Briefcase, Calendar, CreditCard, DollarSign, LayoutDashboard, LayoutGrid, Search, Users, Box } from "lucide-react";
 import { worklyHubLogoUrl } from "@shared/assets/brand";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import { BaseComponent } from "@shared/base/base.component";
 import { FieldIcon } from "@shared/styles/global";
 import { Svg } from "@shared/ui/components/svg/svg.component";
+import { AutocompleteInput, type AutocompleteItem } from "@shared/ui/components/autocomplete/autocomplete.component";
+import { usersOverviewService } from "@modules/users/services/overview.service";
+import { resolveModulePath } from "@modules/users/presentation/utils/module-navigation";
 
 import {
   HeaderShell,
@@ -30,6 +33,73 @@ type Props = BaseProps & {
 };
 
 export class AppHeader extends BaseComponent<Props> {
+  private mapIcon(key?: string): React.ReactNode {
+    switch (key) {
+      case "calendar":
+        return <Calendar />;
+      case "users":
+        return <Users />;
+      case "dollar-sign":
+        return <DollarSign />;
+      case "credit-card":
+        return <CreditCard />;
+      case "dashboard":
+        return <LayoutDashboard />;
+      case "box":
+      case "inventory":
+      case "stock":
+        return <Box />;
+      default:
+        return <Briefcase />;
+    }
+  }
+
+  private searchModules = async (query: string): Promise<AutocompleteItem[]> => {
+    const normalized = (query ?? "").toLowerCase().trim();
+
+    try {
+      const overview = usersOverviewService.getOverviewValue() ?? (await usersOverviewService.fetchOverview());
+      const modules = overview?.modules ?? [];
+
+      const items: AutocompleteItem[] = modules
+        .map((m) => ({
+          key: m.uid,
+          title: m.name,
+          subtitle: m.description ?? "",
+          value: m.name,
+          icon: this.mapIcon(m.icon),
+          meta: { to: resolveModulePath({ id: m.uid, title: m.name }, "/modules") },
+        }))
+        .filter((item) => {
+          if (!normalized) return true;
+          const bucket = `${item.title ?? ""} ${item.subtitle ?? ""}`.toLowerCase();
+          return bucket.includes(normalized);
+        });
+
+      const seeAllPath = resolveModulePath({ id: "all-modules", title: "All modules" }, "/modules");
+      if (seeAllPath) {
+        items.push({
+          key: "all-modules",
+          title: "See all modules",
+          subtitle: "View all available modules",
+          value: "See all modules",
+          icon: <LayoutGrid />,
+          meta: { to: seeAllPath },
+        });
+      }
+
+      return items;
+    } catch (err) {
+      console.debug("module search failed", err);
+      return [];
+    }
+  };
+
+  private handleModuleSelect = (item: AutocompleteItem) => {
+    const to = (item.meta as { to?: string } | undefined)?.to ?? resolveModulePath({ id: item.key, title: item.title }, "/modules");
+    if (to) this.props.onNavigate?.(to);
+  };
+
   protected override renderView(): React.ReactNode {
     const { selectedPath, menuItems } = this.props;
 
@@ -57,7 +127,7 @@ export class AppHeader extends BaseComponent<Props> {
         <div className="container">
           <HeaderInner>
             <Left>
-              <Brand onClick={() => this.props.onNavigate?.("/")} role="button" tabIndex={0}>
+              <Brand onClick={() => this.props.onNavigate?.("/home")} role="button" tabIndex={0}>
                 <Svg
                   src={worklyHubLogoUrl}
                   alt="WorklyHub"
@@ -80,14 +150,16 @@ export class AppHeader extends BaseComponent<Props> {
 
             <Center>
               <SearchWrap>
-                <Input
-                  placeholder="Search"
-                  allowClear
+                <AutocompleteInput
+                  placeholder="Search modules"
                   prefix={
                     <FieldIcon aria-hidden>
                       <Search size={18} />
                     </FieldIcon>
                   }
+                  maxItems={4}
+                  fetchItems={this.searchModules}
+                  onSelect={this.handleModuleSelect}
                 />
               </SearchWrap>
             </Center>

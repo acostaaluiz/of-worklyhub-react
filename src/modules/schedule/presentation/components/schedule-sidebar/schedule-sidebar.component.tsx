@@ -26,26 +26,25 @@ import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-cat
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
+import type { NextScheduleItem, ScheduleStatus } from "@modules/schedule/services/schedules-api";
 
 type ScheduleSidebarProps = {
-  availableServices?: import("@modules/company/interfaces/service.model").CompanyServiceModel[];
-  availableEmployees?: import("@modules/people/interfaces/employee.model").EmployeeModel[];
+  availableServices?: CompanyServiceModel[];
+  availableEmployees?: EmployeeModel[];
   workspaceId?: string | null;
   onCreate?: (
-    draft: import("../schedule-event-modal/schedule-event-modal.form.types").ScheduleEventDraft
+    draft: ScheduleEventDraft
   ) => Promise<void>;
   categories?:
-    | import("@modules/schedule/interfaces/schedule-category.model").ScheduleCategory[]
+    | ScheduleCategory[]
     | null;
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
-  nextSchedules?:
-    | import("@modules/schedule/services/schedules-api").NextScheduleItem[]
-    | null;
-  statuses?:
-    | import("@modules/schedule/services/schedules-api").ScheduleStatus[]
-    | null;
+  nextSchedules?: NextScheduleItem[] | null;
+  statuses?: ScheduleStatus[] | null;
   statusCounts?: Record<string, number> | null;
   selectedStatusIds?: Record<string, boolean> | null;
   onToggleStatus?: (id: string, checked: boolean) => void;

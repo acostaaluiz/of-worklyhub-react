@@ -1,13 +1,14 @@
 import React from "react";
 import ServicesCards from "@modules/users/presentation/components/home/services-cards.component";
 import MetricsCards from "@modules/users/presentation/components/home/metrics-cards.component";
-import { Briefcase, Box, Calendar } from "lucide-react";
+import { Briefcase, Box, LayoutGrid } from "lucide-react";
 
 type ServiceItem = { id: string; title: string; subtitle?: string; icon?: React.ReactNode };
 
 type Props = {
   name?: string;
   companyName?: string;
+  planTitle?: string;
   services: ServiceItem[];
   servicesCount?: number;
   metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } };
@@ -25,7 +26,7 @@ function initialsFrom(name?: string) {
     .toUpperCase();
 }
 
-export default function UsersHomeTemplate({ name, companyName, services, servicesCount, metrics, description, onEditCompany }: Props) {
+export default function UsersHomeTemplate({ name, companyName, planTitle, services, servicesCount, metrics, description, onEditCompany }: Props) {
   const initials = initialsFrom(companyName);
 
   return (
@@ -102,11 +103,11 @@ export default function UsersHomeTemplate({ name, companyName, services, service
 
           <div className="surface" style={{ padding: 12, minWidth: 180, flex: "1 0 180px", display: "flex", gap: 12, alignItems: "center" }}>
             <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--color-surface-2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Calendar size={18} />
+              <LayoutGrid size={18} />
             </div>
             <div>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 6 }}>Next steps</div>
-              <div style={{ fontWeight: 600 }}>Finish company setup</div>
+              <div style={{ fontSize: 12, color: "var(--color-text-muted)", marginBottom: 6 }}>Plan</div>
+              <div style={{ fontWeight: 600 }}>{planTitle ?? "—"}</div>
             </div>
           </div>
         </div>

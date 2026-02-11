@@ -55,6 +55,9 @@ export const ScheduleEventPopup: React.FC<Props> = ({ event, position, onClose, 
     ? event.raw.workers.map((w: any) => w.email || w.fullName || w.userUid).join(', ')
     : '—';
 
+  const consumesText = event.raw?.inventoryInputsText || '';
+  const producesText = event.raw?.inventoryOutputsText || '';
+
   const categoryLabel = (event.raw && event.raw.category && event.raw.category.label) || event.calendarId || '';
 
   const popupBg = event?.raw?.categoryColor || event?.backgroundColor || event?.raw?.statusColor || 'var(--color-surface)';
@@ -103,6 +106,12 @@ export const ScheduleEventPopup: React.FC<Props> = ({ event, position, onClose, 
               <div style={{ color: 'var(--color-text-muted)' }}>{escapeHtml(categoryLabel)}</div>
             </div>
           </div>
+          {(consumesText || producesText) ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: 'var(--color-text-muted)' }}>
+              {consumesText ? <div><strong style={{ color: 'var(--color-text)' }}>Consumes:</strong> {escapeHtml(consumesText)}</div> : null}
+              {producesText ? <div><strong style={{ color: 'var(--color-text)' }}>Produces:</strong> {escapeHtml(producesText)}</div> : null}
+            </div>
+          ) : null}
         </div>
 
         <div className="tui-custom-popup-footer" style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 6 }}>

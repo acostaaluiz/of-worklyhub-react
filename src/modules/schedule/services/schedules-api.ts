@@ -13,6 +13,8 @@ export type CreateSchedulePayload = {
   description?: string | null;
   services?: Array<{ serviceId: string; quantity?: number; priceCents?: number }>;
   workers?: Array<{ workspaceId?: string | null; userUid: string }>;
+  inventoryInputs?: Array<{ itemId: string; quantity?: number }>;
+  inventoryOutputs?: Array<{ itemId: string; quantity?: number }>;
   // optional status id for updates
   statusId?: string | null;
 };
@@ -30,6 +32,8 @@ export type ScheduleServiceItem = {
   description?: string | null;
   services?: Array<{ serviceId: string; quantity?: number; priceCents?: number }>;
   workers?: Array<{ workspaceId?: string | null; userUid: string; email?: string; fullName?: string }>; 
+  inventoryInputs?: Array<{ itemId: string; quantity?: number }> | null;
+  inventoryOutputs?: Array<{ itemId: string; quantity?: number }> | null;
   status?: { id?: string; code?: string; label?: string } | null;
   createdAt?: string;
   updatedAt?: string;

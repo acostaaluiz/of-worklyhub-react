@@ -2,11 +2,11 @@ import React from "react";
 import { BasePage } from "@shared/base/base.page";
 import UsersHomeTemplate from "@modules/users/presentation/templates/home/home.template";
 import { Briefcase, Calendar, Users, DollarSign, Box, LayoutGrid } from "lucide-react";
-import type { ApplicationServiceItem } from "@core/application/application-api";
 import type { ReactNode } from "react";
 import { Subscription } from "rxjs";
 import { usersService } from "@modules/users/services/user.service";
-import { applicationService } from "@core/application/application.service";
+import { usersOverviewService } from "@modules/users/services/overview.service";
+import type { UserOverviewModule } from "@modules/users/services/overview-api";
 import { companyService } from "@modules/company/services/company.service";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
 import { FinanceService } from "@modules/finance/services/finance.service";
@@ -14,12 +14,31 @@ import { message } from "antd";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { navigateTo } from "@core/navigation/navigation.service";
 
-export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; name?: string; services?: ApplicationServiceItem[] | null; metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } } }> {
+export class UsersHomePage extends BasePage<
+  {},
+  {
+    initialized: boolean;
+    isLoading: boolean;
+    error?: unknown;
+    name?: string;
+    modules?: UserOverviewModule[] | null;
+    planTitle?: string | null;
+    metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } };
+  }
+> {
   protected override options = { title: "Home | WorklyHub", requiresAuth: true };
 
   private profileSub?: Subscription;
 
-  public state = { isLoading: true, initialized: false, error: undefined, name: undefined, services: undefined, metrics: undefined };
+  public state = {
+    isLoading: true,
+    initialized: false,
+    error: undefined,
+    name: undefined,
+    modules: undefined,
+    planTitle: undefined,
+    metrics: undefined,
+  };
 
   private async computeAndSetMetrics(): Promise<void> {
     try {
@@ -74,11 +93,13 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
       this.setSafeState({ name: p?.name });
     });
 
-    // avoid duplicate fetches (React StrictMode can mount twice in dev)
-    const existing = applicationService.getServicesValue();
-    if (existing != null) {
-      this.setSafeState({ services: existing });
-      // still compute metrics even when services are cached — keep skeleton visible while computing
+    const existingOverview = usersOverviewService.getOverviewValue();
+    if (existingOverview?.modules != null && existingOverview.modules.length > 0) {
+      this.setSafeState({
+        modules: existingOverview.modules,
+        planTitle: existingOverview.profile?.planTitle ?? null,
+        name: existingOverview.profile?.name ?? this.state.name,
+      });
       await this.runAsync(async () => {
         try {
           await this.computeAndSetMetrics();
@@ -91,18 +112,21 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
 
     await this.runAsync(async () => {
       try {
-        const services = await applicationService.fetchServices();
-        this.setSafeState({ services: services ?? [] });
+        const overview = await usersOverviewService.fetchOverview();
+        this.setSafeState({
+          modules: overview?.modules ?? [],
+          planTitle: overview?.profile?.planTitle ?? null,
+          name: overview?.profile?.name ?? this.state.name,
+        });
 
-        // compute metrics (schedule + finance)
         try {
           await this.computeAndSetMetrics();
         } catch (e) {
           console.debug("metrics fetch failed", e);
         }
       } catch (err) {
-        console.error("failed to fetch application services", err);
-        message.error("Failed to load application services");
+        console.error("failed to fetch overview", err);
+        message.error("Failed to load modules");
       }
     }, { setLoading: true });
   }
@@ -121,7 +145,7 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
   }
 
   protected override renderPage(): React.ReactNode {
-    const apiServices: ApplicationServiceItem[] = (this.state.services ?? []) as ApplicationServiceItem[];
+    const apiModules: UserOverviewModule[] = (this.state.modules ?? []) as UserOverviewModule[];
 
     const mapIcon = (key?: string): ReactNode => {
       switch (key) {
@@ -140,68 +164,47 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
       }
     };
 
-    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = apiServices.map((s: ApplicationServiceItem) => ({
+    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = apiModules.map((s: UserOverviewModule) => ({
       id: s.uid,
       title: s.name,
       subtitle: s.description,
       icon: mapIcon(s.icon),
     }));
 
-    const findByKeywords = (keywords: string[]) => {
-      return services.find((s) => {
+    const preferred = [
+      { id: "schedule", keywords: ["schedule", "calendar"], fallbackIcon: <Calendar /> },
+      { id: "inventory", keywords: ["inventory", "stock"], fallbackIcon: <Box /> },
+      { id: "finance", keywords: ["finance", "payment"], fallbackIcon: <DollarSign /> },
+    ];
+
+    const selected: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = [];
+    const used = new Set<string>();
+
+    preferred.forEach((pref) => {
+      const found = services.find((s) => {
         const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
-        return keywords.some((k) => key.includes(k));
+        return key.includes(pref.id) || pref.keywords.some((k) => key.includes(k));
       });
-    };
+      if (found) {
+        selected.push(found.icon ? found : { ...found, icon: pref.fallbackIcon });
+        used.add(found.id);
+      }
+    });
 
-    const withFallbackIcon = (item: { id: string; title: string; subtitle?: string; icon?: ReactNode }, fallbackIcon: ReactNode) => {
-      if (item.icon) return item;
-      return { ...item, icon: fallbackIcon };
-    };
-
-    const scheduleModule = withFallbackIcon(
-      findByKeywords(["schedule", "calendar"]) ?? {
-        id: "schedule",
-        title: "Schedule",
-        subtitle: "Manage appointments and availability",
-        icon: mapIcon("calendar"),
-      },
-      <Calendar />
-    );
-
-    const inventoryModule = withFallbackIcon(
-      findByKeywords(["inventory", "stock"]) ?? {
-        id: "inventory",
-        title: "Inventory",
-        subtitle: "Manage stock and supplies",
-        icon: mapIcon("inventory"),
-      },
-      <Box />
-    );
-
-    const financeModule = withFallbackIcon(
-      findByKeywords(["finance", "payment"]) ?? {
-        id: "finance",
-        title: "Finance",
-        subtitle: "Track revenue and expenses",
-        icon: mapIcon("dollar-sign"),
-      },
-      <DollarSign />
-    );
+    services.forEach((s) => {
+      if (selected.length >= 3) return;
+      if (s.id && used.has(s.id)) return;
+      selected.push(s.icon ? s : { ...s, icon: mapIcon(s.id) });
+      if (s.id) used.add(s.id);
+    });
 
     const quickModules: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = [
-      scheduleModule,
-      inventoryModule,
-      financeModule,
+      ...selected,
       { id: "all-modules", title: "See all", subtitle: "View all available modules", icon: <LayoutGrid /> },
     ];
 
     const uniqueServices = new Map<string, { id: string; title: string; subtitle?: string; icon?: ReactNode }>();
     services.forEach((s) => {
-      const key = `${s.id ?? ""}|${s.title ?? ""}`.toLowerCase();
-      uniqueServices.set(key, s);
-    });
-    [scheduleModule, inventoryModule, financeModule].forEach((s) => {
       const key = `${s.id ?? ""}|${s.title ?? ""}`.toLowerCase();
       uniqueServices.set(key, s);
     });
@@ -222,6 +225,7 @@ export class UsersHomePage extends BasePage<{}, { initialized: boolean; isLoadin
         name={this.state.name}
         companyName={companyName}
         description={description}
+        planTitle={this.state.planTitle ?? undefined}
         services={quickModules}
         servicesCount={uniqueServices.size}
         metrics={this.state.metrics}

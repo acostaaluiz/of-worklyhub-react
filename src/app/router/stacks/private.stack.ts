@@ -8,6 +8,7 @@ import { financeStackRoutes } from "@modules/finance/presentation/stacks/finance
 import clientsStackRoutes from "@modules/clients/presentation/stacks/clients.stack";
 import { inventoryStackRoutes } from "@modules/inventory/presentation/stacks/inventory.stack";
 import { peopleStackRoutes } from "@modules/people/presentation/stacks/people.stack";
+import { workOrderStackRoutes } from "@modules/work-order/presentation/stacks/work-order.stack";
 
 export const privateStackRoutes: RouteObject[] = [
   ...usersStackRoutes,
@@ -19,4 +20,5 @@ export const privateStackRoutes: RouteObject[] = [
   ...clientsStackRoutes,
   ...inventoryStackRoutes,
   ...peopleStackRoutes,
+  ...workOrderStackRoutes,
 ];

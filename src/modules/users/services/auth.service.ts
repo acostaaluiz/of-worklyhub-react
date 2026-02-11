@@ -6,6 +6,7 @@ import { localStorageProvider } from "@core/storage/local-storage.provider";
 import { companyService } from "@modules/company/services/company.service";
 import { usersService } from "@modules/users/services/user.service";
 import { applicationService } from "@core/application/application.service";
+import { usersOverviewService } from "@modules/users/services/overview.service";
 
 export type UserSession = { uid: string; claims: unknown; email?: string; name?: string; photoUrl?: string } | null;
 
@@ -77,6 +78,11 @@ export class UsersAuthService {
       }
       try {
         applicationService.clear();
+      } catch {
+        // ignore
+      }
+      try {
+        usersOverviewService.clear();
       } catch {
         // ignore
       }

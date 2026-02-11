@@ -2,11 +2,24 @@ import React from "react";
 import { Button, Input, Modal, Select, Segmented, Typography, Tag } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
-import { ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  ClipboardList,
+  FileText,
+  Clock3,
+  UserRoundPlus,
+  BriefcaseBusiness,
+  PackageMinus,
+  PackagePlus,
+  CheckCircle2,
+} from "lucide-react";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import DurationTimeSelector from "@shared/ui/components/duration-time-selector/duration-time-selector.component";
 import SelectCardModal from "@shared/ui/components/select-card-modal/select-card-modal.component";
+import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
 
 import type {
   DayPart,
@@ -28,6 +41,7 @@ import {
   FormStack,
   FieldRow,
   FieldRow3,
+  InlineRow,
   SlotCard,
   SlotLeft,
   SlotRight,
@@ -99,8 +113,10 @@ interface ScheduleEventModalState {
   priceCents: number;
   selectedServiceIds: string[];
   selectedEmployeeIds: string[];
+  selectedInventoryInputs: InventoryItemLine[];
+  selectedInventoryOutputs: InventoryItemLine[];
   selectedStatusId?: string | null;
-  selectModalOpen?: "services" | "employees" | null;
+  selectModalOpen?: "services" | "employees" | "inventory-in" | "inventory-out" | null;
 }
 
 export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, ScheduleEventModalState> {
@@ -125,6 +141,8 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       priceCents: 5000,
       selectedServiceIds: [],
       selectedEmployeeIds: [],
+      selectedInventoryInputs: [],
+      selectedInventoryOutputs: [],
       selectedStatusId: undefined,
       selectModalOpen: null,
     };
@@ -158,6 +176,10 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         categoryId: categories?.[0]?.id ?? "",
         durationMinutes: 25,
         priceCents: 5000,
+        selectedServiceIds: [],
+        selectedEmployeeIds: [],
+        selectedInventoryInputs: [],
+        selectedInventoryOutputs: [],
       });
     }
 
@@ -188,6 +210,8 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         priceCents: d.totalPriceCents ?? 5000,
         selectedServiceIds: d.serviceIds ?? [],
         selectedEmployeeIds: d.employeeIds ?? [],
+        selectedInventoryInputs: d.inventoryInputs ?? [],
+        selectedInventoryOutputs: d.inventoryOutputs ?? [],
         selectedStatusId: (d as any).statusId ?? null,
       });
     }
@@ -236,6 +260,23 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
     return addMinutes(this.selectedStart, this.state.durationMinutes);
   }
 
+  private upsertInventoryLines(current: InventoryItemLine[], ids: string[]) {
+    const map = new Map<string, InventoryItemLine>();
+    current.forEach((l) => {
+      if (l?.itemId) map.set(l.itemId, { itemId: l.itemId, quantity: l.quantity ?? 1 });
+    });
+    ids.forEach((id) => {
+      if (!map.has(id)) map.set(id, { itemId: id, quantity: 1 });
+    });
+    return Array.from(map.values());
+  }
+
+  private inventoryLabel(line: InventoryItemLine) {
+    const item = (this.props.availableInventoryItems ?? []).find((i) => i.id === line.itemId);
+    const qty = line.quantity && line.quantity !== 1 ? ` x${line.quantity}` : "";
+    return `${item?.name ?? line.itemId}${qty}`;
+  }
+
   private get canConfirm() {
     return Boolean(
       this.state.categoryId && this.state.title.trim() && this.selectedStart && this.selectedEnd
@@ -257,6 +298,8 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       durationMinutes: this.state.durationMinutes,
       serviceIds: this.state.selectedServiceIds.length ? this.state.selectedServiceIds.slice() : undefined,
       employeeIds: this.state.selectedEmployeeIds.length ? this.state.selectedEmployeeIds.slice() : undefined,
+      inventoryInputs: this.state.selectedInventoryInputs.length ? this.state.selectedInventoryInputs.map((l) => ({ ...l })) : undefined,
+      inventoryOutputs: this.state.selectedInventoryOutputs.length ? this.state.selectedInventoryOutputs.map((l) => ({ ...l })) : undefined,
       totalPriceCents: this.state.priceCents,
       statusId: this.state.selectedStatusId ?? undefined,
     };
@@ -387,21 +430,15 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               <Label>Appointment details</Label>
 
               <FormStack>
-                <Input
-                  size="large"
-                  value={this.state.title}
-                  onChange={(e) => this.setSafeState({ title: e.target.value })}
-                  placeholder="title"
-                />
-
-                <Input.TextArea
-                  value={this.state.description}
-                  onChange={(e) => this.setSafeState({ description: e.target.value })}
-                  placeholder="Description (optional)"
-                  rows={3}
-                />
-
                 <FieldRow3>
+                  <Input
+                    size="large"
+                    value={this.state.title}
+                    onChange={(e) => this.setSafeState({ title: e.target.value })}
+                    placeholder="Title"
+                    prefix={<ClipboardList size={16} />}
+                  />
+
                   <Select
                     size="large"
                     value={this.state.categoryId || undefined}
@@ -411,44 +448,63 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   />
                 </FieldRow3>
 
-                {/* Status selector - only shown when editing an existing event */}
-                {this.props.initialDraft && this.props.initialDraft.id ? (
-                  <div>
-                    <Label>Event status</Label>
-                    <div style={{ height: 6 }} />
-                    <StatusRow>
-                      {(this.props.statuses ?? []).map((s) => {
-                        const active = this.state.selectedStatusId === s.id;
-                        return (
-                          <StatusCard
-                            key={s.id}
-                            type="button"
-                            $active={active}
-                            onClick={() => this.setSafeState({ selectedStatusId: s.id })}
-                            aria-pressed={active}
-                          >
-                            <div style={{ fontWeight: 700, fontSize: 13 }}>{s.label}</div>
-                          </StatusCard>
-                        );
-                      })}
-                    </StatusRow>
-                  </div>
-                ) : null}
+                <Input.TextArea
+                  value={this.state.description}
+                  onChange={(e) => this.setSafeState({ description: e.target.value })}
+                  placeholder="Description (optional)"
+                  prefix={<FileText size={16} />}
+                  rows={3}
+                />
 
-                {/* Duration selector moved to its own row to avoid crowding */}
-                <div>
-                  <Label>Duration</Label>
-                  <div style={{ height: 6 }} />
-                  <div style={{ display: "flex", justifyContent: "center" }}>
-                    <DurationTimeSelector
-                      mode="duration"
-                      size="large"
-                      value={this.state.durationMinutes}
-                      onChange={(v) => this.setSafeState({ durationMinutes: Number(v) })}
-                      durations={DURATION_OPTIONS.map((d) => d.minutes)}
-                    />
+                <InlineRow>
+                  {/* Status selector - only shown when editing an existing event */}
+                  {this.props.initialDraft && this.props.initialDraft.id ? (
+                    <div style={{ flex: 1, minWidth: 260 }}>
+                      <Label>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <CheckCircle2 size={16} />
+                          Event status
+                        </span>
+                      </Label>
+                      <div style={{ height: 6 }} />
+                      <StatusRow>
+                        {(this.props.statuses ?? []).map((s) => {
+                          const active = this.state.selectedStatusId === s.id;
+                          return (
+                            <StatusCard
+                              key={s.id}
+                              type="button"
+                              $active={active}
+                              onClick={() => this.setSafeState({ selectedStatusId: s.id })}
+                              aria-pressed={active}
+                            >
+                              <div style={{ fontWeight: 700, fontSize: 13 }}>{s.label}</div>
+                            </StatusCard>
+                          );
+                        })}
+                      </StatusRow>
+                    </div>
+                  ) : null}
+
+                  <div style={{ flex: this.props.initialDraft && this.props.initialDraft.id ? "0 0 260px" : "1 0 260px" }}>
+                    <Label>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Clock3 size={16} />
+                        Duration
+                      </span>
+                    </Label>
+                    <div style={{ height: 6 }} />
+                    <div style={{ display: "flex", justifyContent: "center" }}>
+                      <DurationTimeSelector
+                        mode="duration"
+                        size="large"
+                        value={this.state.durationMinutes}
+                        onChange={(v) => this.setSafeState({ durationMinutes: Number(v) })}
+                        durations={DURATION_OPTIONS.map((d) => d.minutes)}
+                      />
+                    </div>
                   </div>
-                </div>
+                </InlineRow>
 
                 <FieldRow>
                   <SlotCard>
@@ -462,13 +518,21 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   </SlotCard>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <Button onClick={() => this.setSafeState({ selectModalOpen: "services" })} icon={<Plus size={14} />}>
-                        Adicionar serviço
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <Button onClick={() => this.setSafeState({ selectModalOpen: "services" })} icon={<BriefcaseBusiness size={14} />}>
+                        Add service
                       </Button>
 
-                      <Button onClick={() => this.setSafeState({ selectModalOpen: "employees" })} icon={<Plus size={14} />}>
-                        Adicionar funcionário
+                      <Button onClick={() => this.setSafeState({ selectModalOpen: "employees" })} icon={<UserRoundPlus size={14} />}>
+                        Add employee
+                      </Button>
+
+                      <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-in" })} icon={<PackageMinus size={14} />}>
+                        Add inventory input
+                      </Button>
+
+                      <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-out" })} icon={<PackagePlus size={14} />}>
+                        Add inventory output
                       </Button>
                     </div>
 
@@ -500,6 +564,30 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                           </Tag>
                         );
                       })}
+
+                      {(this.state.selectedInventoryInputs || []).map((line) => {
+                        const label = this.inventoryLabel(line);
+                        return (
+                          <Tag key={`in-${line.itemId}`} color="magenta" closable onClose={() => {
+                            const next = (this.state.selectedInventoryInputs ?? []).filter((l) => l.itemId !== line.itemId);
+                            this.setSafeState({ selectedInventoryInputs: next });
+                          }}>
+                            Consumes: {label}
+                          </Tag>
+                        );
+                      })}
+
+                      {(this.state.selectedInventoryOutputs || []).map((line) => {
+                        const label = this.inventoryLabel(line);
+                        return (
+                          <Tag key={`out-${line.itemId}`} color="cyan" closable onClose={() => {
+                            const next = (this.state.selectedInventoryOutputs ?? []).filter((l) => l.itemId !== line.itemId);
+                            this.setSafeState({ selectedInventoryOutputs: next });
+                          }}>
+                            Produces: {label}
+                          </Tag>
+                        );
+                      })}
                     </div>
                   </div>
                 </FieldRow>
@@ -509,7 +597,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
             {/* selection modals */}
             <SelectCardModal
               open={this.state.selectModalOpen === "services"}
-              title="Adicionar serviço"
+              title="Add service"
               items={(this.props.availableServices ?? []).map((s) => ({ id: s.id, title: s.title, subtitle: s.description, right: s.priceCents ? formatMoneyFromCents(s.priceCents ?? 0) : undefined }))}
               multiple={true}
               initialSelected={this.state.selectedServiceIds}
@@ -524,7 +612,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
             <SelectCardModal
               open={this.state.selectModalOpen === "employees"}
-              title="Adicionar funcionário"
+              title="Add employee"
               items={(this.props.availableEmployees ?? []).map((e) => ({ id: e.id, title: `${e.firstName} ${e.lastName}`, subtitle: e.role ?? undefined }))}
               multiple={true}
               initialSelected={this.state.selectedEmployeeIds}
@@ -532,6 +620,32 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               onConfirm={(ids) => {
                 const uniq = Array.from(new Set([...(this.state.selectedEmployeeIds ?? []), ...ids]));
                 this.setSafeState({ selectedEmployeeIds: uniq, selectModalOpen: null });
+              }}
+            />
+
+            <SelectCardModal
+              open={this.state.selectModalOpen === "inventory-in"}
+              title="Add inventory input"
+              items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
+              multiple={true}
+              initialSelected={(this.state.selectedInventoryInputs ?? []).map((l) => l.itemId)}
+              onCancel={() => this.setSafeState({ selectModalOpen: null })}
+              onConfirm={(ids) => {
+                const next = this.upsertInventoryLines(this.state.selectedInventoryInputs ?? [], ids);
+                this.setSafeState({ selectedInventoryInputs: next, selectModalOpen: null });
+              }}
+            />
+
+            <SelectCardModal
+              open={this.state.selectModalOpen === "inventory-out"}
+              title="Add inventory output"
+              items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
+              multiple={true}
+              initialSelected={(this.state.selectedInventoryOutputs ?? []).map((l) => l.itemId)}
+              onCancel={() => this.setSafeState({ selectModalOpen: null })}
+              onConfirm={(ids) => {
+                const next = this.upsertInventoryLines(this.state.selectedInventoryOutputs ?? [], ids);
+                this.setSafeState({ selectedInventoryOutputs: next, selectModalOpen: null });
               }}
             />
 

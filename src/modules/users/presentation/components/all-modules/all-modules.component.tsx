@@ -15,6 +15,7 @@ type Props = {
   items: ModuleLandingItem[];
   title?: string;
   description?: string;
+  planTitle?: string;
 };
 
 type State = {
@@ -26,7 +27,7 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
   public state: State = { isLoading: false, error: undefined };
 
   protected override renderView(): React.ReactNode {
-    const { items, title, description } = this.props;
+    const { items, title, description, planTitle } = this.props;
 
     if (!items || items.length === 0) {
       return (
@@ -44,7 +45,8 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
         title={title ?? "All modules"}
         headerIcon={<LayoutGrid size={18} />}
         description={
-          description ?? "Access every service available in WorklyHub."
+          description ??
+          (planTitle ? `Current plan: ${planTitle}` : "Access every service available in WorklyHub.")
         }
         columns={2}
         items={items}

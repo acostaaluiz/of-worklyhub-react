@@ -15,6 +15,7 @@ export function resolveModulePath(
   if (key.includes("billing") || key.includes("plan")) return "/billing/landing";
   if (key.includes("finance") || key.includes("payment")) return "/finance/landing";
   if (key.includes("schedule") || key.includes("calendar")) return "/schedule/landing";
+  if (key.includes("work-order") || key.includes("work order") || key.includes("workorder")) return "/work-order/landing";
   if (key.includes("client")) return "/clients/landing";
   if (key.includes("service") || key.includes("services") || key.includes("catalog")) return "/company/landing";
   if (key.includes("inventory") || key.includes("stock")) return "/inventory/landing";

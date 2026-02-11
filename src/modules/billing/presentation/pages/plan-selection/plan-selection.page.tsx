@@ -1,21 +1,21 @@
 import React from "react";
 import { BasePage } from "@shared/base/base.page";
 import { PlanSelectionTemplate } from "../../templates/plan-selection/plan-selection.template";
-import { applicationService } from "@core/application/application.service";
-import type { ApplicationPlanItem } from "@core/application/application-api";
 import { ConfirmationModal } from "@shared/ui/components/confirmation-modal/confirmation-modal.component";
 import { usersService } from "@modules/users/services/user.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { message } from "antd";
 import { navigateTo } from "@core/navigation/navigation.service";
+import { billingService } from "@modules/billing/services/billing.service";
+import type { BillingPlan } from "@modules/billing/services/billing-api";
 
-export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; plans?: ApplicationPlanItem[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
+export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
   protected override options = {
     title: "Plans | WorklyHub",
     requiresAuth: true,
   };
 
-  public state: { initialized: boolean; isLoading: boolean; error?: unknown; plans?: ApplicationPlanItem[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string } = {
+  public state: { initialized: boolean; isLoading: boolean; error?: unknown; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string } = {
     initialized: false,
     isLoading: false,
     error: undefined,
@@ -28,14 +28,15 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
 
   protected override async onInit(): Promise<void> {
     await this.runAsync(async () => {
-      const plans = await applicationService.fetchPlans();
+      const plansRes = await billingService.fetchPlans();
+      const plans = plansRes?.plans ?? [];
       const planList = plans ?? [];
 
-      const computeRecommended = (planList: ApplicationPlanItem[], rawUserPlan: unknown) => {
+      const computeRecommended = (planList: BillingPlan[], rawUserPlan: unknown) => {
         if (!planList || planList.length === 0) return undefined;
 
         // normalize list sorted by id
-        const sorted = [...planList].sort((a, b) => Number(a.id) - Number(b.id));
+        const sorted = [...planList].sort((a, b) => Number(a.dbId ?? a.id) - Number(b.dbId ?? b.id));
 
         // try to match by numeric id, or by title/code
         const userVal = rawUserPlan ?? undefined;
@@ -44,8 +45,8 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
         const s = String(userVal).toLowerCase();
 
         // find index by id or title
-        let idx = sorted.findIndex((p) => String(p.id) === String(userVal));
-        if (idx === -1) idx = sorted.findIndex((p) => (p.title ?? "").toLowerCase() === s);
+        let idx = sorted.findIndex((p) => String(p.id) === String(userVal) || String(p.dbId) === String(userVal));
+        if (idx === -1) idx = sorted.findIndex((p) => (p.name ?? "").toLowerCase() === s);
         if (idx === -1) idx = sorted.findIndex((p) => (p as any).code === userVal || (p as any).code === s);
 
         // if found, recommend next tier; if already at highest, keep current
@@ -59,12 +60,12 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
         // try numeric fallback: userVal + 1
         const numeric = Number(userVal);
         if (!isNaN(numeric)) {
-          const byId = sorted.find((p) => Number(p.id) === numeric + 1);
+          const byId = sorted.find((p) => Number(p.id) === numeric + 1 || Number(p.dbId) === numeric + 1);
           if (byId) return String(byId.id);
         }
 
         // fallback: find first with highlight or first plan
-        const highlighted = sorted.find((p) => !!(p as any).highlight) ?? sorted[0];
+        const highlighted = sorted.find((p) => !!(p.recommended ?? (p as any).highlight)) ?? sorted[0];
         return highlighted ? String(highlighted.id) : undefined;
       };
 
@@ -116,7 +117,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
 
   private handleSelectPlan = (planId: string, interval?: "monthly" | "yearly") => {
     const plan = this.state.plans?.find((p) => String(p.id) === planId);
-    const name = plan?.title ?? planId;
+    const name = plan?.name ?? planId;
     try {
       sessionStorage.setItem("billing.selectedPlanInterval", interval ?? "monthly");
     } catch {
@@ -162,7 +163,9 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
 
     await this.runAsync(async () => {
       // call users service to set plan (API expects numeric plan id)
-      await usersService.setPlan(email, Number(planId));
+      const plan = this.state.plans?.find((p) => String(p.id) === planId);
+      const numericPlan = plan?.dbId ?? plan?.id ?? planId;
+      await usersService.setPlan(email, Number(numericPlan));
       // refresh profile
       try {
         await usersService.fetchByEmail(email);
@@ -175,15 +178,15 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
         const profile = usersService.getProfileValue();
         const userPlanId = (profile as any)?.planId ?? (profile as any)?.plan_id ?? (profile as any)?.plan ?? undefined;
 
-        const sorted = [...planList].sort((a, b) => Number(a.id) - Number(b.id));
+        const sorted = [...planList].sort((a, b) => Number(a.dbId ?? a.id) - Number(b.dbId ?? b.id));
         let rec: string | undefined = undefined;
         if (sorted.length > 0) {
           if (userPlanId == null) {
             rec = String(sorted[0].id);
           } else {
             const s = String(userPlanId).toLowerCase();
-            let idx = sorted.findIndex((p) => String(p.id) === String(userPlanId));
-            if (idx === -1) idx = sorted.findIndex((p) => (p.title ?? "").toLowerCase() === s);
+            let idx = sorted.findIndex((p) => String(p.id) === String(userPlanId) || String(p.dbId) === String(userPlanId));
+            if (idx === -1) idx = sorted.findIndex((p) => (p.name ?? "").toLowerCase() === s);
             if (idx === -1) idx = sorted.findIndex((p) => (p as any).code === userPlanId || (p as any).code === s);
             if (idx >= 0) {
               const next = sorted[idx + 1];
@@ -193,12 +196,12 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
             if (!rec) {
               const numeric = Number(userPlanId);
               if (!isNaN(numeric)) {
-                const byId = sorted.find((p) => Number(p.id) === numeric + 1);
+                const byId = sorted.find((p) => Number(p.id) === numeric + 1 || Number(p.dbId) === numeric + 1);
                 if (byId) rec = String(byId.id);
               }
             }
             if (!rec) {
-              const highlighted = sorted.find((p) => !!(p as any).highlight) ?? sorted[0];
+              const highlighted = sorted.find((p) => !!(p.recommended ?? (p as any).highlight)) ?? sorted[0];
               rec = highlighted ? String(highlighted.id) : undefined;
             }
           }

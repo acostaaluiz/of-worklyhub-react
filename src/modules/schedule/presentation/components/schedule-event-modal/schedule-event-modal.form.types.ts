@@ -1,6 +1,8 @@
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
+import type { InventoryItem } from "@modules/inventory/services/inventory-api";
+import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
 
 export type DayPart = "morning" | "afternoon" | "evening";
 
@@ -15,6 +17,8 @@ export type ScheduleEventDraft = {
   // optional extras
   serviceIds?: string[];
   employeeIds?: string[];
+  inventoryInputs?: InventoryItemLine[];
+  inventoryOutputs?: InventoryItemLine[];
   totalPriceCents?: number;
   // when editing, selected status id (from backend statuses list)
   statusId?: string;
@@ -27,6 +31,8 @@ export type ScheduleEventModalProps = BaseProps & {
   availableServices?: CompanyServiceModel[];
   // employees available to link (company staff)
   availableEmployees?: EmployeeModel[];
+  // inventory items available for consumption/production
+  availableInventoryItems?: InventoryItem[];
   initialDate?: string;
   initialStartTime?: string;
   initialDraft?: ScheduleEventDraft & { id?: string };

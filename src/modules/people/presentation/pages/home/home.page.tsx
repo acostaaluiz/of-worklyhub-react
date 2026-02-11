@@ -7,12 +7,13 @@ import { PeopleService } from "@modules/people/services/people.service";
 import { loadingService } from "@shared/ui/services/loading.service";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import { BasePage } from "@shared/base/base.page";
+import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
 
 type State = {
   employees: EmployeeModel[];
   showForm: boolean;
   editing: EmployeeModel | null;
-} & import("@shared/base/interfaces/base-page.state.interface").BasePageState;
+} & BasePageState;
 
 export class PeopleHomePage extends BasePage<{}, State> {
   protected override options = {

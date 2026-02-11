@@ -98,7 +98,7 @@ export const Separator = styled.div`
 export const Section = styled.section`
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
 `;
 
 export const CenterRow = styled.div`
@@ -161,7 +161,7 @@ export const TimeChip = styled.button<{ $active?: boolean }>`
 export const FormStack = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
 
   .ant-input,
   .ant-input-affix-wrapper,
@@ -172,8 +172,8 @@ export const FormStack = styled.div`
 
 export const FieldRow = styled.div`
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: var(--space-3);
+  grid-template-columns: 1.25fr 1fr;
+  gap: var(--space-2);
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -182,12 +182,19 @@ export const FieldRow = styled.div`
 
 export const FieldRow3 = styled.div`
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: var(--space-3);
+  grid-template-columns: 1.5fr 1fr;
+  gap: var(--space-2);
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
+`;
+
+export const InlineRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: flex-start;
 `;
 
 export const SlotCard = styled.div`
