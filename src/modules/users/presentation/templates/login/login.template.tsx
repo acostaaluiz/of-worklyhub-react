@@ -22,9 +22,10 @@ import { LoginForm } from "../../components/login-form/login-form.component";
 type Props = {
   onSubmit?: (values: { email: string; password: string }) => Promise<void>;
   onRegister?: () => void;
+  onForgotPassword?: () => void;
 };
 
-export function LoginTemplate({ onSubmit, onRegister }: Props) {
+export function LoginTemplate({ onSubmit, onRegister, onForgotPassword }: Props) {
   return (
     <BaseTemplate
       content={
@@ -65,7 +66,7 @@ export function LoginTemplate({ onSubmit, onRegister }: Props) {
             </LeftPanel>
 
             <RightPanel>
-              <LoginForm onSubmit={onSubmit} onRegister={onRegister} />
+              <LoginForm onSubmit={onSubmit} onRegister={onRegister} onForgotPassword={onForgotPassword} />
             </RightPanel>
           </Grid>
         </PublicFrameLayout>

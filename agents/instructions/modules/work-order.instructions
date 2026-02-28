@@ -1,0 +1,50 @@
+# Modulo work-order
+
+Escopo
+- Ordens de servico e status de execucao.
+- Registro de servicos, trabalhadores e consumo de inventario.
+- Colaboracao e execucao: historico de status, comentarios e checklist.
+
+Rotas e entradas
+- Stack: `src/modules/work-order/presentation/stacks/work-order.stack.tsx`.
+- Base path: `/work-order`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `home`: `presentation/pages/work-orders/work-orders.page`.
+  - `calendar`: `presentation/pages/calendar/calendar.page`.
+  - `statuses`: `presentation/pages/statuses/statuses.page`.
+
+Modelos principais (interfaces)
+- `WorkOrderStatus`: id, code, label, isTerminal, sortOrder.
+- `WorkOrder`: dados completos da OS (status, prioridade, datas, totals, linhas de servico, workers, inventoryLines).
+- `CreateWorkOrderInput` / `UpdateWorkOrderInput` / `CreateWorkOrderStatusInput`.
+- `ListWorkOrdersFilters`: filtros por status, prioridade, usuario, datas e paginacao.
+
+Services
+- `work-order.http.service.ts`
+  - Wrapper para listar status, CRUD de work orders.
+  - Garante `workspaceId` e converte erros.
+  - Endpoints de colaboracao: historico, comentarios e checklist.
+- `work-order-api.ts`
+  - Endpoints `/work-order/statuses` e `/work-order/work-orders`.
+  - Headers com `x-workspace-id`.
+  - Novos endpoints:
+  - `GET /work-order/work-orders/:id/history`
+  - `GET /work-order/work-orders/:id/comments`
+  - `POST /work-order/work-orders/:id/comments`
+  - `GET /work-order/work-orders/:id/checklist`
+  - `POST /work-order/work-orders/:id/checklist`
+  - `PATCH /work-order/work-orders/:id/checklist/:itemId`
+  - `DELETE /work-order/work-orders/:id/checklist/:itemId`
+
+Integracoes
+- Pode referenciar `schedule` via `scheduledEventId`.
+- Pode gerar entrada financeira via `financeEntryId`.
+- Usa inventoryLines para consumo de estoque.
+- Usa workers para alocacao de equipe.
+
+Guardrails
+- `workspaceId` e obrigatorio em create/update.
+- Status e prioridade devem seguir modelos definidos.
+- Nao criar OS sem associar services/workers quando o negocio exigir.
+- Para comentarios e checklist, `authorUid`/`completedBy` podem ser omitidos quando o token valido existe.

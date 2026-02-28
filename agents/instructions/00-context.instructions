@@ -1,0 +1,36 @@
+# WorklyHub - contexto do produto e stack
+
+Visao do produto
+- Plataforma SaaS para operacao de negocios de servico (agenda, clientes, equipe e financeiro).
+- Publico alvo: pequenas e medias empresas que precisam centralizar atendimento e operacao.
+- Valor central: unificar a rotina diaria (agenda + vendas de servicos + execucao + financeiro) em um unico painel.
+
+Jornadas principais (alto nivel)
+- Autenticacao: usuario registra ou faz login e valida token.
+- Onboarding: usuario cria workspace da empresa (company) antes de operar.
+- Operacao diaria: agenda, ordens de servico, equipe, estoque e financeiro.
+- Sustentacao: assinatura/planos e cobranca (billing).
+
+Stack oficial do frontend
+- React 19 + TypeScript
+- Vite (rolldown-vite)
+- React Router
+- Ant Design + styled-components
+- RxJS para estado reativo em services
+- Firebase (auth)
+- Axios (HTTP)
+
+Fonte de verdade local
+- README.md resume o produto e a arquitetura.
+- Regras de dependencia estao em `.dependency-cruiser.cjs`.
+- Aliases de importacao estao em `tsconfig.app.json`.
+
+Mapa rapido de pastas
+- `src/app`: bootstrap, rotas, layout e composicao.
+- `src/core`: infraestrutura (http, auth, storage, errors, config, logger).
+- `src/shared`: componentes e utilitarios genericos.
+- `src/modules`: funcionalidades por dominio (1 modulo = 1 negocio).
+
+Ambiente
+- Variaveis `VITE_*` em `.env.development` e `.env.production`.
+- Base URL do backend: `VITE_API_BASE_URL`.

@@ -1,0 +1,21 @@
+# UI, tema e componentes (detalhado)
+
+Tema
+- CSS variables em `src/shared/styles/theme/app-theme.scss`.
+- Tokens adicionais em `src/shared/styles/theme/tokens.scss`.
+- `AppThemeProvider` (src/app/bootstrap/theme-provider.component.tsx) traduz tokens para Ant Design.
+- Preferencias de tema via `themeService` (`of-theme-preference`).
+
+Componentes
+- Componentes compartilhados ficam em `src/shared`.
+- Componentes de dominio ficam em `src/modules/<modulo>/presentation`.
+- Evite copiar componentes entre modulos. Mova para `shared` se houver reutilizacao real.
+
+Layout
+- Layout privado central: `src/app/layout/private-frame`.
+- Ajustes globais de header/footer devem ser feitos no layout.
+
+Boas praticas
+- Use CSS variables para cores e espacamento.
+- Mantenha consistencia com Ant Design (tokens e componentes).
+- Evite inline styles repetidos; prefira styles/tema.

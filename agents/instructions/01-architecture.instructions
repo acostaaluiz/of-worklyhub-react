@@ -1,0 +1,78 @@
+# Arquitetura e padroes obrigatorios
+
+Principios
+- Arquitetura em camadas com dependencias unidirecionais.
+- Evitar acoplamento entre modulos. Cross-import entre modulos so quando estritamente necessario.
+- Sem dependencia circular (validado por dependency-cruiser).
+
+Camadas e responsabilidades
+- `app`: composicao da aplicacao. Define router, guards, layouts e bootstrap (ex.: tema).
+- `core`: infraestrutura transversal (http, auth, storage, errors, logger, config).
+- `shared`: UI e utilitarios reutilizaveis. Sem regras de negocio.
+- `modules`: dominio de negocio. Cada modulo encapsula sua regra e UI.
+
+Regras de dependencia (obrigatorio)
+- `core` NAO depende de `shared`, `modules` ou `app`.
+- `shared` pode depender de `core`, mas NAO de `modules` ou `app`.
+- `modules` NAO dependem de `app`.
+- Nao criar ciclos. Rode `npm run depcruise` para validar.
+
+Estrutura padrao de modulo
+- `interfaces/`: modelos e contratos tipados do modulo.
+- `services/`: acesso a dados, chamadas HTTP, cache local, RxJS e regras de orquestracao.
+- `presentation/`: pages, components, templates e stacks (rotas do modulo).
+- `utils/` ou `constants/`: funcoes auxiliares especificas do modulo.
+
+Roteamento e guardas
+- `src/app/router/routes.tsx` cria o router principal com `createBrowserRouter`.
+- `NavigationBoot` integra `react-router` com o `navigation.service` (core).
+- `RedirectIfAuthenticated` redireciona usuario logado:
+  - Se nao houver workspace -> `/company/introduction`.
+  - Se houver workspace -> `/home`.
+- `RequireAuth` protege rotas privadas e redireciona para `/login` quando nao ha sessao.
+- Pilhas de rotas:
+  - Publico: `src/app/router/stacks/public.stack.ts` (auth).
+  - Privado: `src/app/router/stacks/private.stack.ts` (todos os modulos privados).
+- Cada modulo deve expor sua stack em `src/modules/<modulo>/presentation/stacks`.
+
+Layout privado e navegacao
+- `PrivateFrameLayout` em `src/app/layout/private-frame` envolve rotas privadas.
+- Header e menu sao montados no layout e usam `companyService` e `usersAuthService`.
+- Ajustes de navegacao devem ser feitos no layout privado, nao dentro de pages isoladas.
+
+Autenticacao e sessao
+- Servico principal: `src/modules/users/services/auth.service.ts`.
+- Sessao persistida no `localStorage` com chave `auth.session`.
+- Firebase autentica e o backend valida token (authApi.verifyToken).
+- Ao sair (signOut), limpa cache de usuarios, company, application e overview.
+
+Workspace (empresa)
+- `companyService` guarda o workspace em `localStorage` (`company.workspace`).
+- `fetchWorkspaceByEmail` e usado no fluxo de redirecionamento.
+- Qualquer funcionalidade que dependa de workspace precisa validar a existencia do ID.
+
+HTTP e erros
+- Cliente HTTP base: `src/core/http/http-client.ts` (AxiosHttpClient).
+- BaseHttpService adiciona `correlationId` com namespace.
+- Mapeamento de erros: `src/core/http/http-error-mapper.ts` + `src/core/errors`.
+- Sempre use services com `toAppError` para padronizar erros.
+
+Estado e cache
+- Muitos services usam `BehaviorSubject` para cache local e atualizacao reativa.
+- `core/storage/mock-store.provider.tsx` fornece dados locais para telas quando backend nao responde.
+- Nao ha Redux/global store. Evite introduzir sem decisao arquitetural.
+
+Tema e UI
+- CSS variables em `src/shared/styles/theme/app-theme.scss`.
+- Tokens em `src/shared/styles/theme/tokens.scss`.
+- `AppThemeProvider` configura Ant Design tokens conforme tema atual.
+
+Importacao e aliases
+- Use sempre os aliases do `tsconfig.app.json`:
+  - `@app/*`, `@core/*`, `@shared/*`, `@modules/*`.
+
+Guardrails (nao negociar)
+- Nao introduzir dependencias entre camadas proibidas.
+- Nao importar UI de outro modulo diretamente; mover para `shared` se for reutilizavel.
+- Nao criar regra de negocio dentro de `shared`.
+- Nao duplicar modelos: reutilize os `interfaces` do modulo dono.

@@ -1,0 +1,16 @@
+# MCP (Model Context Protocol) - configuracao local
+
+Arquivo
+- `mcp.json` na raiz do repo.
+
+Servidores definidos
+- filesystem: leitura/escrita no repo.
+- git: historico e operacoes de git.
+- fetch: requisicoes HTTP simples para docs e APIs.
+- github (opcional): requer `GITHUB_TOKEN` no ambiente.
+
+Regras de uso
+- Use filesystem para leitura/edicao de arquivos do repo.
+- Use git para consultas de historico e diffs.
+- Use fetch apenas para docs publicas.
+- Ative github apenas se o token estiver configurado.

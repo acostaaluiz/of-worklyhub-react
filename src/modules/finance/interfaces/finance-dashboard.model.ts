@@ -33,6 +33,12 @@ export type FinanceDashboardCashflowItemApi = {
   amount_cents: number;
   type_id: string;
   type_name: string;
+  type_direction?: "income" | "expense";
+  schedule_id?: string | null;
+  related_entry_id?: string | null;
+  metadata?: Record<string, unknown> | null;
+  source?: "work-order" | "schedule" | "manual" | string;
+  work_order_id?: string | null;
 };
 
 export type FinanceDashboardTopServiceApi = {
@@ -42,6 +48,49 @@ export type FinanceDashboardTopServiceApi = {
   quantity: number;
   revenue_cents: number;
   avg_ticket_cents: number;
+};
+
+export type FinanceInsightPriorityApi = "high" | "medium" | "low";
+export type FinanceInsightCategoryApi =
+  | "margin"
+  | "cost-control"
+  | "revenue-mix"
+  | "cashflow"
+  | "growth";
+
+export type FinanceInsightActionApi = {
+  id: string;
+  label: string;
+  kind: "pricing" | "cost" | "marketing" | "operations" | "cashflow";
+  target?: string | null;
+};
+
+export type FinanceInsightItemApi = {
+  id: string;
+  priority: FinanceInsightPriorityApi;
+  category: FinanceInsightCategoryApi;
+  title: string;
+  description: string;
+  evidence: Record<string, unknown>;
+  actions: FinanceInsightActionApi[];
+};
+
+export type FinanceInsightsResponseApi = {
+  period: {
+    start: string;
+    end: string;
+    previous_start?: string | null;
+    previous_end?: string | null;
+    label?: string | null;
+  };
+  summary: {
+    total: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  insights: FinanceInsightItemApi[];
+  generated_at?: string;
 };
 
 export type FinanceDashboardResponseApi = {

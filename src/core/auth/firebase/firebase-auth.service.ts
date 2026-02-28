@@ -2,6 +2,7 @@ import type { RefreshResult } from "@core/auth/interfaces/auth-provider.interfac
 import { firebaseAuth } from "./firebase";
 import {
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut as firebaseSignOut,
   type UserCredential,
 } from "firebase/auth";
@@ -62,6 +63,10 @@ export class FirebaseAuthService {
     } finally {
       this.setToken(null);
     }
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    await sendPasswordResetEmail(firebaseAuth, email);
   }
 
   // restore token if present in storage (called on app init)

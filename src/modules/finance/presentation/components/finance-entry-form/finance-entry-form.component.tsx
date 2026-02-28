@@ -31,7 +31,12 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
 
         const current = form.getFieldValue("type");
         if (!current) {
-          const preferred = (rows ?? []).find((r) => (r.name ?? "").toString().toLowerCase() === "expense" || (r.key ?? "") === "expense");
+          const preferred = (rows ?? []).find((r) => {
+            const dir = (r.direction ?? "").toString().toLowerCase();
+            const key = (r.key ?? "").toString().toLowerCase();
+            const name = (r.name ?? "").toString().toLowerCase();
+            return dir === "expense" || key === "expense" || name === "expense";
+          });
           const defaultId = preferred?.id ?? (rows && rows[0]?.id);
           if (defaultId) form.setFieldsValue({ type: defaultId });
         }

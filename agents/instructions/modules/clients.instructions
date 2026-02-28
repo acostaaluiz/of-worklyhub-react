@@ -1,0 +1,35 @@
+# Modulo clients
+
+Escopo
+- Experiencia de descoberta de servicos para clientes finais.
+- Lista e detalhe de servicos, e historico de agendamentos do cliente.
+
+Rotas e entradas
+- Stack: `src/modules/clients/presentation/stacks/clients.stack.tsx`.
+- Base path: `/clients`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `home`: `presentation/pages/home/home.page`.
+  - `service/:serviceId`: `presentation/pages/service-detail/service-detail.page`.
+  - `appointments`: `presentation/pages/my-appointments/my-appointments.page`.
+
+Modelos principais
+- `ServiceModel` (`interfaces/service.model.ts`):
+  - id, title, description, providerId, providerName,
+  - address, imageUrl, rating, reviewsCount,
+  - featured, priceCents, priceFormatted, tags.
+
+Services
+- `clients.service.ts`
+  - Atualmente mock local com lista de servicos.
+  - Retorna `ServiceModel[]`.
+  - Quando houver backend, substituir por chamadas HTTP mantendo o mesmo contrato.
+
+Integracoes
+- `ServiceModel` e reutilizado em `company` (perfil da empresa).
+- Evite importar presentation de outros modulos.
+
+Guardrails
+- Nao adicionar logica de negocio fora de `services`.
+- Se precisar novos campos de servico, atualizar `ServiceModel` e ajustar as telas.
+- Manter rotas e IDs coerentes com o stack.

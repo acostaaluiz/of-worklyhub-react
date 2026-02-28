@@ -1,4 +1,4 @@
-import { ClipboardList, ListChecks } from "lucide-react";
+import { Calendar, ClipboardList, ListChecks } from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -13,6 +13,13 @@ export function WorkOrderLandingTemplate() {
       description: "Track, prioritize, and dispatch work orders.",
       to: "/work-order",
       icon: <ClipboardList size={18} />,
+    },
+    {
+      id: "calendar",
+      title: "Calendar",
+      description: "Visualize work orders on a timeline.",
+      to: "/work-order/calendar",
+      icon: <Calendar size={18} />,
     },
     {
       id: "statuses",

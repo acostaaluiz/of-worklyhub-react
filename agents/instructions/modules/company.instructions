@@ -1,0 +1,48 @@
+# Modulo company
+
+Escopo
+- Onboarding e dados da empresa (workspace).
+- Perfil da empresa e administracao de servicos.
+- Ponto central de dependencia para demais modulos.
+
+Rotas e entradas
+- Stack: `src/modules/company/presentation/stacks/company.stack.tsx`.
+- Base path: `/company`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `introduction`: `presentation/pages/company-introduction.page` (onboarding).
+  - `profile/:id`: `presentation/pages/profile/profile.page`.
+  - `services`: `presentation/pages/services/services.page` (admin servicos).
+  - `slas`: rota para `@modules/slas/presentation/pages/sla-by-employee`.
+
+Modelos principais
+- `CompanyProfileModel` (`interfaces/company.model.ts`): id, name, description, address, imageUrl, wallpaperUrl, phone, rating, reviewsCount, services.
+- `CompanyServiceModel` (`interfaces/service.model.ts`): id, title, description, durationMinutes, priceCents, capacity, staffRequired, tags, active, createdAt.
+- `CompanyServiceCreatePayload`: payload de criacao.
+- `WorkspaceModel` e payloads em `services/companies-api.ts`:
+  - accountType, fullName, email, tradeName, employeesCount, industry, primaryService, description, company_profile.
+
+Services
+- `company.service.ts`
+  - Fonte de verdade do workspace.
+  - Persistencia em `localStorage` (key `company.workspace`).
+  - `createWorkspace`, `fetchWorkspaceByEmail`, `updateWorkspaceProfile`.
+  - `uploadWorkspaceWallpaper` com assinatura e upload direto via XHR.
+  - `getCompanyProfile` atualmente mock.
+- `companies-api.ts`
+  - Endpoints de workspace e profile.
+- `company-services.service.ts`
+  - CRUD mock local de servicos da empresa.
+- `company-workspace.service.ts`
+  - CRUD via backend de servicos do workspace (list/create/update).
+  - Mapeia campos de API para `CompanyServiceModel`.
+
+Integracoes
+- Usado por billing, people, finance, schedule e work-order para obter workspaceId.
+- `CompanyProfileModel` usa `ServiceModel` de `clients`.
+- `slas` aparece na rota `company/slas`.
+
+Guardrails
+- Workspace e dependencia central: nao criar services que bypassam `companyService`.
+- Qualquer feature que depende de empresa deve validar workspaceId.
+- Evitar modificar shape do workspace sem alinhar com backend.

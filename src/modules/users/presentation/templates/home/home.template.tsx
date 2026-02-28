@@ -14,6 +14,7 @@ type Props = {
   metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } };
   description?: string;
   onEditCompany?: () => void;
+  onOpenTutorials?: () => void;
 };
 
 function initialsFrom(name?: string) {
@@ -26,7 +27,7 @@ function initialsFrom(name?: string) {
     .toUpperCase();
 }
 
-export default function UsersHomeTemplate({ name, companyName, planTitle, services, servicesCount, metrics, description, onEditCompany }: Props) {
+export default function UsersHomeTemplate({ name, companyName, planTitle, services, servicesCount, metrics, description, onEditCompany, onOpenTutorials }: Props) {
   const initials = initialsFrom(companyName);
 
   return (
@@ -45,6 +46,11 @@ export default function UsersHomeTemplate({ name, companyName, planTitle, servic
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {onOpenTutorials ? (
+            <button onClick={onOpenTutorials} style={{ background: "transparent", color: "var(--color-text)", border: "1px solid var(--color-border)", padding: "8px 12px", borderRadius: 8, cursor: "pointer" }}>
+              Tutorials
+            </button>
+          ) : null}
           <button onClick={onEditCompany} style={{ background: "var(--color-primary)", color: "var(--on-primary)", border: "none", padding: "8px 12px", borderRadius: 8, cursor: "pointer" }}>
             Edit company
           </button>

@@ -1,0 +1,42 @@
+# Modulo users
+
+Escopo
+- Autenticacao, perfil do usuario e overview (modulos disponiveis).
+- Fonte principal de sessao e identidade do usuario.
+
+Rotas e entradas
+- Stack publico: `src/modules/users/presentation/stacks/auth.stack.tsx`.
+  - `/login`: login.page
+  - `/register`: register.page
+- Stack privado: `src/modules/users/presentation/stacks/users.stack.tsx`.
+  - `/home`: home.page
+  - `/users`: profile.page
+  - `/modules`: all-modules.page
+
+Modelos principais
+- `UserSession` (`auth.service.ts`): uid, claims, email, name, photoUrl.
+- `UserProfileResponse` (`users-api.ts`): name, email, planId, phone, photoUrl.
+- `UserOverviewProfile` / `UserOverviewModule` (`overview-api.ts`).
+
+Services
+- `auth.service.ts`
+  - Login via Firebase + verify token no backend.
+  - Sessao persistida em `localStorage` (`auth.session`).
+  - `signOut()` limpa caches de users/company/application/overview.
+- `user.service.ts`
+  - Perfil do usuario (get by email, update, set plan).
+  - Upload de foto via assinatura + XHR.
+  - Cache em `localStorage` (`user.profile`).
+- `overview.service.ts`
+  - Carrega perfil + modulos disponiveis do backend (`me/overview`).
+  - Cache em `localStorage` (`users.overview`).
+- `users-api.ts` e `overview-api.ts` definem endpoints.
+
+Integracoes
+- `RedirectIfAuthenticated` usa `usersService.fetchByEmail` e `companyService.fetchWorkspaceByEmail`.
+- `billing` pode refletir plano no perfil do usuario.
+
+Guardrails
+- Nunca guardar dados sensiveis fora dos services.
+- Sempre limpar cache ao deslogar.
+- Evitar usar dados de perfil sem verificar `UserSession`.

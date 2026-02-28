@@ -1,0 +1,47 @@
+# Modulo finance
+
+Escopo
+- Entrada/saida de caixa, KPIs financeiros e sugestoes de precificacao.
+- Visualizacao de cashflow e top services.
+
+Rotas e entradas
+- Stack: `src/modules/finance/presentation/stacks/finance.stack.tsx`.
+- Base path: `/finance`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `home`: `presentation/pages/finance/finance.page`.
+  - `services`: `presentation/pages/services-finance/services-finance.page`.
+  - `suggestions`: `presentation/pages/suggestions/suggestions.page`.
+  - `entries`: `presentation/pages/entries/entries.page`.
+
+Modelos principais (interfaces)
+- `FinanceEntryModel`: id, type (income/expense/fixed), amountCents, description, serviceId, date.
+- `FinanceQueryModel`: from, to, groupBy, view.
+- `FinanceKpiModel`: id, label, value, format, delta.
+- `FinanceSeries` + `FinancePoint`: series de pontos.
+- `FinanceCashflowRow`: date, description, type, category, amount, status, source, workOrderId, scheduleId.
+- `FinanceTopServiceRow`: serviceName, orders, revenue, avgTicket.
+- `FinanceDashboardResponseApi`: payload de backend para dashboard.
+
+Services
+- `finance.service.ts`
+  - Possui mock local de entries (in-memory).
+  - `getFinance()` tenta backend via `FinanceApi` e faz fallback para mock.
+  - `listServicesWithSuggestions()` usa `CompanyServicesService` para sugerir precos.
+  - Converte centavos para valores reais e normaliza percentuais.
+- `useFinanceApi()`
+  - Hook com cache local para list/create/remove entries.
+  - Integra com `MockStoreProvider` para fallback.
+- `finance-api.ts`
+  - Endpoints: `/finance/dashboard`, `/finance/entries`, `/finance/revenue`, `/finance/internal/entry-types`.
+  - Usa `x-workspace-id` quando disponivel.
+
+Integracoes
+- Depende de `companyService` (workspaceId).
+- Consome `CompanyServiceModel` para sugestoes de precos.
+- Pode referenciar `workOrderId` e `scheduleId` em linhas de cashflow.
+
+Guardrails
+- Sempre trabalhar em centavos no backend e converter no frontend.
+- Garantir `workspaceId` em chamadas que exigem contexto.
+- Manter consistencia entre `FinanceEntryType` e UI.

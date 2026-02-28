@@ -1,0 +1,32 @@
+# Modulo slas
+
+Escopo
+- Medicao de produtividade/SLA por colaborador e evento.
+- Agregacao por usuario e data.
+
+Rotas e entradas
+- Nao possui stack propria.
+- Pagina principal: `src/modules/slas/presentation/pages/sla-by-employee/sla-by-employee.page`.
+- Rota usada: `/company/slas` (definida no stack de company).
+
+Modelos principais
+- `SlaApiItem`: shape direto do backend.
+- `SlaRecord`: modelo normalizado (workspaceId, userUid, eventId, workDate, durationMinutes).
+- `SlaSummary`: agregado por usuario e data (totalMinutes, totalHours).
+- `SlaQuery`/`SlaFilters`: filtros por userUid, eventId e intervalo.
+- `SlaRow`/`SlaEmployeeOption`: usados em UI e filtros.
+
+Services
+- `slas.service.ts`
+  - `list()` busca registros e normaliza.
+  - `getSummary()` agrega por usuario e data.
+- `slas-api.ts`
+  - Endpoint: `/company/internal/workspaces/{workspaceId}/slas`.
+
+Integracoes
+- Requer `workspaceId`.
+- Relaciona `userUid` com colaboradores (people) e eventos (schedule).
+
+Guardrails
+- Nao modificar o formato de agregacao sem alinhar com a UI.
+- Sempre filtrar por workspaceId.

@@ -33,7 +33,13 @@ type ResponseModalProps =
   | undefined;
 
 type Props = {
-  onSubmit?: (values: { name: string; email: string; password: string }) => Promise<void>;
+  onSubmit?: (values: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+    acceptTerms?: boolean;
+  }) => Promise<void>;
   responseModal?: ResponseModalProps;
   onLogin?: () => void;
 };

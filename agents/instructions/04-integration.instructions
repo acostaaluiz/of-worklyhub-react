@@ -1,0 +1,28 @@
+# Integracao e camada HTTP (detalhado)
+
+Camada HTTP padrao
+- `AxiosHttpClient` em `src/core/http/http-client.ts`.
+- `BaseHttpService` em `src/core/http/base-http.service.ts`.
+- Todos os modulos devem expor `*Api` que herdam de `BaseHttpService`.
+
+Headers comuns
+- `x-correlation-id`: gerado automaticamente.
+- `Authorization: Bearer <token>`: inserido quando authProvider ou getAuthToken existe.
+- `x-workspace-id`: obrigatorio em varios endpoints (finance, work-order, people, etc).
+- `x-user-uid`: usado em billing (checkout/planos).
+
+Tratamento de erros
+- Use `toAppError` em services para padronizar erros.
+- `mapHttpError` converte erros HTTP para `AppError`.
+- Sempre tratar cenarios de rede/timeout.
+
+Padrao para novas integracoes
+1) Crie modelo(s) em `interfaces`.
+2) Crie classe `XApi` em `services` (extends BaseHttpService).
+3) Crie service `XService` que chama `XApi` e converte erros.
+4) Se necessario, cache local em `BehaviorSubject`.
+
+Praticas proibidas
+- Nao chamar axios direto em componentes.
+- Nao espalhar endpoints no codigo de UI.
+- Nao duplicar modelos entre modulos (consumir do modulo dono).

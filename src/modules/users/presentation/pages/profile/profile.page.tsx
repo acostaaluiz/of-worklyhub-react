@@ -409,6 +409,11 @@ export class ProfilePage extends BasePage<{}, State> {
   };
 
   protected override renderPage(): React.ReactNode {
+    const tabParam = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("tab")?.toLowerCase()
+      : undefined;
+    const defaultTab = tabParam === "company" ? "company" : "personal";
+
     return (
       <>
         <ProfileTemplate
@@ -416,6 +421,7 @@ export class ProfilePage extends BasePage<{}, State> {
           company={this.state.company}
           categories={this.state.categories}
           industries={this.state.industries}
+          defaultTab={defaultTab}
           isAvatarLoading={this.state.isAvatarLoading}
           isWallpaperLoading={this.state.isWallpaperLoading}
           isSavingPersonal={this.state.isSavingPersonal}

@@ -6,6 +6,11 @@ export type FinanceCashflowRow = {
   category: string;
   amount: number;
   status: "paid" | "pending";
+  source?: "work-order" | "schedule" | "manual" | string;
+  workOrderId?: string | null;
+  scheduleId?: string | null;
+  relatedEntryId?: string | null;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type FinanceTopServiceRow = {

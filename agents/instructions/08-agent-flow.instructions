@@ -1,0 +1,69 @@
+# Fluxo unico de agents (planejamento -> execucao)
+
+Objetivo
+- Garantir que toda tarefa seja planejada e executada com delegacao clara.
+- Evitar implementacao sem decisao arquitetural.
+- Padronizar handoff entre agents.
+
+Agents do fluxo principal
+1) `worklyhub-flow-orchestrator`
+- Recebe a demanda.
+- Define modulo dono e instrucoes aplicaveis.
+- Abre e fecha o fluxo.
+
+2) `worklyhub-architect`
+- Define arquitetura da solucao.
+- Cria plano tecnico executavel com guardrails.
+- Decide limites entre `app`, `core`, `shared` e `modules`.
+
+3) `worklyhub-senior-dev-analyst`
+- Implementa exatamente o plano arquitetural.
+- Executa lint/depcruise e validacoes locais necessarias.
+- Reporta qualquer desvio para nova avaliacao do arquiteto.
+
+Passo a passo obrigatorio
+1) Triagem (`orchestrator`)
+- Classificar tipo de demanda: bug, melhoria, refactor, novo modulo.
+- Identificar dominio principal e carregar instrucoes do modulo correto.
+- Definir artefatos esperados da entrega.
+
+2) Planejamento (`architect`)
+- Entregar pacote arquitetural com:
+  - contexto tecnico da tarefa;
+  - decisao de estrutura de arquivos;
+  - regras de dependencia entre camadas;
+  - estrategia de integracao/API;
+  - riscos e mitigacoes;
+  - checklist de implementacao.
+
+3) Execucao (`senior-dev-analyst`)
+- Implementar por etapas pequenas e verificaveis.
+- Manter aderencia ao pacote arquitetural.
+- Validar:
+  - `npm run lint`
+  - `npm run depcruise`
+  - demais testes/scripts impactados pela tarefa.
+
+4) Fechamento (`orchestrator`)
+- Conferir se os artefatos definidos na triagem foram entregues.
+- Consolidar resumo final: escopo, riscos residuais, proximos passos.
+
+Contrato de handoff (obrigatorio)
+- Nenhuma implementacao inicia sem pacote do `worklyhub-architect`.
+- Se a execucao exigir mudanca estrutural nao prevista, o `senior-dev-analyst` devolve para revisao do arquiteto.
+- Toda entrega deve citar quais instructions foram usadas (gerais + modulo).
+
+Selecao de instructions por modulo
+- Sempre carregar primeiro:
+  - `00-context.instructions`
+  - `01-architecture.instructions`
+  - `03-delivery-playbook.instructions`
+  - `06-quality.instructions`
+- Depois carregar somente os modulos necessarios em `agents/instructions/modules/*.instructions`.
+- Em demandas multi-modulo, escolher modulo dono + modulo(s) de integracao diretamente afetados.
+
+Definition of done do fluxo
+- Planejamento arquitetural concluido e aplicado.
+- Implementacao aderente ao plano.
+- Checklist tecnico executado.
+- Resumo final documentado pelo orchestrator.

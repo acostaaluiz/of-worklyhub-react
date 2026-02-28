@@ -12,6 +12,7 @@ export function resolveModulePath(
     return "/modules";
   }
 
+  if (key.includes("sla") || key.includes("service-level")) return "/company/slas";
   if (key.includes("billing") || key.includes("plan")) return "/billing/landing";
   if (key.includes("finance") || key.includes("payment")) return "/finance/landing";
   if (key.includes("schedule") || key.includes("calendar")) return "/schedule/landing";

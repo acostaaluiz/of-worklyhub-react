@@ -22,6 +22,8 @@ const links: FooterLinkItem[] = [
   { label: "Company setup", to: "/company/introduction" },
   { label: "Billing", to: "/billing/landing" },
   { label: "Users", to: "/users" },
+  { label: "Terms", to: "/terms" },
+  { label: "Privacy", to: "/privacy" },
 ];
 
 export function AppFooter() {

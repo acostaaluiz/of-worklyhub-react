@@ -1,0 +1,34 @@
+# Modulo people
+
+Escopo
+- Gestao de colaboradores (workers/employees).
+- Cadastro, atualizacao e listagem por workspace.
+
+Rotas e entradas
+- Stack: `src/modules/people/presentation/stacks/people.stack.tsx`.
+- Base path: `/people`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `home`: `presentation/pages/home/home.page`.
+
+Modelos principais
+- `EmployeeModel`: id, firstName, lastName, email, phone, role, department, hiredAt, salaryCents, active, createdAt.
+- `EmployeeStatus`: active | inactive | on_leave.
+
+Services
+- `people.service.ts`
+  - `listEmployees()` tenta backend e cai para mock se necessario.
+  - `createEmployee()` cria via API quando workspaceId existe.
+  - `updateEmployee()` usa `usersAuthService` + workspace.
+  - Mapeia formatos da API para `EmployeeModel`.
+- `people-api.ts`
+  - Endpoints `/people/workers` e `/people/internal/workspaces/{id}/workers`.
+
+Integracoes
+- Depende de `companyService` para workspaceId.
+- Depende de `usersAuthService` para userUid.
+- Integrado com schedule e work-order (alocacao de trabalhadores).
+
+Guardrails
+- Sempre validar workspaceId quando chamar API.
+- Evitar duplicar logica de mapeamento fora do service.

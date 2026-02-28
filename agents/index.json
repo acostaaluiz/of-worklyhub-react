@@ -1,0 +1,274 @@
+{
+  "version": 2,
+  "generatedAt": "2026-02-27",
+  "root": "agents",
+  "instructions": [
+    {
+      "id": "context",
+      "title": "Contexto do produto e stack",
+      "path": "agents/instructions/00-context.instructions",
+      "summary": "Resumo do produto, jornadas principais e stack oficial.",
+      "keywords": ["produto", "stack", "contexto", "jornadas"]
+    },
+    {
+      "id": "architecture",
+      "title": "Arquitetura e padroes obrigatorios",
+      "path": "agents/instructions/01-architecture.instructions",
+      "summary": "Camadas, regras de dependencia, router, auth, workspace e guardrails.",
+      "keywords": ["arquitetura", "dependencias", "router", "auth"]
+    },
+    {
+      "id": "business-domain",
+      "title": "Negocio e dominios",
+      "path": "agents/instructions/02-business-domain.instructions",
+      "summary": "Glossario, fluxo principal e relacoes entre dominios.",
+      "keywords": ["negocio", "dominio", "glossario"]
+    },
+    {
+      "id": "delivery-playbook",
+      "title": "Playbook de entrega",
+      "path": "agents/instructions/03-delivery-playbook.instructions",
+      "summary": "Fluxo de entrega, integracao e checklist de qualidade.",
+      "keywords": ["entrega", "workflow", "qualidade"]
+    },
+    {
+      "id": "integration",
+      "title": "Integracao e camada HTTP",
+      "path": "agents/instructions/04-integration.instructions",
+      "summary": "HTTP client, headers, erros e padrao para novos endpoints.",
+      "keywords": ["http", "api", "auth", "services"]
+    },
+    {
+      "id": "frontend-ui",
+      "title": "UI, tema e componentes",
+      "path": "agents/instructions/05-frontend-ui.instructions",
+      "summary": "Tema, Ant Design e boas praticas de UI.",
+      "keywords": ["ui", "tema", "antd", "componentes"]
+    },
+    {
+      "id": "quality",
+      "title": "Qualidade, padroes e scripts",
+      "path": "agents/instructions/06-quality.instructions",
+      "summary": "Scripts, pre-commit e padroes de qualidade.",
+      "keywords": ["lint", "depcruise", "commit", "quality"]
+    },
+    {
+      "id": "mcp",
+      "title": "MCP configuracao",
+      "path": "agents/instructions/07-mcp.instructions",
+      "summary": "Resumo dos MCPs sugeridos e regras de uso.",
+      "keywords": ["mcp", "tools", "automation"]
+    },
+    {
+      "id": "agent-flow",
+      "title": "Fluxo de agents para entrega",
+      "path": "agents/instructions/08-agent-flow.instructions",
+      "summary": "Contrato de delegacao e handoff entre orchestrator, architect e analista sr.",
+      "keywords": ["agents", "handoff", "delegacao", "fluxo"]
+    },
+    {
+      "id": "product-market",
+      "title": "Produto e mercado",
+      "path": "agents/instructions/09-product-market.instructions",
+      "summary": "Metodo para descoberta e priorizacao de novas features genericas e por modulo.",
+      "keywords": ["produto", "mercado", "features", "priorizacao"]
+    },
+    {
+      "id": "module-billing",
+      "title": "Modulo billing",
+      "path": "agents/instructions/modules/billing.instructions",
+      "summary": "Planos e checkout de cobranca.",
+      "keywords": ["billing", "planos", "checkout"]
+    },
+    {
+      "id": "module-clients",
+      "title": "Modulo clients",
+      "path": "agents/instructions/modules/clients.instructions",
+      "summary": "Descoberta de servicos e visao do cliente.",
+      "keywords": ["clients", "servicos", "customer"]
+    },
+    {
+      "id": "module-company",
+      "title": "Modulo company",
+      "path": "agents/instructions/modules/company.instructions",
+      "summary": "Workspace e perfil da empresa.",
+      "keywords": ["company", "workspace", "perfil"]
+    },
+    {
+      "id": "module-dashboard",
+      "title": "Modulo dashboard",
+      "path": "agents/instructions/modules/dashboard.instructions",
+      "summary": "KPIs e visao geral.",
+      "keywords": ["dashboard", "kpi", "analytics"]
+    },
+    {
+      "id": "module-finance",
+      "title": "Modulo finance",
+      "path": "agents/instructions/modules/finance.instructions",
+      "summary": "Financeiro, cashflow e sugestoes.",
+      "keywords": ["finance", "cashflow", "kpi"]
+    },
+    {
+      "id": "module-inventory",
+      "title": "Modulo inventory",
+      "path": "agents/instructions/modules/inventory.instructions",
+      "summary": "Produtos, categorias e estoque.",
+      "keywords": ["inventory", "estoque", "produtos"]
+    },
+    {
+      "id": "module-people",
+      "title": "Modulo people",
+      "path": "agents/instructions/modules/people.instructions",
+      "summary": "Colaboradores e equipe.",
+      "keywords": ["people", "employees", "workers"]
+    },
+    {
+      "id": "module-schedule",
+      "title": "Modulo schedule",
+      "path": "agents/instructions/modules/schedule.instructions",
+      "summary": "Agenda e eventos.",
+      "keywords": ["schedule", "agenda", "calendar"]
+    },
+    {
+      "id": "module-slas",
+      "title": "Modulo slas",
+      "path": "agents/instructions/modules/slas.instructions",
+      "summary": "SLA e produtividade.",
+      "keywords": ["sla", "produtividade", "tempo"]
+    },
+    {
+      "id": "module-users",
+      "title": "Modulo users",
+      "path": "agents/instructions/modules/users.instructions",
+      "summary": "Auth, perfil e overview.",
+      "keywords": ["users", "auth", "profile"]
+    },
+    {
+      "id": "module-work-order",
+      "title": "Modulo work-order",
+      "path": "agents/instructions/modules/work-order.instructions",
+      "summary": "Ordens de servico e status.",
+      "keywords": ["work-order", "os", "ordem"]
+    }
+  ],
+  "agents": [
+    {
+      "id": "worklyhub-flow-orchestrator",
+      "title": "Orquestrador de fluxo",
+      "purpose": "Coordenar o fluxo unico de trabalho e delegar cada fase para o agent correto.",
+      "use_when": "Sempre que uma tarefa precisar de planejamento e execucao end-to-end.",
+      "instructions": [
+        "agents/instructions/00-context.instructions",
+        "agents/instructions/02-business-domain.instructions",
+        "agents/instructions/03-delivery-playbook.instructions",
+        "agents/instructions/08-agent-flow.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-architect",
+      "title": "Agent arquiteto",
+      "purpose": "Definir arquitetura, padroes, limites entre camadas e plano tecnico da tarefa.",
+      "use_when": "Inicio da implementacao, mudancas estruturais, novos modulos e integracoes.",
+      "instructions": [
+        "agents/instructions/00-context.instructions",
+        "agents/instructions/01-architecture.instructions",
+        "agents/instructions/02-business-domain.instructions",
+        "agents/instructions/03-delivery-playbook.instructions",
+        "agents/instructions/06-quality.instructions",
+        "agents/instructions/08-agent-flow.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-senior-dev-analyst",
+      "title": "Analista de desenvolvimento sr",
+      "purpose": "Executar a implementacao com base no plano do arquiteto e entregar codigo validado.",
+      "use_when": "Apos o handoff tecnico do arquiteto.",
+      "instructions": [
+        "agents/instructions/00-context.instructions",
+        "agents/instructions/01-architecture.instructions",
+        "agents/instructions/03-delivery-playbook.instructions",
+        "agents/instructions/04-integration.instructions",
+        "agents/instructions/05-frontend-ui.instructions",
+        "agents/instructions/06-quality.instructions",
+        "agents/instructions/08-agent-flow.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-domain",
+      "title": "Especialista de negocio",
+      "purpose": "Apoiar escopo funcional e regras de dominio quando a tarefa exigir refinamento de negocio.",
+      "use_when": "Regras de negocio, escopo funcional e nomenclaturas.",
+      "instructions": [
+        "agents/instructions/00-context.instructions",
+        "agents/instructions/02-business-domain.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-product-market-specialist",
+      "title": "Especialista em produto e mercado",
+      "purpose": "Descobrir e priorizar novas features alinhadas ao escopo do produto.",
+      "use_when": "Discovery de funcionalidades, ideacao e evolucao de modulos.",
+      "instructions": [
+        "agents/instructions/09-product-market.instructions",
+        "agents/instructions/00-context.instructions",
+        "agents/instructions/02-business-domain.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-frontend",
+      "title": "Especialista de UI",
+      "purpose": "Padronizar UI, tema e componentes em tarefas que exigem refinamento visual.",
+      "use_when": "Telas, componentes visuais, temas e design system.",
+      "instructions": [
+        "agents/instructions/05-frontend-ui.instructions",
+        "agents/instructions/01-architecture.instructions",
+        "agents/instructions/03-delivery-playbook.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-integration",
+      "title": "Especialista de integracao",
+      "purpose": "Apoiar a implementacao de APIs e contratos quando houver integracoes complexas.",
+      "use_when": "Novos endpoints, auth, tratamento de erros e contratos.",
+      "instructions": [
+        "agents/instructions/04-integration.instructions",
+        "agents/instructions/03-delivery-playbook.instructions",
+        "agents/instructions/06-quality.instructions"
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "core-delivery-flow",
+      "title": "Fluxo unico de entrega",
+      "purpose": "Toda tarefa deve passar por planejamento arquitetural e execucao guiada.",
+      "stages": [
+        {
+          "order": 1,
+          "agentId": "worklyhub-flow-orchestrator",
+          "goal": "Triar a demanda, definir escopo e selecionar instrucoes gerais e de modulo.",
+          "output": "Brief da tarefa + instrucoes aplicaveis."
+        },
+        {
+          "order": 2,
+          "agentId": "worklyhub-architect",
+          "goal": "Definir plano tecnico, estrutura de arquivos, guardrails e riscos.",
+          "output": "Pacote arquitetural aprovado para implementacao."
+        },
+        {
+          "order": 3,
+          "agentId": "worklyhub-senior-dev-analyst",
+          "goal": "Implementar o plano do arquiteto e executar validacoes de qualidade.",
+          "output": "Codigo entregue + checklist tecnico + pendencias."
+        },
+        {
+          "order": 4,
+          "agentId": "worklyhub-flow-orchestrator",
+          "goal": "Consolidar resultado final e registrar status da tarefa.",
+          "output": "Resumo final com escopo entregue, riscos e proximos passos."
+        }
+      ]
+    }
+  ],
+  "mcpConfig": "mcp.json"
+}

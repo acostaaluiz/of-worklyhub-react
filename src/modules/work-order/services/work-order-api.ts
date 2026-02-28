@@ -3,9 +3,17 @@ import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import type {
   CreateWorkOrderInput,
   CreateWorkOrderStatusInput,
+  CreateWorkOrderChecklistItemInput,
+  CreateWorkOrderCommentInput,
+  GetWorkOrderOverviewOptions,
   ListWorkOrdersFilters,
   UpdateWorkOrderInput,
+  UpdateWorkOrderChecklistItemInput,
   WorkOrder,
+  WorkOrderChecklistItem,
+  WorkOrderComment,
+  WorkOrderOverview,
+  WorkOrderStatusHistoryEntry,
   WorkOrderStatus,
 } from "@modules/work-order/interfaces/work-order.model";
 
@@ -13,6 +21,12 @@ export type WorkOrderStatusListResponse = { data: WorkOrderStatus[] };
 export type WorkOrderStatusResponse = { data: WorkOrderStatus };
 export type WorkOrderListResponse = { data: WorkOrder[] };
 export type WorkOrderResponse = { data: WorkOrder };
+export type WorkOrderHistoryResponse = { data: WorkOrderStatusHistoryEntry[] };
+export type WorkOrderCommentsResponse = { data: WorkOrderComment[] };
+export type WorkOrderCommentResponse = { data: WorkOrderComment };
+export type WorkOrderChecklistResponse = { data: WorkOrderChecklistItem[] };
+export type WorkOrderChecklistItemResponse = { data: WorkOrderChecklistItem };
+export type WorkOrderOverviewResponse = { data: WorkOrderOverview };
 
 export class WorkOrderApi extends BaseHttpService {
   constructor(http: HttpClient) {
@@ -79,6 +93,20 @@ export class WorkOrderApi extends BaseHttpService {
     return res?.data ?? [];
   }
 
+  async getOverview(
+    workspaceId: string | undefined,
+    options: GetWorkOrderOverviewOptions = {}
+  ): Promise<WorkOrderOverview> {
+    const headers = this.buildHeaders(workspaceId);
+    const query: GetWorkOrderOverviewOptions = { ...options };
+    const res = await this.get<WorkOrderOverviewResponse>(
+      "/work-order/work-orders/overview",
+      query,
+      headers
+    );
+    return res?.data as WorkOrderOverview;
+  }
+
   async getWorkOrderById(
     workspaceId: string | undefined,
     id: string
@@ -112,6 +140,99 @@ export class WorkOrderApi extends BaseHttpService {
   ): Promise<void> {
     const headers = this.buildHeaders(workspaceId);
     await this.delete<void>(`/work-order/work-orders/${id}`, undefined, headers);
+  }
+
+  async getHistory(
+    workspaceId: string | undefined,
+    id: string
+  ): Promise<WorkOrderStatusHistoryEntry[]> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<WorkOrderHistoryResponse>(
+      `/work-order/work-orders/${id}/history`,
+      undefined,
+      headers
+    );
+    return res?.data ?? [];
+  }
+
+  async getComments(
+    workspaceId: string | undefined,
+    id: string
+  ): Promise<WorkOrderComment[]> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<WorkOrderCommentsResponse>(
+      `/work-order/work-orders/${id}/comments`,
+      undefined,
+      headers
+    );
+    return res?.data ?? [];
+  }
+
+  async createComment(
+    workspaceId: string | undefined,
+    id: string,
+    payload: CreateWorkOrderCommentInput
+  ): Promise<WorkOrderComment> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.post<WorkOrderCommentResponse, CreateWorkOrderCommentInput>(
+      `/work-order/work-orders/${id}/comments`,
+      payload,
+      headers
+    );
+    return res?.data as WorkOrderComment;
+  }
+
+  async getChecklist(
+    workspaceId: string | undefined,
+    id: string
+  ): Promise<WorkOrderChecklistItem[]> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<WorkOrderChecklistResponse>(
+      `/work-order/work-orders/${id}/checklist`,
+      undefined,
+      headers
+    );
+    return res?.data ?? [];
+  }
+
+  async createChecklistItem(
+    workspaceId: string | undefined,
+    id: string,
+    payload: CreateWorkOrderChecklistItemInput
+  ): Promise<WorkOrderChecklistItem> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.post<
+      WorkOrderChecklistItemResponse,
+      CreateWorkOrderChecklistItemInput
+    >(`/work-order/work-orders/${id}/checklist`, payload, headers);
+    return res?.data as WorkOrderChecklistItem;
+  }
+
+  async updateChecklistItem(
+    workspaceId: string | undefined,
+    id: string,
+    itemId: string,
+    payload: UpdateWorkOrderChecklistItemInput
+  ): Promise<WorkOrderChecklistItem> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.patch<
+      WorkOrderChecklistItemResponse,
+      UpdateWorkOrderChecklistItemInput
+    >(`/work-order/work-orders/${id}/checklist/${itemId}`, payload, headers);
+    return res?.data as WorkOrderChecklistItem;
+  }
+
+  async deleteChecklistItem(
+    workspaceId: string | undefined,
+    id: string,
+    itemId: string
+  ): Promise<void> {
+    const headers = this.buildHeaders(workspaceId);
+    await this.delete<void>(
+      `/work-order/work-orders/${id}/checklist/${itemId}`,
+      undefined,
+      headers
+    );
   }
 }
 

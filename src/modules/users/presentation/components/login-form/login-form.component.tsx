@@ -27,6 +27,7 @@ type LoginFormValues = {
 type Props = BaseProps & {
   onSubmit?: (values: LoginFormValues) => Promise<void>;
   onRegister?: () => void;
+  onForgotPassword?: () => void;
 };
 
 export class LoginForm extends BaseComponent<Props> {
@@ -111,7 +112,9 @@ export class LoginForm extends BaseComponent<Props> {
               </Form.Item>
 
               <ActionsRow>
-                <Typography.Link>Recovery password</Typography.Link>
+                <Typography.Link onClick={() => this.props.onForgotPassword?.()}>
+                  Forgot password?
+                </Typography.Link>
               </ActionsRow>
 
               <PrimaryButton type="primary" htmlType="submit" size="large" block>

@@ -1,0 +1,40 @@
+# Modulo billing
+
+Escopo
+- Responsavel por planos de assinatura e checkout de pagamento.
+- Todo fluxo de cobranca deve passar por este modulo.
+
+Rotas e entradas
+- Stack: `src/modules/billing/presentation/stacks/billing.stack.tsx`.
+- Base path: `/billing`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `plans`: `presentation/pages/plan-selection/plan-selection.page`.
+  - `checkout`: `presentation/pages/checkout/checkout.page`.
+
+Modelos principais (billing-api.ts)
+- `BillingPlan`: id, dbId, name, description, currency, priceCents (monthly/yearly), features, recommended.
+- `PaymentConfig`: gateway (mercadopago), publicKey, configured.
+- `CheckoutRequest`: planId, billingCycle, payer, paymentMethod, cardToken, installments, urls, metadata, workspaceId, userUid.
+- `CheckoutResponse`: status, tipo (card/preference), checkoutUrl, plan, amount, currency.
+
+Services
+- `billing.service.ts`
+  - Cache com `BehaviorSubject` (`plans$`).
+  - Resolve `workspaceId` via `companyService`.
+  - Resolve `userUid` via `usersAuthService`.
+  - Monta headers `x-workspace-id` e `x-user-uid`.
+  - `fetchPlans()` busca planos e cacheia.
+  - `createCheckout()` monta payload completo e chama API.
+- `billing-api.ts`
+  - Endpoints: `GET /billing/plans`, `POST /billing/checkout`.
+
+Integracoes
+- Depende de `companyService` (workspace).
+- Depende de `usersAuthService` (sessao).
+- Usa `httpClient` do `core`.
+
+Guardrails
+- Nunca chamar endpoints de billing diretamente na UI; sempre via service.
+- Sempre garantir `workspaceId` e `userUid` no checkout.
+- Qualquer novo metodo de pagamento deve ser padronizado aqui.

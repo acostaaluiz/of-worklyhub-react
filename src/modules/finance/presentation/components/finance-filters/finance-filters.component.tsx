@@ -42,6 +42,7 @@ export function FinanceFilters({
   const dateFormat = getDateFormat();
   const viewOptions: Array<{ label: string; value: FinanceView }> = [
     { label: "Overview", value: "overview" },
+    { label: "Insights", value: "insights" },
     { label: "Revenue", value: "revenue" },
     { label: "Services", value: "top-services" },
     { label: "Expenses", value: "expenses" },

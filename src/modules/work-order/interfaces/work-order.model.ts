@@ -1,4 +1,10 @@
 export type WorkOrderPriority = "low" | "medium" | "high" | "urgent";
+export type WorkOrderRiskLevel =
+  | "overdue"
+  | "due_soon"
+  | "unscheduled"
+  | "checklist_at_risk"
+  | "high_priority";
 
 export type WorkOrderStatus = {
   id: string;
@@ -8,6 +14,79 @@ export type WorkOrderStatus = {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type WorkOrderStatusHistoryEntry = {
+  id: string;
+  workOrderId: string;
+  previousStatus?: WorkOrderStatus | null;
+  newStatus: WorkOrderStatus;
+  changedBy?: string | null;
+  notes?: string | null;
+  changedAt: string;
+};
+
+export type WorkOrderComment = {
+  id: string;
+  workOrderId: string;
+  workspaceId: string;
+  authorUid?: string | null;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkOrderChecklistItem = {
+  id: string;
+  workOrderId: string;
+  workspaceId: string;
+  title: string;
+  sortOrder: number;
+  isDone: boolean;
+  createdBy?: string | null;
+  completedBy?: string | null;
+  completedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkOrderOverviewInsightSeverity = "high" | "medium" | "low";
+
+export type WorkOrderOverview = {
+  generatedAt: string;
+  totals: {
+    total: number;
+    active: number;
+    terminal: number;
+    overdue: number;
+    dueSoon: number;
+    highPriorityOpen: number;
+    unscheduled: number;
+    checklistAtRisk: number;
+  };
+  performance: {
+    completionRate: number;
+    avgResolutionHours: number;
+  };
+  buckets: {
+    byStatus: Array<{
+      statusId: string;
+      code: string;
+      label: string;
+      count: number;
+    }>;
+    byPriority: Array<{
+      priority: WorkOrderPriority;
+      count: number;
+    }>;
+  };
+  insights: Array<{
+    code: string;
+    severity: WorkOrderOverviewInsightSeverity;
+    title: string;
+    description: string;
+    suggestedAction: string;
+  }>;
 };
 
 export type WorkOrderServiceLineInput = {
@@ -37,6 +116,24 @@ export type CreateWorkOrderStatusInput = {
   label: string;
   isTerminal?: boolean;
   sortOrder?: number;
+};
+
+export type CreateWorkOrderCommentInput = {
+  body: string;
+  authorUid?: string | null;
+};
+
+export type CreateWorkOrderChecklistItemInput = {
+  title: string;
+  sortOrder: number;
+  createdBy?: string | null;
+};
+
+export type UpdateWorkOrderChecklistItemInput = {
+  title?: string;
+  sortOrder?: number;
+  isDone?: boolean;
+  completedBy?: string | null;
 };
 
 export type CreateWorkOrderInput = {
@@ -117,6 +214,7 @@ export type WorkOrder = {
 
 export type ListWorkOrdersFilters = {
   workspaceId?: string;
+  riskLevel?: WorkOrderRiskLevel;
   statusId?: string;
   statusCode?: string;
   priority?: WorkOrderPriority;
@@ -129,4 +227,9 @@ export type ListWorkOrdersFilters = {
   search?: string;
   limit?: number;
   offset?: number;
+};
+
+export type GetWorkOrderOverviewOptions = {
+  dueSoonHours?: number;
+  windowDays?: number;
 };

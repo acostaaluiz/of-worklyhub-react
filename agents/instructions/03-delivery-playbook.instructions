@@ -1,0 +1,31 @@
+# Playbook de entrega (detalhado)
+
+Objetivo
+- Entregar funcionalidades sem quebrar arquitetura, com previsibilidade de dados e rotas.
+
+Passo a passo (obrigatorio)
+1) Entenda o requisito e identifique o modulo dono do objeto de negocio.
+2) Verifique rotas existentes em `src/modules/<modulo>/presentation/stacks`.
+3) Atualize ou crie modelos em `src/modules/<modulo>/interfaces`.
+4) Implemente regras e chamadas HTTP em `src/modules/<modulo>/services`.
+5) Ajuste UI em `src/modules/<modulo>/presentation` (pages/templates/components).
+6) Reutilize componentes de `src/shared` quando possivel.
+7) Se for um novo modulo:
+   - Criar `presentation/stacks/<modulo>.stack.tsx`.
+   - Registrar no `src/app/router/stacks/private.stack.ts`.
+
+Regras de integracao
+- Use `httpClient` e classes `*Api` para chamadas remotas.
+- Converta erros com `toAppError`.
+- Sempre validar workspaceId quando o endpoint exigir.
+- Evitar chamadas diretas ao axios; use o client do `core`.
+
+Checklist antes de entregar
+- `npm run lint` passou.
+- `npm run depcruise` passou.
+- Nenhuma dependencia cruzada proibida.
+
+Pontos de atencao
+- Quando a feature afeta mais de um modulo, documente a integracao.
+- Se houver mock local, mantenha comportamento equivalente ao backend.
+- Nao introduza estado global sem aprovacao arquitetural.

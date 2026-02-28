@@ -1,27 +1,60 @@
 import React from "react";
-import { List, Card, Typography, Empty, Input, Tag, Space, Button, Modal, Select, Slider, Switch } from "antd";
-import { Search, Heart, Star, Filter, Sparkles, Scissors, Car, Camera, Palette, UtensilsCrossed, Dumbbell, Flower2, CalendarCheck } from "lucide-react";
+import { List, Card, Typography, Empty, Input, Space, Button, Modal, Select, Slider, Switch } from "antd";
+import {
+  Search,
+  Heart,
+  Star,
+  Filter,
+  Sparkles,
+  Scissors,
+  Car,
+  Camera,
+  Palette,
+  UtensilsCrossed,
+  Dumbbell,
+  Flower2,
+  CalendarCheck,
+  Briefcase,
+  Building2,
+} from "lucide-react";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
-import { FieldIcon, TitleBlock } from "@shared/styles/global";
+import { FieldIcon } from "@shared/styles/global";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import { getAvailableServices } from "@modules/clients/services/clients.service";
 import {
   ServicesWrap,
-  ServiceCard,
-  ServiceMeta,
-  ImageWrap,
-  RatingBadge,
-  ActionsRow,
-  HeaderRow,
-  SearchWrap,
-  CardActionIcon,
+  HeroRow,
+  HeroCard,
+  HeroTitle,
+  HeroSubtitle,
+  HeroStats,
+  StatCard,
+  StatIcon,
+  StatMeta,
+  StatValue,
+  StatLabel,
+  SearchCard,
+  SearchHint,
   TitleWithIcon,
   TitleIcon,
   CategoryFilterRow,
   CategoryFilterButton,
+  CategoryLabel,
+  SearchWrap,
+  ListShell,
+  CardLink,
+  ServiceCard,
+  ServiceMeta,
+  ImageWrap,
+  RatingBadge,
+  RatingRow,
+  ActionsRow,
+  PriceTag,
+  HeartWrap,
+  CardActionIcon,
+  FeaturedTag,
 } from "./services-list.component.styles";
-import { Link } from "react-router-dom";
 
 type State = {
   items: ServiceModel[];
@@ -67,7 +100,6 @@ export class ServicesList extends BaseComponent<{}, State> {
     const { items, q, columns, pageSize, category, minRating, featuredOnly, priceRange, isFilterOpen } = this.state;
 
     if (!items) return null;
-    if (items.length === 0) return <Empty description="No services found" />;
 
     const term = q.trim().toLowerCase();
     const categories = Array.from(
@@ -95,8 +127,10 @@ export class ServicesList extends BaseComponent<{}, State> {
         (it.priceCents >= activePriceRange[0] && it.priceCents <= activePriceRange[1]);
       return matchesTerm && matchesCategory && matchesRating && matchesFeatured && matchesPrice;
     });
+
     const formatRangeMoney = (value: number) =>
       formatMoneyFromCents(value, { locale: "pt-BR", currency: "BRL" });
+    const formatCount = (value: number) => new Intl.NumberFormat("pt-BR").format(value);
 
     const resolveCardIcon = (tags?: string[]) => {
       const joined = (tags ?? []).join(" ").toLowerCase();
@@ -132,143 +166,100 @@ export class ServicesList extends BaseComponent<{}, State> {
       return categoryPalette[pick];
     };
 
+    const providers = new Set(
+      items
+        .map((item) => item.providerId || item.providerName)
+        .filter((value): value is string => Boolean(value))
+    );
+
+    const ratings = items.map((item) => item.rating).filter((value): value is number => typeof value === "number");
+    const avgRating = ratings.length ? ratings.reduce((acc, value) => acc + value, 0) / ratings.length : 0;
+    const reviewCount = items.reduce((acc, item) => acc + (item.reviewsCount ?? 0), 0);
+
     return (
       <ServicesWrap>
-        <HeaderRow>
-          <TitleBlock>
+        <HeroRow>
+          <HeroCard>
             <TitleWithIcon>
-              <TitleIcon aria-hidden><Sparkles size={18} /></TitleIcon>
-              <Typography.Title level={3} style={{ margin: 0 }}>
-                Available Services
+              <TitleIcon aria-hidden>
+                <Briefcase size={18} />
+              </TitleIcon>
+              <HeroTitle>Contrate o servico certo com confianca</HeroTitle>
+            </TitleWithIcon>
+            <HeroSubtitle>
+              Compare empresas avaliadas, precos transparentes e agende em poucos cliques.
+            </HeroSubtitle>
+            <HeroStats>
+              <StatCard>
+                <StatIcon aria-hidden>
+                  <Briefcase size={18} />
+                </StatIcon>
+                <StatMeta>
+                  <StatValue>{formatCount(items.length)}</StatValue>
+                  <StatLabel>Servicos ativos</StatLabel>
+                </StatMeta>
+              </StatCard>
+              <StatCard>
+                <StatIcon aria-hidden>
+                  <Building2 size={18} />
+                </StatIcon>
+                <StatMeta>
+                  <StatValue>{formatCount(providers.size)}</StatValue>
+                  <StatLabel>Empresas listadas</StatLabel>
+                </StatMeta>
+              </StatCard>
+              <StatCard>
+                <StatIcon aria-hidden>
+                  <Star size={18} />
+                </StatIcon>
+                <StatMeta>
+                  <StatValue>{avgRating ? avgRating.toFixed(1) : "-"}</StatValue>
+                  <StatLabel>
+                    {reviewCount ? `${formatCount(reviewCount)} avaliacoes` : "Sem avaliacoes"}
+                  </StatLabel>
+                </StatMeta>
+              </StatCard>
+            </HeroStats>
+          </HeroCard>
+
+          <SearchCard>
+            <TitleWithIcon>
+              <TitleIcon aria-hidden>
+                <Sparkles size={18} />
+              </TitleIcon>
+              <Typography.Title level={4} style={{ margin: 0 }}>
+                Busque e filtre com rapidez
               </Typography.Title>
             </TitleWithIcon>
-            <Typography.Text type="secondary">Explore companies and services</Typography.Text>
-          </TitleBlock>
+            <SearchHint>Use filtros para ajustar preco, avaliacao e destaques.</SearchHint>
+            <SearchWrap>
+              <Button
+                type="primary"
+                icon={<Filter size={16} />}
+                onClick={() =>
+                  this.setSafeState({
+                    isFilterOpen: true,
+                    priceRange: priceRange ?? [minPrice, maxPrice],
+                  })
+                }
+              >
+                Filtros
+              </Button>
+              <Input
+                placeholder="Pesquisar servicos ou empresas"
+                allowClear
+                value={q}
+                onChange={(ev) => this.setSafeState({ q: ev.target.value })}
+                prefix={
+                  <FieldIcon aria-hidden>
+                    <Search size={18} />
+                  </FieldIcon>
+                }
+              />
+            </SearchWrap>
 
-          <SearchWrap>
-            <Button
-              type="primary"
-              icon={<Filter size={16} />}
-              onClick={() =>
-                this.setSafeState({
-                  isFilterOpen: true,
-                  priceRange: priceRange ?? [minPrice, maxPrice],
-                })
-              }
-            >
-              Filters
-            </Button>
-            <Input
-              placeholder="Search services or companies"
-              allowClear
-              value={q}
-              onChange={(ev) => this.setSafeState({ q: ev.target.value })}
-              prefix={
-                <FieldIcon aria-hidden>
-                  <Search size={18} />
-                </FieldIcon>
-              }
-            />
-          </SearchWrap>
-        </HeaderRow>
-
-        <CategoryFilterRow>
-          <CategoryFilterButton
-            type="button"
-            $active={!category}
-            $color="var(--color-primary)"
-            onClick={() => this.setSafeState({ category: undefined })}
-          >
-            All
-          </CategoryFilterButton>
-          {categories.slice(0, 5).map((cat, idx) => (
-            <CategoryFilterButton
-              key={cat}
-              type="button"
-              $active={category === cat}
-              $color={colorFromCategory(cat, idx)}
-              onClick={() => this.setSafeState({ category: cat })}
-            >
-              {cat}
-            </CategoryFilterButton>
-          ))}
-        </CategoryFilterRow>
-
-        <List
-          grid={{ gutter: 16, column: columns }}
-          dataSource={list}
-          pagination={{
-            pageSize,
-            position: "bottom",
-            align: "center",
-            showSizeChanger: false,
-            style: { marginTop: 16 },
-          }}
-          renderItem={(item) => (
-            <List.Item>
-              <Link to={`/clients/service/${item.id}`} style={{ textDecoration: "none" }}>
-                <ServiceCard className="surface" style={{ cursor: "pointer" }}>
-                  <Card bordered={false} bodyStyle={{ padding: 0 }}>
-                    <ImageWrap style={{ backgroundImage: `url(${item.imageUrl})` }}>
-                    <RatingBadge>
-                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <Star size={12} fill="#f5c518" color="#f5c518" />
-                        <span>{item.rating?.toFixed(1)}</span>
-                      </div>
-                      <div style={{ fontSize: 12 }}>{item.reviewsCount}</div>
-                    </RatingBadge>
-                  </ImageWrap>
-
-                  <div className="service-content" style={{ padding: "12px" }}>
-                    <div className="service-body">
-                      <HeaderRow style={{ alignItems: "center" }}>
-                        <div>
-                          <Typography.Title level={5} style={{ margin: 0 }}>
-                            <span className="service-title">{item.providerName}</span>
-                          </Typography.Title>
-                          <ServiceMeta className="service-address">{item.address}</ServiceMeta>
-                        </div>
-
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          {item.featured ? <Tag color="gold">Featured</Tag> : null}
-                          <CardActionIcon aria-hidden>{resolveCardIcon(item.tags)}</CardActionIcon>
-                        </div>
-                      </HeaderRow>
-
-                      <Typography.Paragraph type="secondary" style={{ marginBottom: 4 }}>
-                        <span className="service-description">{item.description}</span>
-                      </Typography.Paragraph>
-
-                      <ActionsRow>
-                        <div style={{ fontWeight: 600 }}>
-                          {item.priceFormatted ??
-                            (typeof item.priceCents === "number"
-                              ? formatMoneyFromCents(item.priceCents, { locale: "pt-BR", currency: "BRL" })
-                              : "")}
-                        </div>
-                        <div style={{ marginLeft: 8 }}>
-                          <Heart size={16} />
-                        </div>
-                      </ActionsRow>
-                    </div>
-                  </div>
-                  </Card>
-                </ServiceCard>
-              </Link>
-            </List.Item>
-          )}
-        />
-        <Modal
-          title="Filters"
-          open={isFilterOpen}
-          onCancel={() => this.setSafeState({ isFilterOpen: false })}
-          onOk={() => this.setSafeState({ isFilterOpen: false })}
-          okText="Apply"
-          cancelText="Close"
-        >
-          <Space direction="vertical" size={16} style={{ width: "100%" }}>
             <div>
-              <Typography.Text strong>Category</Typography.Text>
+              <CategoryLabel>Categorias</CategoryLabel>
               <CategoryFilterRow>
                 <CategoryFilterButton
                   type="button"
@@ -276,7 +267,117 @@ export class ServicesList extends BaseComponent<{}, State> {
                   $color="var(--color-primary)"
                   onClick={() => this.setSafeState({ category: undefined })}
                 >
-                  All
+                  Todas
+                </CategoryFilterButton>
+                {categories.slice(0, 5).map((cat, idx) => (
+                  <CategoryFilterButton
+                    key={cat}
+                    type="button"
+                    $active={category === cat}
+                    $color={colorFromCategory(cat, idx)}
+                    onClick={() => this.setSafeState({ category: cat })}
+                  >
+                    {cat}
+                  </CategoryFilterButton>
+                ))}
+              </CategoryFilterRow>
+            </div>
+            <SearchHint>
+              Encontramos <strong>{formatCount(list.length)}</strong> servicos para voce.
+            </SearchHint>
+          </SearchCard>
+        </HeroRow>
+
+        <ListShell>
+          <List
+            grid={{ gutter: 16, column: columns }}
+            dataSource={list}
+            locale={{ emptyText: <Empty description="Nenhum servico encontrado com esses filtros" /> }}
+            pagination={{
+              pageSize,
+              position: "bottom",
+              align: "center",
+              showSizeChanger: false,
+              size: "small",
+              simple: true,
+            }}
+            renderItem={(item) => (
+              <List.Item>
+                <CardLink to={`/clients/service/${item.id}`}>
+                  <ServiceCard className="surface">
+                    <Card bordered={false} bodyStyle={{ padding: 0 }}>
+                      <ImageWrap style={{ backgroundImage: `url(${item.imageUrl})` }}>
+                        <RatingBadge>
+                          <RatingRow>
+                            <Star size={12} fill="#f5c518" color="#f5c518" />
+                            <span>{typeof item.rating === "number" ? item.rating.toFixed(1) : "-"}</span>
+                          </RatingRow>
+                          <div style={{ fontSize: 12 }}>
+                            {formatCount(item.reviewsCount ?? 0)}
+                          </div>
+                        </RatingBadge>
+                      </ImageWrap>
+
+                      <div className="service-content">
+                        <div className="service-body">
+                          <div className="service-header">
+                            <div>
+                              <Typography.Title level={5} style={{ margin: 0 }}>
+                                <span className="service-title">{item.providerName}</span>
+                              </Typography.Title>
+                              <ServiceMeta className="service-address">{item.address}</ServiceMeta>
+                            </div>
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              {item.featured ? <FeaturedTag>Destaque</FeaturedTag> : null}
+                              <CardActionIcon aria-hidden>{resolveCardIcon(item.tags)}</CardActionIcon>
+                            </div>
+                          </div>
+
+                          <Typography.Paragraph type="secondary" style={{ marginBottom: 4 }}>
+                            <span className="service-description">{item.description}</span>
+                          </Typography.Paragraph>
+
+                          <ActionsRow>
+                            <PriceTag>
+                              {item.priceFormatted ??
+                                (typeof item.priceCents === "number"
+                                  ? formatMoneyFromCents(item.priceCents, { locale: "pt-BR", currency: "BRL" })
+                                  : "")}
+                            </PriceTag>
+                            <HeartWrap aria-hidden>
+                              <Heart size={16} />
+                            </HeartWrap>
+                          </ActionsRow>
+                        </div>
+                      </div>
+                    </Card>
+                  </ServiceCard>
+                </CardLink>
+              </List.Item>
+            )}
+          />
+        </ListShell>
+
+        <Modal
+          title="Filtros"
+          open={isFilterOpen}
+          onCancel={() => this.setSafeState({ isFilterOpen: false })}
+          onOk={() => this.setSafeState({ isFilterOpen: false })}
+          okText="Aplicar"
+          cancelText="Fechar"
+        >
+          <Space direction="vertical" size={16} style={{ width: "100%" }}>
+            <div>
+              <Typography.Text strong>Categoria</Typography.Text>
+              <CategoryFilterRow>
+                <CategoryFilterButton
+                  type="button"
+                  $active={!category}
+                  $color="var(--color-primary)"
+                  onClick={() => this.setSafeState({ category: undefined })}
+                >
+                  Todas
                 </CategoryFilterButton>
                 {categories.map((cat, idx) => (
                   <CategoryFilterButton
@@ -292,21 +393,21 @@ export class ServicesList extends BaseComponent<{}, State> {
               </CategoryFilterRow>
             </div>
             <div>
-              <Typography.Text strong>Minimum rating</Typography.Text>
+              <Typography.Text strong>Avaliacao minima</Typography.Text>
               <Select
-                placeholder="Any"
+                placeholder="Qualquer"
                 allowClear
                 value={minRating}
                 onChange={(value) => this.setSafeState({ minRating: value })}
                 options={[0, 3, 3.5, 4, 4.5].map((value) => ({
-                  label: value === 0 ? "Any" : `${value}+`,
+                  label: value === 0 ? "Qualquer" : `${value}+`,
                   value,
                 }))}
                 style={{ width: "100%", marginTop: 8 }}
               />
             </div>
             <div>
-              <Typography.Text strong>Price</Typography.Text>
+              <Typography.Text strong>Preco</Typography.Text>
               <div style={{ marginTop: 8 }}>
                 <Slider
                   range
@@ -317,12 +418,12 @@ export class ServicesList extends BaseComponent<{}, State> {
                   disabled={minPrice === maxPrice}
                 />
                 <Typography.Text type="secondary">
-                  {formatRangeMoney(activePriceRange[0])} – {formatRangeMoney(activePriceRange[1])}
+                  {formatRangeMoney(activePriceRange[0])} - {formatRangeMoney(activePriceRange[1])}
                 </Typography.Text>
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography.Text strong>Featured only</Typography.Text>
+              <Typography.Text strong>Somente destaques</Typography.Text>
               <Switch
                 checked={featuredOnly}
                 onChange={(checked) => this.setSafeState({ featuredOnly: checked })}
@@ -340,7 +441,7 @@ export class ServicesList extends BaseComponent<{}, State> {
                 })
               }
             >
-              Clear filters
+              Limpar filtros
             </Button>
           </Space>
         </Modal>
@@ -353,7 +454,7 @@ export class ServicesList extends BaseComponent<{}, State> {
   }
 
   protected override renderError(_error: unknown): React.ReactNode {
-    return <div>Error loading services</div>;
+    return <div>Erro ao carregar servicos</div>;
   }
 
   componentDidMount(): void {
@@ -372,5 +473,3 @@ export class ServicesList extends BaseComponent<{}, State> {
 }
 
 export default ServicesList;
-
-

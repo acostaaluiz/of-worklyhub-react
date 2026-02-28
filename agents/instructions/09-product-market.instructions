@@ -1,0 +1,55 @@
+# Produto e mercado - descoberta e priorizacao de features
+
+Objetivo
+- Sugerir features que facam sentido com o escopo do WorklyHub.
+- Priorizar oportunidades com impacto real em conversao, retencao e eficiencia operacional.
+- Evitar ideias fora do foco do produto.
+
+Quando usar
+- Modo generico: "Busque novas ideias para a aplicacao."
+- Modo proposito: "Busque novas features para o modulo <modulo>."
+
+Entradas minimas
+- Tipo da solicitacao: generica ou modulo especifico.
+- Publico alvo principal: cliente final, empresa ou colaborador.
+- Dominio/modulo alvo (quando houver).
+
+Metodo obrigatorio de analise
+1) Contexto e problema
+- Definir qual dor de negocio a feature resolve.
+- Definir em qual jornada ela atua (descoberta, agendamento, operacao, cobranca, retencao).
+
+2) Fit com produto e escopo
+- Validar aderencia aos dominios existentes (`schedule`, `clients`, `company`, `people`, `billing`, `finance`, `inventory`, `dashboard`, `work-order`).
+- Rejeitar propostas fora de escopo atual (ex.: redes sociais internas ou chat real-time sem justificativa forte).
+
+3) Definicao da feature
+- Nome claro.
+- Persona principal.
+- Fluxo resumido de uso.
+- Modulos impactados.
+
+4) MVP e integracoes
+- Definir escopo minimo entregavel.
+- Mapear integracoes necessarias com modulos existentes.
+
+5) Priorizacao
+- Classificar cada feature em `alto`, `medio` ou `baixo` valor.
+- Explicitar risco principal da implementacao.
+
+Formato de saida obrigatorio
+Para cada feature, informar:
+- `problema`
+- `feature`
+- `persona`
+- `valor esperado`
+- `mvp`
+- `modulos impactados`
+- `metrica de sucesso`
+- `prioridade`
+- `risco`
+
+Guardrails
+- Nao propor feature sem conexao clara com o escopo do WorklyHub.
+- Nao sugerir dependencia de arquitetura fora do padrao antes de validar com `worklyhub-architect`.
+- Em sugestoes por modulo, priorizar completude funcional do modulo sem quebrar ownership de dominio.

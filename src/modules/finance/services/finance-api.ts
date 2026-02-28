@@ -1,11 +1,15 @@
 import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
-import type { FinanceDashboardResponseApi } from "@modules/finance/interfaces/finance-dashboard.model";
+import type {
+  FinanceDashboardResponseApi,
+  FinanceInsightsResponseApi,
+} from "@modules/finance/interfaces/finance-dashboard.model";
 
 export type FinanceEntryType = {
   id: string;
   key?: string;
   name: string;
+  direction?: "income" | "expense";
   [key: string]: unknown;
 };
 
@@ -69,6 +73,19 @@ export class FinanceApi extends BaseHttpService {
     if (workspaceId) headers["x-workspace-id"] = workspaceId;
 
     return this.get<FinanceDashboardResponseApi>(`/finance/dashboard`, query, headers);
+  }
+
+  async getInsights(
+    workspaceId: string | undefined,
+    query: {
+      start: string;
+      end: string;
+      period?: string;
+    }
+  ): Promise<FinanceInsightsResponseApi> {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (workspaceId) headers["x-workspace-id"] = workspaceId;
+    return this.get<FinanceInsightsResponseApi>(`/finance/internal/insights`, query, headers);
   }
 }
 

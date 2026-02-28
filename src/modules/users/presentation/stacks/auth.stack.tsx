@@ -9,6 +9,10 @@ const RegisterPage = lazy(
   () => import("@modules/users/presentation/pages/register/register.page")
 );
 
+const ForgotPasswordPage = lazy(
+  () => import("@modules/users/presentation/pages/forgot-password/forgot-password.page")
+);
+
 export const authStackRoutes: RouteObject[] = [
   {
     id: "auth",
@@ -29,6 +33,15 @@ export const authStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <RegisterPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "auth.forgot-password",
+        path: "forgot-password",
+        element: (
+          <React.Suspense fallback={null}>
+            <ForgotPasswordPage />
           </React.Suspense>
         ),
       },

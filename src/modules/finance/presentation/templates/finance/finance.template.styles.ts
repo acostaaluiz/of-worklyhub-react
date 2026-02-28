@@ -4,6 +4,8 @@ import { BaseTemplate } from "@shared/base/base.template";
 export const FinanceTemplateShell = styled(BaseTemplate)`
   height: 100%;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 `;
 
 export const PageStack = styled.div`
@@ -14,9 +16,12 @@ export const PageStack = styled.div`
   /* CRITICAL: fill the private-frame height without overflowing */
   height: 100%;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 
   @media (max-width: 1024px) {
     height: auto;
+    overflow: visible;
   }
 `;
 
@@ -42,6 +47,7 @@ export const TemplateTitleBlock = styled.div`
 export const FiltersCard = styled.div`
   padding: var(--space-4);
   min-width: 0;
+  overflow: hidden;
 `;
 
 export const DashboardShell = styled.div`
@@ -59,6 +65,7 @@ export const DashboardGrid = styled.div`
   flex: 1;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));

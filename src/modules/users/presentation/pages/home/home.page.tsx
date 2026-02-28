@@ -230,7 +230,10 @@ export class UsersHomePage extends BasePage<
         servicesCount={uniqueServices.size}
         metrics={this.state.metrics}
         onEditCompany={() => {
-          navigateTo("/company/introduction");
+          navigateTo("/users?tab=company");
+        }}
+        onOpenTutorials={() => {
+          navigateTo("/tutorials");
         }}
       />
     );

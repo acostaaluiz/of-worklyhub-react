@@ -54,6 +54,24 @@ export function CashflowTableWidget({
   subtitle,
   dense = true,
 }: Props) {
+  const renderSource = (source?: string) => {
+    const normalized = (source ?? "manual").toString().toLowerCase();
+    const label =
+      normalized === "work-order" ? "WORK ORDER"
+        : normalized === "schedule" ? "SCHEDULE"
+        : normalized === "manual" ? "MANUAL"
+        : normalized.toUpperCase();
+    return <Tag>{label}</Tag>;
+  };
+
+  const renderRef = (row: FinanceCashflowRow) => {
+    const ref = row.workOrderId ?? row.scheduleId ?? row.relatedEntryId;
+    if (!ref) return <span style={{ color: "var(--color-text-muted)" }}>-</span>;
+    const prefix = row.workOrderId ? "WO" : row.scheduleId ? "SCH" : "REF";
+    const short = ref.length > 10 ? `${ref.slice(0, 6)}…${ref.slice(-3)}` : ref;
+    return <span title={ref}>{prefix} {short}</span>;
+  };
+
   const columns: ColumnsType<FinanceCashflowRow> = [
     {
       title: "Date",
@@ -75,6 +93,19 @@ export function CashflowTableWidget({
       key: "type",
       width: 90,
       render: (v) => <Tag>{v === "in" ? "IN" : "OUT"}</Tag>,
+    },
+    {
+      title: "Source",
+      dataIndex: "source",
+      key: "source",
+      width: 130,
+      render: (v) => renderSource(v),
+    },
+    {
+      title: "Ref",
+      key: "ref",
+      width: 120,
+      render: (_v, row) => renderRef(row),
     },
     {
       title: "Category",
@@ -131,7 +162,7 @@ export function CashflowTableWidget({
               dataSource={items}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: 720, y: dense ? 180 : 360 }}
+              scroll={{ x: 920, y: dense ? 180 : 360 }}
             />
           </Wrap>
         )}

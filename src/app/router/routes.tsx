@@ -4,6 +4,7 @@ import RedirectIfAuthenticated from "@app/router/guards/redirect-if-authenticate
 import RequireAuth from "@app/router/guards/require-auth";
 import { privateStackRoutes } from "@app/router/stacks/private.stack";
 import { publicStackRoutes } from "@app/router/stacks/public.stack";
+import { legalStackRoutes } from "@modules/users/presentation/stacks/legal.stack";
 import { NavigationBoot } from "@core/navigation/navigation.boot";
 
 function NotFound() {
@@ -26,6 +27,7 @@ const routes: RouteObject[] = [
   {
     element: <NavigationBoot />,
     children: [
+      ...legalStackRoutes,
       {
         // public routes are only for unauthenticated users — redirect to /home if already authenticated
         element: <RedirectIfAuthenticated />,

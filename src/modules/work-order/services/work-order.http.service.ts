@@ -4,9 +4,17 @@ import WorkOrderApi from "@modules/work-order/services/work-order-api";
 import type {
   CreateWorkOrderInput,
   CreateWorkOrderStatusInput,
+  CreateWorkOrderChecklistItemInput,
+  CreateWorkOrderCommentInput,
+  GetWorkOrderOverviewOptions,
   ListWorkOrdersFilters,
   UpdateWorkOrderInput,
+  UpdateWorkOrderChecklistItemInput,
   WorkOrder,
+  WorkOrderChecklistItem,
+  WorkOrderComment,
+  WorkOrderOverview,
+  WorkOrderStatusHistoryEntry,
   WorkOrderStatus,
 } from "@modules/work-order/interfaces/work-order.model";
 
@@ -93,6 +101,107 @@ export class WorkOrderHttpService {
       throw toAppError(err);
     }
   }
+
+  async getOverview(
+    workspaceId: string | undefined,
+    options: GetWorkOrderOverviewOptions = {}
+  ): Promise<WorkOrderOverview> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.getOverview(workspaceId, options);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async listHistory(
+    workspaceId: string | undefined,
+    workOrderId: string
+  ): Promise<WorkOrderStatusHistoryEntry[]> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.getHistory(workspaceId, workOrderId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async listComments(
+    workspaceId: string | undefined,
+    workOrderId: string
+  ): Promise<WorkOrderComment[]> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.getComments(workspaceId, workOrderId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async createComment(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    payload: CreateWorkOrderCommentInput
+  ): Promise<WorkOrderComment> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.createComment(workspaceId, workOrderId, payload);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async listChecklist(
+    workspaceId: string | undefined,
+    workOrderId: string
+  ): Promise<WorkOrderChecklistItem[]> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.getChecklist(workspaceId, workOrderId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async createChecklistItem(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    payload: CreateWorkOrderChecklistItemInput
+  ): Promise<WorkOrderChecklistItem> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.createChecklistItem(workspaceId, workOrderId, payload);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async updateChecklistItem(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    itemId: string,
+    payload: UpdateWorkOrderChecklistItemInput
+  ): Promise<WorkOrderChecklistItem> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.updateChecklistItem(workspaceId, workOrderId, itemId, payload);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async deleteChecklistItem(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    itemId: string
+  ): Promise<void> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      await this.api.deleteChecklistItem(workspaceId, workOrderId, itemId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
 }
 
 export const workOrderHttpService = new WorkOrderHttpService();
@@ -142,6 +251,67 @@ export async function deleteWorkOrder(
   id: string
 ): Promise<void> {
   return workOrderHttpService.deleteWorkOrder(workspaceId, id);
+}
+
+export async function listWorkOrderOverview(
+  workspaceId: string | undefined,
+  options: GetWorkOrderOverviewOptions = {}
+): Promise<WorkOrderOverview> {
+  return workOrderHttpService.getOverview(workspaceId, options);
+}
+
+export async function listWorkOrderHistory(
+  workspaceId: string | undefined,
+  workOrderId: string
+): Promise<WorkOrderStatusHistoryEntry[]> {
+  return workOrderHttpService.listHistory(workspaceId, workOrderId);
+}
+
+export async function listWorkOrderComments(
+  workspaceId: string | undefined,
+  workOrderId: string
+): Promise<WorkOrderComment[]> {
+  return workOrderHttpService.listComments(workspaceId, workOrderId);
+}
+
+export async function createWorkOrderComment(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  payload: CreateWorkOrderCommentInput
+): Promise<WorkOrderComment> {
+  return workOrderHttpService.createComment(workspaceId, workOrderId, payload);
+}
+
+export async function listWorkOrderChecklist(
+  workspaceId: string | undefined,
+  workOrderId: string
+): Promise<WorkOrderChecklistItem[]> {
+  return workOrderHttpService.listChecklist(workspaceId, workOrderId);
+}
+
+export async function createWorkOrderChecklistItem(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  payload: CreateWorkOrderChecklistItemInput
+): Promise<WorkOrderChecklistItem> {
+  return workOrderHttpService.createChecklistItem(workspaceId, workOrderId, payload);
+}
+
+export async function updateWorkOrderChecklistItem(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  itemId: string,
+  payload: UpdateWorkOrderChecklistItemInput
+): Promise<WorkOrderChecklistItem> {
+  return workOrderHttpService.updateChecklistItem(workspaceId, workOrderId, itemId, payload);
+}
+
+export async function deleteWorkOrderChecklistItem(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  itemId: string
+): Promise<void> {
+  return workOrderHttpService.deleteChecklistItem(workspaceId, workOrderId, itemId);
 }
 
 export default workOrderHttpService;

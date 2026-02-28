@@ -1,0 +1,22 @@
+# Qualidade, padroes e scripts (detalhado)
+
+Scripts importantes
+- `npm run dev`: ambiente de desenvolvimento.
+- `npm run build`: build de producao (tsc + vite).
+- `npm run preview`: preview do build.
+- `npm run lint`: ESLint.
+- `npm run depcruise`: valida dependencia entre camadas.
+
+Padroes de codigo
+- TypeScript `strict` habilitado (ver `tsconfig.app.json`).
+- Evitar `any` quando possivel.
+- Preferir tipos do modulo em `interfaces`.
+
+Pre-commit e commits
+- Husky + lint-staged executam ESLint/Prettier no stage.
+- Commitlint valida mensagens (Convencional).
+
+Checklist de qualidade
+- Sem warnings do lint.
+- Sem ciclos no grafo.
+- Sem imports proibidos entre camadas.

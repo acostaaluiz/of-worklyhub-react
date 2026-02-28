@@ -59,6 +59,10 @@ export class UsersAuthService {
     return authApi.register(payload);
   }
 
+  async requestPasswordReset(email: string): Promise<void> {
+    await firebaseAuthService.sendPasswordReset(email);
+  }
+
   async signOut(): Promise<void> {
     try {
       await firebaseAuthService.signOut();

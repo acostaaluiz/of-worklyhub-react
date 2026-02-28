@@ -10,6 +10,9 @@ const WorkOrdersPage = lazy(
 const WorkOrderStatusesPage = lazy(
   () => import("@modules/work-order/presentation/pages/statuses/statuses.page")
 );
+const WorkOrderCalendarPage = lazy(
+  () => import("@modules/work-order/presentation/pages/calendar/calendar.page")
+);
 
 export const workOrderStackRoutes: RouteObject[] = [
   {
@@ -31,6 +34,15 @@ export const workOrderStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <WorkOrderStatusesPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "work-order.calendar",
+        path: "calendar",
+        element: (
+          <React.Suspense fallback={null}>
+            <WorkOrderCalendarPage />
           </React.Suspense>
         ),
       },

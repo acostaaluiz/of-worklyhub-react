@@ -1,0 +1,36 @@
+# Modulo inventory
+
+Escopo
+- Controle de produtos, categorias e estoque.
+- Registro de transacoes de entrada/saida.
+
+Rotas e entradas
+- Stack: `src/modules/inventory/presentation/stacks/inventory.stack.tsx`.
+- Base path: `/inventory`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `home`: `presentation/pages/home/home.page`.
+  - `categories`: `presentation/pages/categories/categories.page`.
+
+Modelos principais
+- `CategoryModel`: id, name, description, active, createdAt.
+- `ProductModel`: id, name, sku, barcode, unit, categoryId, costCents, priceCents, minStock, location, tags, active, stock, createdAt.
+- `InventoryTransactionModel`: id, productId, type (IN/OUT), quantity, date, note.
+
+Services
+- `inventory.service.ts`
+  - CRUD mock para produtos e categorias.
+  - `changeStock()` gera transacoes e valida saldo.
+- `inventory.http.service.ts`
+  - Wrapper HTTP (create/list/get/update/delete).
+  - Encapsula `InventoryApi` e converte erros.
+- `inventory-api.ts`
+  - Endpoints `/inventory/internal/items`.
+  - Usa payload `CreateInventoryItemPayload`.
+
+Integracoes
+- `schedule` e `work-order` podem referenciar itens de inventory via IDs.
+
+Guardrails
+- Operacoes de estoque devem usar `changeStock()` para manter consistencia.
+- Alinhar payload com `CreateInventoryItemPayload` quando integrar com backend.

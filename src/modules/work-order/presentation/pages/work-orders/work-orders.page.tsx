@@ -4,21 +4,28 @@ import { Modal, message } from "antd";
 import { BasePage } from "@shared/base/base.page";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { companyService } from "@modules/company/services/company.service";
+import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { PeopleService } from "@modules/people/services/people.service";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import { usersOverviewService } from "@modules/users/services/overview.service";
+import { listInventoryItems } from "@modules/inventory/services/inventory.http.service";
+import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import type {
   CreateWorkOrderInput,
   ListWorkOrdersFilters,
   UpdateWorkOrderInput,
   WorkOrder,
   WorkOrderPriority,
+  WorkOrderOverview,
+  WorkOrderRiskLevel,
   WorkOrderStatus,
 } from "@modules/work-order/interfaces/work-order.model";
 import {
   createWorkOrder,
   deleteWorkOrder,
+  listWorkOrderOverview,
   listWorkOrderStatuses,
   listWorkOrders,
   updateWorkOrder,
@@ -29,6 +36,7 @@ import WorkOrderForm from "@modules/work-order/presentation/components/work-orde
 
 type Filters = {
   search?: string;
+  riskLevel?: WorkOrderRiskLevel;
   statusId?: string;
   priority?: WorkOrderPriority;
 };
@@ -36,6 +44,7 @@ type Filters = {
 function buildFilters(filters: Filters): ListWorkOrdersFilters {
   const query: ListWorkOrdersFilters = {};
   if (filters.search) query.search = filters.search;
+  if (filters.riskLevel) query.riskLevel = filters.riskLevel;
   if (filters.statusId) query.statusId = filters.statusId;
   if (filters.priority) query.priority = filters.priority;
   query.limit = 100;
@@ -50,8 +59,11 @@ function WorkOrdersPageContent(): React.ReactElement {
     return (ws?.workspaceId ?? ws?.id) as string | undefined;
   });
   const [orders, setOrders] = React.useState<WorkOrder[]>([]);
+  const [overview, setOverview] = React.useState<WorkOrderOverview | null>(null);
   const [statuses, setStatuses] = React.useState<WorkOrderStatus[]>([]);
   const [employees, setEmployees] = React.useState<EmployeeModel[]>([]);
+  const [services, setServices] = React.useState<CompanyServiceModel[]>([]);
+  const [inventoryItems, setInventoryItems] = React.useState<InventoryItem[]>([]);
   const [filters, setFilters] = React.useState<Filters>({});
   const [selected, setSelected] = React.useState<WorkOrder | null>(null);
   const [listLoading, setListLoading] = React.useState(false);
@@ -73,14 +85,29 @@ function WorkOrdersPageContent(): React.ReactElement {
     let mounted = true;
     (async () => {
       if (!workspaceId) {
-        if (mounted) setEmployees([]);
+        if (mounted) {
+          setEmployees([]);
+          setServices([]);
+          setInventoryItems([]);
+        }
         return;
       }
+
       try {
-        const rows = await peopleService.listEmployees();
-        if (mounted) setEmployees(rows ?? []);
+        const [employeesRows, servicesRows, inventoryRows] = await Promise.all([
+          peopleService.listEmployees().catch(() => [] as EmployeeModel[]),
+          companyWorkspaceService.listServices().catch(() => [] as CompanyServiceModel[]),
+          listInventoryItems(workspaceId).catch(() => [] as InventoryItem[]),
+        ]);
+        if (!mounted) return;
+        setEmployees(employeesRows ?? []);
+        setServices(servicesRows ?? []);
+        setInventoryItems(inventoryRows ?? []);
       } catch (err) {
-        if (mounted) setEmployees([]);
+        if (!mounted) return;
+        setEmployees([]);
+        setServices([]);
+        setInventoryItems([]);
       }
     })();
     return () => {
@@ -100,6 +127,20 @@ function WorkOrdersPageContent(): React.ReactElement {
       setStatuses(sorted);
     } catch (err) {
       message.error("Failed to load work order statuses.");
+    }
+  }, [workspaceId]);
+
+  const fetchOverview = React.useCallback(async () => {
+    if (!workspaceId) {
+      setOverview(null);
+      return;
+    }
+
+    try {
+      const data = await listWorkOrderOverview(workspaceId, { dueSoonHours: 24, windowDays: 30 });
+      setOverview(data);
+    } catch (err) {
+      message.error("Failed to load work order overview.");
     }
   }, [workspaceId]);
 
@@ -128,13 +169,13 @@ function WorkOrdersPageContent(): React.ReactElement {
     let mounted = true;
     (async () => {
       setInitialLoading(true);
-      await Promise.all([fetchStatuses(), fetchOrders()]);
+      await Promise.all([fetchStatuses(), fetchOrders(), fetchOverview()]);
       if (mounted) setInitialLoading(false);
     })();
     return () => {
       mounted = false;
     };
-  }, [fetchOrders, fetchStatuses]);
+  }, [fetchOrders, fetchOverview, fetchStatuses]);
 
   const handleApplyFilters = () => {
     fetchOrders();
@@ -169,7 +210,7 @@ function WorkOrdersPageContent(): React.ReactElement {
         message.success("Work order created");
       }
 
-      await fetchOrders();
+      await Promise.all([fetchOrders(), fetchOverview()]);
     } catch (err) {
       message.error("Failed to save work order.");
     } finally {
@@ -188,7 +229,7 @@ function WorkOrdersPageContent(): React.ReactElement {
         try {
           await deleteWorkOrder(workspaceId, order.id);
           if (selected?.id === order.id) setSelected(null);
-          await fetchOrders();
+          await Promise.all([fetchOrders(), fetchOverview()]);
           message.success("Work order deleted");
         } catch (err) {
           message.error("Failed to delete work order.");
@@ -210,8 +251,14 @@ function WorkOrdersPageContent(): React.ReactElement {
           loading={listLoading}
           selectedId={selected?.id ?? null}
           filters={filters}
+          overview={overview}
           onChangeFilters={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
           onApplyFilters={handleApplyFilters}
+          onApplyFilterPatch={(patch) => {
+            const next = { ...filters, ...patch };
+            setFilters(next);
+            fetchOrders(next);
+          }}
           onResetFilters={handleResetFilters}
           onSelect={(order) => setSelected(order)}
           onCreate={() => setSelected(null)}
@@ -225,6 +272,8 @@ function WorkOrdersPageContent(): React.ReactElement {
           currentUserUid={currentUserUid}
           currentUserName={currentUserName}
           employees={employees}
+          services={services}
+          inventoryItems={inventoryItems}
           statuses={statuses}
           initial={selected ?? undefined}
           loading={saving}

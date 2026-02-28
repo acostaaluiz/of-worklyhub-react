@@ -1,0 +1,38 @@
+# Modulo schedule
+
+Escopo
+- Agenda e calendario de eventos.
+- Eventos podem carregar servicos, colaboradores e inventario.
+
+Rotas e entradas
+- Stack: `src/modules/schedule/presentation/stacks/schedule.stack.tsx`.
+- Base path: `/schedule`.
+- Pages:
+  - `landing`: `presentation/pages/landing/landing.page`.
+  - `calendar`: `presentation/pages/schedule/schedule.page`.
+
+Modelos principais
+- `ScheduleCategory`: id, label, color, code (opcional).
+- `ScheduleEvent`: id, title, date, startTime, endTime, categoryId, categoryCode, description, durationMinutes, category, status, inventoryInputs, inventoryOutputs.
+- `InventoryItemLine`: itemId, quantity.
+
+Services
+- `schedule.service.ts`
+  - `getEvents()` lista eventos; tenta backend quando workspaceId existe.
+  - `createEvent()`, `removeEvent()`, `createSchedule()`, `updateEvent()`.
+  - Usa `SchedulesApi` para backend e `MockStoreProvider` como fallback.
+  - Mapeia ISO dates para `date/startTime/endTime`.
+  - `getNextSchedulesForWorkspace()` e `getStatuses()`.
+- `schedules-api.ts`
+  - Endpoints `/schedule/internal/schedules` (create/list/update/delete).
+  - Endpoints `/schedule/internal/schedules/next`, `/today`, `/statuses`.
+
+Integracoes
+- Usa `workspaceId` quando disponivel.
+- Pode receber `services`, `workers` e `inventoryInputs/Outputs`.
+- `categoryCode` enviado no create; `categoryId` usado no update.
+
+Guardrails
+- Sempre normalizar datas no formato `YYYY-MM-DD` para UI.
+- Nao gravar eventos sem `workspaceId` quando o backend exigir.
+- Manter compatibilidade com campos retornados pelo backend (start/end ISO).

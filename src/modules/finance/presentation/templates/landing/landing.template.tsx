@@ -1,4 +1,4 @@
-import { Briefcase, CheckSquare, DollarSign, Sparkles } from "lucide-react";
+import { Briefcase, CheckSquare, DollarSign, Lightbulb, Sparkles } from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -27,6 +27,13 @@ export function FinanceLandingTemplate() {
       description: "Discover insights and growth ideas.",
       to: "/finance/suggestions",
       icon: <Sparkles size={18} />,
+    },
+    {
+      id: "actionable-insights",
+      title: "Actionable insights",
+      description: "Open prioritized recommendations from financial data.",
+      to: "/finance?view=insights",
+      icon: <Lightbulb size={18} />,
     },
     {
       id: "entries",

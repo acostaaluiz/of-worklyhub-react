@@ -1,5 +1,5 @@
 import React from "react";
-import { Divider, Form, Input, Space, Typography } from "antd";
+import { Checkbox, Divider, Form, Input, Space, Typography } from "antd";
 import type { FormInstance } from "antd";
 import { Eye, EyeOff, Lock, Mail, UserPlus, User } from "lucide-react";
 
@@ -14,17 +14,19 @@ import {
 
 import { GoogleIcon } from "@shared/ui/components/icon/brand/google.icon";
 import { FacebookIcon } from "@shared/ui/components/icon/brand/facebook.icon";
-import { ActionsRow, ButtonIcon, FieldIcon, HelperCenter, TitleBlock } from "@shared/styles/global";
+import { ButtonIcon, FieldIcon, TitleBlock } from "@shared/styles/global";
 
 type RegisterFormValues = {
   name: string;
   email: string;
   password: string;
   confirmPassword: string;
+  acceptTerms: boolean;
 };
 
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import { navigateTo } from "@core/navigation/navigation.service";
 
 type Props = BaseProps & {
   onSubmit?: (values: RegisterFormValues) => Promise<void>;
@@ -69,6 +71,7 @@ export class RegisterForm extends BaseComponent<Props> {
                 email: "",
                 password: "",
                 confirmPassword: "",
+                acceptTerms: false,
               }}
               onFinish={handleSubmit}
               requiredMark={false}
@@ -169,13 +172,48 @@ export class RegisterForm extends BaseComponent<Props> {
                 />
               </Form.Item>
 
-              <ActionsRow>
-                <HelperCenter>
+              <Form.Item<RegisterFormValues>
+                name="acceptTerms"
+                valuePropName="checked"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      value
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error(
+                              "You must accept the Terms of Service and Privacy Policy"
+                            )
+                          ),
+                  },
+                ]}
+              >
+                <Checkbox>
                   <Typography.Text type="secondary">
-                    By creating an account you agree to our terms.
+                    I agree to the{" "}
+                    <Typography.Link
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        navigateTo("/terms");
+                      }}
+                    >
+                      Terms of Service
+                    </Typography.Link>{" "}
+                    and{" "}
+                    <Typography.Link
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        navigateTo("/privacy");
+                      }}
+                    >
+                      Privacy Policy
+                    </Typography.Link>
+                    .
                   </Typography.Text>
-                </HelperCenter>
-              </ActionsRow>
+                </Checkbox>
+              </Form.Item>
 
               <PrimaryButton type="primary" htmlType="submit" size="large" block>
                 <ButtonIcon aria-hidden>

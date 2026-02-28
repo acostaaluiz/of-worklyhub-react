@@ -22,7 +22,13 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
     responseModal: undefined,
   };
 
-  protected async handleRegister(values: { name: string; email: string; password: string }) {
+  protected async handleRegister(values: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword?: string;
+    acceptTerms?: boolean;
+  }) {
     loadingService.show();
     try {
       await this.runAsync(

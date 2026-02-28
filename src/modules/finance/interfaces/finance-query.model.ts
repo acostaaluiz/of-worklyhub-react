@@ -2,6 +2,7 @@ import type { FinanceGroupBy } from "./finance-groupby.model";
 
 export type FinanceView =
   | "overview"
+  | "insights"
   | "revenue"
   | "expenses"
   | "profit"

@@ -7,7 +7,11 @@ import type { FinanceQueryModel } from "@modules/finance/interfaces/finance-quer
 import type { FinanceResponseModel } from "@modules/finance/interfaces/finance-response.model";
 import type { FinanceSeries } from "@modules/finance/interfaces/finance-series.model";
 import type { FinanceCashflowRow, FinanceTopServiceRow } from "@modules/finance/interfaces/finance-table.model";
-import type { FinanceDashboardResponseApi } from "@modules/finance/interfaces/finance-dashboard.model";
+import type {
+  FinanceDashboardResponseApi,
+  FinanceInsightsResponseApi,
+} from "@modules/finance/interfaces/finance-dashboard.model";
+import type { FinanceInsightModel } from "@modules/finance/interfaces/finance-insights.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
 import { FinanceApi, type FinanceEntryType } from "@modules/finance/services/finance-api";
 import { httpClient } from "@core/http/client.instance";
@@ -98,15 +102,21 @@ export class FinanceService {
   async getFinance(query: FinanceQueryModel): Promise<FinanceResponseModel> {
     try {
       const workspaceId = getWorkspaceId(companyService.getWorkspaceValue());
-      const dashboard = await this.api.getDashboard(workspaceId, {
-        start: query.from,
-        end: query.to,
-        bucket: query.groupBy,
-        cashflowLimit: 12,
-        topLimit: 8,
-      });
+      const [dashboard, insights] = await Promise.all([
+        this.api.getDashboard(workspaceId, {
+          start: query.from,
+          end: query.to,
+          bucket: query.groupBy,
+          cashflowLimit: 12,
+          topLimit: 8,
+        }),
+        this.api.getInsights(workspaceId, {
+          start: query.from,
+          end: query.to,
+        }).catch(() => null),
+      ]);
 
-      return this.mapDashboard(dashboard);
+      return this.mapDashboard(dashboard, insights);
     } catch (err) {
       try {
         return await this.getMockFinance(query);
@@ -127,7 +137,10 @@ export class FinanceService {
     }
   }
 
-  private mapDashboard(dashboard: FinanceDashboardResponseApi): FinanceResponseModel {
+  private mapDashboard(
+    dashboard: FinanceDashboardResponseApi,
+    insightsResponse?: FinanceInsightsResponseApi | null
+  ): FinanceResponseModel {
     const kpis = dashboard.kpis;
     const variation = dashboard.variation;
 
@@ -145,9 +158,20 @@ export class FinanceService {
     };
 
     const cashflow: FinanceCashflowRow[] = (dashboard.cashflow ?? []).map((row) => {
-      const normalized = row.type_name.toLowerCase();
-      const isOut = normalized.includes("expense") || normalized.includes("out") || row.amount_cents < 0;
+      const normalized = (row.type_name ?? "").toLowerCase();
+      const direction = row.type_direction?.toLowerCase();
+      const isOut = direction
+        ? direction === "expense"
+        : normalized.includes("expense") || normalized.includes("out") || row.amount_cents < 0;
       const amount = Math.abs(row.amount_cents ?? 0);
+      const meta = (row.metadata ?? null) as Record<string, unknown> | null;
+      const workOrderId =
+        row.work_order_id ?? (meta?.["workOrderId"] as string | undefined) ?? null;
+      const scheduleId =
+        row.schedule_id ?? (meta?.["scheduleId"] as string | undefined) ?? null;
+      const relatedEntryId =
+        row.related_entry_id ?? (meta?.["relatedEntryId"] as string | undefined) ?? null;
+
       return {
         id: row.id,
         date: dayjs(row.occurred_at).format("YYYY-MM-DD"),
@@ -156,6 +180,11 @@ export class FinanceService {
         category: row.type_name || "General",
         amount: centsToValue(amount),
         status: "paid",
+        source: row.source ?? (meta?.["source"] as string | undefined),
+        workOrderId,
+        scheduleId,
+        relatedEntryId,
+        metadata: meta,
       };
     });
 
@@ -166,6 +195,7 @@ export class FinanceService {
       revenue: centsToValue(row.revenue_cents),
       avgTicket: centsToValue(row.avg_ticket_cents),
     }));
+    const insights = this.mapInsights(insightsResponse);
 
     return {
       kpis: [
@@ -180,7 +210,27 @@ export class FinanceService {
       expensesByCategory: [],
       cashflow,
       topServices,
+      insights,
     };
+  }
+
+  private mapInsights(response?: FinanceInsightsResponseApi | null): FinanceInsightModel[] {
+    if (!response?.insights || !Array.isArray(response.insights)) return [];
+
+    return response.insights.map((insight) => ({
+      id: insight.id,
+      priority: insight.priority,
+      category: insight.category,
+      title: insight.title,
+      description: insight.description,
+      evidence: insight.evidence ?? {},
+      actions: (insight.actions ?? []).map((action) => ({
+        id: action.id,
+        label: action.label,
+        kind: action.kind,
+        target: action.target ?? null,
+      })),
+    }));
   }
 
   private async getMockFinance(query: FinanceQueryModel): Promise<FinanceResponseModel> {
@@ -209,6 +259,7 @@ export class FinanceService {
 
     const cashflow = this.makeCashflow(from, to);
     const topServices = this.makeTopServices(totalRevenue);
+    const insights = this.makeMockInsights();
 
     return {
       kpis: [
@@ -223,7 +274,29 @@ export class FinanceService {
       expensesByCategory,
       cashflow,
       topServices,
+      insights,
     };
+  }
+
+  private makeMockInsights(): FinanceInsightModel[] {
+    return [
+      {
+        id: "mock-growth",
+        priority: "medium",
+        category: "growth",
+        title: "Opportunity to increase average ticket",
+        description: "Top services have room for upsell bundles this month.",
+        evidence: { sample: true },
+        actions: [
+          {
+            id: "mock-upsell",
+            label: "Test bundled offers with recurring customers.",
+            kind: "marketing",
+            target: null,
+          },
+        ],
+      },
+    ];
   }
 
   private buildPoints(from: dayjs.Dayjs, to: dayjs.Dayjs, groupBy: "day" | "week" | "month") {
@@ -358,6 +431,9 @@ export function useFinanceApi() {
           const occurred = (rr["occurred_at"] ?? rr["date"] ?? rr["created_at"]) as string | undefined;
           const typeIdKey = (rr["typeId"] ?? rr["type_id"]) as string | undefined;
           const t = typeMap.get(typeIdKey ?? "");
+          const rowDirection = (rr["type_direction"] ?? rr["direction"]) as string | undefined;
+          const direction = (rowDirection ?? t?.direction ?? "").toString().toLowerCase();
+          const inferredType = String((t?.key ?? (t?.name ?? ""))).toLowerCase();
           return {
             id: (rr["id"] as string) ?? undefined,
             serviceId: (rr["serviceId"] ?? rr["service_id"]) as string | undefined,
@@ -365,7 +441,7 @@ export function useFinanceApi() {
             date: occurred,
             note: (rr["description"] ?? rr["note"]) as string | undefined,
             description: (rr["description"] ?? rr["note"]) as string | undefined,
-            type: String((t?.key ?? (t?.name ?? ""))).toLowerCase(),
+            type: direction || inferredType,
             typeId: typeIdKey,
             raw: rr,
           } as unknown;
@@ -436,11 +512,12 @@ export function useFinanceApi() {
         // fallback to store/mock list
       }
 
-      return [
-        { id: "income", key: "income", name: "Income" },
-        { id: "expense", key: "expense", name: "Expense" },
+      const fallback: FinanceEntryType[] = [
+        { id: "income", key: "income", name: "Income", direction: "income" },
+        { id: "expense", key: "expense", name: "Expense", direction: "expense" },
         { id: "fixed", key: "fixed", name: "Fixed" },
       ];
+      return fallback;
     })();
 
     entryTypesCache.set(key, p);

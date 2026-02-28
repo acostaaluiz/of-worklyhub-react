@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 const UsersHomePage = lazy(() => import("@modules/users/presentation/pages/home/home.page"));
 const ProfilePage = lazy(() => import("@modules/users/presentation/pages/profile/profile.page"));
 const AllModulesPage = lazy(() => import("@modules/users/presentation/pages/all-modules/all-modules.page"));
+const TutorialsPage = lazy(() => import("@modules/users/presentation/pages/tutorials/tutorials.page"));
 
 export const usersStackRoutes: RouteObject[] = [
 	{
@@ -34,6 +35,15 @@ export const usersStackRoutes: RouteObject[] = [
 				element: (
 					<React.Suspense fallback={null}>
 						<AllModulesPage />
+					</React.Suspense>
+				),
+			},
+			{
+				id: "users.tutorials",
+				path: "tutorials",
+				element: (
+					<React.Suspense fallback={null}>
+						<TutorialsPage />
 					</React.Suspense>
 				),
 			},

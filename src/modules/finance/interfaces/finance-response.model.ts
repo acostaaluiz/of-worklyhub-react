@@ -4,6 +4,7 @@ import type {
   FinanceCashflowRow,
   FinanceTopServiceRow,
 } from "./finance-table.model";
+import type { FinanceInsightModel } from "./finance-insights.model";
 
 export type FinanceResponseModel = {
   kpis: FinanceKpiModel[];
@@ -20,4 +21,5 @@ export type FinanceResponseModel = {
 
   cashflow: FinanceCashflowRow[];
   topServices: FinanceTopServiceRow[];
+  insights: FinanceInsightModel[];
 };

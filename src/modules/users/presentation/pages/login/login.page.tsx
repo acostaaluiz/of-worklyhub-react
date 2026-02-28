@@ -63,7 +63,13 @@ export class LoginPage extends BasePage {
       }
     };
 
-    return <LoginTemplate onSubmit={handleLogin} onRegister={() => navigate("/register")} />;
+    return (
+      <LoginTemplate
+        onSubmit={handleLogin}
+        onRegister={() => navigate("/register")}
+        onForgotPassword={() => navigate("/forgot-password")}
+      />
+    );
   }
 }
 

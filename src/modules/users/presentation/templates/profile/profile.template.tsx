@@ -1,5 +1,6 @@
 import React from "react";
-import { Tabs, Row, Col, Avatar, Button, Form, Input, Radio, InputNumber, Select, Tooltip } from "antd";
+import { Tabs, Avatar, Button, Form, Input, Radio, InputNumber, Select, Tooltip } from "antd";
+import { AppstoreOutlined, BankOutlined, FileTextOutlined, IdcardOutlined, MailOutlined, PhoneOutlined, ShopOutlined, TagsOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
 import styled, { keyframes } from "styled-components";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import { maskPhone } from "@core/utils/mask";
@@ -7,11 +8,87 @@ import { BaseTemplate } from "@shared/base/base.template";
 
 const { TabPane } = Tabs;
 
-const AvatarWrap = styled.div`
+const ProfileShell = styled.div`
   display: flex;
   flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+`;
+
+const CardBase = styled.div`
+  background: var(--color-glass-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+`;
+
+const MainCard = styled(CardBase)`
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+
+  @media (max-width: 768px) {
+    padding: var(--space-5);
+  }
+`;
+
+const AvatarShell = styled.div`
+  padding: 6px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+`;
+
+const ProfileName = styled.div`
+  font-weight: 600;
+  font-size: var(--font-size-lg);
+`;
+
+const ProfileMeta = styled.div`
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+`;
+
+const PlanBadge = styled.div`
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const PlanName = styled.div`
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+`;
+
+const PlanPrice = styled.div`
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+`;
+
+const FieldLabel = styled.span`
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+`;
+
+const LabelIcon = styled.span`
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+`;
+
+const ActionButton = styled(Button)`
+  height: 40px;
+  border-radius: var(--radius-sm);
 `;
 
 const shimmer = keyframes`
@@ -42,20 +119,134 @@ const SkeletonBlock = styled.div<{ $width?: string; $height: number; $radius?: n
   }
 `;
 
-const WallpaperFrame = styled.div`
-  margin-bottom: 12px;
-  border-radius: 8px;
+const HeroFrame = styled.div`
+  position: relative;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  height: 160px;
+  min-height: 180px;
   width: 100%;
-  background: var(--color-surface-2);
+  background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: flex-end;
 `;
 
-const WallpaperImage = styled.div<{ $imageUrl: string }>`
-  height: 100%;
+const HeroMedia = styled.div<{ $imageUrl: string }>`
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
   background-image: url(${({ $imageUrl }) => $imageUrl});
+`;
+
+const HeroOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+  pointer-events: none;
+`;
+
+const HeroSkeleton = styled(SkeletonBlock)`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+`;
+
+const HeroContent = styled.div`
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    padding: var(--space-4);
+  }
+`;
+
+const HeroIdentity = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+`;
+
+const HeroMeta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const HeroActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+`;
+
+const MainHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+`;
+
+const MainTitle = styled.div`
+  font-weight: 600;
+  font-size: var(--font-size-xl);
+`;
+
+const MainSubtitle = styled.div`
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+`;
+
+const ProfileTabs = styled(Tabs)`
+  .ant-tabs-nav {
+    margin: var(--space-4) 0 var(--space-4);
+  }
+
+  .ant-tabs-nav::before {
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  .ant-tabs-tab {
+    padding: 10px 0;
+    margin: 0 var(--space-5) 0 0;
+    background: transparent;
+    border: none;
+    transition: color 160ms ease;
+  }
+
+  .ant-tabs-tab .ant-tabs-tab-btn {
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .ant-tabs-tab:hover .ant-tabs-tab-btn {
+    color: var(--color-text);
+  }
+
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: var(--color-primary);
+  }
+
+  .ant-tabs-ink-bar {
+    height: 3px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  }
 `;
 
 export type PersonalModel = {
@@ -84,6 +275,7 @@ export type ProfileTemplateProps = {
   company?: CompanyModel;
   categories?: ApplicationCategoryItem[];
   industries?: ApplicationIndustryItem[];
+  defaultTab?: "personal" | "company";
   isAvatarLoading?: boolean;
   isWallpaperLoading?: boolean;
   isSavingPersonal?: boolean;
@@ -94,7 +286,7 @@ export type ProfileTemplateProps = {
   onSaveCompany: (values: CompanyModel) => void;
 };
 
-const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 12 };
+const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "var(--space-4)" };
 const fallbackIndustryOptions: { value: string; label: string }[] = [
   { value: "health", label: "Health" },
   { value: "finance", label: "Finance" },
@@ -104,20 +296,29 @@ const fallbackIndustryOptions: { value: string; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-const CompanyColumns = styled.div`
+const CompanyGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-5);
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
+
+  .span-full {
+    grid-column: 1 / -1;
+  }
 `;
 
-const ColumnStack = styled.div`
+const FormActions = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: var(--space-3);
+  align-items: center;
+  flex-wrap: wrap;
 `;
 
 export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
@@ -125,6 +326,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   company,
   categories,
   industries,
+  defaultTab,
   isAvatarLoading,
   isWallpaperLoading,
   onOpenAvatar,
@@ -181,82 +383,120 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   }, [company, companyForm]);
 
   const content = (
-    <Row gutter={24} style={{ marginTop: 8 }}>
-      <Col xs={24} md={8}>
-        <AvatarWrap>
-          {isAvatarLoading ? (
-            <SkeletonBlock $width="120px" $height={120} $radius={60} />
-          ) : (
-            <Avatar size={120} src={personal?.photoUrl} />
-          )}
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontWeight: 600 }}>{personal?.fullName}</div>
-            <div style={{ color: "var(--color-text-muted)", fontSize: 14 }}>{personal?.email}</div>
+    <ProfileShell>
+      <MainCard>
+        <MainHeader>
+          <div>
+            <MainTitle>Profile settings</MainTitle>
+            <MainSubtitle>Update your personal and company information.</MainSubtitle>
           </div>
-          <div style={{ textAlign: "center", marginTop: 8 }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{personal?.planName ?? "No plan"}</div>
-            {personal?.planPrice ? <div style={{ color: "var(--color-text-muted)", fontSize: 13 }}>{personal.planPrice}</div> : null}
-          </div>
-          <Button type="default" onClick={onOpenAvatar}>Change photo</Button>
-        </AvatarWrap>
-      </Col>
-      <Col xs={24} md={16}>
-        {isWallpaperLoading || company?.wallpaperUrl ? (
-          <WallpaperFrame>
-            {isWallpaperLoading ? (
-              <SkeletonBlock $height={160} />
-            ) : (
-              <WallpaperImage $imageUrl={company?.wallpaperUrl ?? ""} />
-            )}
-          </WallpaperFrame>
-        ) : null}
-        <Tabs defaultActiveKey="personal">
-          <TabPane tab="Personal info" key="personal">
-            <Form form={personalForm} initialValues={{ ...personal, phone: maskPhone(personal?.phone) }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
-              <Form.Item name="fullName" label="Full name" rules={[{ required: true, message: "Please enter your full name" }]}>
-                <Input placeholder="Full name" />
-              </Form.Item>
-              <Form.Item name="email" label="Email">
-                <Input disabled />
-              </Form.Item>
-              <Form.Item
-                name="phone"
-                label={
-                  <span>
-                    Phone{" "}
-                    <Tooltip title="Include country code (e.g. +55 11 99999-9999)">
-                      <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
-                    </Tooltip>
-                  </span>
-                }
-              >
-                <Input
-                  placeholder="Phone"
-                  onBlur={(e) => {
-                    try {
-                      // apply mask on blur so the user can type freely while editing
-                      personalForm.setFieldsValue({ phone: maskPhone(String(e.target.value ?? "")) });
-                    } catch {
-                      // ignore
-                    }
-                  }}
-                />
-              </Form.Item>
-              <Form.Item>
-                <Tooltip title="Save your personal profile changes">
-                  <span>
-                    <Button type="primary" htmlType="submit" loading={isSavingPersonal}>Save personal</Button>
-                  </span>
-                </Tooltip>
-              </Form.Item>
-            </Form>
-          </TabPane>
+        </MainHeader>
 
-          <TabPane tab="Company info" key="company" forceRender>
-            <Form form={companyForm} initialValues={company ?? { accountType: "individual" }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSaveCompany(v as CompanyModel)}>
-              <CompanyColumns>
-                <ColumnStack>
-                  <Form.Item name="accountType" label="Account type">
+        <HeroFrame>
+          {isWallpaperLoading ? <HeroSkeleton $height={180} /> : null}
+          {!isWallpaperLoading && company?.wallpaperUrl ? (
+            <HeroMedia $imageUrl={company?.wallpaperUrl ?? ""} />
+          ) : null}
+          <HeroOverlay />
+          <HeroContent>
+            <HeroIdentity>
+              <AvatarShell>
+                {isAvatarLoading ? (
+                  <SkeletonBlock $width="96px" $height={96} $radius={48} />
+                ) : (
+                  <Avatar size={96} src={personal?.photoUrl} />
+                )}
+              </AvatarShell>
+              <HeroMeta>
+                <ProfileName>{personal?.fullName ?? "-"}</ProfileName>
+                <ProfileMeta>{personal?.email}</ProfileMeta>
+              </HeroMeta>
+            </HeroIdentity>
+
+            <HeroActions>
+              <PlanBadge>
+                <PlanName>{personal?.planName ?? "No plan"}</PlanName>
+                {personal?.planPrice ? <PlanPrice>{personal.planPrice}</PlanPrice> : null}
+              </PlanBadge>
+              <ActionButton type="default" onClick={onOpenAvatar}>Change photo</ActionButton>
+            </HeroActions>
+          </HeroContent>
+        </HeroFrame>
+
+        <ProfileTabs defaultActiveKey={defaultTab ?? "personal"}>
+            <TabPane tab="Personal info" key="personal">
+              <Form form={personalForm} initialValues={{ ...personal, phone: maskPhone(personal?.phone) }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
+                <Form.Item
+                  name="fullName"
+                  label={
+                    <FieldLabel>
+                      <LabelIcon><UserOutlined /></LabelIcon>
+                      Full name
+                    </FieldLabel>
+                  }
+                  rules={[{ required: true, message: "Please enter your full name" }]}
+                >
+                  <Input placeholder="Full name" />
+                </Form.Item>
+                <Form.Item
+                  name="email"
+                  label={
+                    <FieldLabel>
+                      <LabelIcon><MailOutlined /></LabelIcon>
+                      Email
+                    </FieldLabel>
+                  }
+                >
+                  <Input disabled />
+                </Form.Item>
+                <Form.Item
+                  name="phone"
+                  label={
+                    <FieldLabel>
+                      <LabelIcon><PhoneOutlined /></LabelIcon>
+                      Phone
+                      <Tooltip title="Include country code (e.g. +55 11 99999-9999)">
+                        <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
+                      </Tooltip>
+                    </FieldLabel>
+                  }
+                >
+                  <Input
+                    placeholder="Phone"
+                    onBlur={(e) => {
+                      try {
+                        // apply mask on blur so the user can type freely while editing
+                        personalForm.setFieldsValue({ phone: maskPhone(String(e.target.value ?? "")) });
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <FormActions>
+                    <Tooltip title="Save your personal profile changes">
+                      <span>
+                        <Button type="primary" htmlType="submit" loading={isSavingPersonal}>Save personal</Button>
+                      </span>
+                    </Tooltip>
+                  </FormActions>
+                </Form.Item>
+              </Form>
+            </TabPane>
+
+            <TabPane tab="Company info" key="company" forceRender>
+              <Form form={companyForm} initialValues={company ?? { accountType: "individual" }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSaveCompany(v as CompanyModel)}>
+                <CompanyGrid>
+                  <Form.Item
+                    name="accountType"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><IdcardOutlined /></LabelIcon>
+                        Account type
+                      </FieldLabel>
+                    }
+                  >
                     <Radio.Group>
                       <Radio value="individual">Individual</Radio>
                       <Radio value="company">Company</Radio>
@@ -264,62 +504,101 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                   </Form.Item>
 
                   <Form.Item
+                    name="employees"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><TeamOutlined /></LabelIcon>
+                        Employees
+                      </FieldLabel>
+                    }
+                  >
+                    <InputNumber style={{ width: "100%" }} min={0} />
+                  </Form.Item>
+
+                  <Form.Item
                     name="legalName"
                     label={
-                      <span>
-                        Legal name{" "}
+                      <FieldLabel>
+                        <LabelIcon><BankOutlined /></LabelIcon>
+                        Legal name
                         <Tooltip title="Official registered company name">
                           <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
                         </Tooltip>
-                      </span>
+                      </FieldLabel>
                     }
                   >
                     <Input placeholder="Legal name" />
                   </Form.Item>
 
-                  <Form.Item name="tradeName" label="Trade name">
+                  <Form.Item
+                    name="tradeName"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><ShopOutlined /></LabelIcon>
+                        Trade name
+                      </FieldLabel>
+                    }
+                  >
                     <Input placeholder="Trade name" />
                   </Form.Item>
 
-                  <Form.Item name="employees" label="Employees">
-                    <InputNumber style={{ width: 160 }} min={0} />
-                  </Form.Item>
-                </ColumnStack>
-
-                <ColumnStack>
-                  <Form.Item name="primaryService" label="Primary service">
+                  <Form.Item
+                    name="primaryService"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><AppstoreOutlined /></LabelIcon>
+                        Primary service
+                      </FieldLabel>
+                    }
+                  >
                     <Select placeholder="Select primary service" options={serviceOptions} />
                   </Form.Item>
 
-                  <Form.Item name="industry" label="Industry">
+                  <Form.Item
+                    name="industry"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><TagsOutlined /></LabelIcon>
+                        Industry
+                      </FieldLabel>
+                    }
+                  >
                     <Select placeholder="Select an industry" options={industryOptions} />
                   </Form.Item>
 
-                  <Form.Item name="description" label="Description">
-                    <Input.TextArea rows={4} />
+                  <Form.Item
+                    name="description"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><FileTextOutlined /></LabelIcon>
+                        Description
+                      </FieldLabel>
+                    }
+                    className="span-full"
+                  >
+                    <Input.TextArea rows={2} />
                   </Form.Item>
-                </ColumnStack>
-              </CompanyColumns>
+                </CompanyGrid>
 
-              <Form.Item>
-                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                  <Tooltip title="Upload a new company wallpaper">
-                    <span>
-                      <Button type="default" onClick={onOpenWallpaper}>Change wallpaper</Button>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Save your company profile changes">
-                    <span>
-                      <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
-                    </span>
-                  </Tooltip>
-                </div>
-              </Form.Item>
-            </Form>
-          </TabPane>
-        </Tabs>
-      </Col>
-    </Row>
+                <Form.Item>
+                  <FormActions>
+                    <Tooltip title="Upload a new company wallpaper">
+                      <span>
+                        <Button type="default" onClick={onOpenWallpaper}>Change wallpaper</Button>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Save your company profile changes">
+                      <span>
+                        <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
+                      </span>
+                    </Tooltip>
+                  </FormActions>
+                </Form.Item>
+              </Form>
+            </TabPane>
+          </ProfileTabs>
+        </MainCard>
+    </ProfileShell>
   );
 
   return <BaseTemplate content={content} />;
