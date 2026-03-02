@@ -1,37 +1,46 @@
-import React from "react";
+﻿import React from "react";
 import { Button, DatePicker, Input, TimePicker, Form, message } from "antd";
 import dayjs from "dayjs";
 import { getDateFormat } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
 
-type Props = {
+type Props = BaseProps & {
   service: ServiceModel;
   onBooked?: (ev: ScheduleEvent) => void;
 };
 
 type State = {
+  isLoading: boolean;
   isSubmitting: boolean;
+};
+
+type BookingFormValues = {
+  date: dayjs.Dayjs;
+  timeRange: [dayjs.Dayjs, dayjs.Dayjs];
+  name?: string;
+  notes?: string;
 };
 
 export class BookingForm extends BaseComponent<Props, State> {
   private serviceApi = new ScheduleService();
   private dateFormat = getDateFormat();
 
-  protected override state: State = { isSubmitting: false };
+  public override state: State = { isLoading: false, isSubmitting: false };
 
-  private handleFinish = async (values: any) => {
+  private handleFinish = async (values: BookingFormValues) => {
     try {
       this.setState({ isSubmitting: true });
 
-      const date = (values.date as dayjs.Dayjs).format("YYYY-MM-DD");
-      const startTime = (values.timeRange[0] as dayjs.Dayjs).format("HH:mm");
-      const endTime = (values.timeRange[1] as dayjs.Dayjs).format("HH:mm");
+      const date = values.date.format("YYYY-MM-DD");
+      const startTime = values.timeRange[0].format("HH:mm");
+      const endTime = values.timeRange[1].format("HH:mm");
 
       const payload: Omit<ScheduleEvent, "id"> = {
-        title: `${this.props.service.title} — ${this.props.service.providerName}`,
+        title: `${this.props.service.title} - ${this.props.service.providerName}`,
         date,
         startTime,
         endTime,
@@ -39,10 +48,11 @@ export class BookingForm extends BaseComponent<Props, State> {
         description: values.notes || this.props.service.description || "",
       };
 
-      const created = await this.serviceApi.createEvent(payload as any);
+      const created = await this.serviceApi.createEvent(payload);
       message.success("Agendamento criado");
       this.props.onBooked?.(created);
-    } catch (err) {
+    } catch (error) {
+      void error;
       message.error("Erro ao criar agendamento");
     } finally {
       this.setState({ isSubmitting: false });
@@ -51,12 +61,16 @@ export class BookingForm extends BaseComponent<Props, State> {
 
   protected override renderView(): React.ReactNode {
     return (
-      <Form layout="vertical" onFinish={this.handleFinish} initialValues={{ timeRange: [dayjs().hour(10), dayjs().hour(11)] }}>
+      <Form
+        layout="vertical"
+        onFinish={this.handleFinish}
+        initialValues={{ timeRange: [dayjs().hour(10), dayjs().hour(11)] }}
+      >
         <Form.Item label="Data" name="date" rules={[{ required: true }]}>
           <DatePicker style={{ width: "100%" }} format={this.dateFormat} />
         </Form.Item>
 
-        <Form.Item label="Horário" name="timeRange" rules={[{ required: true }]}>
+        <Form.Item label="Horario" name="timeRange" rules={[{ required: true }]}>
           <TimePicker.RangePicker format="HH:mm" style={{ width: "100%" }} />
         </Form.Item>
 
@@ -64,12 +78,16 @@ export class BookingForm extends BaseComponent<Props, State> {
           <Input placeholder="Nome para o agendamento" />
         </Form.Item>
 
-        <Form.Item label="Observações" name="notes">
+        <Form.Item label="Observacoes" name="notes">
           <Input.TextArea rows={3} />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={this.state.isSubmitting}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={this.state.isSubmitting}
+          >
             Confirmar agendamento
           </Button>
         </Form.Item>

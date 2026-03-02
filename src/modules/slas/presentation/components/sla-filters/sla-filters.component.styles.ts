@@ -6,6 +6,11 @@ export const FiltersRow = styled.div`
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    align-items: stretch;
+    gap: var(--space-3);
+  }
 `;
 
 export const FiltersGroup = styled.div`
@@ -13,6 +18,10 @@ export const FiltersGroup = styled.div`
   align-items: flex-end;
   gap: var(--space-3);
   flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 export const FilterField = styled.div`
@@ -25,6 +34,10 @@ export const FilterField = styled.div`
     color: var(--color-text-muted);
     font-size: 12px;
     white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    min-width: 100%;
   }
 `;
 

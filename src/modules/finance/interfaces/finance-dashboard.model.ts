@@ -36,7 +36,7 @@ export type FinanceDashboardCashflowItemApi = {
   type_direction?: "income" | "expense";
   schedule_id?: string | null;
   related_entry_id?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: DataMap | null;
   source?: "work-order" | "schedule" | "manual" | string;
   work_order_id?: string | null;
 };
@@ -71,7 +71,7 @@ export type FinanceInsightItemApi = {
   category: FinanceInsightCategoryApi;
   title: string;
   description: string;
-  evidence: Record<string, unknown>;
+  evidence: DataMap;
   actions: FinanceInsightActionApi[];
 };
 

@@ -7,7 +7,6 @@ import {
   ChevronRight,
   X,
   ClipboardList,
-  FileText,
   Clock3,
   UserRoundPlus,
   BriefcaseBusiness,
@@ -99,7 +98,7 @@ function buildSlots(day: Dayjs, part: DayPart) {
 
 interface ScheduleEventModalState {
   isLoading: boolean;
-  error?: unknown;
+  error?: DataValue;
   weekAnchor: Dayjs;
   selectedDay: Dayjs;
   dayPart: DayPart;
@@ -212,7 +211,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         selectedEmployeeIds: d.employeeIds ?? [],
         selectedInventoryInputs: d.inventoryInputs ?? [],
         selectedInventoryOutputs: d.inventoryOutputs ?? [],
-        selectedStatusId: (d as any).statusId ?? null,
+        selectedStatusId: d.statusId ?? null,
       });
     }
 
@@ -452,7 +451,6 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   value={this.state.description}
                   onChange={(e) => this.setSafeState({ description: e.target.value })}
                   placeholder="Description (optional)"
-                  prefix={<FileText size={16} />}
                   rows={3}
                 />
 

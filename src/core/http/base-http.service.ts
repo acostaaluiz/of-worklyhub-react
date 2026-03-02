@@ -1,5 +1,5 @@
 import type { BaseHttpServiceOptions } from "./interfaces/base-http.interface";
-import type { HttpClient } from "./interfaces/http-client.interface";
+import type { HttpClient, HttpQuery } from "./interfaces/http-client.interface";
 
 function withNamespaceCorrelationId(namespace?: string): string | undefined {
   if (!namespace) return undefined;
@@ -19,7 +19,7 @@ export abstract class BaseHttpService {
 
   protected async get<TResponse>(
     url: string,
-    query?: Record<string, any>,
+    query?: HttpQuery,
     headers?: Record<string, string>
   ): Promise<TResponse> {
     const res = await this.http.request<TResponse>({
@@ -34,7 +34,7 @@ export abstract class BaseHttpService {
     return res.data;
   }
 
-  protected async post<TResponse, TBody = unknown>(
+  protected async post<TResponse, TBody = DataValue>(
     url: string,
     body?: TBody,
     headers?: Record<string, string>
@@ -51,7 +51,7 @@ export abstract class BaseHttpService {
     return res.data;
   }
 
-  protected async put<TResponse, TBody = unknown>(
+  protected async put<TResponse, TBody = DataValue>(
     url: string,
     body?: TBody,
     headers?: Record<string, string>
@@ -68,7 +68,7 @@ export abstract class BaseHttpService {
     return res.data;
   }
 
-  protected async patch<TResponse, TBody = unknown>(
+  protected async patch<TResponse, TBody = DataValue>(
     url: string,
     body?: TBody,
     headers?: Record<string, string>
@@ -87,7 +87,7 @@ export abstract class BaseHttpService {
 
   protected async delete<TResponse>(
     url: string,
-    query?: Record<string, any>,
+    query?: HttpQuery,
     headers?: Record<string, string>
   ): Promise<TResponse> {
     const res = await this.http.request<TResponse>({

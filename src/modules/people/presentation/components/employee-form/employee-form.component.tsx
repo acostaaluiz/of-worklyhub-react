@@ -1,8 +1,19 @@
-import React from "react";
 import { Form, Input, DatePicker, InputNumber, Button } from "antd";
-import dayjs from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import { centsToMoney, getDateFormat, getMoneyInput, maskPhone, moneyToCents, unmaskPhone } from "@core/utils/mask";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
+
+type EmployeeFormValues = {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  department?: string;
+  hiredAt?: Dayjs | null;
+  salaryCents?: number;
+  active?: boolean;
+};
 
 type Props = {
   initial?: Partial<EmployeeModel>;
@@ -11,22 +22,42 @@ type Props = {
 };
 
 export function EmployeeFormComponent({ initial, onSubmit, submitting }: Props) {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<EmployeeFormValues>();
   const moneyInput = getMoneyInput();
   const dateFormat = getDateFormat();
 
   return (
-    <Form form={form} layout="vertical" initialValues={{ active: true, ...initial, salaryCents: typeof initial?.salaryCents === "number" ? centsToMoney(initial.salaryCents) : undefined, phone: maskPhone(initial?.phone) }} onFinish={(v) => {
-      const prepared = { ...v } as any;
-      if (v.hiredAt) prepared.hiredAt = (v.hiredAt as dayjs.Dayjs).format("YYYY-MM-DD");
-      if (v.phone) prepared.phone = unmaskPhone(v.phone);
-      if (typeof v.salaryCents === "number" && Number.isFinite(v.salaryCents)) {
-        prepared.salaryCents = moneyToCents(v.salaryCents);
-      } else {
-        prepared.salaryCents = undefined;
-      }
-      onSubmit(prepared);
-    }}>
+    <Form<EmployeeFormValues>
+      form={form}
+      layout="vertical"
+      initialValues={{
+        active: true,
+        ...initial,
+        hiredAt: initial?.hiredAt ? dayjs(initial.hiredAt) : undefined,
+        salaryCents:
+          typeof initial?.salaryCents === "number"
+            ? centsToMoney(initial.salaryCents)
+            : undefined,
+        phone: maskPhone(initial?.phone),
+      }}
+      onFinish={(values) => {
+        const prepared: Omit<EmployeeModel, "id" | "createdAt"> = {
+          firstName: values.firstName?.trim() ?? "",
+          lastName: values.lastName?.trim() ?? "",
+          email: values.email,
+          phone: values.phone ? unmaskPhone(values.phone) : undefined,
+          role: values.role,
+          department: values.department,
+          hiredAt: values.hiredAt ? values.hiredAt.format("YYYY-MM-DD") : undefined,
+          salaryCents:
+            typeof values.salaryCents === "number" && Number.isFinite(values.salaryCents)
+              ? moneyToCents(values.salaryCents)
+              : undefined,
+          active: values.active ?? true,
+        };
+        onSubmit(prepared);
+      }}
+    >
       <Form.Item name="firstName" label="First name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>

@@ -2,9 +2,11 @@ import axios, { AxiosError } from "axios";
 import { AppError } from "../errors/app-error";
 import type { AppErrorKind } from "../errors/interfaces/app-error.interface";
 
-export function mapHttpError(err: unknown, correlationId?: string): AppError {
+type HttpErrorPayload = { message?: string } & DataMap;
+
+export function mapHttpError(err: DataValue, correlationId?: string): AppError {
   if (axios.isAxiosError(err)) {
-    const ax = err as AxiosError<any>;
+    const ax = err as AxiosError<HttpErrorPayload>;
     const status = ax.response?.status;
 
     const isNetworkCode = ax.code === "ERR_NETWORK" || ax.code === "ERR_CANCELED" || ax.code === "ECONNABORTED";

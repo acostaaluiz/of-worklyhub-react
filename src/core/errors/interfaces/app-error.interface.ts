@@ -6,6 +6,6 @@ export interface AppErrorPayload {
   statusCode?: number;
   code?: string;
   correlationId?: string;
-  details?: unknown;
-  cause?: unknown;
+  details?: DataValue;
+  cause?: DataValue;
 }

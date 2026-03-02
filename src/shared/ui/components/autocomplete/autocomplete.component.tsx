@@ -11,7 +11,7 @@ export type AutocompleteItem = {
   subtitle?: string;
   icon?: React.ReactNode;
   value?: string;
-  meta?: unknown;
+  meta?: DataValue;
 };
 
 type Props = BaseProps & {

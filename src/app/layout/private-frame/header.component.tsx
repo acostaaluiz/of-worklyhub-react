@@ -1,9 +1,10 @@
 import React from "react";
-import { Avatar, Menu, Button, Space, Dropdown, type MenuProps } from "antd";
-import { Briefcase, Calendar, CreditCard, DollarSign, LayoutDashboard, LayoutGrid, Search, Users, Box } from "lucide-react";
+import { Avatar, Menu, Button, Space, Dropdown, Badge, Drawer, type MenuProps } from "antd";
+import { Briefcase, Calendar, CreditCard, DollarSign, LayoutDashboard, LayoutGrid, Search, Users, Box, Bell, Menu as MenuIcon } from "lucide-react";
 import { worklyHubLogoUrl } from "@shared/assets/brand";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseState } from "@shared/base/interfaces/base-state.interface";
 import { FieldIcon } from "@shared/styles/global";
 import { Svg } from "@shared/ui/components/svg/svg.component";
 import { AutocompleteInput, type AutocompleteItem } from "@shared/ui/components/autocomplete/autocomplete.component";
@@ -19,6 +20,7 @@ import {
   Center,
   Right,
   SearchWrap,
+  MobileMenuButton,
 } from "./header.component.styles";
 
 // menu items are provided by parent via props
@@ -27,12 +29,24 @@ type Props = BaseProps & {
   onNavigate?: (path: string) => void;
   onLogout?: () => void;
   onUpgrade?: () => void;
+  onNotificationsClick?: () => void;
+  unreadNotifications?: number;
   selectedPath?: string;
   menuItems?: MenuProps["items"];
   userMenuItems?: MenuProps["items"];
 };
 
-export class AppHeader extends BaseComponent<Props> {
+type State = BaseState & {
+  mobileMenuOpen: boolean;
+};
+
+export class AppHeader extends BaseComponent<Props, State> {
+  public state: State = {
+    isLoading: false,
+    error: undefined,
+    mobileMenuOpen: false,
+  };
+
   private mapIcon(key?: string): React.ReactNode {
     switch (key) {
       case "calendar":
@@ -100,8 +114,22 @@ export class AppHeader extends BaseComponent<Props> {
     if (to) this.props.onNavigate?.(to);
   };
 
+  private handleOpenMobileMenu = () => {
+    this.setSafeState({ mobileMenuOpen: true });
+  };
+
+  private handleCloseMobileMenu = () => {
+    this.setSafeState({ mobileMenuOpen: false });
+  };
+
   protected override renderView(): React.ReactNode {
     const { selectedPath, menuItems } = this.props;
+    const unreadCount = Math.max(0, Number(this.props.unreadNotifications ?? 0));
+    const hasUnread = unreadCount > 0;
+    const isPhoneViewport =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 768px)").matches;
+    const drawerWidth = isPhoneViewport ? "100%" : 340;
 
     const selectedKeys = menuItems
       ?.map((i) => (typeof i?.key === "string" ? i.key : ""))
@@ -122,6 +150,30 @@ export class AppHeader extends BaseComponent<Props> {
       onClick: handleMenuClick,
     };
 
+    const handleNavigateAndClose = (path: string) => {
+      this.props.onNavigate?.(path);
+      this.handleCloseMobileMenu();
+    };
+
+    const mobileMenu: MenuProps = {
+      items: menuItems,
+      selectedKeys: selectedKeys?.length ? selectedKeys : [selectedPath ?? "/"],
+      onClick: ({ key }) => handleNavigateAndClose(String(key)),
+    };
+
+    const mobileUserMenu: MenuProps = {
+      items: this.props.userMenuItems,
+      onClick: ({ key }) => {
+        const k = String(key);
+        if (k === "logout") {
+          this.props.onLogout?.();
+        } else {
+          this.props.onNavigate?.(k);
+        }
+        this.handleCloseMobileMenu();
+      },
+    };
+
     return (
       <HeaderShell>
         <div className="container">
@@ -137,6 +189,14 @@ export class AppHeader extends BaseComponent<Props> {
                 />
                 <span>WorklyHub</span>
               </Brand>
+
+              <MobileMenuButton
+                type="button"
+                onClick={this.handleOpenMobileMenu}
+                aria-label="Open navigation menu"
+              >
+                <MenuIcon size={18} />
+              </MobileMenuButton>
             </Left>
 
             <Nav>
@@ -166,7 +226,17 @@ export class AppHeader extends BaseComponent<Props> {
 
             <Right>
               <Space size="small">
-                <Button style={{ borderRadius: "999px" }} onClick={() => this.props.onUpgrade?.()}>
+                <Button
+                  className={`notifications-button${hasUnread ? " has-unread" : ""}`}
+                  onClick={() => this.props.onNotificationsClick?.()}
+                  aria-label="Notifications"
+                >
+                  <Badge count={unreadCount} size="small" overflowCount={99} showZero={false}>
+                    <Bell size={16} />
+                  </Badge>
+                </Button>
+
+                <Button className="upgrade-button" onClick={() => this.props.onUpgrade?.()}>
                   Upgrade
                 </Button>
 
@@ -177,7 +247,7 @@ export class AppHeader extends BaseComponent<Props> {
                   getPopupContainer={() => document.body}
                   styles={{ root: { zIndex: 2000 } }}
                 >
-                  <Avatar shape="circle" style={{ cursor: "pointer" }}>
+                  <Avatar shape="circle" className="user-avatar">
                     U
                   </Avatar>
                 </Dropdown>
@@ -185,6 +255,60 @@ export class AppHeader extends BaseComponent<Props> {
             </Right>
           </HeaderInner>
         </div>
+
+        <Drawer
+          title="Menu"
+          placement="left"
+          width={drawerWidth}
+          onClose={this.handleCloseMobileMenu}
+          open={this.state.mobileMenuOpen}
+          zIndex={1600}
+          rootClassName="mobile-nav-drawer"
+          styles={{
+            header: {
+              borderBottom: "1px solid var(--color-divider)",
+              background: "color-mix(in srgb, var(--color-surface-2) 70%, var(--color-surface))",
+            },
+            body: {
+              padding: 12,
+              background: "var(--color-surface-elevated)",
+            },
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, minHeight: "100%" }}>
+            <Menu
+              mode="inline"
+              items={mobileMenu.items}
+              selectedKeys={mobileMenu.selectedKeys}
+              onClick={mobileMenu.onClick}
+              style={{
+                border: "1px solid var(--color-divider)",
+                borderRadius: 12,
+                background: "color-mix(in srgb, var(--color-surface-2) 65%, var(--color-surface))",
+              }}
+            />
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Button onClick={() => { this.props.onNotificationsClick?.(); this.handleCloseMobileMenu(); }}>
+                Notifications
+              </Button>
+              <Button type="primary" onClick={() => { this.props.onUpgrade?.(); this.handleCloseMobileMenu(); }}>
+                Upgrade
+              </Button>
+            </div>
+
+            <Menu
+              mode="inline"
+              items={mobileUserMenu.items}
+              onClick={mobileUserMenu.onClick}
+              style={{
+                border: "1px solid var(--color-divider)",
+                borderRadius: 12,
+                background: "color-mix(in srgb, var(--color-surface-2) 65%, var(--color-surface))",
+              }}
+            />
+          </div>
+        </Drawer>
       </HeaderShell>
     );
   }

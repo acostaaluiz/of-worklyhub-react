@@ -1,9 +1,11 @@
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+export type HttpQueryPrimitive = string | number | boolean | null | undefined;
+export type HttpQuery = Record<string, HttpQueryPrimitive>;
 
-export interface HttpRequestConfig<TBody = unknown> {
+export interface HttpRequestConfig<TBody = DataValue> {
   url: string;
   method: HttpMethod;
-  query?: Record<string, string | number | boolean | null | undefined>;
+  query?: HttpQuery;
   body?: TBody;
   headers?: Record<string, string>;
   signal?: AbortSignal;
@@ -11,7 +13,7 @@ export interface HttpRequestConfig<TBody = unknown> {
   correlationId?: string;
 }
 
-export interface HttpResponse<TData = unknown> {
+export interface HttpResponse<TData = DataValue> {
   data: TData;
   status: number;
   headers: Record<string, string>;
@@ -19,7 +21,7 @@ export interface HttpResponse<TData = unknown> {
 }
 
 export interface HttpClient {
-  request<TData, TBody = unknown>(
+  request<TData, TBody = DataValue>(
     config: HttpRequestConfig<TBody>
   ): Promise<HttpResponse<TData>>;
 }

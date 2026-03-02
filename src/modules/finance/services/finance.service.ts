@@ -1,6 +1,10 @@
 import { toAppError } from "@core/errors/to-app-error";
 import dayjs from "dayjs";
-import type { FinanceEntryModel, FinanceEntryCreatePayload } from "@modules/finance/interfaces/finance-entry.model";
+import type {
+  FinanceEntryCreatePayload,
+  FinanceEntryListItem,
+  FinanceEntryModel,
+} from "@modules/finance/interfaces/finance-entry.model";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import { CompanyServicesService } from "@modules/company/services/company-services.service";
 import type { FinanceQueryModel } from "@modules/finance/interfaces/finance-query.model";
@@ -13,14 +17,19 @@ import type {
 } from "@modules/finance/interfaces/finance-dashboard.model";
 import type { FinanceInsightModel } from "@modules/finance/interfaces/finance-insights.model";
 import { useMockStore } from "@core/storage/mock-store.provider";
-import { FinanceApi, type FinanceEntryType } from "@modules/finance/services/finance-api";
+import {
+  FinanceApi,
+  type FinanceEntriesQuery,
+  type FinanceEntryApiRow,
+  type FinanceEntryType,
+} from "@modules/finance/services/finance-api";
 import { httpClient } from "@core/http/client.instance";
 import { companyService, type Workspace } from "@modules/company/services/company.service";
 
 // Simple per-workspace in-flight/cached promise map to avoid duplicate requests
 const entryTypesCache = new Map<string, Promise<FinanceEntryType[]>>();
 // In-flight/cached entries list promises to avoid duplicate GETs
-const entriesCache = new Map<string, Promise<unknown[]>>();
+const entriesCache = new Map<string, Promise<FinanceEntryListItem[]>>();
 
 const inMemoryDb: { entries: FinanceEntryModel[] } = { entries: [] };
 
@@ -34,13 +43,21 @@ const normalizeRatio = (value: number | null | undefined): number | undefined =>
   if (value == null || Number.isNaN(value)) return undefined;
   return Math.abs(value) > 1 ? value / 100 : value;
 };
+const getStringValue = (
+  source: Record<string, DataValue> | null | undefined,
+  key: string
+): string | undefined => {
+  const value = source?.[key];
+  return typeof value === "string" ? value : undefined;
+};
+const toWorkspaceId = (value: DataValue): string | undefined => {
+  if (typeof value === "string" && value.trim().length > 0) return value;
+  if (typeof value === "number") return String(value);
+  return undefined;
+};
 const getWorkspaceId = (ws: Workspace): string | undefined => {
   if (!ws) return undefined;
-  if (typeof ws.id === "string" && ws.id.trim().length > 0) return ws.id;
-  const raw = ws.workspaceId as unknown;
-  if (typeof raw === "string" && raw.trim().length > 0) return raw;
-  if (typeof raw === "number") return String(raw);
-  return undefined;
+  return toWorkspaceId(ws.id) ?? toWorkspaceId(ws["workspaceId"]);
 };
 
 export class FinanceService {
@@ -164,13 +181,13 @@ export class FinanceService {
         ? direction === "expense"
         : normalized.includes("expense") || normalized.includes("out") || row.amount_cents < 0;
       const amount = Math.abs(row.amount_cents ?? 0);
-      const meta = (row.metadata ?? null) as Record<string, unknown> | null;
+      const meta = row.metadata ?? null;
       const workOrderId =
-        row.work_order_id ?? (meta?.["workOrderId"] as string | undefined) ?? null;
+        row.work_order_id ?? getStringValue(meta, "workOrderId") ?? null;
       const scheduleId =
-        row.schedule_id ?? (meta?.["scheduleId"] as string | undefined) ?? null;
+        row.schedule_id ?? getStringValue(meta, "scheduleId") ?? null;
       const relatedEntryId =
-        row.related_entry_id ?? (meta?.["relatedEntryId"] as string | undefined) ?? null;
+        row.related_entry_id ?? getStringValue(meta, "relatedEntryId") ?? null;
 
       return {
         id: row.id,
@@ -180,7 +197,7 @@ export class FinanceService {
         category: row.type_name || "General",
         amount: centsToValue(amount),
         status: "paid",
-        source: row.source ?? (meta?.["source"] as string | undefined),
+        source: row.source ?? getStringValue(meta, "source"),
         workOrderId,
         scheduleId,
         relatedEntryId,
@@ -393,7 +410,7 @@ import { useCallback, useMemo } from "react";
 export function useFinanceApi() {
   const store = useMockStore();
 
-  const listEntries = useCallback(async (opts?: { workspaceId?: string; start?: string; end?: string; limit?: number; offset?: number; typeId?: string }) => {
+  const listEntries = useCallback(async (opts?: { workspaceId?: string; start?: string; end?: string; limit?: number; offset?: number; typeId?: string }): Promise<FinanceEntryListItem[]> => {
     const key = JSON.stringify({ workspaceId: opts?.workspaceId, typeId: opts?.typeId, start: opts?.start, end: opts?.end, limit: opts?.limit, offset: opts?.offset });
     if (entriesCache.has(key)) return entriesCache.get(key)!;
 
@@ -401,7 +418,7 @@ export function useFinanceApi() {
       try {
         const api = new FinanceApi(httpClient);
 
-        const query: Record<string, unknown> = {};
+        const query: FinanceEntriesQuery = {};
         if (opts?.typeId) query.typeId = opts.typeId;
         if (opts?.start) query.start = opts.start;
         if (opts?.end) query.end = opts.end;
@@ -424,27 +441,43 @@ export function useFinanceApi() {
           if (t?.id) typeMap.set(t.id, t);
         });
 
-        const mapped = (rows || []).map((r: unknown) => {
-          const rr = r as Record<string, unknown>;
-          const amountRaw = rr["amount_cents"] ?? rr["amount"] ?? 0;
-          const amount = typeof amountRaw === "number" ? (amountRaw as number) / 100 : Number(String(amountRaw || "0")) / 100;
-          const occurred = (rr["occurred_at"] ?? rr["date"] ?? rr["created_at"]) as string | undefined;
-          const typeIdKey = (rr["typeId"] ?? rr["type_id"]) as string | undefined;
-          const t = typeMap.get(typeIdKey ?? "");
-          const rowDirection = (rr["type_direction"] ?? rr["direction"]) as string | undefined;
-          const direction = (rowDirection ?? t?.direction ?? "").toString().toLowerCase();
-          const inferredType = String((t?.key ?? (t?.name ?? ""))).toLowerCase();
+        const mapped = (rows || []).map((row: FinanceEntryApiRow): FinanceEntryListItem => {
+          const amountRaw = row.amount_cents ?? row.amount ?? 0;
+          const parsedAmount =
+            typeof amountRaw === "number" ? amountRaw : Number(String(amountRaw ?? "0"));
+          const amount = Number.isFinite(parsedAmount) ? parsedAmount / 100 : 0;
+          const dateRaw = row.occurred_at ?? row.date ?? row.created_at;
+          const typeId = row.typeId ?? row.type_id;
+          const entryType = typeMap.get(typeId ?? "");
+          const rowDirection = row.type_direction ?? row.direction;
+          const direction = (rowDirection ?? entryType?.direction ?? "").toLowerCase();
+          const inferredType = String(entryType?.key ?? entryType?.name ?? "").toLowerCase();
+          const description =
+            typeof row.description === "string"
+              ? row.description
+              : typeof row.note === "string"
+                ? row.note
+                : undefined;
+          const serviceId =
+            typeof row.serviceId === "string"
+              ? row.serviceId
+              : typeof row.service_id === "string"
+                ? row.service_id
+                : undefined;
+
           return {
-            id: (rr["id"] as string) ?? undefined,
-            serviceId: (rr["serviceId"] ?? rr["service_id"]) as string | undefined,
+            id:
+              typeof row.id === "string" && row.id.trim().length > 0
+                ? row.id
+                : `f-${Math.random().toString(16).slice(2)}`,
+            serviceId,
             amount,
-            date: occurred,
-            note: (rr["description"] ?? rr["note"]) as string | undefined,
-            description: (rr["description"] ?? rr["note"]) as string | undefined,
-            type: direction || inferredType,
-            typeId: typeIdKey,
-            raw: rr,
-          } as unknown;
+            date: typeof dateRaw === "string" ? dateRaw : dayjs().format("YYYY-MM-DD"),
+            note: description,
+            description,
+            type: direction || inferredType || "expense",
+            typeId,
+          };
         });
 
         return mapped;

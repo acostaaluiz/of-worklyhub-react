@@ -12,7 +12,7 @@ export abstract class BasePage<P extends BaseProps = BaseProps, S extends BasePa
     isLoading: false,
     initialized: false,
     error: undefined,
-  } as unknown) as S;
+  } as S);
 
   protected abstract renderPage(): React.ReactNode;
 

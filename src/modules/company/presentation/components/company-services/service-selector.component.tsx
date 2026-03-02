@@ -2,21 +2,23 @@ import React from "react";
 import { List, Checkbox, Space, InputNumber, Button, Typography, Divider } from "antd";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import { SelectorFooter, SelectorShell } from "./service-selector.component.styles";
 
-type Props = {
+type Props = BaseProps & {
   services: ServiceModel[];
   onCancel?: () => void;
   onAdd?: (items: { service: ServiceModel; qty: number }[]) => void;
 };
 
 type State = {
+  isLoading: boolean;
   selected: Record<string, number>;
 };
 
 export class ServiceSelector extends BaseComponent<Props, State> {
-  protected override state: State = { selected: {} };
+  public override state: State = { isLoading: false, selected: {} };
 
   private toggle = (id: string) => {
     this.setState(({ selected }) => {

@@ -162,7 +162,7 @@ export function CashflowTableWidget({
               dataSource={items}
               pagination={false}
               tableLayout="fixed"
-              scroll={{ x: 920, y: dense ? 180 : 360 }}
+              scroll={{ x: 920, y: dense ? 180 : 240 }}
             />
           </Wrap>
         )}

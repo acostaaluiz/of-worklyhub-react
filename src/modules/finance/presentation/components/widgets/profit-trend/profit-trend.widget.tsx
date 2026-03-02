@@ -28,18 +28,30 @@ type Props = {
   subtitle?: string;
 };
 
-function CustomTooltip({ active, payload, label }: any) {
+type TrendTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ dataKey?: string | number; value?: string | number }>;
+  label?: string | number;
+};
+
+function CustomTooltip({ active, payload, label }: TrendTooltipProps) {
   if (!active || !payload?.length) return null;
 
-  const get = (k: string) =>
-    payload.find((p: any) => p.dataKey === k)?.value ?? 0;
+  const get = (k: string) => {
+    const value = payload.find((point) => point.dataKey === k)?.value;
+    const numeric = Number(value ?? 0);
+    return Number.isFinite(numeric) ? numeric : 0;
+  };
+
   const revenue = get("revenue");
   const expenses = get("expenses");
   const profit = get("profit");
+  const tooltipLabel =
+    typeof label === "string" || typeof label === "number" ? String(label) : "";
 
   return (
     <TooltipCard>
-      <div className="tTitle">{label}</div>
+      <div className="tTitle">{tooltipLabel}</div>
       <div className="tRow">
         <div className="k">Revenue</div>
         <div className="v" style={{ color: getFinanceValueColor(revenue, { context: "income" }) }}>

@@ -12,6 +12,33 @@ import { usersAuthService } from "@modules/users/services/auth.service";
 import { usersService } from "@modules/users/services/user.service";
 import ProfileTemplate, { type PersonalModel, type CompanyModel } from "@modules/users/presentation/templates/profile/profile.template";
 
+function toDataMap(value: DataValue | null | undefined): DataMap | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) {
+    return null;
+  }
+  return value;
+}
+
+function toStringValue(value: DataValue | null | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
+function toNumberValue(value: DataValue | null | undefined): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function toAccountTypeValue(
+  value: DataValue | null | undefined
+): "individual" | "company" | undefined {
+  if (value === "individual" || value === "company") return value;
+  return undefined;
+}
+
 type State = {
   isLoading: boolean;
   initialized: boolean;
@@ -98,58 +125,58 @@ export class ProfilePage extends BasePage<{}, State> {
   }
 
   private mapWorkspaceToCompany(
-    workspace: unknown,
+    workspace: DataValue,
     fallback?: CompanyModel,
     options?: { preserveWallpaper?: boolean }
   ): { company: CompanyModel; wallpaperCandidate?: string } {
-    const ws: any = workspace ?? {};
-    const cp: any = ws.company_profile ?? {};
+    const ws = toDataMap(workspace) ?? {};
+    const cp = toDataMap(ws.company_profile) ?? {};
 
     const accountType =
-      (ws.workspace_type as "individual" | "company") ??
-      (ws.accountType as "individual" | "company") ??
+      toAccountTypeValue(ws.workspace_type) ??
+      toAccountTypeValue(ws.accountType) ??
       fallback?.accountType ??
       "individual";
 
     const legalName =
-      (cp.legal_name as string) ??
-      (cp.legalName as string) ??
-      (ws.legal_name as string) ??
-      (ws.legalName as string) ??
+      toStringValue(cp.legal_name) ??
+      toStringValue(cp.legalName) ??
+      toStringValue(ws.legal_name) ??
+      toStringValue(ws.legalName) ??
       fallback?.legalName;
 
     const tradeName =
-      (cp.trade_name as string) ??
-      (cp.tradeName as string) ??
-      (ws.trade_name as string) ??
-      (ws.tradeName as string) ??
-      (ws.name as string) ??
-      (ws.companyName as string) ??
+      toStringValue(cp.trade_name) ??
+      toStringValue(cp.tradeName) ??
+      toStringValue(ws.trade_name) ??
+      toStringValue(ws.tradeName) ??
+      toStringValue(ws.name) ??
+      toStringValue(ws.companyName) ??
       fallback?.tradeName;
 
     const employees =
-      (cp.employees_count as number) ??
-      (cp.employeesCount as number) ??
-      (ws.employees_count as number) ??
-      (ws.employeesCount as number) ??
+      toNumberValue(cp.employees_count) ??
+      toNumberValue(cp.employeesCount) ??
+      toNumberValue(ws.employees_count) ??
+      toNumberValue(ws.employeesCount) ??
       fallback?.employees;
 
     const primaryService =
-      (cp.primary_service as string) ??
-      (cp.primaryService as string) ??
-      (ws.primary_service as string) ??
-      (ws.primaryService as string) ??
+      toStringValue(cp.primary_service) ??
+      toStringValue(cp.primaryService) ??
+      toStringValue(ws.primary_service) ??
+      toStringValue(ws.primaryService) ??
       fallback?.primaryService;
 
-    const industry = (cp.industry as string) ?? (ws.industry as string) ?? fallback?.industry;
+    const industry = toStringValue(cp.industry) ?? toStringValue(ws.industry) ?? fallback?.industry;
 
-    const description = (cp.description as string) ?? (ws.description as string) ?? fallback?.description;
+    const description = toStringValue(cp.description) ?? toStringValue(ws.description) ?? fallback?.description;
 
     const wallpaperCandidate =
-      (cp.wallpaperUrl as string) ??
-      (cp.wallpaper_url as string) ??
-      (ws.wallpaperUrl as string) ??
-      (ws.wallpaper_url as string) ??
+      toStringValue(cp.wallpaperUrl) ??
+      toStringValue(cp.wallpaper_url) ??
+      toStringValue(ws.wallpaperUrl) ??
+      toStringValue(ws.wallpaper_url) ??
       fallback?.wallpaperUrl;
 
     const company: CompanyModel = {
@@ -208,23 +235,29 @@ export class ProfilePage extends BasePage<{}, State> {
             // UserProfileResponse has `name` and `email` at minimum
             // preserve existing photoUrl if not provided
 
-            const f = fetched as any;
-            personal.fullName = (f.name as string) ?? personal.fullName;
-            personal.email = (f.email as string) ?? personal.email;
+            const f = toDataMap(fetched) ?? {};
+            personal.fullName = toStringValue(f.name) ?? personal.fullName;
+            personal.email = toStringValue(f.email) ?? personal.email;
             // support multiple possible photo fields returned by API
-            const photoCandidates = (f as any).profilePhotoUrl ?? (f as any).profile_photo_url ?? (f as any).photoUrl ?? (f as any).photo_url ?? undefined;
-            if (photoCandidates) {
+            const photoCandidate =
+              toStringValue(f.profilePhotoUrl) ??
+              toStringValue(f.profile_photo_url) ??
+              toStringValue(f.photoUrl) ??
+              toStringValue(f.photo_url) ??
+              undefined;
+            if (photoCandidate) {
               // defer setting photoUrl until fully loaded to avoid progressive render
-              const candidate = photoCandidates as string;
+              const candidate = photoCandidate;
               // keep preview empty until image fully loaded
-              personal.photoUrl = undefined as any;
+              personal.photoUrl = undefined;
               // schedule preload after state updated below
               this.preloadAndSetAvatar(candidate).catch(() => {});
             }
-            if ((f as any).phone) personal.phone = (f as any).phone;
+            const phoneValue = toStringValue(f.phone);
+            if (phoneValue) personal.phone = phoneValue;
 
             // map plan if available: resolve planId to title/price using applicationService
-            const planId = (f as any).planId ?? (f as any).plan_id ?? undefined;
+            const planId = toNumberValue(f.planId) ?? toNumberValue(f.plan_id) ?? undefined;
             if (planId != null) {
               try {
                 let plans = applicationService.getPlansValue();
@@ -236,7 +269,7 @@ export class ProfilePage extends BasePage<{}, State> {
                   const price = found.monthly_amount ?? found.yearly_amount ?? 0;
                   personal.planId = Number(found.id);
                   personal.planName = found.title;
-                  personal.planPrice = `${formatMoney(price as number, { precision: 0 })}/month`;
+                  personal.planPrice = `${formatMoney(price, { precision: 0 })}/month`;
                 } else {
                   personal.planId = Number(planId);
                 }

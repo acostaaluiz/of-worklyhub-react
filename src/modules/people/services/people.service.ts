@@ -33,18 +33,18 @@ export class PeopleService {
         if (workspaceId) {
             const res = await this.api.listWorkspaceWorkers(workspaceId);
             // API may return { workers: [...] } or the array directly
-            let arr: unknown[] = [];
+            let arr: DataValue[] = [];
             if (Array.isArray(res)) {
-              arr = res as unknown[];
+              arr = res as DataValue[];
             } else if (res && typeof res === "object") {
-              const obj = res as Record<string, unknown>;
+              const obj = res as DataMap;
               if (Array.isArray(obj["workers"])) {
-                arr = obj["workers"] as unknown[];
+                arr = obj["workers"] as DataValue[];
               }
             }
 
           const mapped = arr
-            .filter((r): r is Record<string, unknown> => typeof r === "object" && r !== null)
+            .filter((r): r is DataMap => typeof r === "object" && r !== null)
             .map((row) => mapFromApi(row));
           // replace local cache with fresh list
           this.employees = mapped.slice();
@@ -92,22 +92,22 @@ export class PeopleService {
         };
 
         const res = await this.api.createWorker(body);
-        const data = (res ?? {}) as Record<string, unknown>;
+        const data = (res ?? {}) as DataMap;
 
         // API may return several shapes: { workers: [...] }, { worker: {...} }, array, or a flat object
-        let createdRow: Record<string, unknown> | undefined;
+        let createdRow: DataMap | undefined;
         if (data && typeof data === "object") {
-          const obj = data as Record<string, unknown>;
-          if (Array.isArray(obj["workers"]) && (obj["workers"] as unknown[]).length > 0) {
-            const first = (obj["workers"] as unknown[])[0];
+          const obj = data as DataMap;
+          if (Array.isArray(obj["workers"]) && (obj["workers"] as DataValue[]).length > 0) {
+            const first = (obj["workers"] as DataValue[])[0];
             if (typeof first === "object" && first !== null) {
-              createdRow = first as Record<string, unknown>;
+              createdRow = first as DataMap;
             }
           } else if (obj["worker"] && typeof obj["worker"] === "object") {
-            createdRow = obj["worker"] as Record<string, unknown>;
+            createdRow = obj["worker"] as DataMap;
           } else if (Object.keys(obj).length > 0 && (obj["user_uid"] || obj["user_email"] || obj["job_title"])) {
             // looks like a flat worker object
-            createdRow = obj as Record<string, unknown>;
+            createdRow = obj as DataMap;
           }
         }
 
@@ -137,14 +137,14 @@ export class PeopleService {
       const userUid = session?.uid ?? undefined;
 
       if (workspaceId && userUid) {
-        const body: { [key: string]: unknown } = {};
+        const body: DataMap = {};
         if (Object.prototype.hasOwnProperty.call(patch, "role")) body.job_title = patch.role ?? null;
         if (Object.prototype.hasOwnProperty.call(patch, "department")) body.department = patch.department ?? null;
         if (Object.prototype.hasOwnProperty.call(patch, "hiredAt")) body.hired_at = patch.hiredAt ?? null;
         if (Object.prototype.hasOwnProperty.call(patch, "salaryCents")) body.salary_cents = patch.salaryCents ?? null;
 
         const res = await this.api.updateWorker(workspaceId, userUid, body);
-        const data = (res ?? {}) as Record<string, unknown>;
+        const data = (res ?? {}) as DataMap;
 
         // update local cache if present
         const idx = this.employees.findIndex((e) => e.id === id);
@@ -196,7 +196,7 @@ export class PeopleService {
   }
 }
 
-function mapFromApi(item: Record<string, unknown>): EmployeeModel {
+function mapFromApi(item: DataMap): EmployeeModel {
   const id = String(item["id"] ?? item["worker_id"] ?? item["user_uid"] ?? item["userUid"] ?? item["user_uid"] ?? makeId());
   const rawName = (item["first_name"] ?? item["firstName"] ?? item["name"] ?? item["user_name"]) as string | undefined;
   const nameParts = rawName ? String(rawName).trim().split(/\s+/) : [];

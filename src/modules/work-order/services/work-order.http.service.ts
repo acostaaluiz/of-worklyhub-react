@@ -10,6 +10,7 @@ import type {
   ListWorkOrdersFilters,
   UpdateWorkOrderInput,
   UpdateWorkOrderChecklistItemInput,
+  WorkOrderListPage,
   WorkOrder,
   WorkOrderChecklistItem,
   WorkOrderComment,
@@ -40,15 +41,23 @@ export class WorkOrderHttpService {
     }
   }
 
-  async listWorkOrders(
+  async listWorkOrdersPage(
     workspaceId: string | undefined,
     filters: ListWorkOrdersFilters = {}
-  ): Promise<WorkOrder[]> {
+  ): Promise<WorkOrderListPage> {
     try {
       return await this.api.listWorkOrders(workspaceId, filters);
     } catch (err) {
       throw toAppError(err);
     }
+  }
+
+  async listWorkOrders(
+    workspaceId: string | undefined,
+    filters: ListWorkOrdersFilters = {}
+  ): Promise<WorkOrder[]> {
+    const page = await this.listWorkOrdersPage(workspaceId, filters);
+    return page.data;
   }
 
   async getWorkOrderById(
@@ -222,6 +231,13 @@ export async function listWorkOrders(
   filters: ListWorkOrdersFilters = {}
 ): Promise<WorkOrder[]> {
   return workOrderHttpService.listWorkOrders(workspaceId, filters);
+}
+
+export async function listWorkOrdersPage(
+  workspaceId: string | undefined,
+  filters: ListWorkOrdersFilters = {}
+): Promise<WorkOrderListPage> {
+  return workOrderHttpService.listWorkOrdersPage(workspaceId, filters);
 }
 
 export async function getWorkOrderById(

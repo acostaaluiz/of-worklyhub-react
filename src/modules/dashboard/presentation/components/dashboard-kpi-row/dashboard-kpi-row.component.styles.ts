@@ -12,6 +12,10 @@ export const KpiCard = styled.div`
   flex-direction: column;
   gap: var(--space-2);
   min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-tertiary) 22%, transparent) 0%, transparent 42%),
+    var(--color-surface);
 `;
 
 export const KpiTop = styled.div`
@@ -23,6 +27,18 @@ export const KpiTop = styled.div`
   .label {
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
+  }
+
+  .icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-tertiary) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-tertiary) 35%, transparent);
   }
 `;
 

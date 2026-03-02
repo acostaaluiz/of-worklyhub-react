@@ -82,7 +82,7 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
               subtitle="Complete these steps to personalize your workspace."
               steps={steps}
               initialValues={initialValues}
-              onFinish={onFinish}
+              onFinish={onFinish ?? (() => {})}
             />
             {/** Response modal is rendered inside the template so pages can control it */}
             {responseModal ? (

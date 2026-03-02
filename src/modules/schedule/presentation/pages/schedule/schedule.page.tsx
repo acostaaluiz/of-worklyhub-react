@@ -16,7 +16,10 @@ const peopleService = new PeopleService();
 import { loadingService } from "@shared/ui/services/loading.service";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
-import type { NextScheduleItem } from "@modules/schedule/services/schedules-api";
+import type {
+  MonthViewHint,
+  NextScheduleItem,
+} from "@modules/schedule/services/schedules-api";
 import dayjs from "dayjs";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
 import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
@@ -38,7 +41,9 @@ const categoriesPromise = import("@core/application/application.service")
 const initialEventsByWorkspace = new Map<string, ScheduleEvent[]>();
 const initialFetchByWorkspace = new Set<string>();
 
-function mapCategoriesWithColor(cats: Array<{ id: string; code?: string; label: string; color?: string | null }>): typeof cats {
+function mapCategoriesWithColor(
+  cats: Array<{ id: string; code?: string; label: string; color?: string | null }>
+): Array<{ id: string; code?: string; label: string; color?: string }> {
   const palette = [
     "#06B6D4", // cyan
     "#A78BFA", // purple
@@ -51,7 +56,7 @@ function mapCategoriesWithColor(cats: Array<{ id: string; code?: string; label: 
   ];
   const used = new Set<string>();
   return cats.map((c, idx) => {
-    let chosen = c.color?.toString().trim();
+    let chosen = c.color?.toString().trim() ?? "";
     if (!chosen || chosen.startsWith("var(")) {
       const pick = palette[idx % palette.length];
       chosen = used.has(pick) ? palette.find((p) => !used.has(p)) ?? pick : pick;
@@ -70,6 +75,22 @@ type SchedulePageState = BasePageState & {
     | null;
   nextSchedules?: NextScheduleItem[];
   statuses?: Array<{ id: string; code?: string; label?: string }> | null;
+};
+
+type EventCategoryLike = {
+  id?: string;
+  code?: string;
+};
+
+type EventStatusLike = {
+  id?: string;
+  code?: string;
+};
+
+type ScheduleEventLike = ScheduleEvent & {
+  category?: EventCategoryLike | null;
+  status?: EventStatusLike | null;
+  statusId?: string;
 };
 
 export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
@@ -97,6 +118,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
     function Wrapper(): React.ReactElement {
       const api = useScheduleApi();
       const [events, setEvents] = useState<ScheduleEvent[]>([]);
+      const [monthViewHint, setMonthViewHint] = useState<MonthViewHint | null>(
+        null
+      );
       const [initialLoading, setInitialLoading] = useState<boolean>(true);
       const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<
         Record<string, boolean>
@@ -111,8 +135,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         for (const c of cats) out[c.id] = 0;
 
         for (const e of events) {
+          const event = e as ScheduleEventLike;
           let cid: string | undefined;
-          const evCat = (e as any).category;
+          const evCat = event.category;
           if (evCat && typeof evCat === "object") {
             // if event category id already matches an app category, use it
             if (cats.find((c) => c.id === evCat.id)) {
@@ -125,8 +150,8 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           }
 
           // fallback: if event provided a categoryId that matches app categories, use it
-          if (!cid && (e as any).categoryId) {
-            const cidTry = (e as any).categoryId as string;
+          if (!cid && event.categoryId) {
+            const cidTry = event.categoryId;
             if (cats.find((c) => c.id === cidTry)) cid = cidTry;
           }
 
@@ -143,11 +168,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         for (const s of sts) out[s.id] = 0;
 
         for (const e of events) {
+          const event = e as ScheduleEventLike;
           let sid: string | undefined;
-          const evStatus = (e as any).status as
-            | Record<string, any>
-            | undefined
-            | null;
+          const evStatus = event.status;
           if (evStatus && typeof evStatus === "object") {
             if (evStatus.id) sid = evStatus.id;
             else if (evStatus.code) {
@@ -156,8 +179,8 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             }
           }
 
-          if (!sid && (e as any).statusId) {
-            const sidTry = (e as any).statusId as string;
+          if (!sid && event.statusId) {
+            const sidTry = event.statusId;
             if (sts.find((s) => s.id === sidTry)) sid = sidTry;
           }
 
@@ -209,30 +232,27 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         if (!hasCategorySelection && !hasStatusSelection) return events;
 
         return events.filter((e) => {
+          const event = e as ScheduleEventLike;
           // category filter
           if (hasCategorySelection) {
-            const cid = (e as any).categoryId as string | undefined;
+            const cid = event.categoryId;
             if (cid && !(selectedCategoryIds[cid] ?? true)) return false;
           }
 
           // status filter
           if (hasStatusSelection) {
             let sid: string | undefined;
-            const evStatus = (e as any).status as
-              | Record<string, any>
-              | undefined
-              | null;
+            const evStatus = event.status;
             if (evStatus && typeof evStatus === "object") {
               if (evStatus.id) sid = evStatus.id;
               else if (evStatus.code) {
                 const match = (statuses ?? []).find(
-                  (c: any) => c.code === evStatus.code
+                  (c) => c.code === evStatus.code
                 );
                 if (match) sid = match.id;
               }
             }
-            if (!sid && (e as any).statusId)
-              sid = (e as any).statusId as string;
+            if (!sid && event.statusId) sid = event.statusId;
             if (sid && !(selectedStatusIds[sid] ?? true)) return false;
           }
 
@@ -241,43 +261,57 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       }, [events, selectedCategoryIds, selectedStatusIds, statuses]);
 
       const fetchRange = React.useCallback(
-        async (from: string, to: string): Promise<ScheduleEvent[]> => {
+        async (
+          from: string,
+          to: string,
+          options?: {
+            viewMode?: "month" | "week" | "day";
+            includeViewHint?: boolean;
+          }
+        ): Promise<ScheduleEvent[]> => {
           // ensure we request the full month range: first day -> last day
           const monthFrom = dayjs(from).startOf("month").format("YYYY-MM-DD");
           const monthTo = dayjs(to).endOf("month").format("YYYY-MM-DD");
+          const viewMode = options?.viewMode ?? "month";
+          const includeViewHint =
+            options?.includeViewHint ?? viewMode === "month";
           try {
-            const ev = await api.getEvents({
+            const rangeResult = await api.getEventsWithHint({
               from: monthFrom,
               to: monthTo,
               workspaceId: workspaceId ?? null,
+              calendarView: viewMode,
+              includeViewHint,
+              monthCellVisibleLimit: 2,
+              monthViewTimeZone: "America/Sao_Paulo",
             });
+            const ev = rangeResult.events ?? [];
+            setMonthViewHint(viewMode === "month" ? rangeResult.monthViewHint : null);
             // fetched events for month
 
             // normalize event.categoryId to match application categories when possible (match by code or id)
-            const mapped = (ev ?? []).map((e: any) => {
+            const mapped = (ev ?? []).map((e) => {
+              const event = e as ScheduleEventLike;
               try {
-                const evCat = e?.category as
-                  | Record<string, any>
-                  | undefined
-                  | null;
+                const evCat = event?.category;
                 let appCatId: string | undefined;
                 if (categories && categories.length > 0) {
                   if (evCat && evCat.code) {
                     const foundByCode = (categories ?? []).find(
-                      (c: any) => c.code === evCat.code
+                      (c) => c.code === evCat.code
                     );
                     if (foundByCode) appCatId = foundByCode.id;
                   }
-                  if (!appCatId && e?.categoryId) {
+                  if (!appCatId && event?.categoryId) {
                     const foundById = (categories ?? []).find(
-                      (c: any) => c.id === e.categoryId
+                      (c) => c.id === event.categoryId
                     );
                     if (foundById) appCatId = foundById.id;
                   }
                 }
                 return {
-                  ...e,
-                  categoryId: appCatId ?? e.categoryId,
+                  ...event,
+                  categoryId: appCatId ?? event.categoryId,
                 } as ScheduleEvent;
               } catch (err) {
                 return e as ScheduleEvent;
@@ -288,6 +322,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             return mapped;
           } catch (err) {
             // fetchRange error
+            setMonthViewHint(null);
             return [];
           }
         },
@@ -325,7 +360,10 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             return;
           }
           try {
-            const fetched = await fetchRange(from, to);
+            const fetched = await fetchRange(from, to, {
+              viewMode: "month",
+              includeViewHint: true,
+            });
             if (Array.isArray(fetched)) {
               initialEventsByWorkspace.set(initialFetchKey, fetched);
             }
@@ -349,9 +387,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           categoryId: draft.categoryId,
           // derive categoryCode from application categories when available
           categoryCode:
-            (categories ?? []).find((c: any) => c.id === draft.categoryId)
+            (categories ?? []).find((c) => c.id === draft.categoryId)
               ?.code ??
-            (categories ?? []).find((c: any) => c.id === draft.categoryId)?.id,
+            (categories ?? []).find((c) => c.id === draft.categoryId)?.id,
           description: draft.description,
           durationMinutes: draft.durationMinutes ?? null,
         };
@@ -369,7 +407,10 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         // refresh current month
         const from = dayjs().startOf("month").format("YYYY-MM-DD");
         const to = dayjs().endOf("month").format("YYYY-MM-DD");
-        const refreshed = await fetchRange(from, to);
+        const refreshed = await fetchRange(from, to, {
+          viewMode: "month",
+          includeViewHint: true,
+        });
         if (Array.isArray(refreshed)) {
           initialEventsByWorkspace.set(initialFetchKey, refreshed);
         }
@@ -391,8 +432,8 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       }) => {
         try {
           loadingService.show();
-          if ((api as any).updateEvent) {
-            await (api as any).updateEvent({
+          if (api.updateEvent) {
+            await api.updateEvent({
               id: args.id,
               event: args.event,
               serviceIds: args.serviceIds,
@@ -407,7 +448,10 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // refresh current month
           const from = dayjs().startOf("month").format("YYYY-MM-DD");
           const to = dayjs().endOf("month").format("YYYY-MM-DD");
-          const refreshed = await fetchRange(from, to);
+          const refreshed = await fetchRange(from, to, {
+            viewMode: "month",
+            includeViewHint: true,
+          });
           if (Array.isArray(refreshed)) {
             initialEventsByWorkspace.set(initialFetchKey, refreshed);
           }
@@ -434,6 +478,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           onUpdate={handleUpdate}
           events={filteredEvents}
           onRangeChange={fetchRange}
+          monthViewHint={monthViewHint}
           categories={categories ?? null}
           categoryCounts={categoryCounts}
           selectedCategoryIds={selectedCategoryIds}
@@ -484,7 +529,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         // also fetch shared application event categories and expose to template via window fallback
         try {
           const appCatsRaw = await categoriesPromise;
-          const appCats = appCatsRaw ? mapCategoriesWithColor(appCatsRaw as any) : null;
+          const appCats = appCatsRaw
+            ? mapCategoriesWithColor(appCatsRaw)
+            : null;
           // also fetch statuses for schedule updates
           try {
             const sts = await statusesPromise;

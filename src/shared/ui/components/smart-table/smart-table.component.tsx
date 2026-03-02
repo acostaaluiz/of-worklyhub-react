@@ -5,7 +5,7 @@ import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { BaseState } from "@shared/base/interfaces/base-state.interface";
 
-type SmartTableProps<T> = BaseProps & {
+type SmartTableProps<T extends object> = BaseProps & {
   columns: ColumnsType<T>;
   dataSource: T[];
   rowKey?: string | ((record: T) => string);
@@ -15,22 +15,31 @@ type SmartTableProps<T> = BaseProps & {
   topRight?: React.ReactNode;
 };
 
-type SmartTableState<T> = BaseState & {
+type SmartTableState<T extends object> = BaseState & {
   query: string;
   filtered: T[];
 };
-function getValue(record: Record<string, unknown> | null | undefined, dataIndex?: string | number | (string | number)[]): unknown {
+
+function toDataMap(value: DataValue): DataMap | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as DataMap;
+  }
+  return null;
+}
+
+function getValue(
+  record: object | null | undefined,
+  dataIndex?: string | number | (string | number)[]
+): DataValue {
   if (!dataIndex || record == null) return undefined;
 
-  let acc: unknown = record;
+  let acc: DataValue = record as DataMap;
 
   if (Array.isArray(dataIndex)) {
     for (const k of dataIndex) {
-      if (acc && typeof acc === "object") {
-        acc = (acc as Record<string, unknown>)[String(k)];
-      } else {
-        return undefined;
-      }
+      const map = toDataMap(acc);
+      if (!map) return undefined;
+      acc = map[String(k)];
     }
     return acc;
   }
@@ -38,27 +47,26 @@ function getValue(record: Record<string, unknown> | null | undefined, dataIndex?
   if (typeof dataIndex === "string" && dataIndex.includes(".")) {
     const parts = dataIndex.split(".");
     for (const k of parts) {
-      if (acc && typeof acc === "object") {
-        acc = (acc as Record<string, unknown>)[k];
-      } else {
-        return undefined;
-      }
+      const map = toDataMap(acc);
+      if (!map) return undefined;
+      acc = map[k];
     }
     return acc;
   }
 
-  if (acc && typeof acc === "object") {
-    return (acc as Record<string, unknown>)[String(dataIndex)];
-  }
-
-  return undefined;
+  const map = toDataMap(acc);
+  if (!map) return undefined;
+  return map[String(dataIndex)];
 }
 
-export class SmartTable<T extends Record<string, unknown>> extends BaseComponent<SmartTableProps<T>, SmartTableState<T>> {
+export class SmartTable<T extends object> extends BaseComponent<SmartTableProps<T>, SmartTableState<T>> {
   public state: SmartTableState<T> = { isLoading: false, error: undefined, query: "", filtered: [] } as SmartTableState<T>;
 
   protected renderView(): React.ReactNode {
     const { columns, dataSource, rowKey, pageSize = 10 } = this.props;
+    const isCompactViewport =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 1024px)").matches;
 
     const mappedColumns: ColumnsType<T> = columns.map((col) => {
       // add client-side sorter when possible
@@ -68,8 +76,8 @@ export class SmartTable<T extends Record<string, unknown>> extends BaseComponent
         return {
           ...col,
           sorter: (a: T, b: T) => {
-            const va = getValue(a as unknown as Record<string, unknown>, dataIndex);
-            const vb = getValue(b as unknown as Record<string, unknown>, dataIndex);
+            const va = getValue(a, dataIndex);
+            const vb = getValue(b, dataIndex);
             if (va == null && vb == null) return 0;
             if (va == null) return -1;
             if (vb == null) return 1;
@@ -84,14 +92,27 @@ export class SmartTable<T extends Record<string, unknown>> extends BaseComponent
 
     return (
       <div>
-        <div style={{ marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Input.Search placeholder="Search" allowClear onSearch={this.handleSearch} onChange={(e) => this.handleSearch((e.target as HTMLInputElement).value)} style={{ width: 280 }} />
+        <div style={{ marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", minWidth: 0, flex: "1 1 320px" }}>
+            <Input.Search
+              placeholder="Search"
+              allowClear
+              onSearch={this.handleSearch}
+              onChange={(e) => this.handleSearch((e.target as HTMLInputElement).value)}
+              style={{ width: "min(280px, 100%)" }}
+            />
             {this.props.topLeft}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>{this.props.topRight}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>{this.props.topRight}</div>
         </div>
-        <Table rowKey={rowKey ?? "id"} columns={mappedColumns} dataSource={this.state.filtered.length ? this.state.filtered : dataSource} pagination={{ pageSize }} />
+        <Table
+          rowKey={rowKey ?? "id"}
+          columns={mappedColumns}
+          dataSource={this.state.filtered.length ? this.state.filtered : dataSource}
+          pagination={{ pageSize, size: isCompactViewport ? "small" : undefined }}
+          size={isCompactViewport ? "small" : "middle"}
+          scroll={isCompactViewport ? { x: "max-content" } : undefined}
+        />
       </div>
     );
   }
@@ -120,7 +141,7 @@ export class SmartTable<T extends Record<string, unknown>> extends BaseComponent
 
     const filtered = (dataSource || []).filter((row) => {
       return fields.some((f) => {
-        const v = getValue(row as unknown as Record<string, unknown>, String(f));
+        const v = getValue(row, String(f));
         return (typeof v === "string" && v.toLowerCase().includes(query)) || (typeof v === "number" && String(v).includes(query));
       });
     });

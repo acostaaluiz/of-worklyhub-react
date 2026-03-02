@@ -1,37 +1,82 @@
-import React from "react";
+import type { ReactNode } from "react";
+import { Sparkles } from "lucide-react";
+
 import { BaseTemplate } from "@shared/base/base.template";
 import { ServicesFinanceList } from "@modules/finance/presentation/components/services-finance-list/services-finance-list.component";
 import { FinanceEntryForm } from "@modules/finance/presentation/components/finance-entry-form/finance-entry-form.component";
-import { Grid, LeftPanel, RightPanel } from "@modules/users/presentation/templates/login/login.template.styles";
 import { FinanceKpis } from "@modules/finance/presentation/components/finance-kpis/finance-kpis.component";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import type {
+  FinanceEntryListItem,
+  FinanceEntryModel,
+} from "@modules/finance/interfaces/finance-entry.model";
+import {
+  ContentGrid,
+  HeaderCopy,
+  HeaderIcon,
+  HeaderMain,
+  HeaderRow,
+  HeaderSubtitle,
+  HeaderTitle,
+  MainPanel,
+  SidePanel,
+  SidePanelInner,
+  TemplateShell,
+} from "../shared/finance-operations.template.styles";
 
 type Props = {
-  selectedService?: any;
-  onSelectService?: (svc: any, suggestedCents: number) => void;
-  onSaved?: (entry: any) => void;
+  selectedService?: CompanyServiceModel & { suggestedCents?: number };
+  onSelectService?: (svc: CompanyServiceModel, suggestedCents: number) => void;
+  onSaved?: (entry: FinanceEntryModel | FinanceEntryListItem) => void;
 };
 
-export function ServicesFinanceTemplate({ selectedService, onSelectService, onSaved }: Props) {
+export function ServicesFinanceTemplate({
+  selectedService,
+  onSelectService,
+  onSaved,
+}: Props): ReactNode {
   return (
     <BaseTemplate
       content={
-        <>
-          <Grid>
-            <LeftPanel>
-              <h2>Serviços e sugestões</h2>
-              <p>Lista de serviços da sua empresa com sugestões de preço baseadas em histórico.</p>
+        <TemplateShell>
+          <HeaderRow>
+            <HeaderMain>
+              <HeaderIcon>
+                <Sparkles size={20} />
+              </HeaderIcon>
+              <HeaderCopy>
+                <HeaderTitle>Services and suggestions</HeaderTitle>
+                <HeaderSubtitle>
+                  Service pricing suggestions based on your recent finance history.
+                </HeaderSubtitle>
+              </HeaderCopy>
+            </HeaderMain>
+          </HeaderRow>
+
+          <ContentGrid>
+            <MainPanel>
               <FinanceKpis />
               <ServicesFinanceList onSelect={onSelectService} />
-            </LeftPanel>
+            </MainPanel>
 
-            <RightPanel>
-              <div style={{ width: "100%", maxWidth: 380 }}>
-                <h3>Adicionar lançamento</h3>
-                       <FinanceEntryForm initial={selectedService ? { serviceId: selectedService.id, amount: (selectedService.suggestedCents ?? 0) / 100 } : undefined} onSaved={onSaved} />
-              </div>
-            </RightPanel>
-          </Grid>
-        </>
+            <SidePanel>
+              <SidePanelInner>
+                <h3 style={{ marginTop: 0 }}>Add entry</h3>
+                <FinanceEntryForm
+                  initial={
+                    selectedService
+                      ? {
+                          serviceId: selectedService.id,
+                          amountCents: selectedService.suggestedCents ?? 0,
+                        }
+                      : undefined
+                  }
+                  onSaved={onSaved}
+                />
+              </SidePanelInner>
+            </SidePanel>
+          </ContentGrid>
+        </TemplateShell>
       }
     />
   );

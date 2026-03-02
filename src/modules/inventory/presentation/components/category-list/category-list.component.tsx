@@ -1,4 +1,3 @@
-import React from "react";
 import { Table, Button, Space } from "antd";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
 
@@ -9,6 +8,10 @@ type Props = {
 };
 
 export function CategoryListComponent({ categories, onEdit, onDeactivate }: Props) {
+  const isCompactViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 1024px)").matches;
+
   const cols = [
     { title: "Name", dataIndex: "name", key: "name" },
     { title: "Description", dataIndex: "description", key: "description" },
@@ -16,7 +19,7 @@ export function CategoryListComponent({ categories, onEdit, onDeactivate }: Prop
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: CategoryModel) => (
+      render: (_: DataMap, record: CategoryModel) => (
         <Space>
           <Button onClick={() => onEdit(record)}>Edit</Button>
           <Button danger onClick={() => onDeactivate(record)}>Deactivate</Button>
@@ -25,7 +28,16 @@ export function CategoryListComponent({ categories, onEdit, onDeactivate }: Prop
     },
   ];
 
-  return <Table rowKey="id" columns={cols} dataSource={categories} pagination={{ pageSize: 10 }} />;
+  return (
+    <Table
+      rowKey="id"
+      columns={cols}
+      dataSource={categories}
+      size={isCompactViewport ? "small" : "middle"}
+      pagination={{ pageSize: 10, size: "small" }}
+      scroll={{ x: 760 }}
+    />
+  );
 }
 
 export default CategoryListComponent;

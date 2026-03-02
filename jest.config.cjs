@@ -1,0 +1,46 @@
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/src'],
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
+  moduleNameMapper: {
+    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@core/http/client.instance$': '<rootDir>/src/__mocks__/client.instance.mock.ts',
+    '^@core/utils/mask$': '<rootDir>/src/__mocks__/mask.mock.ts',
+    '^@modules/work-order/services/work-order-api$': '<rootDir>/src/__mocks__/work-order-api.mock.ts',
+    '^@core/(.*)$': '<rootDir>/src/core/$1',
+    '^@shared/(.*)$': '<rootDir>/src/shared/$1',
+    '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  testMatch: ['**/?(*.)+(spec|test).ts', '**/?(*.)+(spec|test).tsx'],
+  collectCoverage: true,
+  collectCoverageFrom: [
+    'src/core/auth/**/*.ts',
+    'src/modules/users/services/auth.service.ts',
+    'src/modules/users/services/user.service.ts',
+    'src/modules/users/services/users-api.ts',
+    'src/modules/schedule/services/schedule.service.ts',
+    'src/modules/schedule/services/schedules-api.ts',
+    'src/modules/work-order/services/work-order.http.service.ts',
+    'src/modules/work-order/services/work-order-api.ts',
+  ],
+  coverageThreshold: {
+    'src/core/auth/': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/users/services/auth.service.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/users/services/user.service.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/users/services/users-api.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/schedule/services/schedule.service.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/schedule/services/schedules-api.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/work-order/services/work-order.http.service.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+    'src/modules/work-order/services/work-order-api.ts': { branches: 80, functions: 80, lines: 80, statements: 80 },
+  },
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.app.json',
+      isolatedModules: true,
+    },
+  },
+};

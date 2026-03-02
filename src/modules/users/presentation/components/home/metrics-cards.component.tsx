@@ -1,8 +1,16 @@
-import React from "react";
-import { Card, Row, Col } from "antd";
+import { Col } from "antd";
 import { Calendar, DollarSign, Clock } from "lucide-react";
 import { formatDate } from "@core/utils/mask";
 import { formatMoney } from "@core/utils/currency";
+import {
+  MetricCard,
+  MetricContent,
+  MetricIcon,
+  MetricLabel,
+  MetricMeta,
+  MetricsRow,
+  MetricValue,
+} from "./metrics-cards.component.styles";
 
 type NextAppointment = { title?: string; date?: string; time?: string } | undefined;
 
@@ -12,64 +20,65 @@ type Props = {
   nextAppointment?: NextAppointment;
 };
 
-export default function MetricsCards({ appointmentsToday, revenueThisMonthCents, nextAppointment }: Props) {
-  // use shared util for currency formatting
+export default function MetricsCards({
+  appointmentsToday,
+  revenueThisMonthCents,
+  nextAppointment,
+}: Props) {
   const formatNextLabel = (next?: NextAppointment) => {
     if (!next) return "-";
     const rawTitle = (next.title ?? "").trim();
     const category = rawTitle.includes(":")
       ? rawTitle.split(":")[0].trim()
-      : (rawTitle || "Appointment");
+      : rawTitle || "Appointment";
     const date = formatDate(next.date, "DD/MM");
     const time = next.time ?? "";
     return `${category} - ${date} ${time}`.trim();
   };
 
   return (
-    <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
+    <MetricsRow gutter={[12, 12]}>
       <Col xs={24} sm={8}>
-        <Card className="surface" bodyStyle={{ padding: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--color-surface-2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <MetricCard className="surface">
+          <MetricContent>
+            <MetricIcon>
               <Calendar size={18} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Appointments today</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{appointmentsToday}</div>
-            </div>
-          </div>
-        </Card>
+            </MetricIcon>
+            <MetricMeta>
+              <MetricLabel>Appointments today</MetricLabel>
+              <MetricValue>{appointmentsToday}</MetricValue>
+            </MetricMeta>
+          </MetricContent>
+        </MetricCard>
       </Col>
 
       <Col xs={24} sm={8}>
-        <Card className="surface" bodyStyle={{ padding: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--color-surface-2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <MetricCard className="surface">
+          <MetricContent>
+            <MetricIcon>
               <DollarSign size={18} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Revenue (month)</div>
-              <div style={{ fontWeight: 700, fontSize: 18 }}>{formatMoney(revenueThisMonthCents ?? null)}</div>
-            </div>
-          </div>
-        </Card>
+            </MetricIcon>
+            <MetricMeta>
+              <MetricLabel>Revenue (month)</MetricLabel>
+              <MetricValue>{formatMoney(revenueThisMonthCents ?? null)}</MetricValue>
+            </MetricMeta>
+          </MetricContent>
+        </MetricCard>
       </Col>
 
       <Col xs={24} sm={8}>
-        <Card className="surface" bodyStyle={{ padding: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--color-surface-2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <MetricCard className="surface">
+          <MetricContent>
+            <MetricIcon>
               <Clock size={18} />
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Next appointment</div>
-              <div style={{ fontWeight: 700, fontSize: 14 }}>
-                {formatNextLabel(nextAppointment)}
-              </div>
-            </div>
-          </div>
-        </Card>
+            </MetricIcon>
+            <MetricMeta>
+              <MetricLabel>Next appointment</MetricLabel>
+              <MetricValue $compact>{formatNextLabel(nextAppointment)}</MetricValue>
+            </MetricMeta>
+          </MetricContent>
+        </MetricCard>
       </Col>
-    </Row>
+    </MetricsRow>
   );
 }

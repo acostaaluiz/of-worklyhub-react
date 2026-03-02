@@ -1,4 +1,4 @@
 export interface BaseState {
   isLoading: boolean;
-  error?: unknown;
+  error?: DataValue | Error;
 }

@@ -2,7 +2,7 @@
 
 Escopo
 - Controle de produtos, categorias e estoque.
-- Registro de transacoes de entrada/saida.
+- Registro de ledger de movimentos, alertas de minimo e sugestoes simples de compra.
 
 Rotas e entradas
 - Stack: `src/modules/inventory/presentation/stacks/inventory.stack.tsx`.
@@ -15,22 +15,25 @@ Rotas e entradas
 Modelos principais
 - `CategoryModel`: id, name, description, active, createdAt.
 - `ProductModel`: id, name, sku, barcode, unit, categoryId, costCents, priceCents, minStock, location, tags, active, stock, createdAt.
-- `InventoryTransactionModel`: id, productId, type (IN/OUT), quantity, date, note.
+- `InventoryMovement`: id, inventoryItemId, direction (in/out), quantity, previousQuantity, nextQuantity, source, reason.
+- `InventoryAlertsResponse`: summary + alerts + suggestions.
 
 Services
 - `inventory.service.ts`
-  - CRUD mock para produtos e categorias.
-  - `changeStock()` gera transacoes e valida saldo.
+  - Mock legado (evitar para operacoes reais de estoque).
 - `inventory.http.service.ts`
-  - Wrapper HTTP (create/list/get/update/delete).
+  - Wrapper HTTP (create/list/get/update/delete + movements + alerts).
   - Encapsula `InventoryApi` e converte erros.
 - `inventory-api.ts`
-  - Endpoints `/inventory/internal/items`.
-  - Usa payload `CreateInventoryItemPayload`.
+  - Endpoints:
+  - `/inventory/internal/items`
+  - `/inventory/internal/movements`
+  - `/inventory/internal/alerts`
+  - Usa payloads `CreateInventoryItemPayload` e `CreateInventoryMovementPayload`.
 
 Integracoes
 - `schedule` e `work-order` podem referenciar itens de inventory via IDs.
 
 Guardrails
-- Operacoes de estoque devem usar `changeStock()` para manter consistencia.
+- Operacoes de entrada/saida devem usar `createInventoryMovement()` para manter trilha auditavel.
 - Alinhar payload com `CreateInventoryItemPayload` quando integrar com backend.

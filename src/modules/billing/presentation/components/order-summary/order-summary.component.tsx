@@ -31,7 +31,7 @@ const mockPlan = {
   ],
 };
 
-type OrderSummaryState = { isLoading: boolean; error?: unknown; plan?: BillingPlan | null; interval?: BillingCycle };
+type OrderSummaryState = { isLoading: boolean; error?: DataValue; plan?: BillingPlan | null; interval?: BillingCycle };
 
 export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
   public override state: OrderSummaryState = { isLoading: false, error: undefined, plan: undefined, interval: undefined };

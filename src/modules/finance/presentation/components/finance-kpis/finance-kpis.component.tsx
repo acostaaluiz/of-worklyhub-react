@@ -6,6 +6,7 @@ import { formatMoney } from "@core/utils/mask";
 import { FinanceApi } from "@modules/finance/services/finance-api";
 import { httpClient } from "@core/http/client.instance";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
+import type { FinanceEntryListItem } from "@modules/finance/interfaces/finance-entry.model";
 import {
   type FinanceValueContext,
   getFinanceValueColor,
@@ -13,7 +14,7 @@ import {
 
 export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
   const api = useFinanceApi();
-  const [entries, setEntries] = React.useState<any[]>([]);
+  const [entries, setEntries] = React.useState<FinanceEntryListItem[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [dashboardKpis, setDashboardKpis] = React.useState<{
     revenue: number;

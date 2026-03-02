@@ -32,7 +32,7 @@ export type ErrorPresenter = (error: AppError) => {
 };
 
 export type ErrorContextValue = {
-  showError: (error: unknown, options?: ShowErrorOptions) => void;
+  showError: (error: DataValue, options?: ShowErrorOptions) => void;
   showAppError: (error: AppError, options?: ShowErrorOptions) => void;
   closeError: () => void;
   model: ErrorModalModel;

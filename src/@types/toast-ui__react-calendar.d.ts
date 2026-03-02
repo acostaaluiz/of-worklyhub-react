@@ -4,23 +4,23 @@ declare module "@toast-ui/react-calendar" {
   type Props = {
     height?: string | number;
     view?: "month" | "week" | "day";
-    calendars?: any[];
-    events?: any[];
-    theme?: any;
-    month?: any;
-    week?: any;
-    day?: any;
+    calendars?: DataMap[];
+    events?: DataMap[];
+    theme?: DataMap;
+    month?: DataMap;
+    week?: DataMap;
+    day?: DataMap;
     usageStatistics?: boolean;
     useDetailPopup?: boolean;
     useFormPopup?: boolean;
-    onClickEvent?: (e: any) => void;
-    onSelectDateTime?: (e: any) => void;
-    ref?: any;
+    onClickEvent?: (e: DataMap) => void;
+    onSelectDateTime?: (e: DataMap) => void;
+    ref?: DataValue;
   };
 
   const Calendar: ComponentType<Props> & {
     prototype: {
-      getInstance?: () => any;
+      getInstance?: () => DataValue;
     };
   };
 

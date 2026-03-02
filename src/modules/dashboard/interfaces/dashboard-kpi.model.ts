@@ -3,4 +3,5 @@ export type DashboardKpiModel = {
   label: string;
   value: number;
   changePct?: number;
+  format?: "money" | "number" | "percent";
 };

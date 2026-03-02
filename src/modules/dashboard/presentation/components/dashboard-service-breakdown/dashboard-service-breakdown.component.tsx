@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { BriefcaseBusiness } from "lucide-react";
 import { formatMoney } from "@core/utils/mask";
 
 import type { DashboardServiceSalesModel } from "../../../interfaces/dashboard-service-sales.model";
@@ -23,7 +24,12 @@ type Props = {
   loading?: boolean;
 };
 
-function CustomTooltip({ active, payload }: any) {
+type ChartTooltipProps<TPayload> = {
+  active?: boolean;
+  payload?: Array<{ payload?: TPayload }>;
+};
+
+function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardServiceSalesModel>) {
   if (!active || !payload?.length) return null;
   const item = payload[0]?.payload as DashboardServiceSalesModel | undefined;
   if (!item) return null;
@@ -87,6 +93,9 @@ export function DashboardServiceBreakdown(props: Props) {
         <div>
           <div className="title">Top services</div>
           <div className="subtitle">Revenue by service</div>
+        </div>
+        <div className="header-icon" aria-hidden="true">
+          <BriefcaseBusiness size={18} />
         </div>
       </WidgetHeader>
 

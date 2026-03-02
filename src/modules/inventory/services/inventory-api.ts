@@ -1,5 +1,5 @@
 import { BaseHttpService } from "@core/http/base-http.service";
-import type { HttpClient } from "@core/http/interfaces/http-client.interface";
+import type { HttpClient, HttpQuery } from "@core/http/interfaces/http-client.interface";
 
 export type CreateInventoryItemPayload = {
   workspaceId: string;
@@ -28,47 +28,193 @@ export type InventoryItem = {
   updatedAt: string;
 };
 
-export type InventoryListResponse = { data: InventoryItem[] };
-export type InventoryItemResponse = { data: InventoryItem };
+export type InventoryMovementDirection = "in" | "out";
+
+export type InventoryMovementSource =
+  | "manual"
+  | "work-order"
+  | "schedule"
+  | "adjustment"
+  | "system";
+
+export type InventoryMovement = {
+  id: string;
+  workspaceId: string;
+  inventoryItemId: string;
+  itemName: string;
+  itemSku?: string | null;
+  direction: InventoryMovementDirection;
+  quantity: number;
+  previousQuantity: number;
+  nextQuantity: number;
+  reason?: string | null;
+  source: InventoryMovementSource;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  unitCostCents?: number | null;
+  occurredAt: string;
+  createdBy?: string | null;
+  metadata?: DataMap | null;
+  createdAt: string;
+};
+
+export type CreateInventoryMovementPayload = {
+  workspaceId: string;
+  inventoryItemId: string;
+  direction: InventoryMovementDirection;
+  quantity: number;
+  reason?: string | null;
+  source?: InventoryMovementSource;
+  referenceType?: string | null;
+  referenceId?: string | null;
+  unitCostCents?: number | null;
+  occurredAt?: string;
+  createdBy?: string | null;
+  metadata?: DataMap | null;
+};
+
+export type ListInventoryMovementsQuery = {
+  inventoryItemId?: string;
+  direction?: InventoryMovementDirection;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type InventoryAlertSeverity = "high" | "medium" | "low";
+
+export type InventoryAlert = {
+  itemId: string;
+  itemName: string;
+  itemSku?: string | null;
+  quantity: number;
+  minQuantity: number;
+  shortageQuantity: number;
+  recentOutput30d: number;
+  severity: InventoryAlertSeverity;
+  coverageDays: number | null;
+};
+
+export type InventoryPurchaseSuggestion = {
+  itemId: string;
+  itemName: string;
+  itemSku?: string | null;
+  suggestedQuantity: number;
+  reason: string;
+};
+
+export type InventoryAlertsResponse = {
+  generatedAt: string;
+  summary: {
+    total: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  alerts: InventoryAlert[];
+  suggestions: InventoryPurchaseSuggestion[];
+};
+
+type InventoryListResponse = { data: InventoryItem[] };
+type InventoryItemResponse = { data: InventoryItem };
+type InventoryMovementListResponse = { data: InventoryMovement[] };
+type InventoryMovementResponse = { data: InventoryMovement };
 
 export class InventoryApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "inventory-api" });
   }
 
+  private buildHeaders(workspaceId?: string): Record<string, string> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    };
+    if (workspaceId) headers["x-workspace-id"] = workspaceId;
+    return headers;
+  }
+
   async createItem(body: CreateInventoryItemPayload): Promise<InventoryItem> {
+    const headers = this.buildHeaders(body.workspaceId);
     const res = await this.post<InventoryItemResponse, CreateInventoryItemPayload>(
       "/inventory/internal/items",
-      body
+      body,
+      headers
     );
     return res?.data as InventoryItem;
   }
 
   async listItems(workspaceId: string): Promise<InventoryItem[]> {
-    const q: Record<string, unknown> = { workspaceId };
-    const res = await this.get<InventoryListResponse>("/inventory/internal/items", q);
+    const query: HttpQuery = { workspaceId };
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<InventoryListResponse>(
+      "/inventory/internal/items",
+      query,
+      headers
+    );
     return res?.data ?? [];
   }
 
   async getItem(id: string, workspaceId?: string): Promise<InventoryItem | null> {
-    const q: Record<string, unknown> = {};
-    if (workspaceId) q.workspaceId = workspaceId;
-    const res = await this.get<InventoryItemResponse>(`/inventory/internal/items/${id}`, q);
+    const query: HttpQuery = {};
+    if (workspaceId) query.workspaceId = workspaceId;
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<InventoryItemResponse>(
+      `/inventory/internal/items/${id}`,
+      query,
+      headers
+    );
     return res?.data ?? null;
   }
 
-  async updateItem(id: string, body: Partial<CreateInventoryItemPayload>): Promise<InventoryItem> {
-    const res = await this.patch<InventoryItemResponse, Partial<CreateInventoryItemPayload>>(
-      `/inventory/internal/items/${id}`,
-      body
-    );
+  async updateItem(
+    id: string,
+    body: Partial<CreateInventoryItemPayload> & { workspaceId?: string }
+  ): Promise<InventoryItem> {
+    const headers = this.buildHeaders(body.workspaceId);
+    const res = await this.patch<
+      InventoryItemResponse,
+      Partial<CreateInventoryItemPayload> & { workspaceId?: string }
+    >(`/inventory/internal/items/${id}`, body, headers);
     return res?.data as InventoryItem;
   }
 
   async deleteItem(id: string, workspaceId?: string): Promise<void> {
-    const q: Record<string, unknown> = {};
-    if (workspaceId) q.workspaceId = workspaceId;
-    await this.delete<void>(`/inventory/internal/items/${id}`, q);
+    const query: HttpQuery = {};
+    if (workspaceId) query.workspaceId = workspaceId;
+    const headers = this.buildHeaders(workspaceId);
+    await this.delete<void>(`/inventory/internal/items/${id}`, query, headers);
+  }
+
+  async createMovement(body: CreateInventoryMovementPayload): Promise<InventoryMovement> {
+    const headers = this.buildHeaders(body.workspaceId);
+    const res = await this.post<InventoryMovementResponse, CreateInventoryMovementPayload>(
+      "/inventory/internal/movements",
+      body,
+      headers
+    );
+    return res?.data as InventoryMovement;
+  }
+
+  async listMovements(
+    workspaceId: string,
+    query: ListInventoryMovementsQuery = {}
+  ): Promise<InventoryMovement[]> {
+    const headers = this.buildHeaders(workspaceId);
+    const fullQuery: HttpQuery = { workspaceId, ...query };
+    const res = await this.get<InventoryMovementListResponse>(
+      "/inventory/internal/movements",
+      fullQuery,
+      headers
+    );
+    return res?.data ?? [];
+  }
+
+  async getAlerts(workspaceId: string): Promise<InventoryAlertsResponse> {
+    const headers = this.buildHeaders(workspaceId);
+    const query: HttpQuery = { workspaceId };
+    return this.get<InventoryAlertsResponse>("/inventory/internal/alerts", query, headers);
   }
 }
 

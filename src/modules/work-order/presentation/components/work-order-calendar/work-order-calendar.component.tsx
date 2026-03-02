@@ -1,12 +1,20 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Segmented, Typography } from "antd";
 import dayjs from "dayjs";
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 
 import Calendar from "@toast-ui/calendar";
 import type { EventObject } from "@toast-ui/calendar";
 
-import type { WorkOrder, WorkOrderStatus } from "@modules/work-order/interfaces/work-order.model";
+import type {
+  WorkOrder,
+  WorkOrderStatus,
+} from "@modules/work-order/interfaces/work-order.model";
 import {
   CalendarShell,
   ToolbarRow,
@@ -22,6 +30,25 @@ type Props = {
   onRangeChange?: (from: string, to: string) => Promise<void>;
 };
 
+type CalendarViewMode = "month" | "week" | "day";
+
+type CalendarDefinition = {
+  id: string;
+  name: string;
+  backgroundColor: string;
+  borderColor: string;
+  color: string;
+};
+
+type CalendarInstance = Calendar & {
+  render?: () => void;
+  createEvents?: (events: EventObject[]) => void;
+  setDate?: (date: Date) => void;
+  options?: {
+    events?: EventObject[];
+  };
+};
+
 const statusColorMap: Record<string, string> = {
   opened: "#f59e0b",
   work_in_progress: "#2563eb",
@@ -29,7 +56,14 @@ const statusColorMap: Record<string, string> = {
   canceled: "#ef4444",
 };
 
-const statusPalette = ["#0ea5e9", "#f59e0b", "#10b981", "#a78bfa", "#f97316", "#ef4444"];
+const statusPalette = [
+  "#0ea5e9",
+  "#f59e0b",
+  "#10b981",
+  "#a78bfa",
+  "#f97316",
+  "#ef4444",
+];
 
 const defaultColor = "#1e70ff";
 
@@ -47,7 +81,10 @@ function resolveDateRange(order: WorkOrder): { start: Date; end: Date } | null {
 
   let end = order.scheduledEndAt ? dayjs(order.scheduledEndAt) : null;
   if (!end || !end.isValid()) {
-    const duration = typeof order.estimatedDurationMinutes === "number" ? order.estimatedDurationMinutes : 60;
+    const duration =
+      typeof order.estimatedDurationMinutes === "number"
+        ? order.estimatedDurationMinutes
+        : 60;
     end = start.add(Math.max(duration, 30), "minute");
   }
 
@@ -59,8 +96,8 @@ function resolveDateRange(order: WorkOrder): { start: Date; end: Date } | null {
 }
 
 function buildCalendarOptions(args: {
-  viewMode: string;
-  calendars: Array<Record<string, any>>;
+  viewMode: CalendarViewMode;
+  calendars: CalendarDefinition[];
   events: EventObject[];
 }) {
   return {
@@ -77,16 +114,23 @@ function buildCalendarOptions(args: {
       visibleWeeksCount: 0,
       isAlways6Weeks: false,
     },
-  } as any;
+  };
 }
 
-export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: Props) {
+export function WorkOrderCalendar({
+  orders,
+  statuses,
+  loading,
+  onRangeChange,
+}: Props) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const instanceRef = useRef<Calendar | null>(null);
+  const instanceRef = useRef<CalendarInstance | null>(null);
 
-  const [viewMode, setViewMode] = useState<string>("month");
-  const [headerLabel, setHeaderLabel] = useState<string>(dayjs().format("MMMM YYYY"));
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
+  const [headerLabel, setHeaderLabel] = useState<string>(
+    dayjs().format("MMMM YYYY")
+  );
   const [search, setSearch] = useState<string>("");
 
   const statusColorsById = useMemo(() => {
@@ -98,8 +142,8 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
     return map;
   }, [statuses]);
 
-  const calendars = useMemo(() => {
-    const base = [
+  const calendars = useMemo<CalendarDefinition[]>(() => {
+    const base: CalendarDefinition[] = [
       {
         id: "default",
         name: "Work orders",
@@ -157,7 +201,7 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
 
       const detailText = [order.description?.trim(), `Priority: ${order.priority}`]
         .filter(Boolean)
-        .join(" • ");
+        .join(" - ");
 
       out.push({
         id: order.id,
@@ -182,14 +226,14 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
   }, [filteredOrders, statusColorsById]);
 
   const refreshHeaderLabel = () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     const date = inst?.getDate?.();
     if (!date) return;
     setHeaderLabel(dayjs(date).format("MMMM YYYY"));
   };
 
   const loadMonthRange = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst || !onRangeChange) return;
     const date = inst.getDate?.();
     if (!date) return;
@@ -209,7 +253,7 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
   };
 
   const handlePrev = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     inst.prev();
     refreshHeaderLabel();
@@ -217,7 +261,7 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
   };
 
   const handleNext = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     inst.next();
     refreshHeaderLabel();
@@ -225,7 +269,7 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
   };
 
   const handleToday = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     inst.today();
     refreshHeaderLabel();
@@ -248,7 +292,7 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
         calendars,
         events: [],
       })
-    );
+    ) as CalendarInstance;
 
     instanceRef.current = inst;
 
@@ -269,25 +313,23 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
   }, [viewMode, calendars]);
 
   useEffect(() => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
 
     try {
       if (typeof inst.clear === "function" && typeof inst.createEvents === "function") {
         inst.clear();
-        if (tuiEvents && tuiEvents.length > 0) inst.createEvents(tuiEvents);
+        if (tuiEvents.length > 0) inst.createEvents(tuiEvents);
         inst.render?.();
         refreshHeaderLabel();
       } else {
-        try {
-          (inst as any).options.events = tuiEvents;
-        } catch (err) {
-          void err;
+        if (inst.options) {
+          inst.options.events = tuiEvents;
         }
         inst.render?.();
       }
-    } catch (err) {
-      void err;
+    } catch (error) {
+      void error;
     }
   }, [tuiEvents]);
 
@@ -339,7 +381,12 @@ export function WorkOrderCalendar({ orders, statuses, loading, onRangeChange }: 
               >
                 <Segmented
                   value={viewMode}
-                  onChange={(v) => setViewMode(String(v))}
+                  onChange={(v) => {
+                    const next = String(v);
+                    if (next === "month" || next === "week" || next === "day") {
+                      setViewMode(next);
+                    }
+                  }}
                   options={[
                     { label: "Month", value: "month" },
                     { label: "Week", value: "week" },

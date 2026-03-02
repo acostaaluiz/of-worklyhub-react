@@ -20,11 +20,17 @@ export const WidgetCard = styled.div`
   min-width: 0;
   min-height: 0;
   height: 100%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-primary) 20%, transparent) 0%, transparent 45%),
+    var(--color-surface);
 `;
 
 export const WidgetHeader = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
 
@@ -37,12 +43,27 @@ export const WidgetHeader = styled.div`
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
   }
+
+  .header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
+  }
 `;
 
 export const WidgetBody = styled.div`
   flex: 1;
   min-height: 0;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 export const TooltipCard = styled.div`

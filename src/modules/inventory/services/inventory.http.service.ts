@@ -1,14 +1,16 @@
-import { httpClient } from "@core/http/client.instance";
 import { toAppError } from "@core/errors/to-app-error";
-import InventoryApi, { CreateInventoryItemPayload, InventoryItem } from "./inventory-api";
+import { httpClient } from "@core/http/client.instance";
+import InventoryApi, {
+  type CreateInventoryItemPayload,
+  type CreateInventoryMovementPayload,
+  type InventoryAlertsResponse,
+  type InventoryItem,
+  type InventoryMovement,
+  type ListInventoryMovementsQuery,
+} from "./inventory-api";
 
-/**
- * HTTP wrapper for Inventory API.
- * Follows the same pattern as other modules: expose a service class that
- * wraps the lower-level Api class and converts errors to AppError.
- */
 export class InventoryHttpService {
-  private api = new InventoryApi(httpClient);
+  private readonly api = new InventoryApi(httpClient);
 
   async createItem(payload: CreateInventoryItemPayload): Promise<InventoryItem> {
     try {
@@ -34,7 +36,10 @@ export class InventoryHttpService {
     }
   }
 
-  async updateItem(id: string, patch: Partial<CreateInventoryItemPayload>): Promise<InventoryItem> {
+  async updateItem(
+    id: string,
+    patch: Partial<CreateInventoryItemPayload> & { workspaceId?: string }
+  ): Promise<InventoryItem> {
     try {
       return await this.api.updateItem(id, patch);
     } catch (err) {
@@ -49,12 +54,40 @@ export class InventoryHttpService {
       throw toAppError(err);
     }
   }
+
+  async createMovement(payload: CreateInventoryMovementPayload): Promise<InventoryMovement> {
+    try {
+      return await this.api.createMovement(payload);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async listMovements(
+    workspaceId: string,
+    query: ListInventoryMovementsQuery = {}
+  ): Promise<InventoryMovement[]> {
+    try {
+      return await this.api.listMovements(workspaceId, query);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async getAlerts(workspaceId: string): Promise<InventoryAlertsResponse> {
+    try {
+      return await this.api.getAlerts(workspaceId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
 }
 
 export const inventoryHttpService = new InventoryHttpService();
 
-// Backwards-compatible named functions (some modules import these directly)
-export async function createInventoryItem(payload: CreateInventoryItemPayload): Promise<InventoryItem> {
+export async function createInventoryItem(
+  payload: CreateInventoryItemPayload
+): Promise<InventoryItem> {
   return inventoryHttpService.createItem(payload);
 }
 
@@ -62,11 +95,17 @@ export async function listInventoryItems(workspaceId: string): Promise<Inventory
   return inventoryHttpService.listItems(workspaceId);
 }
 
-export async function getInventoryItem(id: string, workspaceId?: string): Promise<InventoryItem | null> {
+export async function getInventoryItem(
+  id: string,
+  workspaceId?: string
+): Promise<InventoryItem | null> {
   return inventoryHttpService.getItem(id, workspaceId);
 }
 
-export async function updateInventoryItem(id: string, patch: Partial<CreateInventoryItemPayload>): Promise<InventoryItem> {
+export async function updateInventoryItem(
+  id: string,
+  patch: Partial<CreateInventoryItemPayload> & { workspaceId?: string }
+): Promise<InventoryItem> {
   return inventoryHttpService.updateItem(id, patch);
 }
 
@@ -74,4 +113,24 @@ export async function deleteInventoryItem(id: string, workspaceId?: string): Pro
   return inventoryHttpService.deleteItem(id, workspaceId);
 }
 
+export async function createInventoryMovement(
+  payload: CreateInventoryMovementPayload
+): Promise<InventoryMovement> {
+  return inventoryHttpService.createMovement(payload);
+}
+
+export async function listInventoryMovements(
+  workspaceId: string,
+  query: ListInventoryMovementsQuery = {}
+): Promise<InventoryMovement[]> {
+  return inventoryHttpService.listMovements(workspaceId, query);
+}
+
+export async function getInventoryAlerts(
+  workspaceId: string
+): Promise<InventoryAlertsResponse> {
+  return inventoryHttpService.getAlerts(workspaceId);
+}
+
 export default inventoryHttpService;
+

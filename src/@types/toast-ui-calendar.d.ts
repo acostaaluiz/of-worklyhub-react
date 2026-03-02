@@ -19,10 +19,10 @@ declare module "@toast-ui/calendar" {
     start: Date;
     end: Date;
     isAllDay?: boolean;
-    raw?: Record<string, unknown>;
+    raw?: DataMap;
   };
 
-  export type CalendarTheme = Record<string, unknown>;
+  export type CalendarTheme = DataMap;
 
   export type CalendarOptions = {
     defaultView?: CalendarView;
@@ -30,9 +30,9 @@ declare module "@toast-ui/calendar" {
     events?: EventObject[];
     theme?: CalendarTheme;
 
-    month?: Record<string, unknown>;
-    week?: Record<string, unknown>;
-    day?: Record<string, unknown>;
+    month?: DataMap;
+    week?: DataMap;
+    day?: DataMap;
 
     usageStatistics?: boolean;
     useDetailPopup?: boolean;
@@ -43,7 +43,7 @@ declare module "@toast-ui/calendar" {
     event?: EventObject;
   };
 
-  export type CalendarSelectDateTimeEvent = Record<string, unknown>;
+  export type CalendarSelectDateTimeEvent = DataMap;
 
   /**
    * Default export = classe real do calendário.

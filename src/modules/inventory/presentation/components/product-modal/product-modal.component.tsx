@@ -11,20 +11,46 @@ import { ModalOverrides } from "@modules/schedule/presentation/components/schedu
 type Props = BaseProps & {
   open: boolean;
   onClose: () => void;
-  onSaved?: (payload: Omit<ProductModel, "id" | "createdAt">, id?: string) => Promise<any> | void;
+  onSaved?: (
+    payload: Omit<ProductModel, "id" | "createdAt">,
+    id?: string
+  ) => Promise<void> | void;
   initial?: Partial<ProductModel> | null;
   workspaceId?: string | undefined;
   categories?: Array<{ id: string; name: string }>;
 };
 
+type ProductFormValues = {
+  name?: string;
+  sku?: string;
+  description?: string;
+  barcode?: string;
+  unit?: string;
+  categoryId?: string;
+  costCents?: number;
+  priceCents?: number;
+  minStock?: number;
+  location?: string;
+  tags?: string[];
+  active?: boolean;
+  stock?: number;
+};
+
 type State = {
   isLoading: boolean;
-  error?: unknown;
+  error?: DataValue;
   submitting: boolean;
 };
 
+function toDataMap(value: DataValue | undefined): DataMap | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) {
+    return null;
+  }
+  return value;
+}
+
 export class ProductModal extends BaseComponent<Props, State> {
-  private formRef = React.createRef<FormInstance>();
+  private formRef = React.createRef<FormInstance<ProductFormValues>>();
   constructor(props: Props) {
     super(props);
     this.state = { isLoading: false, error: undefined, submitting: false };
@@ -36,33 +62,53 @@ export class ProductModal extends BaseComponent<Props, State> {
     }
   }
 
-  private handleSubmit = async (data: Omit<ProductModel, "id" | "createdAt">) => {
+  private handleSubmit = async (values: ProductFormValues) => {
     const { initial, onSaved } = this.props;
     try {
       this.setSafeState({ submitting: true });
 
-      const payload: any = {
-        name: data.name,
-        sku: data.sku ?? null,
-        category: data.categoryId ?? null,
-        quantity: data.stock ?? 0,
-        minQuantity: data.minStock ?? 0,
-        location: data.location ?? null,
-        priceCents: typeof data.priceCents === "number" ? moneyToCents(data.priceCents) : 0,
-        isActive: data.active ?? true,
+      const payload: Omit<ProductModel, "id" | "createdAt"> = {
+        name: values.name?.trim() ?? "",
+        sku: values.sku,
+        description: values.description,
+        barcode: values.barcode,
+        unit: values.unit ?? "un",
+        categoryId: values.categoryId,
+        costCents:
+          typeof values.costCents === "number"
+            ? moneyToCents(values.costCents)
+            : undefined,
+        priceCents:
+          typeof values.priceCents === "number"
+            ? moneyToCents(values.priceCents)
+            : undefined,
+        minStock: typeof values.minStock === "number" ? values.minStock : 0,
+        location: values.location,
+        tags: values.tags,
+        active: values.active ?? true,
+        stock: typeof values.stock === "number" ? values.stock : 0,
       };
 
-      if (onSaved) await onSaved(payload, (initial as any)?.id);
+      if (onSaved) {
+        await onSaved(payload, initial?.id);
+      }
 
       this.setSafeState({ submitting: false });
     } catch (err) {
-      this.setSafeState({ submitting: false, error: err });
+      const error = err as DataValue;
+      this.setSafeState({ submitting: false, error });
 
       // If backend returned a duplicate-name error, show specific feedback and mark the name field
-      const details = (err as any)?.details ?? (err as any)?.response?.data ?? undefined;
-      const status = (err as any)?.statusCode ?? (err as any)?.response?.status;
-      const code = details?.error?.code ?? details?.code;
-      const dupMessage = details?.error?.message ?? details?.message;
+      const root = toDataMap(error);
+      const response = toDataMap(root?.response);
+      const details = toDataMap(root?.details) ?? toDataMap(response?.data);
+      const detailsError = toDataMap(details?.error);
+      const statusValue = root?.statusCode ?? response?.status;
+      const status = typeof statusValue === "number" ? statusValue : undefined;
+      const codeValue = detailsError?.code ?? details?.code;
+      const code = typeof codeValue === "string" ? codeValue : undefined;
+      const dupMessageValue = detailsError?.message ?? details?.message;
+      const dupMessage = typeof dupMessageValue === "string" ? dupMessageValue : undefined;
 
       if (status === 409 && code === "DUPLICATE_NAME") {
         const msg = dupMessage ?? "A product with this name already exists. Please choose another name.";
@@ -75,14 +121,31 @@ export class ProductModal extends BaseComponent<Props, State> {
         return;
       }
 
-      message.error((err as any)?.message ?? "Failed to save item");
+      const fallbackMessage =
+        typeof root?.message === "string" ? root.message : "Failed to save item";
+      message.error(fallbackMessage);
       throw err;
     }
   };
 
   protected renderView(): React.ReactNode {
-    const { open, onClose, initial } = this.props;
+    const { open, onClose, initial, categories = [] } = this.props;
     const moneyInput = getMoneyInput();
+    const initialValues: ProductFormValues = {
+      stock: 0,
+      unit: "un",
+      active: true,
+      ...(initial ?? {}),
+      priceCents:
+        typeof initial?.priceCents === "number"
+          ? centsToMoney(initial.priceCents)
+          : undefined,
+      costCents:
+        typeof initial?.costCents === "number"
+          ? centsToMoney(initial.costCents)
+          : undefined,
+    };
+
     return (
       <ModalOverrides>
           <Modal
@@ -96,18 +159,12 @@ export class ProductModal extends BaseComponent<Props, State> {
             title={<Typography.Title level={4} style={{ margin: 0 }}>{initial ? "Edit Product" : "New Product"}</Typography.Title>}
           >
           <div style={{ paddingTop: "var(--space-3)" }}>
-            <Form
+            <Form<ProductFormValues>
               ref={this.formRef}
+              preserve={false}
               layout="vertical"
-              initialValues={{
-                stock: 0,
-                unit: "un",
-                active: true,
-                ...(initial as any),
-                priceCents: typeof (initial as any)?.priceCents === "number" ? centsToMoney((initial as any).priceCents) : undefined,
-                costCents: typeof (initial as any)?.costCents === "number" ? centsToMoney((initial as any).costCents) : undefined,
-              }}
-              onFinish={(v) => this.handleSubmit(v as any)}
+              initialValues={initialValues}
+              onFinish={(values) => this.handleSubmit(values)}
             >
               <Row gutter={16}>
                 <Col span={12}>
@@ -129,7 +186,7 @@ export class ProductModal extends BaseComponent<Props, State> {
 
                   <Form.Item name="categoryId" label="Category">
                     <Select allowClear placeholder="Select a category">
-                      {(this.props as any).categories?.map((c: any) => (
+                      {categories.map((c) => (
                         <Select.Option key={c.id} value={c.id}>
                           {c.name}
                         </Select.Option>
@@ -166,7 +223,7 @@ export class ProductModal extends BaseComponent<Props, State> {
               </Row>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                <Button onClick={() => this.props.onClose()}>Cancel</Button>
+                <Button onClick={onClose}>Cancel</Button>
                 <Button type="primary" htmlType="submit" loading={this.state.submitting}>
                   Save
                 </Button>

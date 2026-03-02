@@ -15,12 +15,13 @@ import {
   Space,
   Tabs,
   Timeline,
+  Typography,
   Upload,
   type UploadProps,
   message,
 } from "antd";
 import type { UploadFile } from "antd/es/upload/interface";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 
 import type {
   CreateWorkOrderInput,
@@ -47,6 +48,13 @@ import {
   listWorkOrderHistory,
   updateWorkOrderChecklistItem,
 } from "@modules/work-order/services/work-order.http.service";
+import {
+  APP_DATE_TIME_FORMAT,
+  APP_TIME_FORMAT,
+  formatAppDateTime,
+  toDayjsValue,
+  toIsoDateTimeValue,
+} from "@core/utils/date-time";
 
 const priorityOptions: Array<{ value: WorkOrderPriority; label: string }> = [
   { value: "low", label: "Low" },
@@ -74,7 +82,7 @@ type WorkOrderDraft = {
   estimatedDurationMinutes?: number | null;
   actualDurationMinutes?: number | null;
   completedAt?: string | null;
-  metadata?: Record<string, unknown>;
+  metadata?: DataMap;
   serviceLines?: WorkOrderServiceLineInput[];
   workers?: WorkOrderWorkerInput[];
   inventoryLines?: WorkOrderInventoryLineInput[];
@@ -124,21 +132,8 @@ function LabeledField({ label, children, style }: LabeledFieldProps) {
   );
 }
 
-function toDayjs(value?: string | null): Dayjs | null {
-  if (!value) return null;
-  const d = dayjs(value);
-  return d.isValid() ? d : null;
-}
-
-function fromDayjs(value?: Dayjs | null): string | null {
-  if (!value) return null;
-  return value.toISOString();
-}
-
 function formatDateTime(value?: string | null): string {
-  if (!value) return "--";
-  const d = dayjs(value);
-  return d.isValid() ? d.format("MMM D, YYYY HH:mm") : value;
+  return formatAppDateTime(value, "--");
 }
 
 function buildEmptyDraft(workspaceId?: string, uid?: string | null): WorkOrderDraft {
@@ -215,6 +210,10 @@ export function WorkOrderForm({
   onDelete,
   onCancel,
 }: Props) {
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches;
+
   const [draft, setDraft] = React.useState<WorkOrderDraft>(() =>
     initial ? mapFromInitial(initial) : buildEmptyDraft(workspaceId, currentUserUid)
   );
@@ -446,7 +445,7 @@ export function WorkOrderForm({
   const handleSubmit = () => {
     if (!workspaceId) return;
 
-    let metadata: Record<string, unknown> = {};
+    let metadata: DataMap = {};
     if (metadataText.trim()) {
       try {
         metadata = JSON.parse(metadataText);
@@ -530,12 +529,27 @@ export function WorkOrderForm({
     return Array.from(optionsMap.values()).sort((a, b) => a.label.localeCompare(b.label));
   }, [services, draft.serviceLines]);
 
-  const inventoryItemOptions = React.useMemo(() => {
-    const optionsMap = new Map<string, { value: string; label: string }>();
+  const inventoryById = React.useMemo(() => {
+    const map = new Map<string, InventoryItem>();
     (inventoryItems ?? []).forEach((item) => {
       if (!item.id) return;
-      const label = item.sku ? `${item.name} (${item.sku})` : item.name;
-      optionsMap.set(item.id, { value: item.id, label });
+      map.set(item.id, item);
+    });
+    return map;
+  }, [inventoryItems]);
+
+  const inventoryItemOptions = React.useMemo(() => {
+    const optionsMap = new Map<string, { value: string; label: string; disabled?: boolean }>();
+    (inventoryItems ?? []).forEach((item) => {
+      if (!item.id) return;
+      const baseLabel = item.sku ? `${item.name} (${item.sku})` : item.name;
+      const stockLabel = `Stock: ${Math.max(0, Number(item.quantity ?? 0))}`;
+      const inactiveLabel = item.isActive ? "" : " - Inactive";
+      optionsMap.set(item.id, {
+        value: item.id,
+        label: `${baseLabel} - ${stockLabel}${inactiveLabel}`,
+        disabled: !item.isActive,
+      });
     });
 
     (draft.inventoryLines ?? []).forEach((line) => {
@@ -1048,7 +1062,7 @@ export function WorkOrderForm({
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <div style={{ fontWeight: 500 }}>{file.name}</div>
                   <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-                    {file.type || "Unknown type"}
+                    {file.type || "DataValue type"}
                     {fileSize ? ` • ${fileSize}` : ""}
                   </div>
                 </div>
@@ -1070,13 +1084,13 @@ export function WorkOrderForm({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", minHeight: 0 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", minHeight: 0, maxWidth: "100%", overflowX: "hidden" }}>
       {attachmentsModal}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div style={{ fontWeight: 600, fontSize: 16 }}>
           {isEditing ? "Edit work order" : "New work order"}
         </div>
-        <Space>
+        <Space wrap>
           <Button onClick={() => setAttachmentsOpen(true)}>
             Attachments{attachmentFiles.length ? ` (${attachmentFiles.length})` : ""}
           </Button>
@@ -1089,9 +1103,11 @@ export function WorkOrderForm({
         </Space>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", paddingRight: 4 }}>
+      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", paddingRight: 4, maxWidth: "100%" }}>
         <Tabs
           defaultActiveKey="general"
+          tabBarGutter={isMobileViewport ? 8 : 16}
+          style={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}
           items={[
           {
             key: "general",
@@ -1178,18 +1194,20 @@ export function WorkOrderForm({
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
                   <LabeledField label="Scheduled start">
                     <DatePicker
-                      showTime
+                      showTime={{ format: APP_TIME_FORMAT }}
+                      format={APP_DATE_TIME_FORMAT}
                       placeholder="Scheduled start"
-                      value={toDayjs(draft.scheduledStartAt)}
-                      onChange={(value) => updateDraft({ scheduledStartAt: fromDayjs(value) })}
+                      value={toDayjsValue(draft.scheduledStartAt)}
+                      onChange={(value) => updateDraft({ scheduledStartAt: toIsoDateTimeValue(value) })}
                     />
                   </LabeledField>
                   <LabeledField label="Scheduled end">
                     <DatePicker
-                      showTime
+                      showTime={{ format: APP_TIME_FORMAT }}
+                      format={APP_DATE_TIME_FORMAT}
                       placeholder="Scheduled end"
-                      value={toDayjs(draft.scheduledEndAt)}
-                      onChange={(value) => updateDraft({ scheduledEndAt: fromDayjs(value) })}
+                      value={toDayjsValue(draft.scheduledEndAt)}
+                      onChange={(value) => updateDraft({ scheduledEndAt: toIsoDateTimeValue(value) })}
                     />
                   </LabeledField>
                 </div>
@@ -1197,10 +1215,11 @@ export function WorkOrderForm({
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
                   <LabeledField label="Due at">
                     <DatePicker
-                      showTime
+                      showTime={{ format: APP_TIME_FORMAT }}
+                      format={APP_DATE_TIME_FORMAT}
                       placeholder="Due at"
-                      value={toDayjs(draft.dueAt)}
-                      onChange={(value) => updateDraft({ dueAt: fromDayjs(value) })}
+                      value={toDayjsValue(draft.dueAt)}
+                      onChange={(value) => updateDraft({ dueAt: toIsoDateTimeValue(value) })}
                     />
                   </LabeledField>
                   <LabeledField label="Estimated duration (min)">
@@ -1227,10 +1246,11 @@ export function WorkOrderForm({
                     </LabeledField>
                     <LabeledField label="Completed at">
                       <DatePicker
-                        showTime
+                        showTime={{ format: APP_TIME_FORMAT }}
+                        format={APP_DATE_TIME_FORMAT}
                         placeholder="Completed at"
-                        value={toDayjs(draft.completedAt)}
-                        onChange={(value) => updateDraft({ completedAt: fromDayjs(value) })}
+                        value={toDayjsValue(draft.completedAt)}
+                        onChange={(value) => updateDraft({ completedAt: toIsoDateTimeValue(value) })}
                       />
                     </LabeledField>
                   </div>
@@ -1428,8 +1448,21 @@ export function WorkOrderForm({
                       <div style={{ color: "var(--color-text-muted)" }}>No inventory items.</div>
                     ) : null}
 
-                    {(draft.inventoryLines ?? []).map((line, idx) => (
-                      <Space key={`inventory-${idx}`} wrap style={{ width: "100%" }} align="start">
+                    {(draft.inventoryLines ?? []).map((line, idx) => {
+                      const selectedInventoryItem = inventoryById.get(line.inventoryItemId);
+                      const availableQuantity = Math.max(
+                        0,
+                        Number(selectedInventoryItem?.quantity ?? 0)
+                      );
+                      const plannedQuantity = Math.max(0, Number(line.plannedQuantity ?? 0));
+                      const consumedQuantity = Math.max(0, Number(line.consumedQuantity ?? 0));
+                      const direction = line.direction ?? "output";
+                      const exceedsAvailable =
+                        direction === "output" &&
+                        Math.max(plannedQuantity, consumedQuantity) > availableQuantity;
+
+                      return (
+                        <Space key={`inventory-${idx}`} wrap style={{ width: "100%" }} align="start">
                         <LabeledField label="Inventory item" style={{ width: 220 }}>
                           <Select
                             placeholder="Select inventory item"
@@ -1446,6 +1479,18 @@ export function WorkOrderForm({
                             }
                             style={{ width: "100%" }}
                           />
+                          {line.inventoryItemId ? (
+                            <div style={{ marginTop: 4, fontSize: 12 }}>
+                              <Typography.Text
+                                type={exceedsAvailable ? "danger" : "secondary"}
+                              >
+                                Available: {availableQuantity}
+                                {exceedsAvailable
+                                  ? " - planned/consumed quantity exceeds stock"
+                                  : ""}
+                              </Typography.Text>
+                            </div>
+                          ) : null}
                         </LabeledField>
                         <LabeledField label="Direction" style={{ width: 130 }}>
                           <Select
@@ -1491,7 +1536,8 @@ export function WorkOrderForm({
                           </Button>
                         </div>
                       </Space>
-                    ))}
+                      );
+                    })}
                   </>
                 )}
               </div>

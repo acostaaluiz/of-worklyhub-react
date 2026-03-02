@@ -17,7 +17,7 @@ export abstract class BaseComponent<
     return null;
   }
 
-  protected renderError(_error: unknown): React.ReactNode {
+  protected renderError(_error: DataValue | Error): React.ReactNode {
     return null;
   }
 
@@ -27,19 +27,21 @@ export abstract class BaseComponent<
 
   protected setSafeState<K extends keyof S>(patch: Pick<S, K> | S | ((prev: Readonly<S>) => Pick<S, K> | S)): void {
     if (!this.isMountedFlag) return;
-    this.setState(patch as any);
+    this.setState(patch as S);
   }
 
   protected setLoading(isLoading: boolean): void {
-    this.setSafeState({ isLoading } as unknown as S);
+    this.setSafeState({ isLoading } as S);
   }
 
-  protected setError(error?: unknown): void {
-    this.setSafeState({ error, isLoading: false } as unknown as S);
+  protected setError<TError>(error?: TError): void {
+    const normalizedError =
+      error instanceof Error ? error : (error as DataValue | undefined);
+    this.setSafeState({ error: normalizedError, isLoading: false } as S);
   }
 
   protected clearError(): void {
-    this.setSafeState({ error: undefined } as unknown as S);
+    this.setSafeState({ error: undefined } as S);
   }
 
   protected async runAsync<T>(

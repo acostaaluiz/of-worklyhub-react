@@ -4,6 +4,11 @@ export const TableWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
+
+  .ant-table-wrapper {
+    min-width: 0;
+  }
 `;
 
 export const TableMeta = styled.div`
@@ -13,4 +18,5 @@ export const TableMeta = styled.div`
   gap: var(--space-3);
   color: var(--color-text-muted);
   font-size: 12px;
+  flex-wrap: wrap;
 `;

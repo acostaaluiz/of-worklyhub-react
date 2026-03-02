@@ -37,7 +37,7 @@ import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 
 export class PlanSelector extends BaseComponent<
   BaseProps & { plans?: BillingPlan[]; onSelectPlan?: (planId: string, interval?: BillingInterval) => void; recommendedPlanId?: string },
-  { isLoading: boolean; error?: unknown; interval: BillingInterval; selectedPlanId?: string }
+  { isLoading: boolean; error?: DataValue; interval: BillingInterval; selectedPlanId?: string }
 > {
   public override state = { isLoading: false, error: undefined, interval: "monthly" as BillingInterval, selectedPlanId: undefined };
 
@@ -103,7 +103,7 @@ export class PlanSelector extends BaseComponent<
       monthlyPriceCents: p.priceCents.monthly,
       yearlyPriceCents: p.priceCents.yearly,
       currency: p.currency,
-      highlight: !!(p.recommended ?? (p as any).highlight),
+      highlight: !!(p.recommended ?? (p as DataMap).highlight),
       cta: `Choose ${p.name}`,
       features: p.features ?? [],
     }));

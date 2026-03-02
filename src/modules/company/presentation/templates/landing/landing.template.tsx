@@ -7,21 +7,21 @@ import {
 } from "@shared/ui/components/module-landing/module-landing.component";
 import { companyService, type Workspace } from "@modules/company/services/company.service";
 
-const pickString = (...values: unknown[]): string | undefined => {
+const pickString = (...values: DataValue[]): string | undefined => {
   for (const value of values) {
     if (typeof value === "string" && value.trim().length > 0) return value;
   }
   return undefined;
 };
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+const isRecord = (value: DataValue): value is DataMap =>
   typeof value === "object" && value !== null;
 
 const getWorkspaceId = (ws: Workspace): string | null => {
   if (!ws) return null;
   if (typeof ws.id === "string" && ws.id.trim().length > 0) return ws.id;
 
-  const rawWorkspaceId = ws.workspaceId as unknown;
+  const rawWorkspaceId = ws.workspaceId as DataValue;
   if (typeof rawWorkspaceId === "string" && rawWorkspaceId.trim().length > 0)
     return rawWorkspaceId;
   if (typeof rawWorkspaceId === "number") return String(rawWorkspaceId);

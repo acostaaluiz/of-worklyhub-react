@@ -34,7 +34,7 @@ export type CheckoutRequest = {
   successUrl?: string;
   failureUrl?: string;
   pendingUrl?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: DataMap;
   workspaceId?: string;
   userUid?: string;
 };

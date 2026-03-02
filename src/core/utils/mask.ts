@@ -1,4 +1,12 @@
 import dayjs, { type Dayjs, type ConfigType } from "dayjs";
+import {
+  APP_DATE_FORMAT,
+  APP_DATE_TIME_FORMAT,
+  APP_TIME_FORMAT,
+  formatAppDate,
+  formatAppDateTime,
+  formatAppTime,
+} from "./date-time";
 
 export type MaskConfig = {
   phoneMask: string;
@@ -20,7 +28,7 @@ export type MoneyInputOptions = MoneyFormatOptions & {
 
 const DEFAULT_CONFIG: MaskConfig = {
   phoneMask: "(###) ###-####",
-  dateFormat: "MM/DD/YYYY",
+  dateFormat: APP_DATE_FORMAT,
   currencyLocale: "en-US",
   currencyCode: "USD",
   currencyPrecision: 2,
@@ -29,7 +37,7 @@ const DEFAULT_CONFIG: MaskConfig = {
 let cachedConfig: MaskConfig | null = null;
 
 function readEnvString(key: string): string | undefined {
-  const env = (import.meta as unknown as {
+  const env = (import.meta as {
     env?: Record<string, string | number | boolean | undefined>;
   }).env;
   const value = env?.[key];
@@ -49,7 +57,7 @@ export function getMaskConfig(): MaskConfig {
   const phoneMask = readEnvString("VITE_PHONE_MASK") ?? DEFAULT_CONFIG.phoneMask;
   // ensure mask contains placeholder; fall back to default if misconfigured
   const safePhoneMask = phoneMask && phoneMask.includes("#") ? phoneMask : DEFAULT_CONFIG.phoneMask;
-  const dateFormat = readEnvString("VITE_DATE_FORMAT") ?? DEFAULT_CONFIG.dateFormat;
+  const dateFormat = APP_DATE_FORMAT;
   const currencyLocale =
     readEnvString("VITE_CURRENCY_LOCALE") ??
     readEnvString("VITE_LOCALE") ??
@@ -290,9 +298,9 @@ export function getShortDateFormat(): string {
 
 export function formatDate(value?: string | Date | Dayjs | null, format?: string): string {
   if (!value) return "";
-  const fmt = format ?? getDateFormat();
+  if (!format) return formatAppDate(value, String(value));
   const parsed = dayjs(value as ConfigType);
-  return parsed.isValid() ? parsed.format(fmt) : String(value);
+  return parsed.isValid() ? parsed.format(format) : String(value);
 }
 
 export function formatDateShort(value?: string | Date | Dayjs | null): string {
@@ -301,9 +309,16 @@ export function formatDateShort(value?: string | Date | Dayjs | null): string {
 
 export function formatDateTime(value?: string | Date | Dayjs | null, format?: string): string {
   if (!value) return "";
-  const fmt = format ?? `${getDateFormat()} HH:mm`;
+  if (!format) return formatAppDateTime(value, String(value));
   const parsed = dayjs(value as ConfigType);
-  return parsed.isValid() ? parsed.format(fmt) : String(value);
+  return parsed.isValid() ? parsed.format(format) : String(value);
+}
+
+export function formatTime(value?: string | Date | Dayjs | null, format?: string): string {
+  if (!value) return "";
+  if (!format) return formatAppTime(value, String(value));
+  const parsed = dayjs(value as ConfigType);
+  return parsed.isValid() ? parsed.format(format) : String(value);
 }
 
 export default {
@@ -313,6 +328,10 @@ export default {
   formatDate,
   formatDateShort,
   formatDateTime,
+  formatTime,
+  APP_DATE_FORMAT,
+  APP_TIME_FORMAT,
+  APP_DATE_TIME_FORMAT,
   applyMask,
   stripMask,
   maskPhone,

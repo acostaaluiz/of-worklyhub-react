@@ -8,8 +8,10 @@ import {
   Shell,
   ListCard,
   EditorCard,
+  TemplateIcon,
   TemplateTitleRow,
   TemplateTitleBlock,
+  TemplateTitleCopy,
 } from "./work-orders.template.styles";
 
 type Props = {
@@ -33,21 +35,23 @@ export function WorkOrdersTemplate({
         <PageStack>
           <TemplateTitleRow>
             <TemplateTitleBlock>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <TemplateIcon>
                 <ClipboardList size={22} />
+              </TemplateIcon>
+              <TemplateTitleCopy>
                 <Typography.Title level={2} style={{ margin: 0 }}>
                   {title}
                 </Typography.Title>
-              </div>
-              <Typography.Text type="secondary">{description}</Typography.Text>
+                <Typography.Text type="secondary">{description}</Typography.Text>
+              </TemplateTitleCopy>
             </TemplateTitleBlock>
 
             {actions ? <div>{actions}</div> : null}
           </TemplateTitleRow>
 
           <Shell>
-            <ListCard className="surface">{list}</ListCard>
-            <EditorCard className="surface">{editor}</EditorCard>
+            <ListCard>{list}</ListCard>
+            <EditorCard>{editor}</EditorCard>
           </Shell>
         </PageStack>
       }

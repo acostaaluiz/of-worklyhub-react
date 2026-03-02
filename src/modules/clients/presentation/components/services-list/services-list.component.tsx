@@ -67,7 +67,7 @@ type State = {
   minRating?: number;
   featuredOnly: boolean;
   priceRange?: [number, number];
-  error?: unknown;
+  error?: DataValue;
 };
 
 export class ServicesList extends BaseComponent<{}, State> {
@@ -453,7 +453,7 @@ export class ServicesList extends BaseComponent<{}, State> {
     return null;
   }
 
-  protected override renderError(_error: unknown): React.ReactNode {
+  protected override renderError(_error: DataValue): React.ReactNode {
     return <div>Erro ao carregar servicos</div>;
   }
 

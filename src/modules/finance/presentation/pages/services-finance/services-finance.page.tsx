@@ -1,18 +1,26 @@
 import React from "react";
 import { BasePage } from "@shared/base/base.page";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
 import { ServicesFinanceTemplate } from "@modules/finance/presentation/templates/services-finance/services-finance.template";
-import { FinanceService } from "@modules/finance/services/finance.service";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 
-export class ServicesFinancePage extends BasePage {
+type ServicesFinancePageState = BasePageState & {
+  selectedService?: CompanyServiceModel & { suggestedCents?: number };
+};
+
+export class ServicesFinancePage extends BasePage<BaseProps, ServicesFinancePageState> {
   protected override options = {
     title: "Finance - Services | WorklyHub",
     requiresAuth: true,
   };
 
-  state: { selectedService?: CompanyServiceModel & { suggestedCents?: number } } = {};
-
-  private svc = new FinanceService();
+  public override state: ServicesFinancePageState = {
+    isLoading: false,
+    initialized: false,
+    error: undefined,
+    selectedService: undefined,
+  };
 
   protected override renderPage(): React.ReactNode {
     return (

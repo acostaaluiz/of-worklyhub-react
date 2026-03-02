@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Typography } from "antd";
+import { BarChart3 } from "lucide-react";
 import dayjs from "dayjs";
 
 import { BaseTemplate } from "@shared/base/base.template";
@@ -11,7 +12,6 @@ import {
   DashboardShell,
   DashboardGrid,
   GridSpan12,
-  GridSpan6,
   GridSpan4,
 } from "./dashboard.template.styles";
 
@@ -28,9 +28,7 @@ import {
 import { DashboardKpiRow } from "../../components/dashboard-kpi-row/dashboard-kpi-row.component";
 import { DashboardRevenueTrend } from "../../components/dashboard-revenue-trend/dashboard-revenue-trend.component";
 import { DashboardServiceBreakdown } from "../../components/dashboard-service-breakdown/dashboard-service-breakdown.component";
-import { DashboardPaymentStatus } from "../../components/dashboard-payment-status/dashboard-payment-status.component";
-import { DashboardTopClients } from "../../components/dashboard-top-clients/dashboard-top-clients.component";
-import { DashboardRecentSales } from "../../components/dashboard-recent-sales/dashboard-recent-sales.component";
+import { DashboardAlerts } from "../../components/dashboard-alerts/dashboard-alerts.component";
 
 export function DashboardTemplate() {
   const service = useMemo(() => new DashboardService(), []);
@@ -49,12 +47,20 @@ export function DashboardTemplate() {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [data, setData] = useState<DashboardResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async (q: DashboardQueryModel) => {
     setLoading(true);
-    const res = await service.getDashboard(q);
-    setData(res);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await service.getDashboard(q);
+      setData(res);
+    } catch (err) {
+      setError("Unable to load dashboard data for this period.");
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
   }, [service]);
 
   useEffect(() => {
@@ -68,12 +74,32 @@ export function DashboardTemplate() {
           <PageStack>
             <TemplateTitleRow>
               <TemplateTitleBlock>
-                <Typography.Title level={2} style={{ margin: 0 }}>
-                  Dashboard
-                </Typography.Title>
-                <Typography.Text type="secondary">
-                  Financial overview of your company performance.
-                </Typography.Text>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 12,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border))",
+                      background: "color-mix(in srgb, var(--color-surface-2) 78%, transparent)",
+                      boxShadow: "var(--shadow-sm)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <BarChart3 size={22} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Typography.Title level={2} style={{ margin: 0 }}>
+                      Dashboard
+                    </Typography.Title>
+                    <Typography.Text type="secondary">
+                      Daily operational control and risk signals. Use Finance for deep cashflow analysis.
+                    </Typography.Text>
+                  </div>
+                </div>
               </TemplateTitleBlock>
             </TemplateTitleRow>
 
@@ -88,6 +114,10 @@ export function DashboardTemplate() {
 
               <DashboardKpiRow kpis={data?.kpis ?? []} loading={loading} />
 
+              {error ? (
+                <Typography.Text type="danger">{error}</Typography.Text>
+              ) : null}
+
               {view === "overview" && (
                 <DashboardGrid>
                   <GridSpan4>
@@ -97,21 +127,18 @@ export function DashboardTemplate() {
                     />
                   </GridSpan4>
                   <GridSpan4>
-                    <DashboardPaymentStatus
-                      items={data?.paymentStatus ?? []}
-                      loading={loading}
-                    />
-                  </GridSpan4>
-                  <GridSpan4>
                     <DashboardServiceBreakdown
                       items={data?.serviceBreakdown ?? []}
                       loading={loading}
                     />
                   </GridSpan4>
+                  <GridSpan4>
+                    <DashboardAlerts items={data?.alerts ?? []} loading={loading} />
+                  </GridSpan4>
                 </DashboardGrid>
               )}
 
-              {view === "revenue" && (
+              {view === "trend" && (
                 <DashboardGrid>
                   <GridSpan12>
                     <DashboardRevenueTrend
@@ -119,18 +146,6 @@ export function DashboardTemplate() {
                       loading={loading}
                     />
                   </GridSpan12>
-                  <GridSpan6>
-                    <DashboardPaymentStatus
-                      items={data?.paymentStatus ?? []}
-                      loading={loading}
-                    />
-                  </GridSpan6>
-                  <GridSpan6>
-                    <DashboardRecentSales
-                      items={data?.recentSales ?? []}
-                      loading={loading}
-                    />
-                  </GridSpan6>
                 </DashboardGrid>
               )}
 
@@ -145,24 +160,10 @@ export function DashboardTemplate() {
                 </DashboardGrid>
               )}
 
-              {view === "clients" && (
+              {view === "alerts" && (
                 <DashboardGrid>
                   <GridSpan12>
-                    <DashboardTopClients
-                      items={data?.topClients ?? []}
-                      loading={loading}
-                    />
-                  </GridSpan12>
-                </DashboardGrid>
-              )}
-
-              {view === "sales" && (
-                <DashboardGrid>
-                  <GridSpan12>
-                    <DashboardRecentSales
-                      items={data?.recentSales ?? []}
-                      loading={loading}
-                    />
+                    <DashboardAlerts items={data?.alerts ?? []} loading={loading} />
                   </GridSpan12>
                 </DashboardGrid>
               )}

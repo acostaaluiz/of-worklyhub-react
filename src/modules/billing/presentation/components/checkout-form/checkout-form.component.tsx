@@ -1,5 +1,6 @@
 import React from "react";
 import { Divider, Form, Input, Space, Typography, message, Alert } from "antd";
+import type { FormInstance } from "antd";
 import { CreditCard, Lock, User, Mail, Building2 } from "lucide-react";
 
 import { FieldIcon, ButtonIcon, HelperCenter } from "@shared/styles/global.ts";
@@ -41,14 +42,31 @@ type CheckoutState = BaseState & {
   paymentConfigured?: boolean;
 };
 
-type MPInstance = { cards: { createToken: (payload: any) => Promise<{ id?: string }> } };
+type CreateCardTokenPayload = {
+  cardNumber?: string;
+  cardholderName?: string;
+  cardExpirationMonth?: string;
+  cardExpirationYear?: string;
+  securityCode?: string;
+};
+
+type MPInstance = {
+  cards: {
+    createToken: (payload: CreateCardTokenPayload) => Promise<{ id?: string }>;
+  };
+};
+
+type MercadoPagoCtor = new (
+  publicKey: string,
+  options: { locale: string }
+) => MPInstance;
 
 let mpScriptPromise: Promise<void> | null = null;
 let mpInstance: MPInstance | null = null;
 let mpInstanceKey: string | null = null;
 
 export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
-  private formRef = React.createRef<any>();
+  private formRef = React.createRef<FormInstance<CheckoutValues>>();
 
   public override state: CheckoutState = {
     isLoading: false,
@@ -63,9 +81,13 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     paymentConfigured: true,
   };
 
-  private handleValuesChange = (_: any, values: Partial<CheckoutValues>) => {
-    if (values.method && values.method !== this.state.method) {
-      this.setState({ method: values.method as "card" | "hosted" });
+  private handleValuesChange = (
+    changedValues: Partial<CheckoutValues>,
+    values: CheckoutValues
+  ) => {
+    const nextMethod = changedValues.method ?? values.method;
+    if (nextMethod && nextMethod !== this.state.method) {
+      this.setState({ method: nextMethod });
     }
   };
 
@@ -157,7 +179,8 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     await mpScriptPromise;
 
     if (!mpInstance || mpInstanceKey !== publicKey) {
-      const MP = (window as any).MercadoPago;
+      const MP = (window as Window & { MercadoPago?: MercadoPagoCtor })
+        .MercadoPago;
       if (!MP) throw new Error("Mercado Pago SDK not available.");
       mpInstance = new MP(publicKey, { locale: "en-US" });
       mpInstanceKey = publicKey;
@@ -240,7 +263,10 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
         }
       } catch (err) {
         console.error("checkout error", err);
-        const msg = (err as any)?.message ?? "Failed to create checkout.";
+        const msg =
+          err instanceof Error && err.message
+            ? err.message
+            : "Failed to create checkout.";
         message.error(msg);
         this.setError(err);
       } finally {

@@ -5,6 +5,8 @@ const UsersHomePage = lazy(() => import("@modules/users/presentation/pages/home/
 const ProfilePage = lazy(() => import("@modules/users/presentation/pages/profile/profile.page"));
 const AllModulesPage = lazy(() => import("@modules/users/presentation/pages/all-modules/all-modules.page"));
 const TutorialsPage = lazy(() => import("@modules/users/presentation/pages/tutorials/tutorials.page"));
+const NotificationsPage = lazy(() => import("@modules/users/presentation/pages/notifications/notifications.page"));
+const SettingsPage = lazy(() => import("@modules/users/presentation/pages/settings/settings.page"));
 
 export const usersStackRoutes: RouteObject[] = [
 	{
@@ -44,6 +46,24 @@ export const usersStackRoutes: RouteObject[] = [
 				element: (
 					<React.Suspense fallback={null}>
 						<TutorialsPage />
+					</React.Suspense>
+				),
+			},
+			{
+				id: "users.notifications",
+				path: "notifications",
+				element: (
+					<React.Suspense fallback={null}>
+						<NotificationsPage />
+					</React.Suspense>
+				),
+			},
+			{
+				id: "users.settings",
+				path: "settings",
+				element: (
+					<React.Suspense fallback={null}>
+						<SettingsPage />
 					</React.Suspense>
 				),
 			},

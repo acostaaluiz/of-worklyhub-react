@@ -26,8 +26,8 @@ export class LoginPage extends BasePage {
             try {
               await usersAuthService.signIn(values.email, values.password);
               // navigation will be handled by the auth guard (RedirectIfAuthenticated)
-            } catch (err: unknown) {
-              const errObj = err as Record<string, unknown> | null;
+            } catch (err) {
+              const errObj = err as DataMap | null;
               const candidate = errObj?.code ?? errObj?.name ?? null;
               const code = typeof candidate === "string" ? candidate : null;
 

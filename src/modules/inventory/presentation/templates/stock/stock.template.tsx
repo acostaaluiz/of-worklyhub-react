@@ -1,6 +1,19 @@
 import React from "react";
-import { BaseTemplate } from "@shared/base/base.template";
+import { PackageSearch } from "lucide-react";
 import InventoryFilterComponent, { type InventoryFilterState } from "@modules/inventory/presentation/components/inventory-filter/inventory-filter.component";
+import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
+import {
+  StockTemplateShell,
+  ContentWrap,
+  FilterWrap,
+  HeaderCopy,
+  HeaderIcon,
+  HeaderMain,
+  HeaderRow,
+  HeaderSubtitle,
+  HeaderTitle,
+  TemplateShell,
+} from "./stock.template.styles";
 
 type Props = {
   title?: string;
@@ -8,31 +21,43 @@ type Props = {
   showFilter?: boolean;
   filterValue?: InventoryFilterState;
   onFilterChange?: (s: InventoryFilterState) => void;
-  categories?: any[];
+  categories?: CategoryModel[];
 };
 
 export function StockTemplate(props: Props) {
   const { title = "Stock", children, showFilter = false, filterValue, onFilterChange, categories } = props;
 
   return (
-    <BaseTemplate
+    <StockTemplateShell
       content={
-        <>
-          <div style={{ padding: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 style={{ margin: 0 }}>{title}</h2>
-            </div>
+        <TemplateShell>
+          <HeaderRow>
+            <HeaderMain>
+              <HeaderIcon>
+                <PackageSearch size={20} />
+              </HeaderIcon>
+              <HeaderCopy>
+                <HeaderTitle>{title}</HeaderTitle>
+                <HeaderSubtitle>
+                  Monitor stock levels and keep inventory operations under control.
+                </HeaderSubtitle>
+              </HeaderCopy>
+            </HeaderMain>
+          </HeaderRow>
 
-            {showFilter ? (
-              <div style={{ marginTop: 12, marginBottom: 12 }}>
-                <InventoryFilterComponent categories={categories} value={filterValue} onChange={onFilterChange} />
-              </div>
-            ) : null}
+          {showFilter ? (
+            <FilterWrap>
+              <InventoryFilterComponent
+                categories={categories}
+                value={filterValue}
+                onChange={onFilterChange}
+              />
+            </FilterWrap>
+          ) : null}
 
-            <div style={{ marginTop: 8 }}>{children}</div>
-          </div>
-        </>
-      }
+          <ContentWrap>{children}</ContentWrap>
+        </TemplateShell>
+          }
     />
   );
 }

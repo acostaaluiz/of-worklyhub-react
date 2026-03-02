@@ -20,11 +20,15 @@ export const WidgetCard = styled.div`
   min-width: 0;
   min-height: 0;
   height: 100%;
+  border: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-secondary) 20%, transparent) 0%, transparent 45%),
+    var(--color-surface);
 `;
 
 export const WidgetHeader = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
 
@@ -36,6 +40,18 @@ export const WidgetHeader = styled.div`
   .subtitle {
     color: var(--color-text-muted);
     font-size: var(--font-size-sm);
+  }
+
+  .header-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-secondary) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-secondary) 34%, transparent);
   }
 `;
 

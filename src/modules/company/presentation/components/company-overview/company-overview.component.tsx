@@ -1,4 +1,3 @@
-import React from "react";
 import { Typography, Tag, Space } from "antd";
 import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
 import {

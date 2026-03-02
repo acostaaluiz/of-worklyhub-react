@@ -7,6 +7,8 @@ import type {
   CreateWorkOrderCommentInput,
   GetWorkOrderOverviewOptions,
   ListWorkOrdersFilters,
+  WorkOrderListPage,
+  WorkOrderListPagination,
   UpdateWorkOrderInput,
   UpdateWorkOrderChecklistItemInput,
   WorkOrder,
@@ -19,7 +21,21 @@ import type {
 
 export type WorkOrderStatusListResponse = { data: WorkOrderStatus[] };
 export type WorkOrderStatusResponse = { data: WorkOrderStatus };
-export type WorkOrderListResponse = { data: WorkOrder[] };
+type WorkOrderListMetaLike = Partial<{
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+}>;
+type WorkOrderListPayload =
+  | WorkOrder[]
+  | {
+      data?: WorkOrder[];
+      meta?: WorkOrderListMetaLike;
+      pagination?: WorkOrderListMetaLike;
+      pageInfo?: WorkOrderListMetaLike;
+    };
 export type WorkOrderResponse = { data: WorkOrder };
 export type WorkOrderHistoryResponse = { data: WorkOrderStatusHistoryEntry[] };
 export type WorkOrderCommentsResponse = { data: WorkOrderComment[] };
@@ -31,6 +47,48 @@ export type WorkOrderOverviewResponse = { data: WorkOrderOverview };
 export class WorkOrderApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "work-order-api" });
+  }
+
+  private toPositiveInt(value: DataValue, fallback: number): number {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric < 0) return fallback;
+    return Math.floor(numeric);
+  }
+
+  private normalizePagination(
+    items: WorkOrder[],
+    requested: ListWorkOrdersFilters,
+    meta?: WorkOrderListMetaLike
+  ): WorkOrderListPagination {
+    const requestedLimit = this.toPositiveInt(requested.limit, 25);
+    const requestedOffset = this.toPositiveInt(requested.offset, 0);
+    const limit = this.toPositiveInt(meta?.limit, requestedLimit);
+    const offset = this.toPositiveInt(meta?.offset, requestedOffset);
+    const explicitHasMore = typeof meta?.hasMore === "boolean" ? meta.hasMore : undefined;
+    const derivedHasMore =
+      explicitHasMore ??
+      (typeof meta?.nextOffset === "number" ? meta.nextOffset > offset : items.length >= limit);
+    const hasMore = Boolean(derivedHasMore) && items.length > 0;
+    const nextOffset =
+      typeof meta?.nextOffset === "number"
+        ? this.toPositiveInt(meta.nextOffset, offset + items.length)
+        : hasMore
+          ? offset + items.length
+          : null;
+    const explicitTotal = this.toPositiveInt(meta?.total, Number.NaN);
+    const total = Number.isFinite(explicitTotal)
+      ? explicitTotal
+      : hasMore
+        ? offset + items.length + 1
+        : offset + items.length;
+
+    return {
+      limit,
+      offset,
+      total,
+      hasMore,
+      nextOffset,
+    };
   }
 
   private buildHeaders(workspaceId?: string): Record<string, string> {
@@ -81,16 +139,29 @@ export class WorkOrderApi extends BaseHttpService {
   async listWorkOrders(
     workspaceId: string | undefined,
     filters: ListWorkOrdersFilters = {}
-  ): Promise<WorkOrder[]> {
+  ): Promise<WorkOrderListPage> {
     const headers = this.buildHeaders(workspaceId);
     const query: ListWorkOrdersFilters = { ...filters };
     if (workspaceId && !query.workspaceId) query.workspaceId = workspaceId;
-    const res = await this.get<WorkOrderListResponse>(
+    const res = await this.get<WorkOrderListPayload>(
       "/work-order/work-orders",
       query,
       headers
     );
-    return res?.data ?? [];
+
+    if (Array.isArray(res)) {
+      return {
+        data: res,
+        pagination: this.normalizePagination(res, query),
+      };
+    }
+
+    const data = Array.isArray(res?.data) ? res.data : [];
+    const meta = res?.pagination ?? res?.meta ?? res?.pageInfo;
+    return {
+      data,
+      pagination: this.normalizePagination(data, query, meta),
+    };
   }
 
   async getOverview(

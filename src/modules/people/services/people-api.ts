@@ -17,16 +17,16 @@ export class PeopleApi extends BaseHttpService {
     super(http, { correlationNamespace: "people-api" });
   }
 
-  async createWorker(payload: CreateWorkerPayload): Promise<unknown> {
-    return this.post<unknown, CreateWorkerPayload>("/people/workers", payload);
+  async createWorker(payload: CreateWorkerPayload): Promise<DataValue> {
+    return this.post<DataValue, CreateWorkerPayload>("/people/workers", payload);
   }
 
-  async updateWorker(workspaceId: string, userUid: string, body: unknown): Promise<unknown> {
-    return this.put<unknown, unknown>(`/people/workers/${workspaceId}/${userUid}`, body);
+  async updateWorker(workspaceId: string, userUid: string, body: DataValue): Promise<DataValue> {
+    return this.put<DataValue, DataValue>(`/people/workers/${workspaceId}/${userUid}`, body);
   }
 
-  async listWorkspaceWorkers(workspaceId: string): Promise<unknown[]> {
-    return this.get<unknown[]>(`/people/internal/workspaces/${workspaceId}/workers`);
+  async listWorkspaceWorkers(workspaceId: string): Promise<DataValue[]> {
+    return this.get<DataValue[]>(`/people/internal/workspaces/${workspaceId}/workers`);
   }
 }
 

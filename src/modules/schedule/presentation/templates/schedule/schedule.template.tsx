@@ -18,7 +18,11 @@ import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import type { ScheduleEvent, InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
 import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
-import type { NextScheduleItem, ScheduleStatus } from "@modules/schedule/services/schedules-api";
+import type {
+  MonthViewHint,
+  NextScheduleItem,
+  ScheduleStatus,
+} from "@modules/schedule/services/schedules-api";
 import type { ScheduleEventDraft } from "../../components/schedule-event-modal/schedule-event-modal.form.types";
 
 type ScheduleTemplateProps = {
@@ -29,7 +33,15 @@ type ScheduleTemplateProps = {
   onCreate?: (draft: ScheduleEventDraft) => Promise<void>;
   onUpdate?: (args: { id: string; event: Omit<ScheduleEvent, 'id'>; serviceIds?: string[]; employeeIds?: string[]; totalPriceCents?: number; workspaceId?: string | null; inventoryInputs?: InventoryItemLine[]; inventoryOutputs?: InventoryItemLine[] }) => Promise<void>;
   events?: ScheduleEvent[];
-  onRangeChange?: (from: string, to: string) => Promise<void>;
+  onRangeChange?: (
+    from: string,
+    to: string,
+    options?: {
+      viewMode?: "month" | "week" | "day";
+      includeViewHint?: boolean;
+    }
+  ) => Promise<ScheduleEvent[] | void>;
+  monthViewHint?: MonthViewHint | null;
   categories?: ScheduleCategory[] | null;
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
@@ -41,7 +53,6 @@ type ScheduleTemplateProps = {
   onToggleStatus?: (id: string, checked: boolean) => void;
 };
 
-import React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 export function ScheduleTemplate(props: ScheduleTemplateProps) {
@@ -54,15 +65,32 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
             <TemplateTitleRow>
               <TemplateTitleBlock>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <CalendarIcon size={24} />
-                  <Typography.Title level={2} style={{ margin: 0 }}>
-                    My Calendar
-                  </Typography.Title>
+                  <div
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 12,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border))",
+                      background: "color-mix(in srgb, var(--color-surface-2) 78%, transparent)",
+                      boxShadow: "var(--shadow-sm)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <CalendarIcon size={22} />
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Typography.Title level={2} style={{ margin: 0 }}>
+                      My Calendar
+                    </Typography.Title>
+                    <Typography.Text type="secondary">
+                      Manage events, categories and your company agenda in one
+                      place.
+                    </Typography.Text>
+                  </div>
                 </div>
-                <Typography.Text type="secondary">
-                  Manage events, categories and your company agenda in one
-                  place.
-                </Typography.Text>
               </TemplateTitleBlock>
             </TemplateTitleRow>
 
@@ -97,6 +125,7 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   categories={props.categories}
                   statuses={props.statuses}
                   onRangeChange={props.onRangeChange}
+                  monthViewHint={props.monthViewHint}
                 />
               </ContentCard>
             </Shell>

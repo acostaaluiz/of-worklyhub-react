@@ -10,6 +10,44 @@ import { CompanyServices } from "@modules/company/presentation/components/compan
 import { CompanyReviews } from "@modules/company/presentation/components/company-reviews/company-reviews.component";
 import TemplateShell from "./company-profile.template.styles";
 
+type WorkspaceServiceLike = {
+  id?: string;
+  serviceId?: string;
+  name?: string;
+  title?: string;
+  description?: string;
+  price_cents?: number;
+  priceCents?: number;
+  price?: number;
+  tags?: Array<string | number | boolean>;
+};
+
+type WorkspaceProfileLike = {
+  description?: string;
+  wallpaperUrl?: string;
+  wallpaper_url?: string;
+};
+
+type WorkspaceLike = {
+  id?: string;
+  name?: string;
+  tradeName?: string;
+  trade_name?: string;
+  fullName?: string;
+  company_profile?: WorkspaceProfileLike;
+  companyProfile?: WorkspaceProfileLike;
+  description?: string;
+  address?: string;
+  location?: string;
+  imageUrl?: string;
+  wallpaperUrl?: string;
+  wallpaper_url?: string;
+  phone?: string;
+  rating?: number;
+  reviewsCount?: number;
+  services?: WorkspaceServiceLike[];
+};
+
 export function CompanyProfileTemplate() {
   const { id } = useParams();
   const [profile, setProfile] = useState<CompanyProfileModel | null>(null);
@@ -19,30 +57,46 @@ export function CompanyProfileTemplate() {
     console.debug("[CompanyProfileTemplate] effect start, route id=", id);
     const sub = companyService.getWorkspace$().subscribe((ws) => {
       console.debug("[CompanyProfileTemplate] workspace update:", ws);
-      if (!ws) {
+      const workspace = ws as WorkspaceLike | null;
+
+      if (!workspace) {
         setProfile(null);
         return;
       }
 
-      const providerId = String((ws as any).id ?? "");
+      const providerId = String(workspace.id ?? "");
       const providerName =
-        (ws as any).name ?? (ws as any).tradeName ?? (ws as any).trade_name ?? (ws as any).fullName ?? "";
+        workspace.name ??
+        workspace.tradeName ??
+        workspace.trade_name ??
+        workspace.fullName ??
+        "";
 
-      const companyProfile = (ws as any).company_profile ?? (ws as any).companyProfile ?? {};
+      const companyProfile =
+        workspace.company_profile ?? workspace.companyProfile ?? {};
 
       const profileFromWs: CompanyProfileModel = {
         id: providerId,
         name: providerName,
-        description: companyProfile.description ?? (ws as any).description ?? undefined,
-        address: (ws as any).address ?? (ws as any).location ?? undefined,
-        imageUrl: (ws as any).imageUrl ?? undefined,
-        wallpaperUrl: (companyProfile.wallpaperUrl as string) ?? (companyProfile.wallpaper_url as string) ?? (ws as any).wallpaperUrl ?? (ws as any).wallpaper_url ?? undefined,
-        phone: (ws as any).phone ?? undefined,
-        rating: typeof (ws as any).rating === "number" ? (ws as any).rating : undefined,
-        reviewsCount: typeof (ws as any).reviewsCount === "number" ? (ws as any).reviewsCount : undefined,
-        services: Array.isArray((ws as any).services)
-          ? ((ws as any).services as any[]).map((s) => {
-              const priceCents = (s.price_cents as number) ?? (s.priceCents as number) ?? (s.price as number);
+        description: companyProfile.description ?? workspace.description ?? undefined,
+        address: workspace.address ?? workspace.location ?? undefined,
+        imageUrl: workspace.imageUrl ?? undefined,
+        wallpaperUrl:
+          companyProfile.wallpaperUrl ??
+          companyProfile.wallpaper_url ??
+          workspace.wallpaperUrl ??
+          workspace.wallpaper_url ??
+          undefined,
+        phone: workspace.phone ?? undefined,
+        rating:
+          typeof workspace.rating === "number" ? workspace.rating : undefined,
+        reviewsCount:
+          typeof workspace.reviewsCount === "number"
+            ? workspace.reviewsCount
+            : undefined,
+        services: Array.isArray(workspace.services)
+          ? workspace.services.map((s) => {
+              const priceCents = s.price_cents ?? s.priceCents ?? s.price;
               return {
                 id: String(s.id ?? s.serviceId ?? s.name ?? Math.random()),
                 title: s.name ?? s.title ?? "",
@@ -54,7 +108,9 @@ export function CompanyProfileTemplate() {
                   typeof priceCents === "number"
                     ? formatMoneyFromCents(priceCents)
                     : undefined,
-                tags: Array.isArray(s.tags) ? s.tags.map((t: any) => String(t)) : undefined,
+                tags: Array.isArray(s.tags)
+                  ? s.tags.map((t) => String(t))
+                  : undefined,
               } as ServiceModel;
             })
           : undefined,

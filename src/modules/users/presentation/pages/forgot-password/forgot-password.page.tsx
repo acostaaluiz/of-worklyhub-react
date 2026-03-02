@@ -22,7 +22,7 @@ type ResponseModalState =
 type PageState = {
   initialized: boolean;
   isLoading: boolean;
-  error?: unknown;
+  error?: DataValue;
   responseModal?: ResponseModalState;
 };
 
@@ -54,8 +54,8 @@ export class ForgotPasswordPage extends BasePage<{}, PageState> {
                 description: `If an account exists for ${values.email}, we sent a reset link.`,
               },
             });
-          } catch (err: unknown) {
-            const errObj = err as Record<string, unknown> | null;
+          } catch (err) {
+            const errObj = err as DataMap | null;
             const candidate = errObj?.code ?? errObj?.name ?? null;
             const code = typeof candidate === "string" ? candidate : null;
 

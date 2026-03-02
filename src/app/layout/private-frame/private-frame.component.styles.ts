@@ -2,11 +2,17 @@ import styled from "styled-components";
 
 export const PrivatePageShell = styled.div`
   min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
 
   display: flex;
   flex-direction: column;
   align-items: stretch;
+
+  background: var(--gradient-app-bg), var(--color-background);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
 
   padding: 0;
 `;
@@ -19,8 +25,24 @@ export const ContentShell = styled.main`
   overflow: hidden;
   display: flex;
 
+  &.viewport-lock {
+    height: calc(100vh - 64px);
+    max-height: calc(100vh - 64px);
+    padding: var(--space-4) 0;
+  }
+
+  @media (max-width: 1024px) {
+    padding: var(--space-4) 0 var(--space-6);
+  }
+
   @media (max-width: 768px) {
     padding: var(--space-5) 0 var(--space-7);
+
+    &.viewport-lock {
+      height: calc(100vh - 64px);
+      max-height: calc(100vh - 64px);
+      padding: var(--space-3) 0;
+    }
   }
 
   & > .container {
@@ -33,6 +55,7 @@ export const ContentShell = styled.main`
 export const PrivateFrame = styled.div`
   width: 100%;
   max-width: 1120px;
+  min-width: min(900px, 100%);
   margin-inline: auto;
 
   background: var(--color-surface-elevated);
@@ -50,12 +73,22 @@ export const PrivateFrame = styled.div`
 
   margin-top: var(--space-2);
   min-height: min(420px, 100%);
-  transition: min-height 240ms ease, opacity 160ms ease;
+  animation: motion-fade-up var(--motion-duration-enter)
+    var(--motion-ease-standard) both;
+  transition:
+    min-height var(--motion-duration-slow) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
+  will-change: transform, opacity;
 
   @media (max-width: 768px) {
     padding: var(--space-3);
     margin-top: var(--space-2);
     min-height: min(320px, 100%);
+    min-width: 100%;
+  }
+
+  @media (max-width: 1024px) {
+    min-width: 100%;
   }
 
   scrollbar-width: thin;
@@ -81,6 +114,23 @@ export const PrivateFrame = styled.div`
     background: var(--color-text);
     border: 2px solid transparent;
     background-clip: padding-box;
+  }
+
+  &.no-page-scroll {
+    overflow: hidden;
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  &.compact-frame {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    overflow: hidden;
   }
 `;
 

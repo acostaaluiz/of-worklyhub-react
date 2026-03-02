@@ -43,7 +43,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
               value={filters.userUid ?? undefined}
               options={employees}
               onChange={this.handleEmployeeChange}
-              style={{ minWidth: 240 }}
+              style={{ width: "100%" }}
             />
           </FilterField>
 

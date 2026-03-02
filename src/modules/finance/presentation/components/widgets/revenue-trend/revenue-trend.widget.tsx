@@ -28,14 +28,23 @@ type Props = {
   heightHint?: "default" | "full";
 };
 
-function CustomTooltip({ active, payload, label }: any) {
+type RevenueTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ value?: string | number }>;
+  label?: string | number;
+};
+
+function CustomTooltip({ active, payload, label }: RevenueTooltipProps) {
   if (!active || !payload?.length) return null;
-  const v = payload?.[0]?.value ?? 0;
+  const numeric = Number(payload[0]?.value ?? 0);
+  const v = Number.isFinite(numeric) ? numeric : 0;
   const color = getFinanceValueColor(v, { context: "income" });
+  const tooltipLabel =
+    typeof label === "string" || typeof label === "number" ? String(label) : "";
 
   return (
     <TooltipCard>
-      <div className="tTitle">{label}</div>
+      <div className="tTitle">{tooltipLabel}</div>
       <div className="tRow">
         <div className="k">Revenue</div>
         <div className="v" style={{ color }}>{formatMoney(v)}</div>

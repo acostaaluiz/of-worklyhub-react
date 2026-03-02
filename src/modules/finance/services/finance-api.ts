@@ -1,5 +1,5 @@
 import { BaseHttpService } from "@core/http/base-http.service";
-import type { HttpClient } from "@core/http/interfaces/http-client.interface";
+import type { HttpClient, HttpQuery } from "@core/http/interfaces/http-client.interface";
 import type {
   FinanceDashboardResponseApi,
   FinanceInsightsResponseApi,
@@ -10,7 +10,33 @@ export type FinanceEntryType = {
   key?: string;
   name: string;
   direction?: "income" | "expense";
-  [key: string]: unknown;
+  [key: string]: string | number | boolean | null | undefined;
+};
+
+export type FinanceEntryApiRow = {
+  id?: string;
+  serviceId?: string;
+  service_id?: string;
+  amount?: number | string;
+  amount_cents?: number | string;
+  occurred_at?: string;
+  date?: string;
+  created_at?: string;
+  note?: string;
+  description?: string;
+  typeId?: string;
+  type_id?: string;
+  type_direction?: string;
+  direction?: string;
+  [key: string]: string | number | boolean | null | undefined;
+};
+
+export type FinanceEntriesQuery = {
+  typeId?: string;
+  start?: string;
+  end?: string;
+  limit?: number;
+  offset?: number;
 };
 
 export class FinanceApi extends BaseHttpService {
@@ -29,17 +55,20 @@ export class FinanceApi extends BaseHttpService {
     return this.post<{ id: string }>(`/finance/entries`, body, headers);
   }
   
-  async listEntries(workspaceId?: string, query?: { typeId?: string; start?: string; end?: string; limit?: number; offset?: number }): Promise<unknown[]> {
+  async listEntries(
+    workspaceId?: string,
+    query?: FinanceEntriesQuery
+  ): Promise<FinanceEntryApiRow[]> {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (workspaceId) headers["x-workspace-id"] = workspaceId;
-    return this.get<unknown[]>(`/finance/entries`, query, headers).catch(() => []);
+    return this.get<FinanceEntryApiRow[]>(`/finance/entries`, query, headers).catch(() => []);
   }
 
   async getRevenue(workspaceId?: string, params?: { period?: string; start?: string; end?: string }): Promise<{ revenue_cents: number; period?: string | null; start?: string | null; end?: string | null } | null> {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (workspaceId) headers["x-workspace-id"] = workspaceId;
 
-    const query: Record<string, unknown> = {};
+    const query: HttpQuery = {};
     if (params?.period) query.period = params.period;
     if (params?.start) query.start = params.start;
     if (params?.end) query.end = params.end;

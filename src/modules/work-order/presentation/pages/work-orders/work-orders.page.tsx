@@ -16,6 +16,7 @@ import type {
   CreateWorkOrderInput,
   ListWorkOrdersFilters,
   UpdateWorkOrderInput,
+  WorkOrderListPagination,
   WorkOrder,
   WorkOrderPriority,
   WorkOrderOverview,
@@ -27,7 +28,7 @@ import {
   deleteWorkOrder,
   listWorkOrderOverview,
   listWorkOrderStatuses,
-  listWorkOrders,
+  listWorkOrdersPage,
   updateWorkOrder,
 } from "@modules/work-order/services/work-order.http.service";
 import WorkOrdersTemplate from "@modules/work-order/presentation/templates/work-orders/work-orders.template";
@@ -39,16 +40,25 @@ type Filters = {
   riskLevel?: WorkOrderRiskLevel;
   statusId?: string;
   priority?: WorkOrderPriority;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
-function buildFilters(filters: Filters): ListWorkOrdersFilters {
+const PAGE_SIZE = 24;
+
+function buildFilters(
+  filters: Filters,
+  pagination: { limit: number; offset: number }
+): ListWorkOrdersFilters {
   const query: ListWorkOrdersFilters = {};
   if (filters.search) query.search = filters.search;
   if (filters.riskLevel) query.riskLevel = filters.riskLevel;
   if (filters.statusId) query.statusId = filters.statusId;
   if (filters.priority) query.priority = filters.priority;
-  query.limit = 100;
-  query.offset = 0;
+  if (filters.dateFrom) query.scheduledFrom = filters.dateFrom;
+  if (filters.dateTo) query.scheduledTo = filters.dateTo;
+  query.limit = pagination.limit;
+  query.offset = pagination.offset;
   return query;
 }
 
@@ -67,15 +77,29 @@ function WorkOrdersPageContent(): React.ReactElement {
   const [filters, setFilters] = React.useState<Filters>({});
   const [selected, setSelected] = React.useState<WorkOrder | null>(null);
   const [listLoading, setListLoading] = React.useState(false);
+  const [loadingMore, setLoadingMore] = React.useState(false);
+  const [pagination, setPagination] = React.useState<WorkOrderListPagination>({
+    limit: PAGE_SIZE,
+    offset: 0,
+    total: 0,
+    hasMore: false,
+    nextOffset: null,
+  });
   const [saving, setSaving] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(true);
+  const requestRef = React.useRef(0);
+  const ordersRef = React.useRef<WorkOrder[]>([]);
 
   const currentUserUid = usersAuthService.getSessionValue()?.uid ?? null;
   const currentUserName = usersOverviewService.getProfileValue()?.name ?? undefined;
 
   React.useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
+
+  React.useEffect(() => {
     const sub = companyService.getWorkspace$().subscribe((ws) => {
-      const nextId = (ws as any)?.workspaceId ?? (ws as any)?.id;
+      const nextId = (ws as DataMap)?.workspaceId ?? (ws as DataMap)?.id;
       setWorkspaceId(nextId as string | undefined);
     });
     return () => sub.unsubscribe();
@@ -144,32 +168,108 @@ function WorkOrdersPageContent(): React.ReactElement {
     }
   }, [workspaceId]);
 
+  const refreshInventoryItems = React.useCallback(async () => {
+    if (!workspaceId) {
+      setInventoryItems([]);
+      return;
+    }
+    try {
+      const rows = await listInventoryItems(workspaceId);
+      setInventoryItems(rows ?? []);
+    } catch {
+      // keep stale values if reload fails
+    }
+  }, [workspaceId]);
+
   const fetchOrders = React.useCallback(
-    async (override?: Filters) => {
+    async (params?: { override?: Filters; mode?: "replace" | "append"; offset?: number }) => {
       if (!workspaceId) {
         setOrders([]);
+        setPagination({
+          limit: PAGE_SIZE,
+          offset: 0,
+          total: 0,
+          hasMore: false,
+          nextOffset: null,
+        });
         return;
       }
 
-      setListLoading(true);
+      const mode = params?.mode ?? "replace";
+      const nextFilters = params?.override ?? filters;
+      const nextOffset = params?.offset ?? 0;
+      const requestId = ++requestRef.current;
+
+      if (mode === "append") setLoadingMore(true);
+      else setListLoading(true);
+
       try {
-        const query = buildFilters(override ?? filters);
-        const data = await listWorkOrders(workspaceId, query);
-        setOrders(data);
+        const query = buildFilters(nextFilters, {
+          limit: PAGE_SIZE,
+          offset: nextOffset,
+        });
+        const page = await listWorkOrdersPage(workspaceId, query);
+        if (requestId !== requestRef.current) return;
+
+        if (mode === "append") {
+          const current = ordersRef.current;
+          const mergedMap = new Map<string, WorkOrder>();
+          current.forEach((order) => mergedMap.set(order.id, order));
+          (page.data ?? []).forEach((order) => mergedMap.set(order.id, order));
+          const merged = Array.from(mergedMap.values());
+          const appendedUniqueCount = merged.length - current.length;
+          const exhaustedByDuplicates =
+            (page.data?.length ?? 0) > 0 && appendedUniqueCount <= 0;
+          setOrders(merged);
+          setPagination({
+            ...page.pagination,
+            hasMore: page.pagination.hasMore && !exhaustedByDuplicates,
+            nextOffset:
+              page.pagination.hasMore && !exhaustedByDuplicates
+                ? page.pagination.nextOffset
+                : null,
+          });
+          return;
+        }
+
+        setOrders(page.data ?? []);
+        setPagination(page.pagination);
       } catch (err) {
         message.error("Failed to load work orders.");
       } finally {
-        setListLoading(false);
+        if (mode === "append") setLoadingMore(false);
+        else setListLoading(false);
       }
     },
     [workspaceId, filters]
   );
 
+  const fetchMoreOrders = React.useCallback(() => {
+    if (!workspaceId) return;
+    if (listLoading || loadingMore) return;
+    if (!pagination.hasMore || pagination.nextOffset === null) return;
+    fetchOrders({
+      mode: "append",
+      offset: pagination.nextOffset,
+    });
+  }, [
+    workspaceId,
+    listLoading,
+    loadingMore,
+    pagination.hasMore,
+    pagination.nextOffset,
+    fetchOrders,
+  ]);
+
   React.useEffect(() => {
     let mounted = true;
     (async () => {
       setInitialLoading(true);
-      await Promise.all([fetchStatuses(), fetchOrders(), fetchOverview()]);
+      await Promise.all([
+        fetchStatuses(),
+        fetchOrders({ mode: "replace", offset: 0 }),
+        fetchOverview(),
+      ]);
       if (mounted) setInitialLoading(false);
     })();
     return () => {
@@ -178,12 +278,12 @@ function WorkOrdersPageContent(): React.ReactElement {
   }, [fetchOrders, fetchOverview, fetchStatuses]);
 
   const handleApplyFilters = () => {
-    fetchOrders();
+    fetchOrders({ mode: "replace", offset: 0 });
   };
 
   const handleResetFilters = () => {
     setFilters({});
-    fetchOrders({});
+    fetchOrders({ override: {}, mode: "replace", offset: 0 });
   };
 
   const handleSubmit = async (payload: CreateWorkOrderInput | UpdateWorkOrderInput, id?: string) => {
@@ -210,7 +310,11 @@ function WorkOrdersPageContent(): React.ReactElement {
         message.success("Work order created");
       }
 
-      await Promise.all([fetchOrders(), fetchOverview()]);
+      await Promise.all([
+        fetchOrders({ mode: "replace", offset: 0 }),
+        fetchOverview(),
+        refreshInventoryItems(),
+      ]);
     } catch (err) {
       message.error("Failed to save work order.");
     } finally {
@@ -229,7 +333,11 @@ function WorkOrdersPageContent(): React.ReactElement {
         try {
           await deleteWorkOrder(workspaceId, order.id);
           if (selected?.id === order.id) setSelected(null);
-          await Promise.all([fetchOrders(), fetchOverview()]);
+          await Promise.all([
+            fetchOrders({ mode: "replace", offset: 0 }),
+            fetchOverview(),
+            refreshInventoryItems(),
+          ]);
           message.success("Work order deleted");
         } catch (err) {
           message.error("Failed to delete work order.");
@@ -252,18 +360,21 @@ function WorkOrdersPageContent(): React.ReactElement {
           selectedId={selected?.id ?? null}
           filters={filters}
           overview={overview}
+          hasMore={pagination.hasMore}
+          loadingMore={loadingMore}
           onChangeFilters={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
           onApplyFilters={handleApplyFilters}
           onApplyFilterPatch={(patch) => {
             const next = { ...filters, ...patch };
             setFilters(next);
-            fetchOrders(next);
+            fetchOrders({ override: next, mode: "replace", offset: 0 });
           }}
           onResetFilters={handleResetFilters}
+          onLoadMore={fetchMoreOrders}
           onSelect={(order) => setSelected(order)}
           onCreate={() => setSelected(null)}
           onDelete={handleDelete}
-          onRefresh={() => fetchOrders()}
+          onRefresh={() => fetchOrders({ mode: "replace", offset: 0 })}
         />
       }
       editor={

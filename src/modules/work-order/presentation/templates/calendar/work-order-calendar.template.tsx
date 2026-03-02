@@ -8,8 +8,10 @@ import { WorkOrderCalendar } from "@modules/work-order/presentation/components/w
 import {
   PageStack,
   ContentCard,
+  TemplateIcon,
   TemplateTitleRow,
   TemplateTitleBlock,
+  TemplateTitleCopy,
 } from "./work-order-calendar.template.styles";
 
 type Props = {
@@ -31,19 +33,21 @@ export function WorkOrderCalendarTemplate({
         <PageStack>
           <TemplateTitleRow>
             <TemplateTitleBlock>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <TemplateIcon>
                 <CalendarIcon size={24} />
+              </TemplateIcon>
+              <TemplateTitleCopy>
                 <Typography.Title level={2} style={{ margin: 0 }}>
                   Work orders calendar
                 </Typography.Title>
-              </div>
-              <Typography.Text type="secondary">
-                Visualize scheduled and due work orders on a timeline.
-              </Typography.Text>
+                <Typography.Text type="secondary">
+                  Visualize scheduled and due work orders on a timeline.
+                </Typography.Text>
+              </TemplateTitleCopy>
             </TemplateTitleBlock>
           </TemplateTitleRow>
 
-          <ContentCard className="surface">
+          <ContentCard>
             <WorkOrderCalendar
               orders={orders}
               statuses={statuses}

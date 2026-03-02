@@ -5,8 +5,8 @@ export class AppError extends Error {
   readonly statusCode?: number;
   readonly code?: string;
   readonly correlationId?: string;
-  readonly details?: unknown;
-  readonly cause?: unknown;
+  readonly details?: DataValue;
+  readonly cause?: DataValue;
 
   constructor(payload: AppErrorPayload) {
     super(payload.message);

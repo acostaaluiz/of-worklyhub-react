@@ -14,7 +14,7 @@ import {
 type SuccessDetails = {
   correlationId?: string;
   code?: string;
-  meta?: unknown;
+  meta?: DataValue;
 };
 
 type Props = {

@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 export const FooterShell = styled.footer`
   width: 100%;
-  background: var(--color-surface-elevated);
+  background: transparent;
   border-top: 1px solid var(--color-border);
 `;
 

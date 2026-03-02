@@ -1,7 +1,7 @@
 import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 
-export type VerifyTokenResponse = { uid: string; claims: unknown };
+export type VerifyTokenResponse = { uid: string; claims: DataValue };
 
 export class AuthApi extends BaseHttpService {
   constructor(http: HttpClient) {
@@ -14,7 +14,7 @@ export class AuthApi extends BaseHttpService {
     return this.post<VerifyTokenResponse>("internal/auth/verify-token", undefined, headers);
   }
 
-  async register(payload: { name?: string; email: string; password: string }): Promise<unknown> {
-    return this.post<unknown>("internal/auth/register", payload);
+  async register(payload: { name?: string; email: string; password: string }): Promise<DataValue> {
+    return this.post<DataValue>("internal/auth/register", payload);
   }
 }

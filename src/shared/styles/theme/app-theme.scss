@@ -170,7 +170,7 @@
     );
 
   --gradient-auth-hero:
-    rawwwwwwgradient(
+    radial-gradient(
       900px 520px at 25% 18%,
       rgba(0, 214, 160, 0.14),
       transparent 55%
@@ -211,7 +211,33 @@ body {
   font-size: var(--font-size-md);
   line-height: var(--line-height-normal);
   background: var(--gradient-app-bg), var(--color-background);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
   color: var(--color-text);
+  overflow-x: hidden;
+}
+
+@keyframes motion-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes motion-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 * {
@@ -298,11 +324,42 @@ select:focus-visible,
   padding-inline: var(--space-4);
 }
 
+@media (max-width: 1024px) {
+  .container {
+    padding-inline: var(--space-3);
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding-inline: var(--space-2);
+  }
+}
+
 .surface {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background:
+    radial-gradient(
+      120% 120% at 6% 8%,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      120% 120% at 92% 88%,
+      color-mix(in srgb, var(--color-secondary) 12%, transparent),
+      transparent 46%
+    ),
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--color-surface-2) 72%, transparent),
+      var(--color-surface)
+    );
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    background-position var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .grid {
@@ -399,4 +456,43 @@ select:focus-visible,
 }
 .rounded-lg {
   border-radius: var(--radius-lg);
+}
+
+.motion-enter {
+  animation: motion-fade-up var(--motion-duration-enter)
+    var(--motion-ease-standard) both;
+}
+
+.motion-enter-delay-1 {
+  animation-delay: var(--motion-delay-1);
+}
+
+.motion-enter-delay-2 {
+  animation-delay: var(--motion-delay-2);
+}
+
+.motion-enter-delay-3 {
+  animation-delay: var(--motion-delay-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .ant-table-wrapper .ant-table-content,
+  .ant-table-wrapper .ant-table-body {
+    overflow-x: auto;
+  }
 }

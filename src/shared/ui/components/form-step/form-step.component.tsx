@@ -60,7 +60,9 @@ export function FormStepWizard<TValues extends object>({
     const fields = activeStep.fields;
 
     if (fields?.length) {
-      await form.validateFields(fields as any);
+      await form.validateFields(
+        fields as Array<string | number | (string | number)[]>
+      );
       return;
     }
 

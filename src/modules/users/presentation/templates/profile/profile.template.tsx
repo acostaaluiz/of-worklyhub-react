@@ -11,8 +11,10 @@ const { TabPane } = Tabs;
 const ProfileShell = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding-top: var(--space-2);
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 `;
 
 const CardBase = styled.div`
@@ -25,18 +27,25 @@ const CardBase = styled.div`
 `;
 
 const MainCard = styled(CardBase)`
-  padding: var(--space-6);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-3);
+  background:
+    radial-gradient(circle at 14% 12%, rgba(30, 112, 255, 0.16), transparent 45%),
+    radial-gradient(circle at 86% 88%, rgba(0, 214, 160, 0.14), transparent 48%),
+    var(--color-glass-surface);
 
   @media (max-width: 768px) {
-    padding: var(--space-5);
+    padding: var(--space-3);
   }
 `;
 
 const AvatarShell = styled.div`
-  padding: 6px;
+  padding: 4px;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
   border: 1px solid var(--color-border);
@@ -87,8 +96,8 @@ const LabelIcon = styled.span`
 `;
 
 const ActionButton = styled(Button)`
-  height: 40px;
-  border-radius: var(--radius-sm);
+  height: 34px;
+  border-radius: 999px;
 `;
 
 const shimmer = keyframes`
@@ -123,7 +132,7 @@ const HeroFrame = styled.div`
   position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  min-height: 180px;
+  min-height: 140px;
   width: 100%;
   background: linear-gradient(135deg, var(--color-surface-2), var(--color-surface));
   border: 1px solid var(--color-border);
@@ -162,15 +171,15 @@ const HeroContent = styled.div`
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: var(--space-5);
+  padding: var(--space-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
-    padding: var(--space-4);
+    padding: var(--space-3);
   }
 `;
 
@@ -190,7 +199,7 @@ const HeroMeta = styled.div`
 const HeroActions = styled.div`
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex-wrap: wrap;
 `;
 
@@ -198,23 +207,28 @@ const MainHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
 `;
 
 const MainTitle = styled.div`
   font-weight: 600;
-  font-size: var(--font-size-xl);
+  font-size: clamp(20px, 2.1vh, 30px);
 `;
 
 const MainSubtitle = styled.div`
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
+  font-size: clamp(12px, 1.25vh, 14px);
 `;
 
 const ProfileTabs = styled(Tabs)`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
   .ant-tabs-nav {
-    margin: var(--space-4) 0 var(--space-4);
+    margin: var(--space-3) 0 var(--space-2);
   }
 
   .ant-tabs-nav::before {
@@ -222,8 +236,8 @@ const ProfileTabs = styled(Tabs)`
   }
 
   .ant-tabs-tab {
-    padding: 10px 0;
-    margin: 0 var(--space-5) 0 0;
+    padding: 8px 0;
+    margin: 0 var(--space-4) 0 0;
     background: transparent;
     border: none;
     transition: color 160ms ease;
@@ -246,6 +260,21 @@ const ProfileTabs = styled(Tabs)`
     height: 3px;
     border-radius: 999px;
     background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  }
+
+  .ant-tabs-content-holder {
+    min-height: 0;
+    overflow: auto;
+    padding-right: 4px;
+  }
+
+  .ant-tabs-content,
+  .ant-tabs-tabpane {
+    min-height: 0;
+  }
+
+  .ant-form-item {
+    margin-bottom: 10px;
   }
 `;
 
@@ -286,7 +315,7 @@ export type ProfileTemplateProps = {
   onSaveCompany: (values: CompanyModel) => void;
 };
 
-const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "var(--space-4)" };
+const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "var(--space-2)" };
 const fallbackIndustryOptions: { value: string; label: string }[] = [
   { value: "health", label: "Health" },
   { value: "finance", label: "Finance" },
@@ -299,7 +328,7 @@ const fallbackIndustryOptions: { value: string; label: string }[] = [
 const CompanyGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3) var(--space-5);
+  gap: var(--space-2) var(--space-3);
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -316,9 +345,73 @@ const CompanyGrid = styled.div`
 
 const FormActions = styled.div`
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: center;
   flex-wrap: wrap;
+`;
+
+const PersonalGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-3);
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+
+  .span-full {
+    grid-column: 1 / -1;
+  }
+`;
+
+const ProfileHighlights = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const HighlightCard = styled.div`
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  background: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const HighlightIcon = styled.div`
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+`;
+
+const HighlightMeta = styled.div`
+  min-width: 0;
+`;
+
+const HighlightLabel = styled.div`
+  font-size: 11px;
+  color: var(--color-text-muted);
+`;
+
+const HighlightValue = styled.div`
+  margin-top: 1px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
@@ -359,7 +452,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   }, [industries, company?.industry]);
 
   React.useEffect(() => {
-    // schedule update after render to avoid "not connected to any Form" warning
+    // schedule update after render to avoid "not connected to DataMap Form" warning
     Promise.resolve().then(() => {
       try {
         const maskedPersonal = { ...personal, phone: maskPhone(personal?.phone) };
@@ -402,9 +495,9 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
             <HeroIdentity>
               <AvatarShell>
                 {isAvatarLoading ? (
-                  <SkeletonBlock $width="96px" $height={96} $radius={48} />
+                  <SkeletonBlock $width="80px" $height={80} $radius={40} />
                 ) : (
-                  <Avatar size={96} src={personal?.photoUrl} />
+                  <Avatar size={80} src={personal?.photoUrl} />
                 )}
               </AvatarShell>
               <HeroMeta>
@@ -423,56 +516,85 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
           </HeroContent>
         </HeroFrame>
 
+        <ProfileHighlights>
+          <HighlightCard>
+            <HighlightIcon><TagsOutlined /></HighlightIcon>
+            <HighlightMeta>
+              <HighlightLabel>Plan</HighlightLabel>
+              <HighlightValue>{personal?.planName ?? "No plan"}</HighlightValue>
+            </HighlightMeta>
+          </HighlightCard>
+
+          <HighlightCard>
+            <HighlightIcon><IdcardOutlined /></HighlightIcon>
+            <HighlightMeta>
+              <HighlightLabel>Account type</HighlightLabel>
+              <HighlightValue>{company?.accountType === "company" ? "Company" : "Individual"}</HighlightValue>
+            </HighlightMeta>
+          </HighlightCard>
+
+          <HighlightCard>
+            <HighlightIcon><TeamOutlined /></HighlightIcon>
+            <HighlightMeta>
+              <HighlightLabel>Employees</HighlightLabel>
+              <HighlightValue>{company?.employees ?? 0}</HighlightValue>
+            </HighlightMeta>
+          </HighlightCard>
+        </ProfileHighlights>
+
         <ProfileTabs defaultActiveKey={defaultTab ?? "personal"}>
             <TabPane tab="Personal info" key="personal">
               <Form form={personalForm} initialValues={{ ...personal, phone: maskPhone(personal?.phone) }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
-                <Form.Item
-                  name="fullName"
-                  label={
-                    <FieldLabel>
-                      <LabelIcon><UserOutlined /></LabelIcon>
-                      Full name
-                    </FieldLabel>
-                  }
-                  rules={[{ required: true, message: "Please enter your full name" }]}
-                >
-                  <Input placeholder="Full name" />
-                </Form.Item>
-                <Form.Item
-                  name="email"
-                  label={
-                    <FieldLabel>
-                      <LabelIcon><MailOutlined /></LabelIcon>
-                      Email
-                    </FieldLabel>
-                  }
-                >
-                  <Input disabled />
-                </Form.Item>
-                <Form.Item
-                  name="phone"
-                  label={
-                    <FieldLabel>
-                      <LabelIcon><PhoneOutlined /></LabelIcon>
-                      Phone
-                      <Tooltip title="Include country code (e.g. +55 11 99999-9999)">
-                        <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
-                      </Tooltip>
-                    </FieldLabel>
-                  }
-                >
-                  <Input
-                    placeholder="Phone"
-                    onBlur={(e) => {
-                      try {
-                        // apply mask on blur so the user can type freely while editing
-                        personalForm.setFieldsValue({ phone: maskPhone(String(e.target.value ?? "")) });
-                      } catch {
-                        // ignore
-                      }
-                    }}
-                  />
-                </Form.Item>
+                <PersonalGrid>
+                  <Form.Item
+                    name="fullName"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><UserOutlined /></LabelIcon>
+                        Full name
+                      </FieldLabel>
+                    }
+                    rules={[{ required: true, message: "Please enter your full name" }]}
+                  >
+                    <Input placeholder="Full name" />
+                  </Form.Item>
+                  <Form.Item
+                    name="email"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><MailOutlined /></LabelIcon>
+                        Email
+                      </FieldLabel>
+                    }
+                  >
+                    <Input disabled />
+                  </Form.Item>
+                  <Form.Item
+                    className="span-full"
+                    name="phone"
+                    label={
+                      <FieldLabel>
+                        <LabelIcon><PhoneOutlined /></LabelIcon>
+                        Phone
+                        <Tooltip title="Include country code (e.g. +55 11 99999-9999)">
+                          <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
+                        </Tooltip>
+                      </FieldLabel>
+                    }
+                  >
+                    <Input
+                      placeholder="Phone"
+                      onBlur={(e) => {
+                        try {
+                          // apply mask on blur so the user can type freely while editing
+                          personalForm.setFieldsValue({ phone: maskPhone(String(e.target.value ?? "")) });
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                    />
+                  </Form.Item>
+                </PersonalGrid>
                 <Form.Item>
                   <FormActions>
                     <Tooltip title="Save your personal profile changes">

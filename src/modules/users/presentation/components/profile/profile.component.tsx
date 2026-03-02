@@ -1,4 +1,3 @@
-import React from "react";
 import { Card, Typography, Avatar } from "antd";
 import type { UserSession } from "@modules/users/services/auth.service";
 

@@ -5,6 +5,8 @@ import type { CategoryModel } from "@modules/inventory/interfaces/category.model
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 import { InventoryService } from "@modules/inventory/services/inventory.service";
 
+type ProductFormValues = Omit<ProductModel, "id" | "createdAt">;
+
 type Props = {
   initial?: Partial<ProductModel>;
   onSubmit: (data: Omit<ProductModel, "id" | "createdAt">) => Promise<void> | void;
@@ -12,7 +14,7 @@ type Props = {
 };
 
 export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<ProductFormValues>();
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const service = React.useMemo(() => new InventoryService(), []);
   const moneyInput = getMoneyInput();
@@ -33,7 +35,7 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
     };
   }, [service]);
   return (
-    <Form
+    <Form<ProductFormValues>
       form={form}
       layout="vertical"
       initialValues={{
@@ -44,18 +46,22 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         priceCents: typeof initial?.priceCents === "number" ? centsToMoney(initial.priceCents) : undefined,
         costCents: typeof initial?.costCents === "number" ? centsToMoney(initial.costCents) : undefined,
       }}
-      onFinish={(v) => {
-        const prepared = { ...(v as any) };
-        if (typeof v.priceCents === "number" && Number.isFinite(v.priceCents)) {
-          prepared.priceCents = moneyToCents(v.priceCents);
-        } else {
-          prepared.priceCents = undefined;
-        }
-        if (typeof v.costCents === "number" && Number.isFinite(v.costCents)) {
-          prepared.costCents = moneyToCents(v.costCents);
-        } else {
-          prepared.costCents = undefined;
-        }
+      onFinish={(values) => {
+        const prepared: Omit<ProductModel, "id" | "createdAt"> = {
+          ...values,
+          name: values.name,
+          stock: typeof values.stock === "number" ? values.stock : 0,
+          unit: values.unit ?? "un",
+          active: values.active ?? true,
+          priceCents:
+            typeof values.priceCents === "number" && Number.isFinite(values.priceCents)
+              ? moneyToCents(values.priceCents)
+              : undefined,
+          costCents:
+            typeof values.costCents === "number" && Number.isFinite(values.costCents)
+              ? moneyToCents(values.costCents)
+              : undefined,
+        };
         onSubmit(prepared);
       }}
     >

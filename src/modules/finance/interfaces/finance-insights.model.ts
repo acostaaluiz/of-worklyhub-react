@@ -20,6 +20,6 @@ export type FinanceInsightModel = {
   category: FinanceInsightCategory;
   title: string;
   description: string;
-  evidence: Record<string, unknown>;
+  evidence: DataMap;
   actions: FinanceInsightAction[];
 };

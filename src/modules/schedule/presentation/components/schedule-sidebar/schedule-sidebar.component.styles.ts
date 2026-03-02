@@ -5,6 +5,10 @@ export const SidebarHeaderRow = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
 `;
 
 export const SidebarTitle = styled.div`
@@ -87,6 +91,11 @@ export const CategoryRow = styled.div<{ $color: string }>`
     padding: 2px 8px;
     border-radius: 999px;
     background: var(--color-surface);
+  }
+
+  @media (max-width: 640px) {
+    padding: var(--space-2);
+    gap: var(--space-2);
   }
 `;
 

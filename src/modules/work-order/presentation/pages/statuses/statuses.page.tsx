@@ -25,7 +25,7 @@ function WorkOrderStatusesPageContent(): React.ReactElement {
 
   React.useEffect(() => {
     const sub = companyService.getWorkspace$().subscribe((ws) => {
-      const nextId = (ws as any)?.workspaceId ?? (ws as any)?.id;
+      const nextId = (ws as DataMap)?.workspaceId ?? (ws as DataMap)?.id;
       setWorkspaceId(nextId as string | undefined);
     });
     return () => sub.unsubscribe();

@@ -27,7 +27,12 @@ const statusColor: Record<string, string> = {
   refunded: "var(--color-text-muted)",
 };
 
-function CustomTooltip({ active, payload }: any) {
+type ChartTooltipProps<TPayload> = {
+  active?: boolean;
+  payload?: Array<{ payload?: TPayload }>;
+};
+
+function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardPaymentStatusModel>) {
   if (!active || !payload?.length) return null;
   const item = payload[0]?.payload as DashboardPaymentStatusModel | undefined;
   if (!item) return null;

@@ -1,9 +1,9 @@
-import React from "react";
+import type { ReactNode } from "react";
 import CategoryManagerComponent from "@modules/inventory/presentation/components/category-manager/category-manager.component";
 import StockTemplate from "@modules/inventory/presentation/templates/stock/stock.template";
 import { BasePage } from "@shared/base/base.page";
 
-function InventoryCategoriesPageContent(): JSX.Element {
+function InventoryCategoriesPageContent() {
   return (
     <StockTemplate>
       <CategoryManagerComponent />
@@ -17,7 +17,7 @@ export class InventoryCategoriesPage extends BasePage {
     requiresAuth: true,
   };
 
-  protected override renderPage(): React.ReactNode {
+  protected override renderPage(): ReactNode {
     return <InventoryCategoriesPageContent />;
   }
 }

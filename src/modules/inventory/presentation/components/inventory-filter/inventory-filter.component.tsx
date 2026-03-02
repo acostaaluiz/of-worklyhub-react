@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Row, Col, Input, Select, Radio, InputNumber, Button } from "antd";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
 
@@ -28,7 +28,7 @@ export function InventoryFilterComponent({ categories = [], value, onChange }: P
 
   return (
     <>
-      <Row gutter={12} align="middle">
+      <Row gutter={[12, 12]} align="middle">
         <Col xs={24} sm={24} md={12} lg={12}>
           <Input.Search placeholder="Search product, sku or barcode" allowClear onSearch={(v) => apply({ q: v })} enterButton />
         </Col>
@@ -43,18 +43,24 @@ export function InventoryFilterComponent({ categories = [], value, onChange }: P
           </Select>
         </Col>
 
-        <Col xs={12} sm={8} md={4} lg={4}>
+        <Col xs={24} sm={8} md={4} lg={4}>
           <InputNumber placeholder="Min stock" style={{ width: "100%" }} min={0} value={state.minStock} onChange={(v) => apply({ minStock: v ?? undefined })} />
         </Col>
 
-        <Col xs={12} sm={4} md={2} lg={2} style={{ textAlign: "right" }}>
-          <Button onClick={() => apply({ q: "", categoryId: undefined, stockStatus: "all", minStock: undefined })}>Clear</Button>
+        <Col xs={24} sm={4} md={2} lg={2} style={{ textAlign: "right" }}>
+          <Button style={{ width: "100%" }} onClick={() => apply({ q: "", categoryId: undefined, stockStatus: "all", minStock: undefined })}>
+            Clear
+          </Button>
         </Col>
       </Row>
 
       <Row gutter={12} style={{ marginTop: 12 }} align="middle">
         <Col xs={24} sm={24} md={12} lg={10}>
-          <Radio.Group value={state.stockStatus ?? "all"} onChange={(e) => apply({ stockStatus: e.target.value })}>
+          <Radio.Group
+            value={state.stockStatus ?? "all"}
+            onChange={(e) => apply({ stockStatus: e.target.value })}
+            style={{ display: "flex", flexWrap: "wrap", gap: 6 }}
+          >
             <Radio.Button value="all">All</Radio.Button>
             <Radio.Button value="in">In stock</Radio.Button>
             <Radio.Button value="out">Out of stock</Radio.Button>

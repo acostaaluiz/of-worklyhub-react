@@ -18,10 +18,9 @@ import {
 
 export type DashboardView =
   | "overview"
-  | "revenue"
+  | "trend"
   | "services"
-  | "clients"
-  | "sales";
+  | "alerts";
 
 type Props = {
   value: DashboardQueryModel;
@@ -60,16 +59,22 @@ export function DashboardFilters(props: Props) {
     <FiltersCard className="surface">
       <FiltersLeft>
         <Typography.Text strong>Period</Typography.Text>
-        <DatePicker.RangePicker value={rangeValue} onChange={setRange as any} format={dateFormat} />
+        <DatePicker.RangePicker
+          value={rangeValue}
+          onChange={(dates) => {
+            if (!dates || !dates[0] || !dates[1]) return;
+            setRange([dates[0], dates[1]]);
+          }}
+          format={dateFormat}
+        />
         <ViewSegment
           value={view}
           onChange={(v) => onViewChange(v as DashboardView)}
           options={[
             { label: "Overview", value: "overview" },
-            { label: "Revenue", value: "revenue" },
+            { label: "Trend", value: "trend" },
             { label: "Services", value: "services" },
-            { label: "Clients", value: "clients" },
-            { label: "Sales", value: "sales" },
+            { label: "Alerts", value: "alerts" },
           ]}
         />
       </FiltersLeft>

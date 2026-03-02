@@ -1,20 +1,31 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Form, Input, InputNumber, Select, Button, DatePicker, message } from "antd";
-import dayjs from "dayjs";
+import dayjs, { type Dayjs } from "dayjs";
 import { getDateFormat, getMaskConfig, getMoneyInput } from "@core/utils/mask";
 import { loadingService } from "@shared/ui/services/loading.service";
-import type { FinanceEntryCreatePayload } from "@modules/finance/interfaces/finance-entry.model";
+import type {
+  FinanceEntryCreatePayload,
+  FinanceEntryListItem,
+} from "@modules/finance/interfaces/finance-entry.model";
 import type { FinanceEntryType } from "@modules/finance/services/finance-api";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
 
+type FinanceEntryFormValues = {
+  serviceId?: string;
+  type?: string;
+  amount?: number;
+  date?: Dayjs | null;
+  description?: string;
+};
+
 type Props = {
   initial?: Partial<FinanceEntryCreatePayload>;
-  onSaved?: (entry: any) => void;
+  onSaved?: (entry: FinanceEntryListItem) => void;
   workspaceId?: string;
 };
 
 export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<FinanceEntryFormValues>();
   const api = useFinanceApi();
   const [types, setTypes] = useState<FinanceEntryType[]>([]);
   const moneyInput = getMoneyInput();
@@ -49,13 +60,13 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
     };
   }, [api, workspaceId, form]);
 
-  async function onFinish(values: any) {
+  async function onFinish(values: FinanceEntryFormValues) {
     try {
       const payload = {
         serviceId: values.serviceId,
         type: values.type,
-        amount: Number(values.amount || 0),
-        date: (values.date || dayjs()).format("YYYY-MM-DD"),
+        amount: Number(values.amount ?? 0),
+        date: values.date ? values.date.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
         note: values.description,
       };
 

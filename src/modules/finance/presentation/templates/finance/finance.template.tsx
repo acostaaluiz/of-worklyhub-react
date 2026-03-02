@@ -36,7 +36,7 @@ const AVAILABLE_VIEWS: FinanceView[] = [
   "cashflow",
 ];
 
-const OVERVIEW_PANEL_HEIGHT = "clamp(300px, calc(100dvh - 430px), 540px)";
+const OVERVIEW_PANEL_HEIGHT = "clamp(260px, calc(100dvh - 560px), 360px)";
 
 const defaultQuery = (): FinanceQueryModel => {
   const from = dayjs().subtract(30, "day").format("YYYY-MM-DD");
@@ -147,7 +147,22 @@ export function FinanceTemplate() {
             <TemplateTitleRow>
               <TemplateTitleBlock>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <BarChart3 size={36} />
+                  <div
+                    style={{
+                      width: 42,
+                      height: 42,
+                      borderRadius: 12,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border))",
+                      background: "color-mix(in srgb, var(--color-surface-2) 78%, transparent)",
+                      boxShadow: "var(--shadow-sm)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <BarChart3 size={22} />
+                  </div>
                   <div>
                     <Typography.Title level={2} style={{ margin: 0 }}>
                       Finance
@@ -161,7 +176,7 @@ export function FinanceTemplate() {
               </TemplateTitleBlock>
             </TemplateTitleRow>
 
-            <FiltersCard className="surface">
+            <FiltersCard>
               <FinanceFilters
                 from={query.from}
                 to={query.to}
@@ -245,7 +260,7 @@ export function FinanceTemplate() {
 
                 {view === "insights" && (
                   <>
-                    <GridSpan12 style={{ height: OVERVIEW_PANEL_HEIGHT }}>
+                    <GridSpan12 style={{ height: "100%" }}>
                       <ActionableInsightsWidget
                         className="surface"
                         items={data.insights}

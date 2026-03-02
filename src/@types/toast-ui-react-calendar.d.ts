@@ -21,17 +21,17 @@ declare module "@toast-ui/react-calendar" {
 
     events?: EventObject[];
 
-    theme?: unknown;
-    month?: unknown;
-    week?: unknown;
-    day?: unknown;
+    theme?: DataMap;
+    month?: DataMap;
+    week?: DataMap;
+    day?: DataMap;
 
     usageStatistics?: boolean;
     useDetailPopup?: boolean;
     useFormPopup?: boolean;
 
-    onClickEvent?: (e: any) => void;
-    onSelectDateTime?: (e: any) => void;
+    onClickEvent?: (e: DataMap) => void;
+    onSelectDateTime?: (e: DataMap) => void;
   };
 
   export type ToastCalendarRef = {

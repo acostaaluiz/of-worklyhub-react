@@ -35,6 +35,7 @@ export type ModuleLandingProps = {
   headerIcon?: React.ReactNode;
   items: ModuleLandingItem[];
   columns?: number;
+  variant?: "default" | "soft-accent";
 };
 
 export function ModuleLanding({
@@ -43,16 +44,17 @@ export function ModuleLanding({
   headerIcon,
   items,
   columns = 1,
+  variant = "soft-accent",
 }: ModuleLandingProps) {
   const navigate = useNavigate();
 
   return (
-    <LandingShell>
+    <LandingShell $variant={variant}>
       <LandingHeader>
         <div>
           <LandingTitleRow>
             {headerIcon ? (
-              <LandingTitleIcon>{headerIcon}</LandingTitleIcon>
+              <LandingTitleIcon $variant={variant}>{headerIcon}</LandingTitleIcon>
             ) : null}
             <LandingTitle>{title}</LandingTitle>
           </LandingTitleRow>
@@ -71,12 +73,15 @@ export function ModuleLanding({
               key={item.id}
               type="button"
               $disabled={isDisabled}
+              $variant={variant}
               aria-disabled={isDisabled}
               onClick={() => {
                 if (!isDisabled && item.to) navigate(item.to);
               }}
             >
-              <CardIcon $disabled={isDisabled}>{item.icon}</CardIcon>
+              <CardIcon $disabled={isDisabled} $variant={variant}>
+                {item.icon}
+              </CardIcon>
 
               <CardContent>
                 <CardTitle>{item.title}</CardTitle>
@@ -86,7 +91,7 @@ export function ModuleLanding({
                 {item.meta ? <CardMeta>{item.meta}</CardMeta> : null}
               </CardContent>
 
-              <CardAction $disabled={isDisabled}>
+              <CardAction $disabled={isDisabled} $variant={variant}>
                 <ChevronRight size={16} />
               </CardAction>
             </LandingCard>

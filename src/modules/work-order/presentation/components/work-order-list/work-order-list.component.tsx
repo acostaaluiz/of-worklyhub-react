@@ -1,7 +1,8 @@
 import React from "react";
-import { Button, Input, Select, Space, Table, Tag, Popconfirm, Tabs } from "antd";
+import { Button, DatePicker, Input, Popconfirm, Select, Space, Spin, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 
 import type {
   WorkOrder,
@@ -11,12 +12,40 @@ import type {
   WorkOrderStatus,
 } from "@modules/work-order/interfaces/work-order.model";
 import { formatMoneyFromCents } from "@core/utils/mask";
+import { formatAppDateTime } from "@core/utils/date-time";
+import {
+  FiltersRow,
+  InsightAction,
+  InsightDescription,
+  InsightMeta,
+  InsightRow,
+  InsightTitle,
+  InsightsList,
+  ListRoot,
+  OverviewActions,
+  OverviewCard,
+  OverviewEmpty,
+  OverviewHeader,
+  OverviewTags,
+  OverviewTitle,
+  OverviewUpdated,
+  PaneActions,
+  PaneHeader,
+  PaneTitle,
+  PaneToolbar,
+  StyledTabs,
+  TableWrap,
+  TableFooterState,
+  WorkOrdersPane,
+} from "./work-order-list.component.styles";
 
 type Filters = {
   search?: string;
   riskLevel?: WorkOrderRiskLevel;
   statusId?: string;
   priority?: WorkOrderPriority;
+  dateFrom?: string;
+  dateTo?: string;
 };
 
 type Props = {
@@ -24,12 +53,15 @@ type Props = {
   statuses: WorkOrderStatus[];
   overview?: WorkOrderOverview | null;
   loading?: boolean;
+  loadingMore?: boolean;
+  hasMore?: boolean;
   selectedId?: string | null;
   filters: Filters;
   onChangeFilters: (patch: Partial<Filters>) => void;
   onApplyFilters: () => void;
   onApplyFilterPatch?: (patch: Partial<Filters>) => void;
   onResetFilters: () => void;
+  onLoadMore: () => void;
   onSelect: (order: WorkOrder) => void;
   onCreate: () => void;
   onDelete: (order: WorkOrder) => void;
@@ -66,20 +98,35 @@ export function WorkOrderList({
   statuses,
   overview,
   loading,
+  loadingMore,
+  hasMore,
   selectedId,
   filters,
   onChangeFilters,
   onApplyFilters,
   onApplyFilterPatch,
   onResetFilters,
+  onLoadMore,
   onSelect,
   onCreate,
   onDelete,
   onRefresh,
 }: Props) {
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches;
+
   const [activeTab, setActiveTab] = React.useState<"work-orders" | "operations-overview">(
     "work-orders"
   );
+  const tableWrapRef = React.useRef<HTMLDivElement | null>(null);
+
+  const dateRangeValue = React.useMemo<[Dayjs | null, Dayjs | null] | null>(() => {
+    if (!filters.dateFrom && !filters.dateTo) return null;
+    const start = filters.dateFrom ? dayjs(filters.dateFrom) : null;
+    const end = filters.dateTo ? dayjs(filters.dateTo) : null;
+    return [start, end];
+  }, [filters.dateFrom, filters.dateTo]);
 
   const applyRiskFilter = React.useCallback(
     (riskLevel: WorkOrderRiskLevel) => {
@@ -94,35 +141,67 @@ export function WorkOrderList({
     [onApplyFilterPatch, onChangeFilters, onApplyFilters]
   );
 
-  const columns = React.useMemo<ColumnsType<WorkOrder>>(
-    () => [
-      {
-        title: "Title",
-        dataIndex: "title",
-        key: "title",
-        width: 220,
-        render: (_, record) => (
-          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-            <span style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {record.title}
+  const handleLoadMore = React.useCallback(() => {
+    if (loading || loadingMore || !hasMore) return;
+    onLoadMore();
+  }, [loading, loadingMore, hasMore, onLoadMore]);
+
+  React.useEffect(() => {
+    const host = tableWrapRef.current;
+    if (!host) return;
+    const body = host.querySelector(".ant-table-body");
+    if (!body) return;
+
+    const onScroll = (event: Event) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      const threshold = 72;
+      const reachedBottom =
+        target.scrollTop + target.clientHeight >= target.scrollHeight - threshold;
+      if (reachedBottom) handleLoadMore();
+    };
+
+    body.addEventListener("scroll", onScroll, { passive: true });
+    return () => body.removeEventListener("scroll", onScroll);
+  }, [handleLoadMore, orders.length]);
+
+  const columns = React.useMemo<ColumnsType<WorkOrder>>(() => {
+    const titleColumn: ColumnsType<WorkOrder>[number] = {
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+      width: isMobileViewport ? undefined : 220,
+      render: (_, record) => (
+        <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <span style={{ fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {record.title}
+          </span>
+          {record.description ? (
+            <span style={{ color: "var(--color-text-muted)", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {record.description}
             </span>
-            {record.description ? (
-              <span style={{ color: "var(--color-text-muted)", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {record.description}
-              </span>
-            ) : null}
-          </div>
-        ),
-      },
-      {
-        title: "Status",
-        dataIndex: "status",
-        key: "status",
-        width: 110,
-        render: (status?: WorkOrderStatus) => (
-          <Tag color={getStatusColor(status)}>{status?.label ?? "--"}</Tag>
-        ),
-      },
+          ) : null}
+        </div>
+      ),
+    };
+
+    const statusColumn: ColumnsType<WorkOrder>[number] = {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      width: isMobileViewport ? 126 : 110,
+      render: (status?: WorkOrderStatus) => (
+        <Tag color={getStatusColor(status)}>{status?.label ?? "--"}</Tag>
+      ),
+    };
+
+    if (isMobileViewport) {
+      return [titleColumn, statusColumn];
+    }
+
+    return [
+      titleColumn,
+      statusColumn,
       {
         title: "Priority",
         dataIndex: "priority",
@@ -142,7 +221,7 @@ export function WorkOrderList({
         render: (value?: string | null, record?: WorkOrder) => {
           const date = value || record?.scheduledEndAt || record?.scheduledStartAt;
           if (!date) return "--";
-          return dayjs(date).format("MMM D");
+          return formatAppDateTime(date, "--");
         },
       },
       {
@@ -175,37 +254,36 @@ export function WorkOrderList({
           </Space>
         ),
       },
-    ],
-    [onDelete, onSelect]
-  );
+    ];
+  }, [isMobileViewport, onDelete, onSelect]);
 
   const workOrdersContent = (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%" }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontWeight: 600, fontSize: 16 }}>Work orders</div>
-          <Space>
+    <WorkOrdersPane>
+      <PaneToolbar>
+        <PaneHeader>
+          <PaneTitle>Work orders</PaneTitle>
+          <PaneActions>
             <Button onClick={onRefresh}>Refresh</Button>
             <Button type="primary" onClick={onCreate}>
               New work order
             </Button>
-          </Space>
-        </div>
+          </PaneActions>
+        </PaneHeader>
 
-        <Space wrap>
+        <FiltersRow>
           <Input
             placeholder="Search"
             value={filters.search}
             allowClear
             onChange={(e) => onChangeFilters({ search: e.target.value })}
             onPressEnter={onApplyFilters}
-            style={{ width: 200 }}
+            style={{ width: isMobileViewport ? "100%" : 200 }}
           />
           <Select
             placeholder="Risk"
             value={filters.riskLevel || undefined}
             allowClear
-            style={{ width: 190 }}
+            style={{ width: isMobileViewport ? "100%" : 190 }}
             options={[
               { value: "overdue", label: "Overdue" },
               { value: "due_soon", label: "Due soon (24h)" },
@@ -219,7 +297,7 @@ export function WorkOrderList({
             placeholder="Status"
             value={filters.statusId || undefined}
             allowClear
-            style={{ width: 180 }}
+            style={{ width: isMobileViewport ? "100%" : 180 }}
             options={statuses.map((s) => ({ value: s.id, label: s.label }))}
             onChange={(value) => onChangeFilters({ statusId: value })}
           />
@@ -227,7 +305,7 @@ export function WorkOrderList({
             placeholder="Priority"
             value={filters.priority || undefined}
             allowClear
-            style={{ width: 140 }}
+            style={{ width: isMobileViewport ? "100%" : 140 }}
             options={[
               { value: "low", label: "Low" },
               { value: "medium", label: "Medium" },
@@ -236,21 +314,43 @@ export function WorkOrderList({
             ]}
             onChange={(value) => onChangeFilters({ priority: value as WorkOrderPriority })}
           />
-          <Button type="primary" onClick={onApplyFilters}>
+          <DatePicker.RangePicker
+            value={dateRangeValue}
+            format="YYYY-MM-DD"
+            allowEmpty={[true, true]}
+            style={isMobileViewport ? { width: "100%" } : undefined}
+            onChange={(value) => {
+              onChangeFilters({
+                dateFrom: value?.[0]?.format("YYYY-MM-DD"),
+                dateTo: value?.[1]?.format("YYYY-MM-DD"),
+              });
+            }}
+          />
+          <Button
+            type="primary"
+            onClick={onApplyFilters}
+            style={isMobileViewport ? { flex: "1 1 calc(50% - 4px)" } : undefined}
+          >
             Apply
           </Button>
-          <Button onClick={onResetFilters}>Reset</Button>
-        </Space>
-      </div>
+          <Button
+            onClick={onResetFilters}
+            style={isMobileViewport ? { flex: "1 1 calc(50% - 4px)" } : undefined}
+          >
+            Reset
+          </Button>
+        </FiltersRow>
+      </PaneToolbar>
 
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <TableWrap ref={tableWrapRef}>
         <Table
           columns={columns}
           dataSource={orders}
           loading={loading}
           rowKey={(record) => record.id}
-          pagination={{ pageSize: 6, size: "small" }}
-          scroll={{ y: 340, x: 720 }}
+          pagination={false}
+          size={isMobileViewport ? "small" : "middle"}
+          scroll={{ y: isMobileViewport ? 320 : 340, x: isMobileViewport ? undefined : 720 }}
           onRow={(record) => ({
             onClick: () => onSelect(record),
             style:
@@ -259,38 +359,30 @@ export function WorkOrderList({
                 : undefined,
           })}
         />
-      </div>
-    </div>
+        <TableFooterState>
+          {loadingMore ? (
+            <>
+              <Spin size="small" />
+              <span>Loading more work orders...</span>
+            </>
+          ) : hasMore ? (
+            <span>Scroll down to load more.</span>
+          ) : (
+            <span>End of results.</span>
+          )}
+        </TableFooterState>
+      </TableWrap>
+    </WorkOrdersPane>
   );
 
   const operationsOverviewContent = overview ? (
-    <div
-      style={{
-        border: "1px solid var(--color-border)",
-        borderRadius: 10,
-        padding: 12,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        background: "var(--color-surface-2)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ fontWeight: 600 }}>Operations overview</div>
-        <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-          Updated {dayjs(overview.generatedAt).format("MMM D, HH:mm")}
-        </div>
-      </div>
+    <OverviewCard>
+      <OverviewHeader>
+        <OverviewTitle>Operations overview</OverviewTitle>
+        <OverviewUpdated>Updated {formatAppDateTime(overview.generatedAt, "--")}</OverviewUpdated>
+      </OverviewHeader>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <OverviewTags>
         <Tag color="geekblue">Open: {overview.totals.active}</Tag>
         <Tag color="green">Completed: {overview.totals.terminal}</Tag>
         <Tag color={overview.totals.overdue > 0 ? "red" : "default"}>
@@ -310,9 +402,9 @@ export function WorkOrderList({
         </Tag>
         <Tag>Completion: {overview.performance.completionRate.toFixed(1)}%</Tag>
         <Tag>Avg resolution: {overview.performance.avgResolutionHours.toFixed(1)}h</Tag>
-      </div>
+      </OverviewTags>
 
-      <Space wrap>
+      <OverviewActions>
         <Button size="small" onClick={() => applyRiskFilter("overdue")}>
           View overdue
         </Button>
@@ -325,37 +417,32 @@ export function WorkOrderList({
         <Button size="small" onClick={() => applyRiskFilter("high_priority")}>
           High priority
         </Button>
-      </Space>
+      </OverviewActions>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <InsightsList>
         {(overview.insights ?? []).map((insight) => (
-          <div
-            key={insight.code}
-            style={{ display: "flex", gap: 8, alignItems: "flex-start" }}
-          >
+          <InsightRow key={insight.code}>
             <Tag color={insightSeverityColor[insight.severity] ?? "default"}>
               {insight.severity.toUpperCase()}
             </Tag>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span style={{ fontWeight: 600 }}>{insight.title}</span>
-              <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
-                {insight.description}
-              </span>
-              <span style={{ fontSize: 12 }}>{insight.suggestedAction}</span>
-            </div>
-          </div>
+            <InsightMeta>
+              <InsightTitle>{insight.title}</InsightTitle>
+              <InsightDescription>{insight.description}</InsightDescription>
+              <InsightAction>{insight.suggestedAction}</InsightAction>
+            </InsightMeta>
+          </InsightRow>
         ))}
-      </div>
-    </div>
+      </InsightsList>
+    </OverviewCard>
   ) : (
-    <div style={{ color: "var(--color-text-muted)" }}>
+    <OverviewEmpty>
       Operations overview is loading or unavailable for this workspace.
-    </div>
+    </OverviewEmpty>
   );
 
   return (
-    <div style={{ height: "100%" }}>
-      <Tabs
+    <ListRoot>
+      <StyledTabs
         activeKey={activeTab}
         onChange={(key) =>
           setActiveTab(key as "work-orders" | "operations-overview")
@@ -373,7 +460,7 @@ export function WorkOrderList({
           },
         ]}
       />
-    </div>
+    </ListRoot>
   );
 }
 

@@ -176,7 +176,7 @@ export class CompanyService {
     try {
       const current = this.getWorkspaceValue();
       if (current) {
-        type WorkspaceWithCompany = WorkspaceModel & { company_profile?: { wallpaperUrl?: string; [k: string]: unknown } };
+        type WorkspaceWithCompany = WorkspaceModel & { company_profile?: { wallpaperUrl?: string; [k: string]: DataValue } };
         const updated = { ...(current as WorkspaceModel) } as WorkspaceWithCompany;
         updated.company_profile = updated.company_profile ?? {};
         updated.company_profile.wallpaperUrl = sig.path;

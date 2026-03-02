@@ -1,4 +1,5 @@
 import { Typography } from "antd";
+import { Gauge } from "lucide-react";
 
 import { BaseTemplate } from "@shared/base/base.template";
 import type { SlaEmployeeOption, SlaFilters, SlaRow } from "@modules/slas/interfaces/sla-report.model";
@@ -38,16 +39,36 @@ export function SlaByEmployeeTemplate({
         <PageStack>
           <TemplateTitleRow>
             <TemplateTitleBlock>
-              <Typography.Title level={2} style={{ margin: 0 }}>
-                Employee SLA
-              </Typography.Title>
-              <Typography.Text type="secondary">
-                Review completed schedule hours grouped by employee and work date.
-              </Typography.Text>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border))",
+                    background: "color-mix(in srgb, var(--color-surface-2) 78%, transparent)",
+                    boxShadow: "var(--shadow-sm)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Gauge size={22} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Typography.Title level={2} style={{ margin: 0 }}>
+                    Employee SLA
+                  </Typography.Title>
+                  <Typography.Text type="secondary">
+                    Review completed schedule hours grouped by employee and work date.
+                  </Typography.Text>
+                </div>
+              </div>
             </TemplateTitleBlock>
           </TemplateTitleRow>
 
-          <FiltersCard className="surface">
+          <FiltersCard>
             <SlaFiltersComponent
               employees={employees}
               filters={filters}
@@ -61,7 +82,7 @@ export function SlaByEmployeeTemplate({
             </HelperText>
           </FiltersCard>
 
-          <ResultsCard className="surface">
+          <ResultsCard>
             <SlaTable rows={rows} loading={loading} />
           </ResultsCard>
         </PageStack>

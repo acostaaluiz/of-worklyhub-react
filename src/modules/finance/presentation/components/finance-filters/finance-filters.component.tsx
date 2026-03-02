@@ -1,5 +1,5 @@
-import { Button, DatePicker, Segmented } from "antd";
-import dayjs from "dayjs";
+import { Button, DatePicker, Grid, Segmented, Select } from "antd";
+import dayjs, { type Dayjs } from "dayjs";
 import { RefreshCcw } from "lucide-react";
 import { getDateFormat } from "@core/utils/mask";
 
@@ -11,6 +11,8 @@ import {
   PeriodGroup,
   Right,
   Row,
+  SegmentedRail,
+  SelectGroup,
 } from "./finance-filters.component.styles";
 
 type Props = {
@@ -39,6 +41,8 @@ export function FinanceFilters({
   onRefresh,
   availableViews,
 }: Props) {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const dateFormat = getDateFormat();
   const viewOptions: Array<{ label: string; value: FinanceView }> = [
     { label: "Overview", value: "overview" },
@@ -53,6 +57,7 @@ export function FinanceFilters({
   const options = availableViews?.length
     ? viewOptions.filter((opt) => availableViews.includes(opt.value))
     : viewOptions;
+  const periodValue: [Dayjs, Dayjs] = [dayjs(from), dayjs(to)];
 
   return (
     <Row>
@@ -61,7 +66,7 @@ export function FinanceFilters({
           <div className="label">Period</div>
 
           <DatePicker.RangePicker
-            value={[dayjs(from), dayjs(to)] as any}
+            value={periodValue}
             onChange={(v) => {
               const a = v?.[0] ? dayjs(v[0]).format("YYYY-MM-DD") : from;
               const b = v?.[1] ? dayjs(v[1]).format("YYYY-MM-DD") : to;
@@ -73,23 +78,55 @@ export function FinanceFilters({
         </PeriodGroup>
 
         {/* VIEW selector must be next to period */}
-        <Segmented
-          value={view}
-          onChange={(v) => onChangeView(v as FinanceView)}
-          options={options}
-        />
+        {isMobile ? (
+          <SelectGroup>
+            <div className="label">View</div>
+            <Select
+              className="control"
+              value={view}
+              onChange={(v) => onChangeView(v as FinanceView)}
+              options={options}
+            />
+          </SelectGroup>
+        ) : (
+          <SegmentedRail>
+            <Segmented
+              value={view}
+              onChange={(v) => onChangeView(v as FinanceView)}
+              options={options}
+            />
+          </SegmentedRail>
+        )}
       </Left>
 
       <Right>
-        <Segmented
-          value={groupBy}
-          onChange={(v) => onChangeGroupBy(v as FinanceGroupBy)}
-          options={[
-            { label: "Day", value: "day" },
-            { label: "Week", value: "week" },
-            { label: "Month", value: "month" },
-          ]}
-        />
+        {isMobile ? (
+          <SelectGroup>
+            <div className="label">Group by</div>
+            <Select
+              className="control"
+              value={groupBy}
+              onChange={(v) => onChangeGroupBy(v as FinanceGroupBy)}
+              options={[
+                { label: "Day", value: "day" },
+                { label: "Week", value: "week" },
+                { label: "Month", value: "month" },
+              ]}
+            />
+          </SelectGroup>
+        ) : (
+          <SegmentedRail>
+            <Segmented
+              value={groupBy}
+              onChange={(v) => onChangeGroupBy(v as FinanceGroupBy)}
+              options={[
+                { label: "Day", value: "day" },
+                { label: "Week", value: "week" },
+                { label: "Month", value: "month" },
+              ]}
+            />
+          </SegmentedRail>
+        )}
 
         <Button
           icon={<RefreshCcw size={16} />}

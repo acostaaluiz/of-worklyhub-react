@@ -37,9 +37,9 @@ export type WorkspaceModel = {
     description?: string;
     wallpaperUrl?: string | null;
     wallpaper_url?: string | null;
-    [key: string]: unknown;
+    [key: string]: DataValue;
   };
-  [key: string]: unknown;
+  [key: string]: DataValue;
 };
 
 export type WorkspaceCreateResponse = WorkspaceModel;
@@ -76,16 +76,16 @@ export class CompaniesApi extends BaseHttpService {
     });
   }
 
-  async listWorkspaceServices(workspaceId: string): Promise<unknown[]> {
-    return this.get<unknown[]>(`/company/internal/workspaces/${workspaceId}/services`);
+  async listWorkspaceServices(workspaceId: string): Promise<DataValue[]> {
+    return this.get<DataValue[]>(`/company/internal/workspaces/${workspaceId}/services`);
   }
 
-  async createWorkspaceService(workspaceId: string, body: unknown): Promise<unknown> {
-    return this.post<unknown, unknown>(`/company/internal/workspaces/${workspaceId}/services`, body);
+  async createWorkspaceService(workspaceId: string, body: DataValue): Promise<DataValue> {
+    return this.post<DataValue, DataValue>(`/company/internal/workspaces/${workspaceId}/services`, body);
   }
 
-  async updateWorkspaceService(workspaceId: string, serviceId: string, body: unknown): Promise<unknown> {
-    return this.put<unknown, unknown>(`/company/internal/workspaces/${workspaceId}/services/${serviceId}`, body);
+  async updateWorkspaceService(workspaceId: string, serviceId: string, body: DataValue): Promise<DataValue> {
+    return this.put<DataValue, DataValue>(`/company/internal/workspaces/${workspaceId}/services/${serviceId}`, body);
   }
 
   async updateWorkspaceProfile(workspaceId: string, payload: WorkspaceProfileUpdatePayload): Promise<WorkspaceProfileUpdateResponse> {

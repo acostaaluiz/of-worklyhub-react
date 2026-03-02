@@ -41,6 +41,7 @@ Integracoes
 - Pode referenciar `schedule` via `scheduledEventId`.
 - Pode gerar entrada financeira via `financeEntryId`.
 - Usa inventoryLines para consumo de estoque.
+- Formulario deve carregar itens via `inventory.http.service` e exibir contexto de saldo para reduzir ruptura.
 - Usa workers para alocacao de equipe.
 
 Guardrails

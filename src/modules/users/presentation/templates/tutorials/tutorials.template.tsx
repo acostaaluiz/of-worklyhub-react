@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, Col, Progress, Row, Space, Tag, Typography } from "antd";
+import { AnimatePresence, type Variants, useReducedMotion } from "framer-motion";
 import {
   BookOpen,
   Box,
@@ -12,6 +12,62 @@ import {
   LayoutDashboard,
   Users,
 } from "lucide-react";
+import {
+  CatalogCard,
+  CatalogCardIcon,
+  CatalogCardTop,
+  CatalogFooter,
+  CatalogGrid,
+  CatalogStartButton,
+  CatalogSubtitle,
+  CatalogTitle,
+  FloatingTag,
+  FocusItem,
+  FocusList,
+  FocusTitle,
+  GhostButton,
+  HeroActionRow,
+  HeroAura,
+  HeroIconWrap,
+  HeroIdentity,
+  HeroMainButton,
+  HeroSection,
+  HeroSubtitle,
+  HeroTitle,
+  HeroTitleBlock,
+  HeroTopRow,
+  IndexButton,
+  IndexButtonLeft,
+  IndexButtonRow,
+  IndexButtonTitle,
+  IndexGrid,
+  IndexProgressTag,
+  Panel,
+  PanelHeader,
+  PanelTitle,
+  PrimaryPillButton,
+  ResultBox,
+  ResultLabel,
+  ResultValue,
+  SlideCard,
+  SlideSummary,
+  SlideTitle,
+  SlidesPill,
+  StageActionButtons,
+  StageActions,
+  StageBody,
+  StageIconWrap,
+  StageIdentity,
+  StageLabel,
+  StageProgress,
+  StageProgressTag,
+  StageTitle,
+  StageTop,
+  SlideViewport,
+  TourWorkspace,
+  TutorialsRoot,
+  TutorialsSurface,
+} from "./tutorials.template.styles";
 
 type TutorialSlide = {
   title: string;
@@ -468,11 +524,50 @@ function ensureSlideIndex(index: number, slidesTotal: number): number {
   return index;
 }
 
+const catalogGridVariants: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { staggerChildren: 0.07, delayChildren: 0.08 },
+  },
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
+};
+
+const catalogCardVariants: Variants = {
+  hidden: { opacity: 0, y: 20, rotateX: -6 },
+  visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.48 } },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+};
+
+const slideVariants: Variants = {
+  enter: (direction: 1 | -1) => ({
+    opacity: 0,
+    x: direction > 0 ? 56 : -56,
+    rotateX: direction > 0 ? -3 : 3,
+    filter: "blur(4px)",
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    rotateX: 0,
+    filter: "blur(0px)",
+  },
+  exit: (direction: 1 | -1) => ({
+    opacity: 0,
+    x: direction > 0 ? -56 : 56,
+    rotateX: direction > 0 ? 3 : -3,
+    filter: "blur(4px)",
+  }),
+};
+
 export default function TutorialsTemplate() {
   const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
   const tutorials = useMemo(() => tutorialsCatalog, []);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [slidesByModule, setSlidesByModule] = useState<Record<string, number>>({});
+  const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
 
   const selectedModule = useMemo(
     () => tutorials.find((module) => module.id === selectedModuleId) ?? null,
@@ -492,11 +587,16 @@ export default function TutorialsTemplate() {
     ? Math.round(((currentSlideIndex + 1) / selectedModule.slides.length) * 100)
     : 0;
 
-  const activateModule = (moduleId: string, slideIndex = 0) => {
+  const activateModule = (
+    moduleId: string,
+    slideIndex = 0,
+    direction: 1 | -1 = 1
+  ) => {
     const module = tutorials.find((item) => item.id === moduleId);
     if (!module) return;
 
     const safeIndex = ensureSlideIndex(slideIndex, module.slides.length);
+    setSlideDirection(direction);
     setSelectedModuleId(moduleId);
     setSlidesByModule((prev) => ({ ...prev, [moduleId]: safeIndex }));
   };
@@ -504,209 +604,254 @@ export default function TutorialsTemplate() {
   const goToPreviousSlide = () => {
     if (!selectedModule) return;
     if (currentSlideIndex > 0) {
-      activateModule(selectedModule.id, currentSlideIndex - 1);
+      activateModule(selectedModule.id, currentSlideIndex - 1, -1);
       return;
     }
     if (selectedModuleIndex > 0) {
       const previousModule = tutorials[selectedModuleIndex - 1];
-      activateModule(previousModule.id, previousModule.slides.length - 1);
+      activateModule(previousModule.id, previousModule.slides.length - 1, -1);
     }
   };
 
   const goToNextSlide = () => {
     if (!selectedModule) return;
     if (currentSlideIndex < selectedModule.slides.length - 1) {
-      activateModule(selectedModule.id, currentSlideIndex + 1);
+      activateModule(selectedModule.id, currentSlideIndex + 1, 1);
       return;
     }
     if (selectedModuleIndex < tutorials.length - 1) {
       const nextModule = tutorials[selectedModuleIndex + 1];
-      activateModule(nextModule.id, 0);
+      activateModule(nextModule.id, 0, 1);
     }
   };
 
+  const isFirstSlide =
+    selectedModuleIndex === 0 && currentSlideIndex === 0;
+  const isLastSlide =
+    !!selectedModule &&
+    selectedModuleIndex === tutorials.length - 1 &&
+    currentSlideIndex === selectedModule.slides.length - 1;
+
   return (
-    <div className="container" style={{ padding: "var(--space-6)" }}>
-      <div className="surface" style={{ padding: "var(--space-6)", borderRadius: "var(--radius-xl)" }}>
-        <div
-          style={{
-            borderRadius: 16,
-            padding: "18px 18px 16px",
-            marginBottom: 20,
-            border: "1px solid var(--color-border)",
-            background:
-              "radial-gradient(circle at 20% 15%, rgba(78, 241, 221, 0.18), transparent 52%), var(--color-surface)",
-          }}
+    <TutorialsRoot className="container">
+      <TutorialsSurface
+        initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20, scale: 0.99 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{
+          duration: prefersReducedMotion ? 0.01 : 0.6,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      >
+        <HeroSection
+          initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0.01 : 0.55 }}
         >
-          <Space style={{ width: "100%", justifyContent: "space-between" }} wrap>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 10,
-                  background: "var(--color-surface-2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+          <HeroAura aria-hidden>
+            <span className="orb orb-a" />
+            <span className="orb orb-b" />
+            <span className="orb orb-c" />
+          </HeroAura>
+
+          <HeroTopRow>
+            <HeroIdentity>
+              <HeroIconWrap
+                animate={
+                  prefersReducedMotion
+                    ? undefined
+                    : {
+                        rotate: [0, -4, 3, 0],
+                        y: [0, -2, 0],
+                      }
+                }
+                transition={{
+                  duration: 5.2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
                 }}
               >
                 <BookOpen size={20} />
-              </div>
-              <div>
-                <Typography.Title level={3} style={{ margin: 0 }}>
-                  Product tutorials
-                </Typography.Title>
-                <Typography.Text type="secondary">
-                  Friendly guided tour. Select a module and move slide by slide.
-                </Typography.Text>
-              </div>
-            </div>
-            <Space wrap>
-              <Tag color="geekblue">{tutorials.length} modules</Tag>
-              <Tag color="cyan">
-                {tutorials.reduce((sum, module) => sum + module.slides.length, 0)} total slides
-              </Tag>
-              <Button type="primary" onClick={() => activateModule(tutorials[0].id, 0)}>
-                Start full tour
-              </Button>
-            </Space>
-          </Space>
-        </div>
+              </HeroIconWrap>
+              <HeroTitleBlock>
+                <HeroTitle level={3}>Product tutorials</HeroTitle>
+                <HeroSubtitle>
+                  Immersive guided tour. Pick a module and navigate with animated
+                  story cards.
+                </HeroSubtitle>
+              </HeroTitleBlock>
+            </HeroIdentity>
 
-        {!selectedModule ? (
-          <Row gutter={[14, 14]}>
-            {tutorials.map((module) => (
-              <Col key={module.id} xs={24} sm={12} lg={8}>
-                <Card
-                  className="surface"
-                  bodyStyle={{ padding: 14 }}
-                  style={{ height: "100%", borderRadius: 12, border: "1px solid var(--color-border)" }}
-                >
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10, height: "100%" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 10,
-                          background: "var(--color-surface-2)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {module.icon}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 700 }}>{module.title}</div>
-                        <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>{module.subtitle}</div>
-                      </div>
-                    </div>
-                    <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Tag>{module.slides.length} slides</Tag>
-                      <Button size="small" type="primary" onClick={() => activateModule(module.id, 0)}>
-                        Start
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        ) : (
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={8}>
-              <Card
-                className="surface"
-                bodyStyle={{ padding: 14 }}
-                style={{ borderRadius: 12, border: "1px solid var(--color-border)" }}
-                title="Tutorial index"
-                extra={
-                  <Button size="small" onClick={() => setSelectedModuleId(null)}>
-                    Back to modules
-                  </Button>
-                }
+            <HeroActionRow>
+              <FloatingTag color="geekblue">{tutorials.length} modules</FloatingTag>
+              <FloatingTag color="cyan">
+                {tutorials.reduce((sum, module) => sum + module.slides.length, 0)} total slides
+              </FloatingTag>
+              <HeroMainButton
+                type="primary"
+                onClick={() => {
+                  if (tutorials.length) activateModule(tutorials[0].id, 0, 1);
+                }}
               >
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                    gap: 6,
-                    maxHeight: "min(40vh, 340px)",
-                    overflowY: "auto",
-                    paddingRight: 2,
+                Start full tour
+              </HeroMainButton>
+            </HeroActionRow>
+          </HeroTopRow>
+        </HeroSection>
+
+        <AnimatePresence mode="wait" initial={false}>
+          {!selectedModule ? (
+            <CatalogGrid
+              key="catalog"
+              variants={catalogGridVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              {tutorials.map((module, index) => (
+                <CatalogCard
+                  key={module.id}
+                  variants={catalogCardVariants}
+                  whileHover={
+                    prefersReducedMotion
+                      ? undefined
+                      : { y: -7, scale: 1.01, rotateX: 5, rotateY: -3 }
+                  }
+                  whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
+                  transition={{
+                    duration: prefersReducedMotion ? 0.01 : 0.35,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: prefersReducedMotion ? 0 : index * 0.02,
                   }}
+                  onClick={() => activateModule(module.id, 0, 1)}
                 >
+                  <CatalogCardTop>
+                    <CatalogCardIcon
+                      animate={
+                        prefersReducedMotion
+                          ? undefined
+                          : { rotate: [0, -6, 4, 0], scale: [1, 1.06, 1] }
+                      }
+                      transition={{
+                        duration: 3 + (index % 3) * 0.6,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {module.icon}
+                    </CatalogCardIcon>
+                    <div>
+                      <CatalogTitle>{module.title}</CatalogTitle>
+                      <CatalogSubtitle>{module.subtitle}</CatalogSubtitle>
+                    </div>
+                  </CatalogCardTop>
+
+                  <CatalogFooter>
+                    <SlidesPill>{module.slides.length} slides</SlidesPill>
+                    <CatalogStartButton
+                      size="small"
+                      type="primary"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        activateModule(module.id, 0, 1);
+                      }}
+                    >
+                        Start
+                    </CatalogStartButton>
+                  </CatalogFooter>
+                </CatalogCard>
+              ))}
+            </CatalogGrid>
+          ) : (
+            <TourWorkspace
+              key={`tour-${selectedModule.id}`}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: prefersReducedMotion ? 0 : -12 }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.35 }}
+            >
+              <Panel
+                initial={{ opacity: 0, x: prefersReducedMotion ? 0 : -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0.01 : 0.35 }}
+              >
+                <PanelHeader>
+                  <PanelTitle>Tutorial index</PanelTitle>
+                  <GhostButton size="small" onClick={() => setSelectedModuleId(null)}>
+                    Back to modules
+                  </GhostButton>
+                </PanelHeader>
+                <IndexGrid>
                   {tutorials.map((module) => {
                     const active = module.id === selectedModule.id;
+                    const targetIndex = tutorials.findIndex(
+                      (item) => item.id === module.id
+                    );
+                    const direction: 1 | -1 =
+                      targetIndex >= selectedModuleIndex ? 1 : -1;
+                    const moduleSlide = ensureSlideIndex(
+                      slidesByModule[module.id] ?? 0,
+                      module.slides.length
+                    );
                     return (
-                      <button
+                      <IndexButton
                         key={module.id}
-                        onClick={() => activateModule(module.id, slidesByModule[module.id] ?? 0)}
-                        style={{
-                          width: "100%",
-                          borderRadius: 10,
-                          border: `1px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
-                          background: active ? "rgba(78, 241, 221, 0.15)" : "var(--color-surface)",
-                          color: "var(--color-text)",
-                          padding: "6px 8px",
-                          minHeight: 38,
-                          cursor: "pointer",
-                          textAlign: "left",
-                        }}
+                        $active={active}
+                        whileHover={
+                          prefersReducedMotion
+                            ? undefined
+                            : { scale: 1.02, y: -1 }
+                        }
+                        whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
+                        onClick={() => activateModule(module.id, moduleSlide, direction)}
                       >
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0 }}>
+                        <IndexButtonRow>
+                          <IndexButtonLeft>
                             {module.icon}
-                            <span style={{ fontWeight: 600, fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                              {module.title}
-                            </span>
-                          </div>
-                          <Tag style={{ marginInlineEnd: 0, paddingInline: 4, fontSize: 11, lineHeight: "16px" }}>
-                            {(slidesByModule[module.id] ?? 0) + 1}/{module.slides.length}
-                          </Tag>
-                        </div>
-                      </button>
+                            <IndexButtonTitle>{module.title}</IndexButtonTitle>
+                          </IndexButtonLeft>
+                          <IndexProgressTag>
+                            {moduleSlide + 1}/{module.slides.length}
+                          </IndexProgressTag>
+                        </IndexButtonRow>
+                      </IndexButton>
                     );
                   })}
-                </div>
-              </Card>
-            </Col>
+                </IndexGrid>
+              </Panel>
 
-            <Col xs={24} lg={16}>
-              <Card
-                className="surface"
-                bodyStyle={{ padding: 16 }}
-                style={{ borderRadius: 12, border: "1px solid var(--color-border)" }}
+              <Panel
+                initial={{ opacity: 0, x: prefersReducedMotion ? 0 : 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: prefersReducedMotion ? 0.01 : 0.35 }}
               >
-                <Space direction="vertical" size={14} style={{ width: "100%" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div
-                        style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: 10,
-                          background: "var(--color-surface-2)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                <StageBody>
+                  <StageTop>
+                    <StageIdentity>
+                      <StageIconWrap
+                        animate={
+                          prefersReducedMotion
+                            ? undefined
+                            : { rotate: [0, -5, 5, 0], scale: [1, 1.04, 1] }
+                        }
+                        transition={{
+                          duration: 4.2,
+                          repeat: Infinity,
+                          ease: "easeInOut",
                         }}
                       >
                         {selectedModule.icon}
-                      </div>
+                      </StageIconWrap>
                       <div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Now learning</div>
-                        <div style={{ fontWeight: 700 }}>{selectedModule.title}</div>
+                        <StageLabel>Now learning</StageLabel>
+                        <StageTitle>{selectedModule.title}</StageTitle>
                       </div>
-                    </div>
-                    <Tag color="cyan" style={{ marginInlineEnd: 0 }}>
+                    </StageIdentity>
+                    <StageProgressTag color="cyan">
                       Slide {currentSlideIndex + 1} of {selectedModule.slides.length}
-                    </Tag>
-                  </div>
+                    </StageProgressTag>
+                  </StageTop>
 
-                  <Progress
+                  <StageProgress
                     percent={progressPercent}
                     size="small"
                     strokeColor="var(--color-primary)"
@@ -714,74 +859,92 @@ export default function TutorialsTemplate() {
                     showInfo={false}
                   />
 
-                  {currentSlide ? (
-                    <div
-                      style={{
-                        borderRadius: 12,
-                        border: "1px solid var(--color-border)",
-                        padding: 14,
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 12,
-                        background: "linear-gradient(180deg, rgba(78, 241, 221, 0.08), rgba(78, 241, 221, 0.01))",
-                      }}
-                    >
-                      <div>
-                        <Typography.Title level={4} style={{ margin: 0 }}>
-                          {currentSlide.title}
-                        </Typography.Title>
-                        <Typography.Paragraph style={{ margin: "8px 0 0", color: "var(--color-text-muted)" }}>
-                          {currentSlide.summary}
-                        </Typography.Paragraph>
-                      </div>
+                  <SlideViewport>
+                    <AnimatePresence mode="wait" custom={slideDirection}>
+                      {currentSlide ? (
+                        <SlideCard
+                          key={`${selectedModule.id}-${currentSlideIndex}`}
+                          custom={slideDirection}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{
+                            duration: prefersReducedMotion ? 0.01 : 0.45,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                        >
+                          <div>
+                            <SlideTitle level={4}>{currentSlide.title}</SlideTitle>
+                            <SlideSummary>{currentSlide.summary}</SlideSummary>
+                          </div>
 
-                      <div>
-                        <div style={{ fontWeight: 600, marginBottom: 8 }}>What to focus on</div>
-                        <ul style={{ margin: 0, paddingLeft: 18, color: "var(--color-text-muted)", lineHeight: 1.55 }}>
-                          {currentSlide.bullets.map((bullet) => (
-                            <li key={bullet}>{bullet}</li>
-                          ))}
-                        </ul>
-                      </div>
+                          <div>
+                            <FocusTitle>What to focus on</FocusTitle>
+                            <FocusList>
+                              {currentSlide.bullets.map((bullet, index) => (
+                                <FocusItem
+                                  key={bullet}
+                                  initial={{
+                                    opacity: 0,
+                                    x: prefersReducedMotion ? 0 : -10,
+                                  }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{
+                                    duration: prefersReducedMotion ? 0.01 : 0.28,
+                                    delay: prefersReducedMotion
+                                      ? 0
+                                      : 0.08 + index * 0.06,
+                                  }}
+                                >
+                                  {bullet}
+                                </FocusItem>
+                              ))}
+                            </FocusList>
+                          </div>
 
-                      <div
-                        style={{
-                          borderRadius: 10,
-                          border: "1px solid var(--color-border)",
-                          padding: "10px 12px",
-                          background: "var(--color-surface)",
-                        }}
-                      >
-                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>Expected result</div>
-                        <div style={{ fontWeight: 600 }}>{currentSlide.expectedResult}</div>
-                      </div>
-                    </div>
-                  ) : null}
+                          <ResultBox
+                            initial={{
+                              opacity: 0,
+                              y: prefersReducedMotion ? 0 : 8,
+                            }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{
+                              duration: prefersReducedMotion ? 0.01 : 0.25,
+                              delay: prefersReducedMotion ? 0 : 0.16,
+                            }}
+                          >
+                            <ResultLabel>Expected result</ResultLabel>
+                            <ResultValue>{currentSlide.expectedResult}</ResultValue>
+                          </ResultBox>
+                        </SlideCard>
+                      ) : null}
+                    </AnimatePresence>
+                  </SlideViewport>
 
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                    <Space>
-                      <Button onClick={goToPreviousSlide} disabled={selectedModuleIndex === 0 && currentSlideIndex === 0}>
+                  <StageActions>
+                    <StageActionButtons>
+                      <GhostButton onClick={goToPreviousSlide} disabled={isFirstSlide}>
                         Previous
-                      </Button>
-                      <Button
+                      </GhostButton>
+                      <PrimaryPillButton
                         type="primary"
                         onClick={goToNextSlide}
-                        disabled={
-                          selectedModuleIndex === tutorials.length - 1 &&
-                          currentSlideIndex === selectedModule.slides.length - 1
-                        }
+                        disabled={isLastSlide}
                       >
                         Next
-                      </Button>
-                    </Space>
-                    <Button onClick={() => navigate(selectedModule.route)}>Open module</Button>
-                  </div>
-                </Space>
-              </Card>
-            </Col>
-          </Row>
-        )}
-      </div>
-    </div>
+                      </PrimaryPillButton>
+                    </StageActionButtons>
+                    <GhostButton onClick={() => navigate(selectedModule.route)}>
+                      Open module
+                    </GhostButton>
+                  </StageActions>
+                </StageBody>
+              </Panel>
+            </TourWorkspace>
+          )}
+        </AnimatePresence>
+      </TutorialsSurface>
+    </TutorialsRoot>
   );
 }

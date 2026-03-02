@@ -4,7 +4,6 @@ export interface ProductModel {
   sku?: string;
   description?: string;
   barcode?: string;
-  sku?: string;
   unit?: string;
   categoryId?: string;
   costCents?: number;

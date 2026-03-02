@@ -1,6 +1,7 @@
-import React from "react";
 import { Form, Input, Button } from "antd";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
+
+type CategoryFormValues = Omit<CategoryModel, "id" | "createdAt">;
 
 type Props = {
   initial?: Partial<CategoryModel>;
@@ -9,9 +10,20 @@ type Props = {
 };
 
 export function CategoryFormComponent({ initial, onSubmit, submitting }: Props) {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<CategoryFormValues>();
   return (
-    <Form form={form} layout="vertical" initialValues={{ active: true, ...initial }} onFinish={(v) => onSubmit(v as any)}>
+    <Form<CategoryFormValues>
+      form={form}
+      layout="vertical"
+      initialValues={{ active: true, ...initial }}
+      onFinish={(values) =>
+        onSubmit({
+          name: values.name,
+          description: values.description,
+          active: values.active ?? true,
+        })
+      }
+    >
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
         <Input />
       </Form.Item>

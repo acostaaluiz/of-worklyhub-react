@@ -1,4 +1,3 @@
-import React from "react";
 import { List, Avatar, Rate, Typography } from "antd";
 import styled from "styled-components";
 

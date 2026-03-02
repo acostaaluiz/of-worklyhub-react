@@ -23,8 +23,8 @@ const NEGATIVE_CONTEXTS = new Set<FinanceValueContext>(["out", "expense", "fixed
 let cachedConfig: FinanceValueRuleConfig | null = null;
 
 function readEnvNumber(key: string): number | undefined {
-  const env = (import.meta as unknown as {
-    env?: Record<string, string | number | boolean | undefined>;
+  const env = (import.meta as ImportMeta & {
+    env?: Record<string, string | undefined>;
   }).env;
   const value = env?.[key];
   if (typeof value !== "string") return undefined;

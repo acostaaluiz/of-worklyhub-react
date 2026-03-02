@@ -1,4 +1,4 @@
-import { Skeleton } from "antd";
+import { Empty, Skeleton } from "antd";
 import {
   Area,
   AreaChart,
@@ -8,6 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { LineChart } from "lucide-react";
 import { formatMoney } from "@core/utils/mask";
 
 import type { DashboardSeriesPointModel } from "../../../interfaces/dashboard-series.model";
@@ -24,7 +25,17 @@ type Props = {
   loading?: boolean;
 };
 
-function CustomTooltip({ active, payload, label }: any) {
+type ChartTooltipProps<TPayload> = {
+  active?: boolean;
+  payload?: Array<{ payload?: TPayload }>;
+  label?: string | number;
+};
+
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: ChartTooltipProps<DashboardSeriesPointModel>) {
   if (!active || !payload?.length) return null;
   const item = payload[0]?.payload as DashboardSeriesPointModel | undefined;
   if (!item) return null;
@@ -46,19 +57,31 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export function DashboardRevenueTrend(props: Props) {
   const { series, loading } = props;
+  const hasSeries = series.length > 0;
+  const hasMeaningfulData = series.some(
+    (point) => Math.abs(point.revenue) > 0 || Math.abs(point.profit) > 0
+  );
 
   return (
-    <WidgetCard>
+    <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Revenue trend</div>
-          <div className="subtitle">Revenue and profit over time</div>
+          <div className="title">Business pulse</div>
+          <div className="subtitle">Revenue and profit trend for management context</div>
+        </div>
+        <div className="header-icon" aria-hidden="true">
+          <LineChart size={18} />
         </div>
       </WidgetHeader>
 
       <WidgetBody>
         {loading ? (
           <Skeleton active paragraph={{ rows: 8 }} />
+        ) : !hasSeries || !hasMeaningfulData ? (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="No financial movement found in this period."
+          />
         ) : (
           <ChartWrap>
             <ResponsiveContainer width="100%" height="100%">

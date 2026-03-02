@@ -10,7 +10,7 @@ export type FinanceCashflowRow = {
   workOrderId?: string | null;
   scheduleId?: string | null;
   relatedEntryId?: string | null;
-  metadata?: Record<string, unknown> | null;
+  metadata?: DataMap | null;
 };
 
 export type FinanceTopServiceRow = {

@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance } from "axios";
+import axios, { AxiosHeaders, type AxiosInstance } from "axios";
 
 import { mapHttpError } from "./http-error-mapper";
 import type { Logger } from "../logger/interfaces/logger.interface";
@@ -23,6 +23,68 @@ function ensureCorrelationId(existing?: string): string {
   if (existing) return existing;
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function toDataMap(value: object | null | undefined): DataMap | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as DataMap;
+  }
+  return null;
+}
+
+function toHeaderMap(value: object | null | undefined): Record<string, string> {
+  const rawHeaders: Record<string, string | number | boolean> = {};
+  if (value && typeof value === "object") {
+    Object.entries(
+      value as Record<string, string | number | boolean | null | undefined>
+    ).forEach(([key, headerValue]) => {
+      if (headerValue === null || headerValue === undefined) return;
+      if (
+        typeof headerValue === "string" ||
+        typeof headerValue === "number" ||
+        typeof headerValue === "boolean"
+      ) {
+        rawHeaders[key] = headerValue;
+      }
+    });
+  }
+
+  const source = AxiosHeaders.from(rawHeaders).toJSON() as Record<
+    string,
+    string | number | boolean | null | undefined
+  >;
+  const headers: Record<string, string> = {};
+  Object.entries(source).forEach(([k, v]) => {
+    if (typeof v === "string") headers[k] = v;
+    if (typeof v === "number" || typeof v === "boolean") headers[k] = String(v);
+  });
+
+  return headers;
+}
+
+function getErrorCorrelationId(error: object | null | undefined): string {
+  const map = toDataMap(error);
+  const configValue = map?.config;
+  const config =
+    configValue && typeof configValue === "object" && !Array.isArray(configValue)
+      ? toDataMap(configValue)
+      : null;
+  const headersValue = config?.headers;
+  const headers =
+    headersValue && typeof headersValue === "object" && !Array.isArray(headersValue)
+      ? toHeaderMap(headersValue)
+      : {};
+  return String(headers["x-correlation-id"] || "");
+}
+
+function isNetworkLikeError(error: object | null | undefined): boolean {
+  const map = toDataMap(error);
+  const code = typeof map?.code === "string" ? map.code : "";
+  const message = typeof map?.message === "string" ? map.message : "";
+  return (
+    code === "ERR_NETWORK" ||
+    message.includes("Network Error")
+  );
 }
 
 export interface AxiosHttpClientOptions {
@@ -58,11 +120,15 @@ export class AxiosHttpClient implements HttpClient {
     });
 
     this.axios.interceptors.request.use((cfg) => {
-      const correlationId = ensureCorrelationId((cfg.headers as any)?.["x-correlation-id"]);
-      (cfg.headers as any) = { ...(cfg.headers as any), "x-correlation-id": correlationId };
+      const headerMap = toHeaderMap(cfg.headers ?? null);
+      const correlationId = ensureCorrelationId(headerMap["x-correlation-id"]);
 
       const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.();
-      if (token) (cfg.headers as any) = { ...(cfg.headers as any), Authorization: `Bearer ${token}` };
+      cfg.headers = AxiosHeaders.from({
+        ...headerMap,
+        "x-correlation-id": correlationId,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      });
 
       this.logger?.debug("HTTP request", {
         correlationId,
@@ -75,7 +141,9 @@ export class AxiosHttpClient implements HttpClient {
 
     this.axios.interceptors.response.use(
       (res) => {
-        const correlationId = String((res.config.headers as any)?.["x-correlation-id"] || "");
+        const correlationId = String(
+          toHeaderMap(res.config.headers ?? null)["x-correlation-id"] || ""
+        );
         this.logger?.debug("HTTP response", {
           correlationId,
           status: res.status,
@@ -84,7 +152,8 @@ export class AxiosHttpClient implements HttpClient {
         return res;
       },
       (err) => {
-        const correlationId = String((err?.config?.headers as any)?.["x-correlation-id"] || "");
+        const correlationId =
+          err && typeof err === "object" ? getErrorCorrelationId(err) : "";
         const appError = mapHttpError(err, correlationId);
 
         this.logger?.error("HTTP error", {
@@ -99,12 +168,14 @@ export class AxiosHttpClient implements HttpClient {
     );
   }
 
-  async request<TData, TBody = unknown>(config: HttpRequestConfig<TBody>): Promise<HttpResponse<TData>> {
+  async request<TData, TBody = DataValue>(
+    config: HttpRequestConfig<TBody>
+  ): Promise<HttpResponse<TData>> {
     const correlationId = ensureCorrelationId(config.correlationId);
     const url = `${config.url}${toQueryString(config.query)}`;
     const maxAttempts = (this.retryOptions?.retries ?? 0) + 1;
     let attempt = 0;
-    let lastError: unknown = null;
+    let lastError: Error | null = null;
 
     while (attempt < maxAttempts) {
       attempt += 1;
@@ -142,10 +213,12 @@ export class AxiosHttpClient implements HttpClient {
           correlationId,
         };
       } catch (err) {
-        lastError = err;
+        const caughtError =
+          err instanceof Error ? err : new Error(String(err));
+        lastError = caughtError;
 
         // If unauthorized and authProvider can refresh, try refresh once
-        if (err instanceof AppError && err.statusCode === 401 && this.authProvider?.refresh) {
+        if (caughtError instanceof AppError && caughtError.statusCode === 401 && this.authProvider?.refresh) {
           try {
             const newToken = await this.authProvider.refresh();
             if (newToken) {
@@ -153,16 +226,17 @@ export class AxiosHttpClient implements HttpClient {
               continue;
             } else {
               this.authProvider.signOut?.();
-              return Promise.reject(err);
+              return Promise.reject(caughtError);
             }
           } catch (_refreshErr) {
             this.authProvider.signOut?.();
-            return Promise.reject(err);
+            return Promise.reject(caughtError);
           }
         }
 
-        const status = err instanceof AppError ? err.statusCode : undefined;
-        const isNetworkError = (err as any)?.code === "ERR_NETWORK" || (err as any)?.message?.includes?.("Network Error");
+        const status =
+          caughtError instanceof AppError ? caughtError.statusCode : undefined;
+        const isNetworkError = isNetworkLikeError(caughtError);
 
         const retryOn = this.retryOptions?.retryOn ?? ((s?: number) => (s ? s >= 500 || s === 429 : isNetworkError));
 
@@ -173,10 +247,10 @@ export class AxiosHttpClient implements HttpClient {
           continue;
         }
 
-        return Promise.reject(err);
+        return Promise.reject(caughtError);
       }
     }
 
-    return Promise.reject(lastError);
+    return Promise.reject(lastError ?? new Error("HTTP request failed"));
   }
 }

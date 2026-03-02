@@ -5,7 +5,12 @@ import type { ScheduleEvent, InventoryItemLine } from "../interfaces/schedule-ev
 import { useMockStore } from "@core/storage/mock-store.provider";
 import { httpClient } from "@core/http/client.instance";
 import { SchedulesApi } from "./schedules-api";
-import type { NextScheduleItem, ScheduleStatus } from "./schedules-api";
+import type {
+  ListSchedulesQuery,
+  MonthViewHint,
+  NextScheduleItem,
+  ScheduleStatus,
+} from "./schedules-api";
 
 type CreateSchedulePayload = {
   start: string; // ISO
@@ -101,6 +106,17 @@ type GetEventsParams = {
   workspaceId?: string | null;
 };
 
+export type GetEventsWithHintParams = GetEventsParams &
+  Pick<
+    ListSchedulesQuery,
+    "calendarView" | "includeViewHint" | "monthCellVisibleLimit" | "monthViewTimeZone"
+  >;
+
+export type ScheduleEventsWithHintResult = {
+  events: ScheduleEvent[];
+  monthViewHint: MonthViewHint | null;
+};
+
 export const categoriesSeed: ScheduleCategory[] = [
   { id: "work", label: "Work", color: "var(--color-primary)" },
   { id: "personal", label: "Personal", color: "var(--color-secondary)" },
@@ -180,7 +196,7 @@ export class ScheduleService {
         const useTodayEndpoint = from === to;
         const rows = useTodayEndpoint ? await schedulesApi.todaySchedules(workspaceId) : await schedulesApi.listSchedules(workspaceId, { from, to });
 
-        const mapped = (rows ?? []).map((r) => r as Record<string, unknown>).map((s) => {
+        const mapped = (rows ?? []).map((r) => r as DataMap).map((s) => {
           const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
           const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
 
@@ -206,17 +222,17 @@ export class ScheduleService {
             endTime,
             categoryId:
               (s["categoryId"] as string) ??
-              ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
+              ((s["category"] as DataMap | undefined)?.["id"] as string | undefined) ??
               (s["calendarId"] as string) ??
               undefined,
-            category: (s["category"] as Record<string, unknown> | null) ?? null,
-            categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
+            category: (s["category"] as DataMap | null) ?? null,
+            categoryCode: ((s["category"] as DataMap | undefined)?.["code"] as string | undefined) ?? undefined,
             description: (s["description"] as string) ?? undefined,
-            status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
-            workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            inventoryInputs: ((s["inventoryInputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            inventoryOutputs: ((s["inventoryOutputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
+            status: (s["status"] ?? null) as DataMap | null,
+            workers: (s["workers"] ?? null) as Array<DataMap> | null,
+            services: (s["services"] ?? null) as Array<DataMap> | null,
+            inventoryInputs: (s["inventoryInputs"] ?? null) as Array<DataMap> | null,
+            inventoryOutputs: (s["inventoryOutputs"] ?? null) as Array<DataMap> | null,
           } as ScheduleEvent;
         });
 
@@ -287,108 +303,157 @@ export function useScheduleApi() {
     return categoriesSeed.slice();
   }, []);
 
-  const getEvents = useCallback(async (params: GetEventsParams): Promise<ScheduleEvent[]> => {
-    const { from, to, workspaceId } = params;
+  const mapBackendEvents = useCallback(
+    (rows: DataMap[], from: string, to: string): ScheduleEvent[] => {
+      const mapped = rows.map((s) => {
+        const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
+        const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
 
-    // if workspaceId is provided, attempt to load from backend schedules API
-      if (workspaceId) {
-      try {
-        const rows = await schedulesApi.listSchedules(workspaceId, { from, to });
-        // rows expected to be Schedule[] with ISO start/end
-        const mapped = (rows ?? []).map((r) => r as Record<string, unknown>).map((s) => {
-          const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
-          const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
-
-          // derive date and times using UTC components to reflect backend day boundaries
-          const pad = (n: number) => n.toString().padStart(2, "0");
-          let date = "";
-          let startTime = "09:00";
-          let endTime = "09:30";
-          if (startIso) {
-            const d = new Date(startIso);
-            date = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
-            startTime = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
-          }
-          if (endIso) {
-            const e = new Date(endIso);
-            endTime = `${pad(e.getUTCHours())}:${pad(e.getUTCMinutes())}`;
-          }
-
-          return {
-            id: String(s["id"] ?? ""),
-            title: (s["title"] as string) ?? "Untitled",
-            date,
-            startTime,
-            endTime,
-            // prefer categoryId from API if provided; backend may return a `category` object
-              categoryId:
-                (s["categoryId"] as string) ??
-                ((s["category"] as Record<string, unknown> | undefined)?.["id"] as string | undefined) ??
-                (s["calendarId"] as string) ??
-                undefined,
-            // preserve the backend category object when available (contains code/label)
-            category: (s["category"] as Record<string, unknown> | null) ?? null,
-            categoryCode: ((s["category"] as Record<string, unknown> | undefined)?.["code"] as string | undefined) ?? undefined,
-            description: (s["description"] as string) ?? undefined,
-            // preserve status object from backend so UI can color by status.code
-            status: ((s["status"] ?? null) as unknown) as Record<string, unknown> | null,
-            // preserve workers and services from backend for UI details
-            workers: ((s["workers"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            services: ((s["services"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            inventoryInputs: ((s["inventoryInputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-            inventoryOutputs: ((s["inventoryOutputs"] ?? null) as unknown) as Array<Record<string, unknown>> | null,
-          } as ScheduleEvent;
-        });
-
-        // try to preserve categoryId for events where backend did not return it
-        try {
-          for (let i = 0; i < mapped.length; i++) {
-            const m = mapped[i];
-            if (!m.categoryId) {
-              const found = store.events.find((se) => se.id === m.id) as ScheduleEvent | undefined | null;
-              if (found && found.categoryId) {
-                mapped[i] = {
-                  ...m,
-                  categoryId: found.categoryId,
-                  category: found.category ?? null,
-                  categoryCode: found.categoryCode ?? found.category?.code ?? undefined,
-                } as ScheduleEvent;
-              }
-            }
-          }
-        } catch (err) {
-          // preserve categoryId fallback failed
+        const pad = (n: number) => n.toString().padStart(2, "0");
+        let date = "";
+        let startTime = "09:00";
+        let endTime = "09:30";
+        if (startIso) {
+          const d = new Date(startIso);
+          date = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(
+            d.getUTCDate()
+          )}`;
+          startTime = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+        }
+        if (endIso) {
+          const e = new Date(endIso);
+          endTime = `${pad(e.getUTCHours())}:${pad(e.getUTCMinutes())}`;
         }
 
-        // filter by date string (YYYY-MM-DD) to match backend day boundaries
-        const filtered = mapped.filter((e) => {
-          if (!e.date) return false;
-          return e.date >= from && e.date <= to;
-        });
+        return {
+          id: String(s["id"] ?? ""),
+          title: (s["title"] as string) ?? "Untitled",
+          date,
+          startTime,
+          endTime,
+          categoryId:
+            (s["categoryId"] as string) ??
+            ((s["category"] as DataMap | undefined)?.[
+              "id"
+            ] as string | undefined) ??
+            (s["calendarId"] as string) ??
+            undefined,
+          category: (s["category"] as DataMap | null) ?? null,
+          categoryCode:
+            ((s["category"] as DataMap | undefined)?.[
+              "code"
+            ] as string | undefined) ?? undefined,
+          description: (s["description"] as string) ?? undefined,
+          status: (s["status"] ?? null) as DataMap | null,
+          workers: (s["workers"] ?? null) as Array<
+            DataMap
+          > | null,
+          services: (s["services"] ?? null) as Array<
+            DataMap
+          > | null,
+          inventoryInputs: (s["inventoryInputs"] ?? null) as Array<
+            DataMap
+          > | null,
+          inventoryOutputs: (s["inventoryOutputs"] ?? null) as Array<
+            DataMap
+          > | null,
+        } as ScheduleEvent;
+      });
 
-        const result = filtered.map((e) => e as ScheduleEvent);
-        return result;
+      // Preserve category when backend omits category id on some responses.
+      try {
+        for (let i = 0; i < mapped.length; i++) {
+          const event = mapped[i];
+          if (event.categoryId) continue;
+
+          const found = store.events.find((se) => se.id === event.id) as
+            | ScheduleEvent
+            | undefined
+            | null;
+          if (!found || !found.categoryId) continue;
+
+          mapped[i] = {
+            ...event,
+            categoryId: found.categoryId,
+            category: found.category ?? null,
+            categoryCode: found.categoryCode ?? found.category?.code ?? undefined,
+          };
+        }
       } catch (err) {
-        // fallback to local store if backend fails
+        // preserve categoryId fallback failed
       }
-    }
 
-    // fallback: use local mock store
-    return store.events
-      .filter((e) => {
-        const isInRange = e.date >= from && e.date <= to;
-        return isInRange;
-      })
-      .map((e) => ({
-        id: e.id,
-        title: e.title ?? "Untitled",
-        date: e.date,
-        startTime: e.startTime ?? "09:00",
-        endTime: e.endTime ?? "09:30",
-        categoryId: e.categoryId ?? "schedule",
-        description: e.description,
-      }));
-  }, [store]);
+      return mapped.filter((e) => e.date && e.date >= from && e.date <= to);
+    },
+    [store.events]
+  );
+
+  const getEventsWithHint = useCallback(
+    async (params: GetEventsWithHintParams): Promise<ScheduleEventsWithHintResult> => {
+      const {
+        from,
+        to,
+        workspaceId,
+        calendarView = "month",
+        includeViewHint = calendarView === "month",
+        monthCellVisibleLimit,
+        monthViewTimeZone,
+      } = params;
+
+      if (workspaceId) {
+        try {
+          const useTodayEndpoint = from === to;
+          let rows: DataMap[] = [];
+          let monthViewHint: MonthViewHint | null = null;
+
+          if (useTodayEndpoint) {
+            rows = (await schedulesApi.todaySchedules(workspaceId)) as Array<
+              DataMap
+            >;
+          } else {
+            const res = await schedulesApi.listSchedulesWithMeta(workspaceId, {
+              from,
+              to,
+              calendarView,
+              includeViewHint,
+              monthCellVisibleLimit,
+              monthViewTimeZone,
+            });
+            rows = (res.data ?? []) as Array<DataMap>;
+            monthViewHint = res.meta?.monthViewHint ?? null;
+          }
+
+          const events = mapBackendEvents(rows, from, to);
+          return { events, monthViewHint };
+        } catch (err) {
+          // fallback to local store if backend fails
+        }
+      }
+
+      const fallbackEvents = store.events
+        .filter((e) => e.date >= from && e.date <= to)
+        .map((e) => ({
+          id: e.id,
+          title: e.title ?? "Untitled",
+          date: e.date,
+          startTime: e.startTime ?? "09:00",
+          endTime: e.endTime ?? "09:30",
+          categoryId: e.categoryId ?? "schedule",
+          description: e.description,
+        }));
+
+      return { events: fallbackEvents, monthViewHint: null };
+    },
+    [mapBackendEvents, store.events]
+  );
+
+  const getEvents = useCallback(
+    async (params: GetEventsParams): Promise<ScheduleEvent[]> => {
+      const result = await getEventsWithHint(params);
+      return result.events;
+    },
+    [getEventsWithHint]
+  );
 
   const createEvent = useCallback(async (payload: Omit<ScheduleEvent, "id">): Promise<ScheduleEvent> => {
     try {
@@ -497,7 +562,7 @@ export function useScheduleApi() {
       body.categoryCode = event.categoryCode ?? event.categoryId ?? null;
 
       if (typeof totalPriceCents === "number") {
-        // attach price on first service element if any
+        // attach price on first service element if present
         if (body.services && body.services.length > 0) {
           body.services[0].priceCents = totalPriceCents;
         }
@@ -573,26 +638,26 @@ export function useScheduleApi() {
 
       // include status when provided by UI (event may include statusId or status object)
       try {
-        const evt = event as unknown as Record<string, unknown>;
+        const evt = event as DataMap;
         let evtStatusId: string | null = null;
         const sId = evt['statusId'];
         if (typeof sId === 'string' && sId) evtStatusId = sId;
         else {
           const st = evt['status'];
           if (st && typeof st === 'object') {
-            const stId = (st as Record<string, unknown>)['id'];
+            const stId = (st as DataMap)['id'];
             if (typeof stId === 'string' && stId) evtStatusId = stId;
           }
         }
-        if (evtStatusId) (body as Record<string, unknown>)['statusId'] = evtStatusId;
+        if (evtStatusId) (body as DataMap)['statusId'] = evtStatusId;
       } catch (err) {
         // no-op
       }
 
       // For updates send categoryId (backend expects categoryCode only on create).
       try {
-        const evtRec = event as unknown as Record<string, unknown>;
-        (body as Record<string, unknown>)['categoryId'] = (evtRec['categoryId'] as string | undefined) ?? null;
+        const evtRec = event as DataMap;
+        (body as DataMap)['categoryId'] = (evtRec['categoryId'] as string | undefined) ?? null;
       } catch (err) {
         // no-op
       }
@@ -604,7 +669,7 @@ export function useScheduleApi() {
       }
 
       const res = await schedulesApi.updateSchedule(id, body);
-      const resp = (res as unknown as Record<string, unknown>) ?? {};
+      const resp = (res as DataMap) ?? {};
       const maybeId = resp.id;
       const newId = typeof maybeId === "string" && maybeId ? maybeId : id;
 
@@ -655,5 +720,26 @@ export function useScheduleApi() {
     }
   }, [store]);
 
-  return useMemo(() => ({ getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent, getNextSchedules: getNextSchedulesForWorkspace, getStatuses }), [getCategories, getEvents, createEvent, createSchedule, removeEvent, updateEvent]);
+  return useMemo(
+    () => ({
+      getCategories,
+      getEvents,
+      getEventsWithHint,
+      createEvent,
+      createSchedule,
+      removeEvent,
+      updateEvent,
+      getNextSchedules: getNextSchedulesForWorkspace,
+      getStatuses,
+    }),
+    [
+      getCategories,
+      getEvents,
+      getEventsWithHint,
+      createEvent,
+      createSchedule,
+      removeEvent,
+      updateEvent,
+    ]
+  );
 }

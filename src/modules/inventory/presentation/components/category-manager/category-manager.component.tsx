@@ -7,20 +7,21 @@ import { Card, Divider, message } from "antd";
 
 export function CategoryManagerComponent() {
   const [categories, setCategories] = React.useState<CategoryModel[]>([]);
-  const [editing, setEditing] = React.useState<CategoryModel | null>(null);
+  const [, setEditing] = React.useState<CategoryModel | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const service = React.useMemo(() => new InventoryService(), []);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      const res = await InventoryService.listCategories();
+      const res = await service.listCategories();
       setCategories(res);
     } catch (err) {
       // swallow
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [service]);
 
   React.useEffect(() => {
     load();
@@ -28,7 +29,7 @@ export function CategoryManagerComponent() {
 
   async function handleCreate(payload: Omit<CategoryModel, "id" | "createdAt">) {
       try {
-        await InventoryService.createCategory(payload);
+        await service.createCategory(payload);
         message.success("Category created");
         load();
       } catch (e) {
@@ -38,23 +39,11 @@ export function CategoryManagerComponent() {
 
   async function handleDeactivate(c: CategoryModel) {
     try {
-      await InventoryService.deactivateCategory(c.id);
+      await service.deactivateCategory(c.id);
       message.success("Category deactivated");
       load();
     } catch (e) {
       message.error("Failed to deactivate category");
-    }
-  }
-
-  async function _handleEditSubmit(payload: Omit<CategoryModel, "id" | "createdAt">) {
-    if (!editing) return;
-    try {
-      await InventoryService.updateCategory(editing.id, payload);
-      message.success("Category updated");
-      setEditing(null);
-      load();
-    } catch (e) {
-      message.error("Failed to update category");
     }
   }
 

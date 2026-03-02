@@ -20,6 +20,11 @@ type Props = {
   subtitle?: string;
 };
 
+type PieTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ payload?: Item }>;
+};
+
 const palette = [
   "var(--color-primary)",
   "var(--color-secondary)",
@@ -28,7 +33,7 @@ const palette = [
   "var(--color-info)",
 ];
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: PieTooltipProps) {
   if (!active || !payload?.length) return null;
   const p = payload[0]?.payload as Item | undefined;
   if (!p) return null;

@@ -1,4 +1,46 @@
 import dayjs from "dayjs";
+import type { EventObject } from "@toast-ui/calendar";
+
+type PopupWorker = {
+  email?: string;
+  fullName?: string;
+  userUid?: string;
+};
+
+type PopupStatus = {
+  label?: string;
+  code?: string;
+};
+
+type PopupCategory = {
+  label?: string;
+};
+
+type PopupRaw = {
+  categoryColor?: string;
+  statusColor?: string;
+  description?: string;
+  workers?: PopupWorker[] | null;
+  status?: PopupStatus | null;
+  category?: PopupCategory | null;
+};
+
+type CalendarTemplateModel = EventObject & {
+  raw?: PopupRaw;
+  body?: string;
+  backgroundColor?: string;
+  color?: string;
+};
+
+type CalendarDefinition = {
+  id: string;
+  name: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  color?: string;
+};
+
+type CalendarTheme = Record<string, DataValue>;
 
 export function escapeHtml(input?: string | null) {
   if (!input) return "";
@@ -35,7 +77,10 @@ export const normalizeCssColor = (value?: string | null): string | undefined => 
 };
 
 export const buildCalendarTemplates = () => ({
-  monthGridEvent: (model: any) => {
+  milestoneTitle: () => "",
+  taskTitle: () => "",
+  alldayTitle: () => "",
+  monthGridEvent: (model: CalendarTemplateModel) => {
     try {
       // monthGridEvent template
       const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
@@ -51,7 +96,7 @@ export const buildCalendarTemplates = () => ({
       return escapeHtml(model.title || "");
     }
   },
-  popupDetail: (model: any) => {
+  popupDetail: (model: CalendarTemplateModel) => {
     try {
       const fg = model.color || `var(--color-text)`;
       const bg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
@@ -61,7 +106,11 @@ export const buildCalendarTemplates = () => ({
       const body = model.body || (model.raw && model.raw.description) || "";
       const workers = (model.raw && model.raw.workers) || null;
       const workersText = Array.isArray(workers) && workers.length > 0
-        ? workers.map((w: any) => escapeHtml((w && (w.email || w.fullName || w.userUid)) || '')).join(', ')
+        ? workers
+            .map((w) =>
+              escapeHtml((w && (w.email || w.fullName || w.userUid)) || "")
+            )
+            .join(", ")
         : null;
       const categoryLabel = (model.raw && model.raw.category && model.raw.category.label) || model.calendarId || '';
       return `
@@ -106,13 +155,27 @@ export const buildCalendarTemplates = () => ({
   },
 });
 
-export const buildCalendarOptions = (opts: { viewMode: string; tuiCalendars: any[]; tuiEvents: any[]; calendarTheme: any }) => ({
+export const buildCalendarOptions = (opts: {
+  viewMode: "month" | "week" | "day";
+  tuiCalendars: CalendarDefinition[];
+  tuiEvents: EventObject[];
+  calendarTheme: CalendarTheme;
+}) => ({
   height: "100%",
   defaultView: opts.viewMode,
   calendars: opts.tuiCalendars,
   events: opts.tuiEvents,
   theme: opts.calendarTheme,
   template: buildCalendarTemplates(),
+  week: {
+    eventView: ["time"],
+    taskView: false,
+    hourStart: 7,
+    hourEnd: 22,
+    showNowIndicator: true,
+    showTimezoneCollapseButton: false,
+    timezonesCollapsed: true,
+  },
   month: {
     startDayOfWeek: 0,
     visibleWeeksCount: 0,
@@ -121,4 +184,4 @@ export const buildCalendarOptions = (opts: { viewMode: string; tuiCalendars: any
   usageStatistics: false,
   useDetailPopup: false,
   useFormPopup: false,
-} as any);
+});

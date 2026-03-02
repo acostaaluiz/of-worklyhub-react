@@ -14,12 +14,23 @@ import { message } from "antd";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { navigateTo } from "@core/navigation/navigation.service";
 
+function toDataMap(value: DataValue | null | undefined): DataMap | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) {
+    return null;
+  }
+  return value;
+}
+
+function toStringValue(value: DataValue | null | undefined): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
 export class UsersHomePage extends BasePage<
   {},
   {
     initialized: boolean;
     isLoading: boolean;
-    error?: unknown;
+    error?: DataValue;
     name?: string;
     modules?: UserOverviewModule[] | null;
     planTitle?: string | null;
@@ -53,7 +64,9 @@ export class UsersHomePage extends BasePage<
       const weekStr = `${week.getFullYear()}-${pad(week.getMonth() + 1)}-${pad(week.getDate())}`;
 
       const ws = companyService.getWorkspaceValue();
-      const workspaceId = (ws as any)?.workspaceId ?? (ws as any)?.id ?? undefined;
+      const workspace = toDataMap(ws);
+      const workspaceId =
+        toStringValue(workspace?.workspaceId) ?? toStringValue(workspace?.id);
 
       const eventsToday = await schedule.getEvents({ from: todayStr, to: todayStr, workspaceId });
       const eventsWeek = await schedule.getEvents({ from: todayStr, to: weekStr, workspaceId });
@@ -210,15 +223,22 @@ export class UsersHomePage extends BasePage<
     });
 
     const ws = companyService.getWorkspaceValue();
+    const workspace = toDataMap(ws);
+    const companyProfile = toDataMap(workspace?.company_profile);
     const companyName =
       // prefer explicit name field if present
-      (ws as any)?.name ??
+      toStringValue(workspace?.name) ??
       // company_profile may come from API in snake_case
-      (ws as any)?.company_profile?.trade_name ??
+      toStringValue(companyProfile?.trade_name) ??
       // fallback to camelCase variants
-      (ws as any)?.tradeName ?? (ws as any)?.fullName ?? undefined;
+      toStringValue(workspace?.tradeName) ??
+      toStringValue(workspace?.fullName) ??
+      undefined;
 
-    const description = (ws as any)?.company_profile?.description ?? (ws as any)?.description ?? undefined;
+    const description =
+      toStringValue(companyProfile?.description) ??
+      toStringValue(workspace?.description) ??
+      undefined;
 
     return (
       <UsersHomeTemplate
@@ -234,6 +254,9 @@ export class UsersHomePage extends BasePage<
         }}
         onOpenTutorials={() => {
           navigateTo("/tutorials");
+        }}
+        onOpenModules={() => {
+          navigateTo("/modules");
         }}
       />
     );

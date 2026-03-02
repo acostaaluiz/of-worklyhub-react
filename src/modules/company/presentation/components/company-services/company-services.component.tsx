@@ -2,22 +2,24 @@ import React from "react";
 import { List, Card, Typography, Button, Drawer } from "antd";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import { CartBar } from "./cart-bar.component";
 import { ServiceSelector } from "./service-selector.component";
 import { ServicesGrid } from "./company-services.component.styles";
 
-type Props = {
+type Props = BaseProps & {
   services?: ServiceModel[];
 };
 
 type State = {
+  isLoading: boolean;
   open: boolean;
   cart: Record<string, number>;
 };
 
 export class CompanyServices extends BaseComponent<Props, State> {
-  public override state: State = { open: false, cart: {} };
+  public override state: State = { isLoading: false, open: false, cart: {} };
 
   private handleAdd = (s: ServiceModel) => {
     this.setState(({ cart }) => ({ cart: { ...cart, [s.id]: (cart[s.id] ?? 0) + 1 } }));
@@ -38,7 +40,7 @@ export class CompanyServices extends BaseComponent<Props, State> {
   }
 
   private get cartTotal() {
-    const { services } = this.props;
+    const services = this.props.services ?? [];
     return Object.entries(this.state.cart).reduce((acc, [id, qty]) => {
       const svc = services.find((s) => s.id === id);
       return acc + ((svc?.priceCents ?? 0) * qty);

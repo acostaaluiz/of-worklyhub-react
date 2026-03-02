@@ -10,3 +10,14 @@ export interface FinanceEntryModel {
 }
 
 export type FinanceEntryCreatePayload = Omit<FinanceEntryModel, "id">;
+
+export type FinanceEntryListItem = {
+  id: string;
+  serviceId?: string;
+  amount: number;
+  date: string;
+  note?: string;
+  description?: string;
+  type?: string;
+  typeId?: string;
+};

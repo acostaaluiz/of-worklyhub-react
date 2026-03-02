@@ -11,6 +11,7 @@ export function WorkOrderLandingTemplate() {
       id: "work-orders",
       title: "Work orders",
       description: "Track, prioritize, and dispatch work orders.",
+      meta: "Execution board",
       to: "/work-order",
       icon: <ClipboardList size={18} />,
     },
@@ -18,6 +19,7 @@ export function WorkOrderLandingTemplate() {
       id: "calendar",
       title: "Calendar",
       description: "Visualize work orders on a timeline.",
+      meta: "Timeline view",
       to: "/work-order/calendar",
       icon: <Calendar size={18} />,
     },
@@ -25,6 +27,7 @@ export function WorkOrderLandingTemplate() {
       id: "statuses",
       title: "Statuses",
       description: "Configure the workflow stages for work orders.",
+      meta: "Workflow setup",
       to: "/work-order/statuses",
       icon: <ListChecks size={18} />,
     },
@@ -38,6 +41,7 @@ export function WorkOrderLandingTemplate() {
           headerIcon={<ClipboardList size={18} />}
           description="Plan, execute, and close work requests with full visibility."
           items={items}
+          variant="soft-accent"
         />
       }
     />

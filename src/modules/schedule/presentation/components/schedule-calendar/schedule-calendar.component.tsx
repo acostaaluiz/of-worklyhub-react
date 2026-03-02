@@ -15,6 +15,8 @@ import type { ScheduleEvent } from "../../../interfaces/schedule-event.model";
 
 import {
   CalendarShell,
+  MonthHintActions,
+  MonthHintBanner,
   ToolbarRow,
   CalendarWrap,
   CalendarHost,
@@ -28,7 +30,9 @@ import {
 } from "../../../constants/colors";
 
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
-import ScheduleEventPopup from "./schedule-event-popup.component";
+import ScheduleEventPopup, {
+  type SchedulePopupEvent,
+} from "./schedule-event-popup.component";
 import {
   normalizeCssColor,
   escapeHtml,
@@ -39,7 +43,10 @@ import type { CompanyServiceModel } from "@modules/company/interfaces/service.mo
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import type { InventoryItemLine } from "../../../interfaces/schedule-event.model";
-import type { ScheduleStatus } from "@modules/schedule/services/schedules-api";
+import type {
+  MonthViewHint,
+  ScheduleStatus,
+} from "@modules/schedule/services/schedules-api";
 
 type ScheduleCalendarProps = {
   availableServices?: CompanyServiceModel[];
@@ -63,10 +70,137 @@ type ScheduleCalendarProps = {
     inventoryOutputs?: InventoryItemLine[];
   }) => Promise<void>;
   events?: ScheduleEvent[];
-  onRangeChange?: (from: string, to: string) => Promise<void>;
+  onRangeChange?: (
+    from: string,
+    to: string,
+    options?: {
+      viewMode?: "month" | "week" | "day";
+      includeViewHint?: boolean;
+    }
+  ) => Promise<ScheduleEvent[] | void>;
+  monthViewHint?: MonthViewHint | null;
   categories?: ScheduleCategory[] | null;
   statuses?: ScheduleStatus[] | null;
   // internal view mode only; parent no longer controls it
+};
+
+type EventCategoryRef = {
+  id?: string;
+  code?: string;
+  label?: string;
+  color?: string;
+};
+
+type EventStatusRef = {
+  id?: string;
+  code?: string;
+  label?: string;
+  color?: string;
+};
+
+type EventServiceRef = {
+  serviceId?: string;
+  id?: string;
+  priceCents?: number;
+};
+
+type EventWorkerRef = {
+  userUid?: string;
+  id?: string;
+  email?: string;
+  fullName?: string;
+};
+
+type EventInventoryRef = {
+  itemId?: string;
+  id?: string;
+  inventoryItemId?: string;
+  item_id?: string;
+  productId?: string;
+  quantity?: number | string;
+};
+
+type ScheduleEventExtended = ScheduleEvent & {
+  category?: EventCategoryRef | null;
+  status?: EventStatusRef | null;
+  services?: EventServiceRef[] | null;
+  workers?: EventWorkerRef[] | null;
+  inventoryInputs?: EventInventoryRef[] | null;
+  inventoryOutputs?: EventInventoryRef[] | null;
+  durationMinutes?: number | null;
+};
+
+type PopupRawData = {
+  description?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  durationMinutes?: number | null;
+  services?: EventServiceRef[] | null;
+  workers?: EventWorkerRef[] | null;
+  inventoryInputs?: EventInventoryRef[] | null;
+  inventoryOutputs?: EventInventoryRef[] | null;
+  inventoryInputsText?: string;
+  inventoryOutputsText?: string;
+  _bodyHtml?: string;
+  status?: EventStatusRef | null;
+  category?: EventCategoryRef | null;
+  statusColor?: string;
+  categoryColor?: string;
+};
+
+type TuiScheduleEvent = EventObject &
+  SchedulePopupEvent & {
+    raw?: PopupRawData;
+    category?: string;
+    body?: string;
+    color?: string;
+    borderColor?: string;
+    dragBackgroundColor?: string;
+    customStyle?: Record<string, string>;
+  };
+
+type PointerEventLike = {
+  clientX?: number;
+  clientY?: number;
+  touches?: Array<{ clientX?: number; clientY?: number }>;
+};
+
+type CalendarClickPayload = {
+  event?: TuiScheduleEvent;
+  domEvent?: PointerEventLike | null;
+  nativeEvent?: PointerEventLike | null;
+};
+
+type SelectDateTimePayload = {
+  start?: Date | string;
+};
+
+type CalendarViewMode = "month" | "week" | "day";
+
+type CalendarInstance = Calendar & {
+  render?: () => void;
+  createEvents?: (events: EventObject[]) => void;
+  createCalendars?: (
+    calendars: Array<{
+      id: string;
+      name: string;
+      backgroundColor?: string;
+      borderColor?: string;
+      color?: string;
+    }>
+  ) => void;
+  clearCalendars?: () => void;
+  setDate?: (date: Date) => void;
+  options?: {
+    calendars?: Array<{
+      id: string;
+      name: string;
+      backgroundColor?: string;
+      borderColor?: string;
+      color?: string;
+    }>;
+  };
 };
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
@@ -74,12 +208,21 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const instanceRef = useRef<Calendar | null>(null);
+  const instanceRef = useRef<CalendarInstance | null>(null);
   const eventColorMapRef = useRef<Map<string, string>>(new Map());
 
-  const [viewMode, setViewMode] = useState<string>("month");
+  const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [headerLabel, setHeaderLabel] = useState<string>(
     dayjs().format("MMMM YYYY")
+  );
+  const [currentMonthKey, setCurrentMonthKey] = useState<string>(
+    dayjs().format("YYYY-MM")
+  );
+  const [dismissedHintMonthKey, setDismissedHintMonthKey] = useState<
+    string | null
+  >(null);
+  const [localMonthViewHint, setLocalMonthViewHint] = useState<MonthViewHint | null>(
+    null
   );
   const [search, setSearch] = useState("");
 
@@ -101,7 +244,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   >(undefined);
 
   // React-controlled popup state (replacement for native detail popup)
-  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<SchedulePopupEvent | null>(
+    null
+  );
   const [popupPosition, setPopupPosition] = useState<{
     left: number;
     top: number;
@@ -111,11 +256,19 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     events: propEvents,
     workspaceId: propWorkspaceId,
     onRangeChange: propOnRangeChange,
+    monthViewHint: propMonthViewHint,
     onCreate: propOnCreate,
     availableServices: propAvailableServices,
     availableEmployees: propAvailableEmployees,
     availableInventoryItems: propAvailableInventoryItems,
   } = props;
+
+  const activeMonthViewHint = propMonthViewHint ?? localMonthViewHint;
+  const shouldShowMonthHint =
+    viewMode === "month" &&
+    Boolean(activeMonthViewHint?.shouldSuggestDayWeekView) &&
+    Number(activeMonthViewHint?.totalHiddenEvents ?? 0) > 0 &&
+    dismissedHintMonthKey !== currentMonthKey;
 
   const inventoryNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -146,8 +299,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     });
   }, [events, search]);
 
-  const tuiEvents = useMemo<EventObject[]>(() => {
-    const out: EventObject[] = [];
+  const tuiEvents = useMemo<TuiScheduleEvent[]>(() => {
+    const out: TuiScheduleEvent[] = [];
     const root =
       typeof document !== "undefined" ? document.documentElement : null;
     const themeText = root
@@ -169,27 +322,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     // use shared status/category colors and contrast helpers
 
     filteredEvents.forEach((e) => {
+      const event = e as ScheduleEventExtended;
       const start = dayjs(`${e.date}T${e.startTime}`).toDate();
       const end = dayjs(`${e.date}T${e.endTime}`).toDate();
 
-      if (!start || isNaN((start as any).getTime())) {
+      if (!start || Number.isNaN(start.getTime())) {
         return;
       }
 
-      if (!end || isNaN((end as any).getTime())) {
+      if (!end || Number.isNaN(end.getTime())) {
         return;
       }
 
       // match category by stringified id to avoid mismatches (number vs string)
       // also try matching by category object or by category code to cover responses
       // that return codes instead of ids or embed the category object only.
-      const rawCat = (e as any).category as
-        | Record<string, any>
-        | undefined
-        | null;
+      const rawCat: EventCategoryRef | null = event.category ?? null;
       const category = categories.find((c) => {
         const cid = String(c.id ?? "");
-        const ccode = String((c as any).code ?? "");
+        const ccode = String(c.code ?? "");
         const eCatId = e.categoryId ? String(e.categoryId) : "";
         const eRawCatId = rawCat && rawCat.id ? String(rawCat.id) : "";
         const eRawCatCode = rawCat && rawCat.code ? String(rawCat.code) : "";
@@ -203,7 +354,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       const rawCategoryColor = category?.color ?? themePrimary ?? "#1e70ff";
       const categoryColor =
         normalizeCssColor(rawCategoryColor) ?? rawCategoryColor;
-      const statusCode = (e as any)?.status?.code ?? null;
+      const statusCode = event?.status?.code ?? null;
       const statusColorRaw = statusCode
         ? (getStatusColor(statusCode) ?? themePrimary ?? "#7c3aed")
         : undefined;
@@ -212,11 +363,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       const startText = formatDateTime(start);
       const endText = dayjs(end).format("HH:mm");
-      const inventoryInputsRaw = (e as any).inventoryInputs ?? null;
-      const inventoryOutputsRaw = (e as any).inventoryOutputs ?? null;
+      const inventoryInputsRaw = event.inventoryInputs ?? null;
+      const inventoryOutputsRaw = event.inventoryOutputs ?? null;
       const inventoryInputsText = Array.isArray(inventoryInputsRaw)
         ? inventoryInputsRaw
-            .map((l: any) => {
+            .map((l: EventInventoryRef) => {
               const iid = l?.itemId ?? l?.id ?? "";
               if (!iid) return null;
               const name = inventoryNameMap.get(String(iid)) ?? String(iid);
@@ -226,12 +377,12 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                   : "";
               return `${name}${qty}`;
             })
-            .filter(Boolean)
+            .filter((line): line is string => Boolean(line))
             .join(", ")
         : "";
       const inventoryOutputsText = Array.isArray(inventoryOutputsRaw)
         ? inventoryOutputsRaw
-            .map((l: any) => {
+            .map((l: EventInventoryRef) => {
               const iid = l?.itemId ?? l?.id ?? "";
               if (!iid) return null;
               const name = inventoryNameMap.get(String(iid)) ?? String(iid);
@@ -241,7 +392,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                   : "";
               return `${name}${qty}`;
             })
-            .filter(Boolean)
+            .filter((line): line is string => Boolean(line))
             .join(", ")
         : "";
       const bodyHtml = `
@@ -259,7 +410,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       out.push({
         id: e.id,
         // ensure calendarId is a string so it matches tuiCalendars ids
-        calendarId: String((e as any).category?.id ?? e.categoryId),
+        calendarId: String(event.category?.id ?? e.categoryId),
         title: e.title,
         category: "time",
         start,
@@ -278,22 +429,22 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           date: e.date,
           startTime: e.startTime,
           endTime: e.endTime,
-          services: (e as any).services ?? null,
-          workers: (e as any).workers ?? null,
+          services: event.services ?? null,
+          workers: event.workers ?? null,
           inventoryInputs: inventoryInputsRaw ?? null,
           inventoryOutputs: inventoryOutputsRaw ?? null,
           inventoryInputsText,
           inventoryOutputsText,
           _bodyHtml: bodyHtml,
-          status: (e as any).status ?? null,
-          category: (e as any).category ?? null,
+          status: event.status ?? null,
+          category: event.category ?? null,
           statusColor,
           categoryColor,
         },
         // helper to open edit modal when popup Edit pressed
         onEdit: () => {
           try {
-            const raw = (e as any) || {};
+            const raw = event || {};
             // resolve categoryId robustly from multiple potential sources so backend always receives it
             const resolvedCategoryId = (() => {
               const byEvent = e.categoryId ? String(e.categoryId) : undefined;
@@ -332,18 +483,20 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               date: e.date,
               startTime: e.startTime ?? "09:00",
               endTime: e.endTime ?? "09:30",
-              durationMinutes: (e as any).durationMinutes ?? undefined,
+              durationMinutes: event.durationMinutes ?? undefined,
               serviceIds: Array.isArray(raw.services)
                 ? raw.services
-                    .map((s: any) => s.serviceId ?? s.id)
-                    .filter(Boolean)
+                    .map((s: EventServiceRef) => s.serviceId ?? s.id ?? null)
+                    .filter((id): id is string => Boolean(id))
                 : undefined,
               employeeIds: Array.isArray(raw.workers)
-                ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean)
+                ? raw.workers
+                    .map((w: EventWorkerRef) => w.userUid ?? w.id ?? null)
+                    .filter((id): id is string => Boolean(id))
                 : undefined,
               inventoryInputs: Array.isArray(raw.inventoryInputs)
                 ? raw.inventoryInputs
-                    .map((l: any) => {
+                    .map((l: EventInventoryRef) => {
                       const iid =
                         l?.itemId ??
                         l?.id ??
@@ -351,21 +504,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                         l?.item_id ??
                         l?.productId;
                       if (!iid) return null;
-                      return {
+                      const quantity =
+                        typeof l?.quantity === "number"
+                          ? l.quantity
+                          : l?.quantity
+                          ? Number(l.quantity)
+                          : undefined;
+                      const line: InventoryItemLine = {
                         itemId: String(iid),
-                        quantity:
-                          typeof l?.quantity === "number"
-                            ? l.quantity
-                            : l?.quantity
-                            ? Number(l.quantity)
-                            : undefined,
                       };
+                      if (quantity !== undefined) line.quantity = quantity;
+                      return line;
                     })
-                    .filter(Boolean) as any
+                    .filter(
+                      (line): line is InventoryItemLine => Boolean(line)
+                    )
                 : undefined,
               inventoryOutputs: Array.isArray(raw.inventoryOutputs)
                 ? raw.inventoryOutputs
-                    .map((l: any) => {
+                    .map((l: EventInventoryRef) => {
                       const iid =
                         l?.itemId ??
                         l?.id ??
@@ -373,21 +530,26 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                         l?.item_id ??
                         l?.productId;
                       if (!iid) return null;
-                      return {
+                      const quantity =
+                        typeof l?.quantity === "number"
+                          ? l.quantity
+                          : l?.quantity
+                          ? Number(l.quantity)
+                          : undefined;
+                      const line: InventoryItemLine = {
                         itemId: String(iid),
-                        quantity:
-                          typeof l?.quantity === "number"
-                            ? l.quantity
-                            : l?.quantity
-                            ? Number(l.quantity)
-                            : undefined,
                       };
+                      if (quantity !== undefined) line.quantity = quantity;
+                      return line;
                     })
-                    .filter(Boolean) as any
+                    .filter(
+                      (line): line is InventoryItemLine => Boolean(line)
+                    )
                 : undefined,
               totalPriceCents: Array.isArray(raw.services)
                 ? raw.services.reduce(
-                    (acc: number, s: any) => acc + (s.priceCents ?? 0),
+                    (acc: number, s: EventServiceRef) =>
+                      acc + Number(s.priceCents ?? 0),
                     0
                   )
                 : undefined,
@@ -403,7 +565,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             void err;
           }
         },
-      } as any);
+      });
     });
 
     // build quick lookup map for event -> preferred color (use normalized categoryColor first)
@@ -411,10 +573,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       const map = new Map<string, string>();
       out.forEach((ev) => {
         const id = ev.id as string;
-        const rawCategory = (ev as any).raw?.categoryColor;
-        const rawStatus = (ev as any).raw?.statusColor;
+        const rawCategory = (ev as TuiScheduleEvent).raw?.categoryColor;
+        const rawStatus = (ev as TuiScheduleEvent).raw?.statusColor;
         const bgRaw =
-          (ev as any).backgroundColor || rawCategory || rawStatus || "";
+          (ev as TuiScheduleEvent).backgroundColor || rawCategory || rawStatus || "";
         const bg = normalizeCssColor(bgRaw) ?? bgRaw;
         if (id && bg) map.set(id, bg as string);
       });
@@ -484,8 +646,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             // prefer explicit color from the eventColorMap (normalized), then raw values
             const fromMap = eventColorMapRef.current.get(id);
             const categoryColor =
-              (ev as any).raw?.categoryColor ||
-              (ev as unknown as any).backgroundColor;
+              (ev as TuiScheduleEvent).raw?.categoryColor ||
+              (ev as TuiScheduleEvent).backgroundColor;
             const preferCategory = (c?: string | undefined) =>
               c && String(c).trim() ? c : undefined;
             const preferredColor = fromMap || preferCategory(categoryColor);
@@ -505,7 +667,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               if (preferredColor) el.style.background = preferredColor;
             }
 
-            // ensure any template popup width is enforced and remove stray max-width
+            // ensure DataMap template popup width is enforced and remove stray max-width
             try {
               const popups =
                 document.querySelectorAll<HTMLElement>(".tui-custom-popup");
@@ -528,9 +690,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               try {
                 // prefer status color for the dot so it clearly indicates event status
                 const dotColorRaw =
-                  (ev as any).raw?.statusColor ||
-                  (ev as any).raw?.categoryColor ||
-                  (ev as any).backgroundColor;
+                  (ev as TuiScheduleEvent).raw?.statusColor ||
+                  (ev as TuiScheduleEvent).raw?.categoryColor ||
+                  (ev as TuiScheduleEvent).backgroundColor;
                 const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
                 if (dotColor) {
                   dot.style.setProperty(
@@ -543,8 +705,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 // if contrast between dot and category is low, add a thin border to improve visibility
                 try {
                   const catCol =
-                    (ev as any).raw?.categoryColor ||
-                    (ev as any).backgroundColor;
+                    (ev as TuiScheduleEvent).raw?.categoryColor ||
+                    (ev as TuiScheduleEvent).backgroundColor;
                   const border = suitableBorderForContrast(dotColor, catCol);
                   if (border) {
                     dot.style.setProperty(
@@ -565,9 +727,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 }
               } catch (err) {
                 const dotColorRaw =
-                  (ev as any).raw?.statusColor ||
-                  (ev as any).raw?.categoryColor ||
-                  (ev as any).backgroundColor;
+                  (ev as TuiScheduleEvent).raw?.statusColor ||
+                  (ev as TuiScheduleEvent).raw?.categoryColor ||
+                  (ev as TuiScheduleEvent).backgroundColor;
                 const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
                 if (dotColor) dot.style.background = dotColor;
               }
@@ -587,7 +749,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   };
 
   const safeRender = () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
 
     syncHostHeight();
@@ -601,17 +763,18 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   };
 
   const refreshHeaderLabel = () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
 
     const current = inst.getDate?.();
     if (!current) return;
 
     setHeaderLabel(dayjs(current).format("MMMM YYYY"));
+    setCurrentMonthKey(dayjs(current).format("YYYY-MM"));
   };
 
   const loadMonthEventsFromInstance = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
 
     const current = inst.getDate?.();
@@ -620,14 +783,22 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     const from = dayjs(current).startOf("month").format("YYYY-MM-DD");
     const to = dayjs(current).endOf("month").format("YYYY-MM-DD");
     if (propOnRangeChange) {
-      await propOnRangeChange(from, to);
+      await propOnRangeChange(from, to, {
+        viewMode: viewMode === "week" || viewMode === "day" ? viewMode : "month",
+        includeViewHint: viewMode === "month",
+      });
     } else {
-      const ev = await api.getEvents({
+      const range = await api.getEventsWithHint({
         from,
         to,
         workspaceId: propWorkspaceId ?? null,
+        calendarView: viewMode === "week" || viewMode === "day" ? viewMode : "month",
+        includeViewHint: viewMode === "month",
+        monthCellVisibleLimit: 2,
+        monthViewTimeZone: "America/Sao_Paulo",
       });
-      setEvents(ev);
+      setEvents(range.events ?? []);
+      setLocalMonthViewHint(range.monthViewHint ?? null);
     }
   };
 
@@ -688,12 +859,17 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       if (props.events === undefined && !props.onRangeChange) {
         const from = dayjs().startOf("month").format("YYYY-MM-DD");
         const to = dayjs().endOf("month").format("YYYY-MM-DD");
-        const ev = await api.getEvents({
+        const range = await api.getEventsWithHint({
           from,
           to,
           workspaceId: props.workspaceId ?? null,
+          calendarView: "month",
+          includeViewHint: true,
+          monthCellVisibleLimit: 2,
+          monthViewTimeZone: "America/Sao_Paulo",
         });
-        setEvents(ev);
+        setEvents(range.events ?? []);
+        setLocalMonthViewHint(range.monthViewHint ?? null);
       }
     })();
     // avoid re-running for changing onRangeChange identity - parent should provide stable callback
@@ -705,6 +881,12 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   }, [propEvents]);
 
   useEffect(() => {
+    if (!dismissedHintMonthKey) return;
+    if (dismissedHintMonthKey === currentMonthKey) return;
+    setDismissedHintMonthKey(null);
+  }, [currentMonthKey, dismissedHintMonthKey]);
+
+  useEffect(() => {
     if (!hostRef.current) return;
 
     syncHostHeight();
@@ -713,9 +895,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     const inst = new Calendar(
       hostRef.current,
       buildCalendarOptions({ viewMode, tuiCalendars, tuiEvents, calendarTheme })
-    );
+    ) as CalendarInstance;
 
-    inst.on("clickEvent", (e: any) => {
+    inst.on("clickEvent", (e: CalendarClickPayload) => {
       const ev = e?.event;
       if (!ev) {
         return;
@@ -754,7 +936,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       // attach an onEdit handler directly to the selected event object so Toast UI's internal cloning
       // won't remove function refs. This opens the edit modal prefilled with the event data.
       try {
-        const raw = (ev as any).raw || {};
+        const raw = (ev as TuiScheduleEvent).raw ?? {};
         const draft: ScheduleEventDraft & {
           id?: string;
         } = {
@@ -762,20 +944,24 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           title: ev.title ?? "",
           description: raw.description ?? undefined,
           categoryId:
-            (ev as any).calendarId ?? (ev as any).raw?.category?.id ?? "",
+            (ev as TuiScheduleEvent).calendarId ?? (ev as TuiScheduleEvent).raw?.category?.id ?? "",
           date: raw.date ?? "",
           startTime: raw.startTime ?? "09:00",
           endTime: raw.endTime ?? "09:30",
           durationMinutes: (raw.durationMinutes as number) ?? undefined,
           serviceIds: Array.isArray(raw.services)
-            ? raw.services.map((s: any) => s.serviceId ?? s.id).filter(Boolean)
+            ? raw.services
+                .map((s: EventServiceRef) => s.serviceId ?? s.id ?? null)
+                .filter((id): id is string => Boolean(id))
             : undefined,
           employeeIds: Array.isArray(raw.workers)
-            ? raw.workers.map((w: any) => w.userUid ?? w.id).filter(Boolean)
+            ? raw.workers
+                .map((w: EventWorkerRef) => w.userUid ?? w.id ?? null)
+                .filter((id): id is string => Boolean(id))
             : undefined,
           inventoryInputs: Array.isArray(raw.inventoryInputs)
             ? raw.inventoryInputs
-                .map((l: any) => {
+                .map((l: EventInventoryRef) => {
                   const iid =
                     l?.itemId ??
                     l?.id ??
@@ -783,21 +969,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                     l?.item_id ??
                     l?.productId;
                   if (!iid) return null;
-                  return {
+                  const quantity =
+                    typeof l?.quantity === "number"
+                      ? l.quantity
+                      : l?.quantity
+                      ? Number(l.quantity)
+                      : undefined;
+                  const line: InventoryItemLine = {
                     itemId: String(iid),
-                    quantity:
-                      typeof l?.quantity === "number"
-                        ? l.quantity
-                        : l?.quantity
-                        ? Number(l.quantity)
-                        : undefined,
                   };
+                  if (quantity !== undefined) line.quantity = quantity;
+                  return line;
                 })
-                .filter(Boolean) as any
+                .filter(
+                  (line): line is InventoryItemLine => Boolean(line)
+                )
             : undefined,
           inventoryOutputs: Array.isArray(raw.inventoryOutputs)
             ? raw.inventoryOutputs
-                .map((l: any) => {
+                .map((l: EventInventoryRef) => {
                   const iid =
                     l?.itemId ??
                     l?.id ??
@@ -805,21 +995,26 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                     l?.item_id ??
                     l?.productId;
                   if (!iid) return null;
-                  return {
+                  const quantity =
+                    typeof l?.quantity === "number"
+                      ? l.quantity
+                      : l?.quantity
+                      ? Number(l.quantity)
+                      : undefined;
+                  const line: InventoryItemLine = {
                     itemId: String(iid),
-                    quantity:
-                      typeof l?.quantity === "number"
-                        ? l.quantity
-                        : l?.quantity
-                        ? Number(l.quantity)
-                        : undefined,
                   };
+                  if (quantity !== undefined) line.quantity = quantity;
+                  return line;
                 })
-                .filter(Boolean) as any
+                .filter(
+                  (line): line is InventoryItemLine => Boolean(line)
+                )
             : undefined,
           totalPriceCents: Array.isArray(raw.services)
             ? raw.services.reduce(
-                (acc: number, s: any) => acc + (s.priceCents ?? 0),
+                (acc: number, s: EventServiceRef) =>
+                  acc + Number(s.priceCents ?? 0),
                 0
               )
             : undefined,
@@ -827,7 +1022,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
         };
 
-        const augmented = {
+        const augmented: SchedulePopupEvent = {
           ...ev,
           onEdit: () => {
             try {
@@ -842,7 +1037,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               void err;
             }
           },
-        } as any;
+        };
 
         setSelectedEvent(augmented);
       } catch (err) {
@@ -850,7 +1045,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       }
     });
 
-    inst.on("selectDateTime", (e: any) => {
+    inst.on("selectDateTime", (e: SelectDateTimePayload) => {
       const start = e?.start ? dayjs(e.start) : null;
       if (!start) return;
 
@@ -889,7 +1084,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           }
           if (
             m.type === "attributes" &&
-            (m as any).attributeName?.includes("data-event")
+            m.attributeName?.includes("data-event")
           ) {
             found = true;
             break;
@@ -930,7 +1125,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
   // When calendar definitions change (colors/categories), try to update the existing instance
   useEffect(() => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     try {
       // Toast UI Calendar may expose setCalendars/createCalendars - try a few options
@@ -947,7 +1142,12 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       } else {
         // fallback: update options and rerender
         try {
-          (inst as any).options.calendars = tuiCalendars;
+          const instWithOptions = inst as Calendar & {
+            options?: { calendars?: typeof tuiCalendars };
+          };
+          if (instWithOptions.options) {
+            instWithOptions.options.calendars = tuiCalendars;
+          }
         } catch (err) {
           void err;
         }
@@ -979,7 +1179,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
   // update events on existing instance without recreating the whole calendar
   useEffect(() => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
 
     // prefer instance methods to update events in-place
@@ -1017,10 +1217,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           tuiEvents,
           calendarTheme,
         })
-      );
+      ) as CalendarInstance;
       if (prevDate) {
         try {
-          (next as any).setDate?.(prevDate);
+          next.setDate?.(prevDate);
         } catch (err) {
           void err;
         }
@@ -1174,7 +1374,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               const inner =
                 n.querySelectorAll && n.querySelectorAll(".tui-custom-popup");
               if (inner && inner.length)
-                inner.forEach((el: any) => enforcePopup(el as HTMLElement));
+                inner.forEach((el) => enforcePopup(el as HTMLElement));
             } catch (err) {
               void err;
             }
@@ -1203,7 +1403,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   }, [isModalOpen]);
 
   const handlePrev = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     inst.prev();
     refreshHeaderLabel();
@@ -1212,7 +1412,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   };
 
   const handleNext = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     inst.next();
     refreshHeaderLabel();
@@ -1221,7 +1421,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   };
 
   const handleToday = async () => {
-    const inst = instanceRef.current as any;
+    const inst = instanceRef.current;
     if (!inst) return;
     inst.today();
     refreshHeaderLabel();
@@ -1237,6 +1437,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const handleConfirmModal = async (draft: ScheduleEventDraft) => {
     const toCreate: Omit<ScheduleEvent, "id"> & {
       durationMinutes?: number | null;
+      statusId?: string;
     } = {
       title: draft.title,
       date: draft.date,
@@ -1251,8 +1452,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       // include statusId when provided by the modal draft so backend receives updated status
       try {
-        if ((draft as any).statusId)
-          (toCreate as any).statusId = (draft as any).statusId;
+        if (draft.statusId)
+          toCreate.statusId = draft.statusId;
       } catch (err) {
         // no-op
       }
@@ -1275,8 +1476,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           });
         } else {
           // fallback to calling api.updateEvent directly
-          if ((api as any).updateEvent) {
-            await (api as any).updateEvent({
+          if (api.updateEvent) {
+            await api.updateEvent({
               id: modalInitialDraft.id,
               event: toCreate,
               serviceIds: draft.serviceIds,
@@ -1310,19 +1511,28 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       // refresh month events only when parent isn't already handling data refresh
       if (!parentHandlesRefresh) {
-        const inst = instanceRef.current as any;
+        const inst = instanceRef.current;
         const current = inst?.getDate?.();
         const from = dayjs(current).startOf("month").format("YYYY-MM-DD");
         const to = dayjs(current).endOf("month").format("YYYY-MM-DD");
         if (propOnRangeChange) {
-          await propOnRangeChange(from, to);
+          await propOnRangeChange(from, to, {
+            viewMode: viewMode === "week" || viewMode === "day" ? viewMode : "month",
+            includeViewHint: viewMode === "month",
+          });
         } else {
-          const ev = await api.getEvents({
+          const range = await api.getEventsWithHint({
             from,
             to,
             workspaceId: propWorkspaceId ?? null,
+            calendarView:
+              viewMode === "week" || viewMode === "day" ? viewMode : "month",
+            includeViewHint: viewMode === "month",
+            monthCellVisibleLimit: 2,
+            monthViewTimeZone: "America/Sao_Paulo",
           });
-          setEvents(ev);
+          setEvents(range.events ?? []);
+          setLocalMonthViewHint(range.monthViewHint ?? null);
         }
       }
 
@@ -1365,6 +1575,41 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             </div>
           </div>
 
+          {shouldShowMonthHint && activeMonthViewHint ? (
+            <MonthHintBanner>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}
+              >
+                <Typography.Text strong>
+                  {activeMonthViewHint.title || "High volume in month view"}
+                </Typography.Text>
+                <Typography.Text type="secondary">
+                  {activeMonthViewHint.message ||
+                    "This month has hidden events in the month grid. Use Week or Day to view all items."}
+                </Typography.Text>
+                <Typography.Text
+                  type="secondary"
+                  style={{ fontSize: 12 }}
+                >{`+${activeMonthViewHint.totalHiddenEvents} hidden events across ${activeMonthViewHint.overloadedDays} days`}</Typography.Text>
+              </div>
+              <MonthHintActions>
+                <Button size="small" type="primary" onClick={() => setViewMode("week")}>
+                  Go to Week
+                </Button>
+                <Button size="small" onClick={() => setViewMode("day")}>
+                  Go to Day
+                </Button>
+                <Button
+                  size="small"
+                  type="text"
+                  onClick={() => setDismissedHintMonthKey(currentMonthKey)}
+                >
+                  Dismiss
+                </Button>
+              </MonthHintActions>
+            </MonthHintBanner>
+          ) : null}
+
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
@@ -1380,11 +1625,19 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                   boxSizing: "border-box",
                   padding: 2,
                   background: "transparent",
+                  border: shouldShowMonthHint
+                    ? "1px solid color-mix(in srgb, var(--color-primary) 45%, var(--color-border))"
+                    : "1px solid transparent",
                 }}
               >
                 <Segmented
                   value={viewMode}
-                  onChange={(v) => setViewMode(String(v))}
+                  onChange={(v) => {
+                    const next = String(v);
+                    if (next === "month" || next === "week" || next === "day") {
+                      setViewMode(next);
+                    }
+                  }}
                   options={[
                     { label: "Month", value: "month" },
                     { label: "Week", value: "week" },
@@ -1441,7 +1694,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         availableEmployees={propAvailableEmployees}
         statuses={
           props.statuses
-            ? props.statuses.map((s: any) => ({
+            ? props.statuses.map((s) => ({
                 id: String(s.id),
                 code: s.code,
                 label: s.label,
@@ -1452,3 +1705,4 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     </>
   );
 }
+

@@ -1,5 +1,6 @@
-import React from "react";
+import type { ReactNode } from "react";
 import { Button, Space, Tag } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import SmartTable from "@shared/ui/components/smart-table/smart-table.component";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
@@ -8,12 +9,12 @@ type Props = {
   services: CompanyServiceModel[];
   onEdit: (s: CompanyServiceModel) => void;
   onDeactivate: (s: CompanyServiceModel) => void;
-  toolbarLeft?: React.ReactNode;
-  toolbarRight?: React.ReactNode;
+  toolbarLeft?: ReactNode;
+  toolbarRight?: ReactNode;
 };
 
 export function ServiceListComponent({ services, onEdit, onDeactivate, toolbarLeft, toolbarRight }: Props) {
-  const cols = [
+  const cols: ColumnsType<CompanyServiceModel> = [
     { title: "Title", dataIndex: "title", key: "title" },
     { title: "Duration (min)", dataIndex: "durationMinutes", key: "durationMinutes" },
     { title: "Price", dataIndex: "priceCents", key: "priceCents", render: (v?: number) => (typeof v === "number" ? formatMoneyFromCents(v) : "-") },
@@ -22,7 +23,7 @@ export function ServiceListComponent({ services, onEdit, onDeactivate, toolbarLe
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: CompanyServiceModel) => {
+      render: (_: DataMap, record: CompanyServiceModel) => {
         const isActive = Boolean(record?.active);
         return (
           <Space>
@@ -36,7 +37,7 @@ export function ServiceListComponent({ services, onEdit, onDeactivate, toolbarLe
     },
   ];
 
-  return <SmartTable columns={cols} dataSource={services} rowKey="id" pageSize={10} searchFields={["title"]} topLeft={toolbarLeft} topRight={toolbarRight} />;
+  return <SmartTable<CompanyServiceModel> columns={cols} dataSource={services} rowKey="id" pageSize={10} searchFields={["title"]} topLeft={toolbarLeft} topRight={toolbarRight} />;
 }
 
 export default ServiceListComponent;

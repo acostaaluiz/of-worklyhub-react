@@ -76,7 +76,7 @@ export function ErrorProvider({ children }: PropsWithChildren) {
   );
 
   const showError = useCallback(
-    (err: unknown, options?: ShowErrorOptions) => {
+    (err: DataValue, options?: ShowErrorOptions) => {
       const appError = toAppError(err);
       showAppError(appError, options);
     },

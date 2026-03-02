@@ -21,6 +21,16 @@
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.7;
 
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 180ms;
+  --motion-duration-slow: 240ms;
+  --motion-duration-enter: 320ms;
+  --motion-delay-1: 40ms;
+  --motion-delay-2: 80ms;
+  --motion-delay-3: 120ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+
   --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 14px;

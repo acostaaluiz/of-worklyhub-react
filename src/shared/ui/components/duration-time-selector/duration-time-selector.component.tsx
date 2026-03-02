@@ -2,11 +2,13 @@ import React from "react";
 import { Select } from "antd";
 import type { SelectProps } from "antd";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import type { BaseState } from "@shared/base/interfaces/base-state.interface";
 import { SlotsRail, TimeChip } from "./duration-time-selector.styles";
 
 export type DurationTimeOption = { value: string | number; label: string };
 
-type Props = {
+type Props = BaseProps & {
   value?: string | number;
   onChange?: (v: string | number) => void;
   // mode: 'duration' -> options are minutes numbers; 'time' -> options are times of day
@@ -40,7 +42,9 @@ function timeStringToMinutes(t: string) {
   return h * 60 + m;
 }
 
-export class DurationTimeSelector extends BaseComponent<Props, object> {
+export class DurationTimeSelector extends BaseComponent<Props, BaseState> {
+  public override state: BaseState = { isLoading: false, error: undefined };
+
   static defaultProps: Partial<Props> = {
     mode: "duration",
     durations: [15, 25, 30, 45, 60],

@@ -3,14 +3,14 @@ import type { RouteObject } from "react-router-dom";
 
 const DashboardPage = lazy(() =>
   import("@modules/dashboard/presentation/pages/dashboard/dashboard.page").then(
-    (m: any) => ({
+    (m) => ({
       default: m.default ?? m.DashboardPage,
     })
   )
 );
 const DashboardLandingPage = lazy(() =>
   import("@modules/dashboard/presentation/pages/landing/landing.page").then(
-    (m: any) => ({
+    (m) => ({
       default: m.default ?? m.DashboardLandingPage,
     })
   )

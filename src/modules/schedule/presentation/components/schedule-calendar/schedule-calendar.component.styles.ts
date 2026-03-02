@@ -20,6 +20,33 @@ export const ToolbarRow = styled.div`
   }
 `;
 
+export const MonthHintBanner = styled.div`
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--color-warning, #f59e0b) 45%, var(--color-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-warning, #f59e0b) 18%, transparent),
+    color-mix(in srgb, var(--color-primary) 8%, transparent)
+  );
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+export const MonthHintActions = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+`;
+
 export const ToolbarLeft = styled.div`
   display: flex;
   align-items: center;

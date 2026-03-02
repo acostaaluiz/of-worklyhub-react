@@ -4,7 +4,7 @@ import { httpClient } from "@core/http/client.instance";
 import { companyService } from "./company.service";
 import type { CompanyServiceModel, CompanyServiceCreatePayload } from "@modules/company/interfaces/service.model";
 
-type ApiRow = { [key: string]: unknown };
+type ApiRow = DataMap;
 
 function getString(row: ApiRow, key: string): string | undefined {
   const v = row[key];
@@ -28,7 +28,7 @@ function mapFromApi(item: ApiRow): CompanyServiceModel {
   const priceCents = getNumber(item, "price_cents") ?? getNumber(item, "priceCents");
   const capacity = getNumber(item, "capacity");
   const staffRequired = getNumber(item, "staff_required") ?? getNumber(item, "staffRequired");
-  const tags = Array.isArray(item["tags"]) ? (item["tags"] as unknown[]).map((x) => String(x)) : undefined;
+  const tags = Array.isArray(item["tags"]) ? (item["tags"] as DataValue[]).map((x) => String(x)) : undefined;
   const category = getString(item, "category");
   const active = getBoolean(item, "is_active") ?? getBoolean(item, "active");
   const createdAt = getString(item, "created_at") ?? getString(item, "createdAt") ?? new Date().toISOString();
@@ -47,7 +47,7 @@ function mapFromApi(item: ApiRow): CompanyServiceModel {
   } as CompanyServiceModel;
 }
 
-function mapToApi(payload: CompanyServiceCreatePayload): { [key: string]: unknown } {
+function mapToApi(payload: CompanyServiceCreatePayload): DataMap {
   return {
     name: payload.title ?? payload.title,
     category: Array.isArray(payload.tags) && payload.tags.length ? payload.tags[0] : undefined,
@@ -77,9 +77,9 @@ export class CompanyWorkspaceService {
         if (!res) return [] as CompanyServiceModel[];
         let arr: ApiRow[] = [];
         if (Array.isArray(res)) {
-          arr = res as unknown[] as ApiRow[];
+          arr = res as DataValue[] as ApiRow[];
         } else if (res && typeof res === "object") {
-          const obj = res as { [key: string]: unknown };
+          const obj = res as DataMap;
           const maybe = obj["services"];
           if (Array.isArray(maybe)) arr = maybe as ApiRow[];
         }
@@ -122,7 +122,7 @@ export class CompanyWorkspaceService {
 
       const serviceId = _id;
 
-      const body: { [key: string]: unknown } = {};
+      const body: DataMap = {};
       const patch = _patch as Partial<CompanyServiceModel>;
       if (Object.prototype.hasOwnProperty.call(patch, "title")) body.name = patch.title ?? null;
       if (Object.prototype.hasOwnProperty.call(patch, "tags")) body.category = Array.isArray(patch.tags) && patch.tags!.length ? patch.tags![0] : null;

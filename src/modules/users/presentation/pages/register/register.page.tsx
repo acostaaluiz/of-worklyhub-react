@@ -9,13 +9,13 @@ import { navigateTo } from "@core/navigation/navigation.service";
 
 type ResponseModalState = { open: boolean; title: string; description?: string } | undefined;
 
-export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; responseModal?: ResponseModalState }> {
+export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; responseModal?: ResponseModalState }> {
   protected override options = {
     title: "Register | WorklyHub",
     requiresAuth: false,
   };
 
-  public state: { initialized: boolean; isLoading: boolean; error?: unknown; responseModal?: ResponseModalState } = {
+  public state: { initialized: boolean; isLoading: boolean; error?: DataValue; responseModal?: ResponseModalState } = {
     isLoading: false,
     initialized: false,
     error: undefined,
@@ -36,8 +36,8 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
           try {
             await usersAuthService.register(values.name, values.email, values.password);
             this.setSafeState({ responseModal: { open: true, title: "Account created", description: "Your account was created successfully." } });
-          } catch (err: unknown) {
-            const errObj = err as Record<string, unknown> | null;
+          } catch (err) {
+            const errObj = err as DataMap | null;
             const candidate = errObj?.code ?? errObj?.name ?? null;
             const code = typeof candidate === "string" ? candidate : null;
 

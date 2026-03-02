@@ -14,7 +14,7 @@ import { resolveModulePath } from "@modules/users/presentation/utils/module-navi
 type State = {
   isLoading: boolean;
   initialized: boolean;
-  error?: unknown;
+  error?: DataValue;
   modules?: UserOverviewModule[] | null;
   planTitle?: string | null;
 };

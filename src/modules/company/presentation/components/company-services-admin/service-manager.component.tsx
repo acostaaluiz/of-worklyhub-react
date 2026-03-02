@@ -46,9 +46,9 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
           initial={editing ?? undefined}
           onSubmit={(d) => {
             if (editing) {
-              onUpdate(editing.id, d as any);
+              onUpdate(editing.id, d);
             } else {
-              onCreate(d as any);
+              onCreate(d);
             }
             setShowForm(false);
           }}

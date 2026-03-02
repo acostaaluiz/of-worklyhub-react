@@ -15,13 +15,13 @@ import type { CompanyIntroductionValues } from "../templates/company-introductio
 
 type ResponseModalState = { open: boolean; title: string; description?: string } | undefined;
 
-export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; categories?: ApplicationCategoryItem[]; industries?: ApplicationIndustryItem[]; initialValues?: CompanyIntroductionValues; responseModal?: ResponseModalState }> {
+export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; categories?: ApplicationCategoryItem[]; industries?: ApplicationIndustryItem[]; initialValues?: CompanyIntroductionValues; responseModal?: ResponseModalState }> {
   protected override options = {
     title: "Company setup | WorklyHub",
     requiresAuth: true,
   };
 
-  public state: { initialized: boolean; isLoading: boolean; error?: unknown; categories?: ApplicationCategoryItem[]; industries?: ApplicationIndustryItem[]; initialValues?: CompanyIntroductionValues; responseModal?: ResponseModalState } = {
+  public state: { initialized: boolean; isLoading: boolean; error?: DataValue; categories?: ApplicationCategoryItem[]; industries?: ApplicationIndustryItem[]; initialValues?: CompanyIntroductionValues; responseModal?: ResponseModalState } = {
     isLoading: false,
     initialized: false,
     error: undefined,
@@ -53,13 +53,19 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
 
       const profile = usersService.getProfileValue();
       if (profile?.name) {
-        fullName = profile.name as unknown as string;
+        fullName =
+          typeof profile.name === "string"
+            ? profile.name
+            : String(profile.name ?? "");
       } else if (email) {
         try {
-          const fetched = await usersService.fetchByEmail(email);
+          const fetched = (await usersService.fetchByEmail(email)) as {
+            name?: string;
+            fullName?: string;
+          } | null;
           // fetched may have different shape; attempt to read `name` or `fullName`
-           
-          fullName = (fetched as any)?.name ?? (fetched as any)?.fullName ?? undefined;
+
+          fullName = fetched?.name ?? fetched?.fullName ?? undefined;
         } catch {
           // ignore
         }
@@ -81,7 +87,12 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
     }, { setLoading: false, swallowError: true });
   }
 
-  protected handleFinish = async (values: any) => {
+  protected handleFinish = async (
+    values: CompanyIntroductionValues & {
+      primaryServiceCategory?: string;
+      services?: Array<{ name: string; category?: string; description?: string }>;
+    }
+  ) => {
     loadingService.show();
     try {
       const session = usersAuthService.getSessionValue();
@@ -92,7 +103,7 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
       console.debug("CompanyIntroduction form values:", values);
 
       // Build payload explicitly so JSON won't drop undefined fields unintentionally
-      const payload: Record<string, unknown> = {
+      const payload: WorkspaceCreatePayload = {
         creatorUid,
         accountType: values?.accountType ?? "individual",
         fullName: values?.fullName ?? "",
@@ -121,7 +132,7 @@ export class CompanyIntroductionPage extends BasePage<{}, { initialized: boolean
         payload.services = [];
       }
 
-      await companyService.createWorkspace(payload as WorkspaceCreatePayload);
+      await companyService.createWorkspace(payload);
       // refresh workspace and user profile so app state is populated without forcing logout
       try {
         const email = session?.email as string | undefined;

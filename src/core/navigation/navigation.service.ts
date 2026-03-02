@@ -1,4 +1,7 @@
-export type NavigateFn = (to: string, opts?: { replace?: boolean; state?: unknown }) => void;
+export type NavigateFn = (
+  to: string,
+  opts?: { replace?: boolean; state?: DataValue }
+) => void;
 
 let _navigate: NavigateFn | undefined;
 
@@ -6,7 +9,10 @@ export function setNavigator(fn: NavigateFn) {
   _navigate = fn;
 }
 
-export function navigateTo(to: string, opts?: { replace?: boolean; state?: unknown }) {
+export function navigateTo(
+  to: string,
+  opts?: { replace?: boolean; state?: DataValue }
+) {
   if (_navigate) {
     _navigate(to, opts);
     return;

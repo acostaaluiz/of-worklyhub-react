@@ -32,7 +32,7 @@ export const AvatarUploadModal: React.FC<AvatarUploadModalProps> = ({ open, titl
       setFiles([]);
       setProgress([]);
       setInternalUploading(false);
-      // abort any active readers
+      // abort active readers
       readersRef.current.forEach((r) => {
         try {
           r.abort();
@@ -147,14 +147,15 @@ export const AvatarUploadModal: React.FC<AvatarUploadModalProps> = ({ open, titl
       });
     };
 
-    function isPromise<T = unknown>(v: unknown): v is Promise<T> {
-      return !!v && typeof (v as { then?: unknown }).then === "function";
+    function isPromiseResult(v: Promise<void> | void): v is Promise<void> {
+      if (!v || typeof v !== "object") return false;
+      return "then" in v;
     }
 
     try {
       setInternalUploading(true);
-      const res = onUpload(files, progressCb) as unknown;
-      if (isPromise(res)) {
+      const res = onUpload(files, progressCb);
+      if (isPromiseResult(res)) {
         await res;
       }
       // mark all as complete

@@ -9,13 +9,13 @@ import { navigateTo } from "@core/navigation/navigation.service";
 import { billingService } from "@modules/billing/services/billing.service";
 import type { BillingPlan } from "@modules/billing/services/billing-api";
 
-export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: unknown; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
+export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
   protected override options = {
     title: "Plans | WorklyHub",
     requiresAuth: true,
   };
 
-  public state: { initialized: boolean; isLoading: boolean; error?: unknown; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string } = {
+  public state: { initialized: boolean; isLoading: boolean; error?: DataValue; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string } = {
     initialized: false,
     isLoading: false,
     error: undefined,
@@ -32,7 +32,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
       const plans = plansRes?.plans ?? [];
       const planList = plans ?? [];
 
-      const computeRecommended = (planList: BillingPlan[], rawUserPlan: unknown) => {
+      const computeRecommended = (planList: BillingPlan[], rawUserPlan: DataValue) => {
         if (!planList || planList.length === 0) return undefined;
 
         // normalize list sorted by id
@@ -47,7 +47,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
         // find index by id or title
         let idx = sorted.findIndex((p) => String(p.id) === String(userVal) || String(p.dbId) === String(userVal));
         if (idx === -1) idx = sorted.findIndex((p) => (p.name ?? "").toLowerCase() === s);
-        if (idx === -1) idx = sorted.findIndex((p) => (p as any).code === userVal || (p as any).code === s);
+        if (idx === -1) idx = sorted.findIndex((p) => (p as DataMap).code === userVal || (p as DataMap).code === s);
 
         // if found, recommend next tier; if already at highest, keep current
         if (idx >= 0) {
@@ -65,7 +65,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
         }
 
         // fallback: find first with highlight or first plan
-        const highlighted = sorted.find((p) => !!(p.recommended ?? (p as any).highlight)) ?? sorted[0];
+        const highlighted = sorted.find((p) => !!(p.recommended ?? (p as DataMap).highlight)) ?? sorted[0];
         return highlighted ? String(highlighted.id) : undefined;
       };
 
@@ -73,7 +73,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
       let recommendedPlanId: string | undefined = undefined;
       try {
         const profile = usersService.getProfileValue();
-        let userPlanId = (profile as any)?.planId ?? (profile as any)?.plan_id ?? (profile as any)?.plan ?? undefined;
+        let userPlanId = (profile as DataMap)?.planId ?? (profile as DataMap)?.plan_id ?? (profile as DataMap)?.plan ?? undefined;
 
         // if not in cache, attempt to fetch from server (best-effort)
         if (userPlanId == null) {
@@ -81,7 +81,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
           if (session?.email) {
             try {
               const fetched = await usersService.fetchByEmail(session.email);
-              userPlanId = (fetched as any)?.planId ?? (fetched as any)?.plan_id ?? (fetched as any)?.plan ?? undefined;
+              userPlanId = (fetched as DataMap)?.planId ?? (fetched as DataMap)?.plan_id ?? (fetched as DataMap)?.plan ?? undefined;
             } catch {
               // ignore
             }
@@ -176,7 +176,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
       try {
         const planList = this.state.plans ?? [];
         const profile = usersService.getProfileValue();
-        const userPlanId = (profile as any)?.planId ?? (profile as any)?.plan_id ?? (profile as any)?.plan ?? undefined;
+        const userPlanId = (profile as DataMap)?.planId ?? (profile as DataMap)?.plan_id ?? (profile as DataMap)?.plan ?? undefined;
 
         const sorted = [...planList].sort((a, b) => Number(a.dbId ?? a.id) - Number(b.dbId ?? b.id));
         let rec: string | undefined = undefined;
@@ -187,7 +187,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
             const s = String(userPlanId).toLowerCase();
             let idx = sorted.findIndex((p) => String(p.id) === String(userPlanId) || String(p.dbId) === String(userPlanId));
             if (idx === -1) idx = sorted.findIndex((p) => (p.name ?? "").toLowerCase() === s);
-            if (idx === -1) idx = sorted.findIndex((p) => (p as any).code === userPlanId || (p as any).code === s);
+            if (idx === -1) idx = sorted.findIndex((p) => (p as DataMap).code === userPlanId || (p as DataMap).code === s);
             if (idx >= 0) {
               const next = sorted[idx + 1];
               if (next) rec = String(next.id);
@@ -201,7 +201,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
               }
             }
             if (!rec) {
-              const highlighted = sorted.find((p) => !!(p.recommended ?? (p as any).highlight)) ?? sorted[0];
+              const highlighted = sorted.find((p) => !!(p.recommended ?? (p as DataMap).highlight)) ?? sorted[0];
               rec = highlighted ? String(highlighted.id) : undefined;
             }
           }

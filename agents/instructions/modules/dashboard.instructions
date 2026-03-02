@@ -2,7 +2,7 @@
 
 Escopo
 - Indicadores operacionais e visao resumida do negocio.
-- Agregacao de KPIs, series e rankings para o usuario.
+- Consumo de dados reais de resumo, tendencia e alertas via backend.
 
 Rotas e entradas
 - Stack: `src/modules/dashboard/presentation/stack/dashboard.stack.tsx`.
@@ -12,19 +12,24 @@ Rotas e entradas
   - `home`: `presentation/pages/dashboard/dashboard.page`.
 
 Modelos principais (interfaces)
-- `DashboardKpiModel`: id, label, value, changePct.
+- `DashboardKpiModel`: id, label, value, changePct, format.
 - `DashboardSeriesPointModel`: key, label, revenue, profit.
 - `DashboardServiceSalesModel`: serviceId, serviceName, count, revenue.
-- `DashboardPaymentStatusModel`: status (paid/pending/refunded), count, amount.
-- `DashboardClientRankModel`: clientName, ordersCount, totalSpent, avgTicket, lastPurchase.
-- `DashboardSaleItemModel`: clientName, serviceName, dateTime, amount, status.
+- `DashboardAlertModel`: id, source, priority, title, description, suggestedAction.
 - `DashboardQueryModel`: from, to, groupBy (day/week/month).
 
 Services
 - `dashboard.service.ts`
-  - Gera dados mock com base em periodo.
-  - Nao depende de backend atualmente.
+  - Orquestra chamadas de:
+    - `GET /dashboard/summary`
+    - `GET /dashboard/trend`
+    - `GET /dashboard/alerts`
+  - Resolve `workspaceId` via `companyService`.
+- `dashboard-api.ts`
+  - Usa `BaseHttpService` + `httpClient`.
+  - Envia `x-workspace-id` para endpoints de dashboard.
 
 Guardrails
 - Manter contratos dos modelos para evitar quebrar UI.
-- Quando conectar a backend, manter a mesma estrutura de resposta (`DashboardResponse`).
+- Nao voltar para dados mock no fluxo principal.
+- Sempre aplicar filtros de periodo (`from`, `to`, `groupBy`) nas chamadas.

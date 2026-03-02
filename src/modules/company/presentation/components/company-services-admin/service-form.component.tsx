@@ -1,5 +1,6 @@
 import React from "react";
 import { Form, Input, InputNumber, Button, Switch } from "antd";
+import type { FormInstance } from "antd";
 import { centsToMoney, getMoneyInput, moneyToCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -14,8 +15,17 @@ type Props = BaseProps & {
   submitting?: boolean;
 };
 
+type ServiceFormValues = {
+  title: string;
+  description?: string;
+  durationMinutes?: number;
+  priceCents?: number;
+  capacity?: number;
+  active?: boolean;
+};
+
 export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
-  private formRef = React.createRef<any>();
+  private formRef = React.createRef<FormInstance<ServiceFormValues>>();
 
   public override state: BaseState = { isLoading: false };
 
@@ -27,8 +37,15 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
         ref={this.formRef}
         layout="vertical"
         initialValues={{ durationMinutes: 30, active: true, ...initial, priceCents: typeof initial?.priceCents === "number" ? centsToMoney(initial.priceCents) : undefined }}
-        onFinish={(v) => {
-          const prepared = { ...(v as any) };
+        onFinish={(v: ServiceFormValues) => {
+          const prepared: Omit<CompanyServiceModel, "id" | "createdAt"> = {
+            title: v.title,
+            description: v.description,
+            durationMinutes: v.durationMinutes,
+            priceCents: undefined,
+            capacity: v.capacity,
+            active: v.active ?? true,
+          };
           if (typeof v.priceCents === "number" && Number.isFinite(v.priceCents)) {
             prepared.priceCents = moneyToCents(v.priceCents);
           } else {

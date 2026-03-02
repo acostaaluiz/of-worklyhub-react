@@ -149,7 +149,7 @@ export type CreateWorkOrderInput = {
   scheduledEndAt?: string | null;
   dueAt?: string | null;
   estimatedDurationMinutes?: number | null;
-  metadata?: Record<string, unknown>;
+  metadata?: DataMap;
   serviceLines?: WorkOrderServiceLineInput[];
   workers?: WorkOrderWorkerInput[];
   inventoryLines?: WorkOrderInventoryLineInput[];
@@ -184,7 +184,7 @@ export type WorkOrder = {
   executionStartedAt?: string | null;
   completedAt?: string | null;
   dueAt?: string | null;
-  metadata: Record<string, unknown>;
+  metadata: DataMap;
   serviceLines: Array<{
     id: string;
     serviceId: string;
@@ -227,6 +227,19 @@ export type ListWorkOrdersFilters = {
   search?: string;
   limit?: number;
   offset?: number;
+};
+
+export type WorkOrderListPagination = {
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+};
+
+export type WorkOrderListPage = {
+  data: WorkOrder[];
+  pagination: WorkOrderListPagination;
 };
 
 export type GetWorkOrderOverviewOptions = {

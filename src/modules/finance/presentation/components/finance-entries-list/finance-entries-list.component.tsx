@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, Button, Typography, message, Skeleton } from "antd";
 import { formatDate, formatMoney } from "@core/utils/mask";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
+import type { FinanceEntryListItem } from "@modules/finance/interfaces/finance-entry.model";
 import {
   type FinanceValueContext,
   getFinanceSignedValue,
@@ -10,7 +11,7 @@ import {
 
 export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
   const api = useFinanceApi();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<FinanceEntryListItem[]>([]);
   const [page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const pageSize = 3;
