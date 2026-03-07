@@ -25,31 +25,17 @@ import '@testing-library/jest-dom';
 
 // Provide matchMedia for tests (some components rely on it)
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
-  // @ts-ignore
-  window.matchMedia = (query: string) => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: () => {},
-    removeListener: () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => false,
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: (query: string): MediaQueryList => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => undefined,
+      removeListener: () => undefined,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      dispatchEvent: () => false,
+    }),
   });
-}
-
-// Try to normalize React default interop for environments where React is ESM-only
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const r = require('react');
-  if (r && typeof r === 'object' && r.default && !r.PureComponent) {
-    // @ts-ignore
-    r.PureComponent = r.default.PureComponent;
-    // @ts-ignore
-    r.useState = r.default.useState;
-    // @ts-ignore
-    r.useEffect = r.default.useEffect;
-  }
-} catch (_) {
-  // ignore when require fails
 }

@@ -74,6 +74,13 @@
       "keywords": ["produto", "mercado", "features", "priorizacao"]
     },
     {
+      "id": "unit-testing",
+      "title": "Testes unitarios e padrao",
+      "path": "agents/instructions/10-unit-testing.instructions",
+      "summary": "Padrao unico para testes unitarios, consolidacao por arquivo e validacao continua.",
+      "keywords": ["testes", "unit", "jest", "qualidade", "padrao"]
+    },
+    {
       "id": "module-billing",
       "title": "Modulo billing",
       "path": "agents/instructions/modules/billing.instructions",
@@ -234,6 +241,20 @@
         "agents/instructions/04-integration.instructions",
         "agents/instructions/03-delivery-playbook.instructions",
         "agents/instructions/06-quality.instructions"
+      ]
+    },
+    {
+      "id": "worklyhub-unit-test-specialist",
+      "title": "Especialista em testes unitarios",
+      "purpose": "Padronizar, consolidar e validar testes unitarios com um arquivo por alvo de desenvolvimento.",
+      "use_when": "Refatoracao de testes, padronizacao de suites e aumento de confiabilidade em validacoes unitarias.",
+      "instructions": [
+        "agents/instructions/10-unit-testing.instructions",
+        "agents/instructions/00-context.instructions",
+        "agents/instructions/01-architecture.instructions",
+        "agents/instructions/03-delivery-playbook.instructions",
+        "agents/instructions/06-quality.instructions",
+        "agents/instructions/08-agent-flow.instructions"
       ]
     }
   ],

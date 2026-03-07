@@ -1,10 +1,9 @@
+import { localStorageProvider } from '@core/storage/local-storage.provider';
+import { UsersApi } from './users-api';
+import { UsersService } from './user.service';
+
 jest.mock('./users-api', () => ({
-  UsersApi: jest.fn().mockImplementation(() => ({
-    getByEmail: jest.fn().mockResolvedValue({ name: 'User', email: 'u@d.com', planId: 1, phone: '123' }),
-    setPlan: jest.fn().mockResolvedValue(undefined),
-    updateProfile: jest.fn().mockResolvedValue({ user: { name: 'New', email: 'u@d.com' } }),
-    requestProfilePhotoSignature: jest.fn().mockResolvedValue({ url: 'u', path: '/p', maxSize: 100 }),
-  })),
+  UsersApi: jest.fn(),
 }));
 
 jest.mock('@core/storage/local-storage.provider', () => ({
@@ -15,90 +14,140 @@ jest.mock('@core/storage/local-storage.provider', () => ({
   },
 }));
 
-import { UsersService } from './user.service';
-import { localStorageProvider } from '@core/storage/local-storage.provider';
+type UsersApiMock = {
+  getByEmail: jest.Mock;
+  setPlan: jest.Mock;
+  updateProfile: jest.Mock;
+  requestProfilePhotoSignature: jest.Mock;
+};
+
+function createApiMock(): UsersApiMock {
+  return {
+    getByEmail: jest
+      .fn()
+      .mockResolvedValue({ name: 'User', email: 'u@d.com', planId: 1, phone: '123' }),
+    setPlan: jest.fn().mockResolvedValue(undefined),
+    updateProfile: jest.fn().mockResolvedValue({ user: { name: 'New', email: 'u@d.com' } }),
+    requestProfilePhotoSignature: jest
+      .fn()
+      .mockResolvedValue({ url: 'https://upload.test/put', path: '/p', maxSize: 1024 * 1024 }),
+  };
+}
 
 describe('UsersService', () => {
-  beforeEach(() => jest.clearAllMocks());
+  const mockedStorage = jest.mocked(localStorageProvider);
+  const usersApiCtor = jest.mocked(UsersApi);
+  let apiMock: UsersApiMock;
 
-  test('fetchByEmail updates profile and persists', async () => {
-    const svc = new UsersService();
-    const res = await svc.fetchByEmail('u@d.com');
-    expect(res.email).toBe('u@d.com');
-    expect(svc.getProfileValue()).toEqual(res);
-    expect(localStorageProvider.set).toHaveBeenCalled();
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedStorage.get.mockReturnValue(null);
+    apiMock = createApiMock();
+    usersApiCtor.mockImplementation(() => apiMock as unknown as UsersApi);
   });
 
-  test('setPlan updates cached profile when present', async () => {
-    const svc = new UsersService();
-    // prime profile
-    (svc as any).subject.next({ name: 'User', email: 'u@d.com', planId: 1 } as any);
-    await svc.setPlan('u@d.com', 2);
-    const v = svc.getProfileValue();
-    expect(v?.planId).toBe(2);
-    expect(localStorageProvider.set).toHaveBeenCalled();
+  it('fetchByEmail updates cache and persists profile', async () => {
+    const service = new UsersService();
+
+    const profile = await service.fetchByEmail('u@d.com');
+
+    expect(profile?.email).toBe('u@d.com');
+    expect(service.getProfileValue()).toEqual(profile);
+    expect(mockedStorage.set).toHaveBeenCalledWith(
+      'user.profile',
+      JSON.stringify(profile)
+    );
   });
 
-  test('updateProfile returns merged profile and persists', async () => {
-    const svc = new UsersService();
-    (svc as any).subject.next({ name: 'Old', email: 'u@d.com', planId: 1 } as any);
-    const out = await svc.updateProfile({ fullName: 'Full', email: 'u@d.com', phone: '123' } as any);
-    expect(out.email).toBe('u@d.com');
-    expect(localStorageProvider.set).toHaveBeenCalled();
+  it('setPlan updates cached profile when it exists', async () => {
+    mockedStorage.get.mockReturnValue(
+      JSON.stringify({ name: 'User', email: 'u@d.com', planId: 1 })
+    );
+    const service = new UsersService();
+
+    await service.setPlan('u@d.com', 2);
+
+    expect(apiMock.setPlan).toHaveBeenCalledWith('u@d.com', 2);
+    expect(service.getProfileValue()?.planId).toBe(2);
+    expect(mockedStorage.set).toHaveBeenCalled();
   });
 
-  test('clear removes storage and resets subject', () => {
-    const svc = new UsersService();
-    svc.clear();
-    expect(localStorageProvider.remove).toHaveBeenCalled();
-    expect(svc.getProfileValue()).toBeNull();
+  it('updateProfile merges profile values and persists cache', async () => {
+    mockedStorage.get.mockReturnValue(
+      JSON.stringify({ name: 'Old', email: 'u@d.com', planId: 1, photoUrl: '/old' })
+    );
+    const service = new UsersService();
+
+    const updated = await service.updateProfile({
+      fullName: 'Full Name',
+      email: 'u@d.com',
+      phone: '123',
+    });
+
+    expect(updated).toMatchObject({
+      email: 'u@d.com',
+      planId: 1,
+      photoUrl: '/old',
+    });
+    expect(mockedStorage.set).toHaveBeenCalledWith(
+      'user.profile',
+      JSON.stringify(updated)
+    );
   });
 
-  test('uploadProfilePhoto uploads via XHR and updates profile', async () => {
-    const signature = { url: 'https://upload.test/put', path: '/p', maxSize: 1024 * 1024 };
-    // mock UsersApi inside UsersService
-    const mockReq = jest.fn().mockResolvedValue(signature);
-    jest.spyOn(require('./users-api'), 'UsersApi').mockImplementation(() => ({ requestProfilePhotoSignature: mockReq }));
+  it('clear removes persisted profile and resets state', () => {
+    const service = new UsersService();
 
-    // fake XHR
-    class FakeXhr {
-      upload: any = {};
+    service.clear();
+
+    expect(mockedStorage.remove).toHaveBeenCalledWith('user.profile');
+    expect(service.getProfileValue()).toBeNull();
+  });
+
+  it('uploadProfilePhoto uploads with xhr and updates photoUrl', async () => {
+    mockedStorage.get.mockReturnValue(
+      JSON.stringify({ name: 'User', email: 'u@d.com', planId: 1, photoUrl: '/old' })
+    );
+
+    class FakeXmlHttpRequest {
+      upload: { onprogress: ((event: ProgressEvent<EventTarget>) => void) | null } = {
+        onprogress: null,
+      };
       status = 200;
-      onload: () => void = () => {};
-      onerror: () => void = () => {};
-      open() {}
-      setRequestHeader() {}
-      send(file: any) {
-        // simulate progress
-        if (this.upload && typeof this.upload.onprogress === 'function') {
-          this.upload.onprogress({ lengthComputable: true, loaded: 50, total: 100 });
+      onload: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+
+      open(): void {}
+      setRequestHeader(): void {}
+
+      send(_body: Document | XMLHttpRequestBodyInit | null): void {
+        if (this.upload.onprogress) {
+          this.upload.onprogress({
+            lengthComputable: true,
+            loaded: 50,
+            total: 100,
+          } as ProgressEvent<EventTarget>);
         }
-        // call onload async
-        setTimeout(() => this.onload(), 0);
+
+        setTimeout(() => this.onload?.(), 0);
       }
     }
 
-    // replace global XMLHttpRequest
-    // @ts-ignore
-    const orig = (global as any).XMLHttpRequest;
-    // @ts-ignore
-    (global as any).XMLHttpRequest = FakeXhr as any;
+    const originalXMLHttpRequest = globalThis.XMLHttpRequest;
+    globalThis.XMLHttpRequest = FakeXmlHttpRequest as unknown as typeof XMLHttpRequest;
 
-    const svc = new UsersService();
-    // prime current profile
-    (svc as any).subject.next({ name: 'User', email: 'u@d.com', planId: 1, photoUrl: '/old' } as any);
+    try {
+      const service = new UsersService();
+      const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
 
-    const file = new File(['x'], 'photo.jpg', { type: 'image/jpeg' });
-    const path = await svc.uploadProfilePhoto(file, (p) => {
-      // progress callback invoked
-      expect(typeof p).toBe('number');
-    });
+      const uploadedPath = await service.uploadProfilePhoto(file, (percent) => {
+        expect(typeof percent).toBe('number');
+      });
 
-    expect(path).toBe('/p');
-    expect(localStorageProvider.set).toHaveBeenCalled();
-
-    // restore
-    // @ts-ignore
-    (global as any).XMLHttpRequest = orig;
+      expect(uploadedPath).toBe('/p');
+      expect(mockedStorage.set).toHaveBeenCalled();
+    } finally {
+      globalThis.XMLHttpRequest = originalXMLHttpRequest;
+    }
   });
 });

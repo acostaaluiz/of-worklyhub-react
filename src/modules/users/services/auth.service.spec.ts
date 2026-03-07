@@ -1,4 +1,5 @@
-jest.mock('@core/auth/firebase/firebase-auth.service', () => ({
+/* eslint-disable @typescript-eslint/no-explicit-any */
+jest.mock("@core/auth/firebase/firebase-auth.service", () => ({
   firebaseAuthService: {
     signInWithEmail: jest.fn(),
     sendPasswordReset: jest.fn(),
@@ -6,56 +7,160 @@ jest.mock('@core/auth/firebase/firebase-auth.service', () => ({
   },
 }));
 
-jest.mock('@core/auth/auth-manager', () => ({
-  authManager: { setTokens: jest.fn(), signOut: jest.fn() },
+jest.mock("@core/auth/auth-manager", () => ({
+  authManager: {
+    setTokens: jest.fn(),
+    signOut: jest.fn(),
+  },
 }));
 
-jest.mock('@core/auth', () => ({
-  authApi: { verifyToken: jest.fn(), register: jest.fn() },
+jest.mock("@core/auth", () => ({
+  authApi: {
+    verifyToken: jest.fn(),
+    register: jest.fn(),
+  },
 }));
 
-jest.mock('@core/storage/local-storage.provider', () => ({
-  localStorageProvider: { get: jest.fn(), set: jest.fn(), remove: jest.fn() },
+jest.mock("@core/storage/local-storage.provider", () => ({
+  localStorageProvider: {
+    get: jest.fn(),
+    set: jest.fn(),
+    remove: jest.fn(),
+  },
 }));
 
-import { UsersAuthService } from './auth.service';
-import { firebaseAuthService } from '@core/auth/firebase/firebase-auth.service';
-import { authApi } from '@core/auth';
-import { localStorageProvider } from '@core/storage/local-storage.provider';
-import { authManager } from '@core/auth/auth-manager';
+jest.mock("@modules/company/services/company.service", () => ({
+  companyService: { clear: jest.fn() },
+}));
 
-describe('UsersAuthService', () => {
+jest.mock("@modules/users/services/user.service", () => ({
+  usersService: { clear: jest.fn() },
+}));
+
+jest.mock("@core/application/application.service", () => ({
+  applicationService: { clear: jest.fn() },
+}));
+
+jest.mock("@modules/users/services/overview.service", () => ({
+  usersOverviewService: { clear: jest.fn() },
+}));
+
+import { authApi } from "@core/auth";
+import { authManager } from "@core/auth/auth-manager";
+import { firebaseAuthService } from "@core/auth/firebase/firebase-auth.service";
+import { applicationService } from "@core/application/application.service";
+import { localStorageProvider } from "@core/storage/local-storage.provider";
+import { companyService } from "@modules/company/services/company.service";
+import { usersService } from "@modules/users/services/user.service";
+import { usersOverviewService } from "@modules/users/services/overview.service";
+import { UsersAuthService } from "./auth.service";
+
+describe("UsersAuthService", () => {
+  const mockedStorage = jest.mocked(localStorageProvider);
+  const mockedAuthApi = jest.mocked(authApi);
+  const mockedFirebaseService = jest.mocked(firebaseAuthService);
+  const mockedAuthManager = jest.mocked(authManager);
+  const mockedCompanyService = jest.mocked(companyService);
+  const mockedUsersService = jest.mocked(usersService);
+  const mockedApplicationService = jest.mocked(applicationService);
+  const mockedUsersOverviewService = jest.mocked(usersOverviewService);
+
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedStorage.get.mockReturnValue(null);
   });
 
-  test('register forwards to authApi.register', async () => {
-    (authApi.register as jest.Mock).mockResolvedValue({ ok: true });
-    const s = new UsersAuthService();
-    const result = await s.register('Name', 'a@b.com', 'pass');
-    expect(authApi.register).toHaveBeenCalledWith({ name: 'Name', email: 'a@b.com', password: 'pass' });
+  it("loads session from storage when JSON is valid", () => {
+    mockedStorage.get.mockReturnValue(
+      JSON.stringify({ uid: "uid-1", claims: { role: "admin" }, email: "person@worklyhub.com" })
+    );
+
+    const service = new UsersAuthService();
+
+    expect(service.getSessionValue()).toEqual({
+      uid: "uid-1",
+      claims: { role: "admin" },
+      email: "person@worklyhub.com",
+    });
+  });
+
+  it("returns null session when stored JSON is invalid", () => {
+    mockedStorage.get.mockReturnValue("{invalid-json");
+
+    const service = new UsersAuthService();
+
+    expect(service.getSessionValue()).toBeNull();
+  });
+
+  it("registers a user through authApi", async () => {
+    mockedAuthApi.register.mockResolvedValue({ ok: true });
+    const service = new UsersAuthService();
+
+    const result = await service.register("Person", "person@worklyhub.com", "password");
+
+    expect(mockedAuthApi.register).toHaveBeenCalledWith({
+      name: "Person",
+      email: "person@worklyhub.com",
+      password: "password",
+    });
     expect(result).toEqual({ ok: true });
   });
 
-  test('signIn stores session and sets tokens', async () => {
-    (firebaseAuthService.signInWithEmail as jest.Mock).mockResolvedValue({ token: 'tk' });
-    (authApi.verifyToken as jest.Mock).mockResolvedValue({ uid: 'u1', claims: { role: 'x' } });
-    const s = new UsersAuthService();
+  it("requests password reset through firebase service", async () => {
+    mockedFirebaseService.sendPasswordReset.mockResolvedValue(undefined);
+    const service = new UsersAuthService();
 
-    const session = await s.signIn('a@b.com', 'pwd');
+    await service.requestPasswordReset("person@worklyhub.com");
 
-    expect(firebaseAuthService.signInWithEmail).toHaveBeenCalledWith('a@b.com', 'pwd');
-    expect(authApi.verifyToken).toHaveBeenCalledWith('tk');
-    expect(localStorageProvider.set).toHaveBeenCalled();
-    expect(authManager.setTokens).toHaveBeenCalledWith('tk', null);
-    expect(session).toMatchObject({ uid: 'u1', email: 'a@b.com' });
+    expect(mockedFirebaseService.sendPasswordReset).toHaveBeenCalledWith(
+      "person@worklyhub.com"
+    );
   });
 
-  test('signOut clears storage and signs out external services', async () => {
-    const s = new UsersAuthService();
-    await s.signOut();
-    expect(localStorageProvider.remove).toHaveBeenCalled();
-    expect(authManager.signOut).toHaveBeenCalled();
-    expect(firebaseAuthService.signOut).toHaveBeenCalled();
+  it("signs in, validates token and stores session", async () => {
+    mockedFirebaseService.signInWithEmail.mockResolvedValue({ token: "id-token" } as any);
+    mockedAuthApi.verifyToken.mockResolvedValue({ uid: "uid-1", claims: { role: "owner" } });
+    const service = new UsersAuthService();
+
+    const session = await service.signIn("person@worklyhub.com", "password");
+
+    expect(mockedFirebaseService.signInWithEmail).toHaveBeenCalledWith(
+      "person@worklyhub.com",
+      "password"
+    );
+    expect(mockedAuthApi.verifyToken).toHaveBeenCalledWith("id-token");
+    expect(mockedStorage.set).toHaveBeenCalledWith(
+      "auth.session",
+      JSON.stringify({
+        uid: "uid-1",
+        claims: { role: "owner" },
+        email: "person@worklyhub.com",
+      })
+    );
+    expect(mockedAuthManager.setTokens).toHaveBeenCalledWith("id-token", null);
+    expect(service.getSessionValue()).toEqual(session);
+  });
+
+  it("signs out and always clears all cached services", async () => {
+    const service = new UsersAuthService();
+
+    mockedFirebaseService.signOut.mockResolvedValueOnce(undefined);
+    await service.signOut();
+
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(mockedAuthManager.signOut).toHaveBeenCalledTimes(1);
+    expect(mockedUsersService.clear).toHaveBeenCalledTimes(1);
+    expect(mockedCompanyService.clear).toHaveBeenCalledTimes(1);
+    expect(mockedApplicationService.clear).toHaveBeenCalledTimes(1);
+    expect(mockedUsersOverviewService.clear).toHaveBeenCalledTimes(1);
+    expect(service.getSessionValue()).toBeNull();
+
+    mockedFirebaseService.signOut.mockRejectedValueOnce(new Error("firebase-signout-failure"));
+    await expect(service.signOut()).rejects.toThrow("firebase-signout-failure");
+
+    expect(mockedStorage.remove).toHaveBeenCalledTimes(2);
+    expect(mockedAuthManager.signOut).toHaveBeenCalledTimes(2);
   });
 });
+
+

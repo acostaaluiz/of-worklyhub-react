@@ -1,29 +1,64 @@
-beforeEach(() => jest.resetModules());
-
-jest.mock('./auth-api', () => ({ AuthApi: jest.fn(() => ({})) }));
-
-test('index module restores token and sets auth manager handlers', () => {
-  const restoreSpy = jest.fn();
-  const getAccessSpy = jest.fn().mockReturnValue('mytoken');
-  const getRefreshHandler = jest.fn().mockReturnValue(() => Promise.resolve({ accessToken: 'r' }));
-
-  jest.mock('./firebase/firebase-auth.service', () => ({
-    firebaseAuthService: {
-      restoreFromStorage: restoreSpy,
-      getAccessToken: getAccessSpy,
-      getRefreshHandler,
-    },
-  }));
-
+function loadIndexModule(accessToken: string | null) {
+  const restoreFromStorage = jest.fn();
+  const getAccessToken = jest.fn().mockReturnValue(accessToken);
+  const refreshHandler = jest.fn().mockResolvedValue({ accessToken: "refreshed-token" });
+  const getRefreshHandler = jest.fn().mockReturnValue(refreshHandler);
   const setTokens = jest.fn();
   const setRefreshHandler = jest.fn();
-  jest.mock('./auth-manager', () => ({ authManager: { setTokens, setRefreshHandler } }));
 
-  jest.mock('@core/http/client.instance', () => ({ httpClient: {} }));
+  jest.isolateModules(() => {
+    jest.doMock("./auth-api", () => ({
+      AuthApi: jest.fn(() => ({})),
+    }));
+    jest.doMock("./firebase/firebase-auth.service", () => ({
+      firebaseAuthService: {
+        restoreFromStorage,
+        getAccessToken,
+        getRefreshHandler,
+      },
+    }));
+    jest.doMock("./auth-manager", () => ({
+      authManager: {
+        setTokens,
+        setRefreshHandler,
+      },
+    }));
+    jest.doMock("@core/http/client.instance", () => ({
+      httpClient: {},
+    }));
 
-  const mod = require('./index');
-  expect(restoreSpy).toHaveBeenCalled();
-  expect(setTokens).toHaveBeenCalledWith('mytoken', null);
-  expect(setRefreshHandler).toHaveBeenCalled();
-  expect(mod.authApi).toBeDefined();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require("./index");
+  });
+
+  return {
+    restoreFromStorage,
+    getAccessToken,
+    getRefreshHandler,
+    setTokens,
+    setRefreshHandler,
+  };
+}
+
+describe("core/auth index bootstrap", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+  });
+
+  it("restores persisted token and wires refresh handler", () => {
+    const spies = loadIndexModule("token-from-storage");
+
+    expect(spies.restoreFromStorage).toHaveBeenCalledTimes(1);
+    expect(spies.getAccessToken).toHaveBeenCalledTimes(1);
+    expect(spies.getRefreshHandler).toHaveBeenCalledTimes(1);
+    expect(spies.setTokens).toHaveBeenCalledWith("token-from-storage", null);
+    expect(spies.setRefreshHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it("normalizes missing token to null", () => {
+    const spies = loadIndexModule(null);
+
+    expect(spies.setTokens).toHaveBeenCalledWith(null, null);
+  });
 });

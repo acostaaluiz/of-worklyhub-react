@@ -15,7 +15,17 @@
         "@modelcontextprotocol/server-git",
         "--repo",
         "d:/OF Consulting/of-worklyhub-react"
-      ]
+      ],
+      "mcpTemplates": {
+        "sequential-thinking-copilot": {
+          "path": "agents/mcp/sequential-thinking-copilot.mcp.json",
+          "provider": "copilot"
+        },
+        "sequential-thinking-codex": {
+          "path": "agents/mcp/sequential-thinking-codex.mcp.json",
+          "provider": "codex"
+        }
+      }
     },
     "fetch": {
       "command": "npx",

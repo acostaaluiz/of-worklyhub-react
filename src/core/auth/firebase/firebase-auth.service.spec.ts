@@ -1,59 +1,164 @@
-jest.mock('./firebase', () => ({
-  firebaseAuth: { currentUser: null },
+/* eslint-disable @typescript-eslint/no-explicit-any */
+jest.mock("./firebase", () => ({
+  firebaseAuth: { currentUser: null as null | { getIdToken: (force?: boolean) => Promise<string> } },
 }));
 
-jest.mock('firebase/auth', () => ({
+jest.mock("firebase/auth", () => ({
   signInWithEmailAndPassword: jest.fn(),
   sendPasswordResetEmail: jest.fn(),
   signOut: jest.fn(),
 }));
 
-import { FirebaseAuthService, firebaseAuthService } from './firebase-auth.service';
-import { localStorageProvider } from '@core/storage/local-storage.provider';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, signOut as firebaseSignOut } from 'firebase/auth';
+jest.mock("@core/storage/local-storage.provider", () => ({
+  localStorageProvider: {
+    get: jest.fn(),
+    set: jest.fn(),
+    remove: jest.fn(),
+  },
+}));
 
-describe('FirebaseAuthService', () => {
+import { FirebaseAuthService } from "./firebase-auth.service";
+import { firebaseAuth } from "./firebase";
+import { localStorageProvider } from "@core/storage/local-storage.provider";
+import {
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+} from "firebase/auth";
+
+function createUser(token = "id-token") {
+  return {
+    getIdToken: jest.fn().mockResolvedValue(token),
+  };
+}
+
+describe("FirebaseAuthService", () => {
+  const mockedStorage = jest.mocked(localStorageProvider);
+  const mockedSignIn = jest.mocked(signInWithEmailAndPassword);
+  const mockedSignOut = jest.mocked(firebaseSignOut);
+  const mockedReset = jest.mocked(sendPasswordResetEmail);
+
   beforeEach(() => {
     jest.clearAllMocks();
-    // ensure storage is clean
-    jest.spyOn(localStorageProvider, 'set').mockImplementation(() => {});
-    jest.spyOn(localStorageProvider, 'remove').mockImplementation(() => {});
+    firebaseAuth.currentUser = null;
+    mockedStorage.get.mockReturnValue(null);
   });
 
-  test('setToken stores and removes keys correctly', () => {
-    const svc = new FirebaseAuthService();
-    svc.setToken('abc');
-    expect(localStorageProvider.set).toHaveBeenCalled();
-    svc.setToken(null);
-    expect(localStorageProvider.remove).toHaveBeenCalled();
+  it("signs in, reads token and persists it", async () => {
+    const user = createUser("token-from-firebase");
+    mockedSignIn.mockResolvedValue({ user } as any);
+    const service = new FirebaseAuthService();
+
+    const result = await service.signInWithEmail("person@worklyhub.com", "password");
+
+    expect(mockedSignIn).toHaveBeenCalledWith(
+      firebaseAuth,
+      "person@worklyhub.com",
+      "password"
+    );
+    expect(user.getIdToken).toHaveBeenCalledWith(false);
+    expect(result.token).toBe("token-from-firebase");
+    expect(service.getAccessToken()).toBe("token-from-firebase");
+    expect(mockedStorage.set).toHaveBeenCalledWith("auth.idToken", "token-from-firebase");
   });
 
-  test('getAccessToken returns currentToken', () => {
-    const svc = new FirebaseAuthService();
-    svc.setToken('tok');
-    expect(svc.getAccessToken()).toBe('tok');
+  it("returns cached token when no firebase user exists", async () => {
+    const service = new FirebaseAuthService();
+    service.setToken("cached-token");
+
+    await expect(service.getToken()).resolves.toBe("cached-token");
   });
 
-  test('signOut calls firebase signOut and clears token', async () => {
-    (firebaseSignOut as jest.Mock).mockResolvedValue(undefined);
-    const svc = new FirebaseAuthService();
-    svc.setToken('t');
-    await svc.signOut();
-    expect(firebaseSignOut).toHaveBeenCalled();
-    expect(svc.getAccessToken()).toBeNull();
+  it("refreshes token from current user in getToken", async () => {
+    const user = createUser("fresh-token");
+    firebaseAuth.currentUser = user;
+    const service = new FirebaseAuthService();
+
+    const token = await service.getToken();
+
+    expect(token).toBe("fresh-token");
+    expect(user.getIdToken).toHaveBeenCalledWith(false);
+    expect(service.getAccessToken()).toBe("fresh-token");
   });
 
-  test('sendPasswordReset delegates to firebase', async () => {
-    (sendPasswordResetEmail as jest.Mock).mockResolvedValue(undefined);
-    const svc = new FirebaseAuthService();
-    await svc.sendPasswordReset('a@b.com');
-    expect(sendPasswordResetEmail).toHaveBeenCalled();
+  it("removes token and session when setToken receives null", () => {
+    const service = new FirebaseAuthService();
+
+    service.setToken(null);
+
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.idToken");
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(service.getAccessToken()).toBeNull();
   });
 
-  test('getRefreshHandler returns null when no user', async () => {
-    const svc = new FirebaseAuthService();
-    const handler = svc.getRefreshHandler();
-    const res = await handler();
-    expect(res).toBeNull();
+  it("refreshes token with force=true and clears token on failure", async () => {
+    const successUser = createUser("forced-token");
+    firebaseAuth.currentUser = successUser;
+    const service = new FirebaseAuthService();
+
+    await expect(service.refresh()).resolves.toBe("forced-token");
+    expect(successUser.getIdToken).toHaveBeenCalledWith(true);
+
+    const failureUser = {
+      getIdToken: jest.fn().mockRejectedValue(new Error("refresh-failed")),
+    };
+    firebaseAuth.currentUser = failureUser as any;
+
+    await expect(service.refresh()).resolves.toBeNull();
+    expect(service.getAccessToken()).toBeNull();
+  });
+
+  it("returns null from refresh when there is no current user", async () => {
+    const service = new FirebaseAuthService();
+
+    await expect(service.refresh()).resolves.toBeNull();
+  });
+
+  it("signs out and always clears token", async () => {
+    const service = new FirebaseAuthService();
+    service.setToken("token-before-signout");
+
+    mockedSignOut.mockResolvedValue(undefined);
+    await service.signOut();
+    expect(mockedSignOut).toHaveBeenCalledWith(firebaseAuth);
+    expect(service.getAccessToken()).toBeNull();
+
+    service.setToken("token-before-failure");
+    mockedSignOut.mockRejectedValueOnce(new Error("firebase-signout-error"));
+    await expect(service.signOut()).rejects.toThrow("firebase-signout-error");
+    expect(service.getAccessToken()).toBeNull();
+  });
+
+  it("delegates password reset to firebase auth", async () => {
+    mockedReset.mockResolvedValue(undefined);
+    const service = new FirebaseAuthService();
+
+    await service.sendPasswordReset("person@worklyhub.com");
+
+    expect(mockedReset).toHaveBeenCalledWith(firebaseAuth, "person@worklyhub.com");
+  });
+
+  it("restores token from storage when available", () => {
+    mockedStorage.get.mockReturnValue("stored-token");
+    const service = new FirebaseAuthService();
+
+    service.restoreFromStorage();
+
+    expect(mockedStorage.get).toHaveBeenCalledWith("auth.idToken");
+    expect(service.getAccessToken()).toBe("stored-token");
+  });
+
+  it("returns compatible refresh handler output", async () => {
+    const user = createUser("refreshed-token");
+    firebaseAuth.currentUser = user;
+    const service = new FirebaseAuthService();
+
+    const refreshHandler = service.getRefreshHandler();
+    await expect(refreshHandler()).resolves.toEqual({ accessToken: "refreshed-token" });
+
+    firebaseAuth.currentUser = null;
+    await expect(refreshHandler()).resolves.toBeNull();
   });
 });
+
+

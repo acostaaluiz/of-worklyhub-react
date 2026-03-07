@@ -1,55 +1,129 @@
-import { SchedulesApi } from './schedules-api';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { SchedulesApi } from "./schedules-api";
 
-function makeHttp(returnValue: any) {
-  return { request: jest.fn().mockResolvedValue({ data: returnValue }) } as any;
+function createApi(returnValue: DataValue) {
+  const request = jest.fn().mockResolvedValue({ data: returnValue });
+  const http = { request } as any;
+  const api = new SchedulesApi(http);
+
+  return { api, request };
 }
 
-describe('SchedulesApi', () => {
-  test('listSchedulesWithMeta maps query params correctly', async () => {
-    const resp = { data: [{ id: '1' }], meta: { monthViewHint: null } };
-    const http = makeHttp(resp);
-    const api = new SchedulesApi(http);
-    const out = await api.listSchedulesWithMeta('ws-1', { from: '2020-01-01', calendarView: 'month', monthCellVisibleLimit: 3 });
-    expect(out.data.length).toBe(1);
-    expect((http.request as jest.Mock).mock.calls[0][0].query.from).toBe('2020-01-01');
-    expect((http.request as jest.Mock).mock.calls[0][0].query.monthCellVisibleLimit).toBe(3);
+describe("SchedulesApi", () => {
+  it("builds query with every optional field in listSchedulesWithMeta", async () => {
+    const payload = {
+      data: [{ id: "schedule-1" }],
+      meta: { monthViewHint: { title: "Dense month" } },
+    };
+    const { api, request } = createApi(payload);
+
+    const result = await api.listSchedulesWithMeta("ws-1", {
+      from: "2026-01-01",
+      to: "2026-01-31",
+      calendarView: "month",
+      includeViewHint: true,
+      monthCellVisibleLimit: 4,
+      monthViewTimeZone: "America/Sao_Paulo",
+    });
+
+    expect(result).toEqual(payload);
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request.mock.calls[0][0]).toMatchObject({
+      method: "GET",
+      url: "/schedule/internal/schedules",
+      query: {
+        workspaceId: "ws-1",
+        from: "2026-01-01",
+        to: "2026-01-31",
+        calendarView: "month",
+        includeViewHint: true,
+        monthCellVisibleLimit: 4,
+        monthViewTimeZone: "America/Sao_Paulo",
+      },
+    });
   });
 
-  test('nextSchedules sends limit when provided', async () => {
-    const resp = { data: [{ id: 'n' }] };
-    const http = makeHttp(resp);
-    const api = new SchedulesApi(http);
-    const out = await api.nextSchedules('ws-2', 5);
-    expect(out.length).toBe(1);
-    expect((http.request as jest.Mock).mock.calls[0][0].query.limit).toBe(5);
+  it("omits optional query params when values are invalid or missing", async () => {
+    const { api, request } = createApi({});
+
+    const result = await api.listSchedulesWithMeta("ws-1", {
+      includeViewHint: false,
+      monthCellVisibleLimit: Number.POSITIVE_INFINITY,
+    });
+
+    expect(result).toEqual({ data: [], meta: undefined });
+    expect(request.mock.calls[0][0].query).toEqual({
+      workspaceId: "ws-1",
+      includeViewHint: false,
+    });
   });
 
-  test('getStatuses returns empty array when none', async () => {
-    const http = makeHttp({ data: [] });
-    const api = new SchedulesApi(http);
-    const sts = await api.getStatuses();
-    expect(Array.isArray(sts)).toBe(true);
+  it("unwraps listSchedules from listSchedulesWithMeta", async () => {
+    const { api } = createApi({ data: [{ id: "schedule-1" }] });
+
+    await expect(api.listSchedules("ws-2", { from: "2026-01-01" })).resolves.toEqual([
+      { id: "schedule-1" },
+    ]);
   });
 
-  test('create/update/delete/todaySchedules basic calls', async () => {
-    const httpCreate = makeHttp({ data: { id: 'c' } });
-    const apiCreate = new SchedulesApi(httpCreate);
-    const c = await apiCreate.createSchedule({ start: 'a', end: 'b' } as any);
-    expect((httpCreate.request as jest.Mock).mock.calls[0][0].method).toBe('POST');
+  it("sends limit in nextSchedules only when limit is numeric", async () => {
+    const withLimit = createApi({ data: [{ id: "next-1" }] });
+    const withoutLimit = createApi({ data: [{ id: "next-2" }] });
 
-    const httpUpd = makeHttp({ data: { id: 'u' } });
-    const apiUpd = new SchedulesApi(httpUpd);
-    const u = await apiUpd.updateSchedule('id', { title: 'x' } as any);
-    expect((httpUpd.request as jest.Mock).mock.calls[0][0].method).toBe('PATCH');
+    await expect(withLimit.api.nextSchedules("ws-1", 5)).resolves.toEqual([{ id: "next-1" }]);
+    await expect(withoutLimit.api.nextSchedules("ws-1")).resolves.toEqual([{ id: "next-2" }]);
 
-    const httpDel = makeHttp(undefined);
-    const apiDel = new SchedulesApi(httpDel);
-    await apiDel.deleteSchedule('id');
-    expect((httpDel.request as jest.Mock).mock.calls[0][0].method).toBe('DELETE');
+    expect(withLimit.request.mock.calls[0][0].query).toEqual({ workspaceId: "ws-1", limit: 5 });
+    expect(withoutLimit.request.mock.calls[0][0].query).toEqual({ workspaceId: "ws-1" });
+  });
 
-    const httpToday = makeHttp({ data: [{ id: 't' }] });
-    const apiToday = new SchedulesApi(httpToday);
-    const t = await apiToday.todaySchedules('ws');
-    expect(t.length).toBe(1);
+  it("handles create/update/delete/today/status requests", async () => {
+    const create = createApi({ id: "created" });
+    const update = createApi({ id: "updated" });
+    const remove = createApi(undefined);
+    const today = createApi({ data: [{ id: "today-1" }] });
+    const statuses = createApi({ data: [{ id: "open", code: "open", label: "Open" }] });
+
+    await expect(
+      create.api.createSchedule({ start: "2026-02-10T10:00:00.000Z", end: "2026-02-10T11:00:00.000Z" })
+    ).resolves.toEqual({ id: "created" });
+    expect(create.request.mock.calls[0][0].method).toBe("POST");
+
+    await expect(update.api.updateSchedule("schedule-1", { title: "Updated" })).resolves.toEqual({
+      id: "updated",
+    });
+    expect(update.request.mock.calls[0][0].method).toBe("PATCH");
+
+    await expect(remove.api.deleteSchedule("schedule-1")).resolves.toBeUndefined();
+    expect(remove.request.mock.calls[0][0].method).toBe("DELETE");
+
+    await expect(today.api.todaySchedules("ws-1")).resolves.toEqual([{ id: "today-1" }]);
+    expect(today.request.mock.calls[0][0]).toMatchObject({
+      method: "GET",
+      url: "/schedule/internal/schedules/today",
+      query: { workspaceId: "ws-1" },
+    });
+
+    await expect(statuses.api.getStatuses()).resolves.toEqual([
+      { id: "open", code: "open", label: "Open" },
+    ]);
+    expect(statuses.request.mock.calls[0][0]).toMatchObject({
+      method: "GET",
+      url: "/schedule/internal/statuses",
+    });
+  });
+
+  it("returns [] when list/next/today/status payloads are undefined", async () => {
+    const listApi = createApi(undefined);
+    const nextApi = createApi(undefined);
+    const todayApi = createApi(undefined);
+    const statusApi = createApi(undefined);
+
+    await expect(listApi.api.listSchedules("ws-1")).resolves.toEqual([]);
+    await expect(nextApi.api.nextSchedules("ws-1")).resolves.toEqual([]);
+    await expect(todayApi.api.todaySchedules("ws-1")).resolves.toEqual([]);
+    await expect(statusApi.api.getStatuses()).resolves.toEqual([]);
   });
 });
+
+

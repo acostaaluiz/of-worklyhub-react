@@ -1,0 +1,39 @@
+{
+  "id": "sequential-thinking-codex",
+  "name": "Sequential Thinking - Codex",
+  "description": "MCP template to drive step-by-step reasoning and code edits using OpenAI Codex-style assistants.",
+  "type": "sequential-thinking",
+  "provider": "codex",
+  "version": "1.0",
+  "settings": {
+    "model": "code-davinci-002",
+    "temperature": 0.05,
+    "max_tokens": 1200
+  },
+  "steps": [
+    {
+      "id": "understand",
+      "title": "Understand context",
+      "instruction": "Read the repo context and the user's intent. Return a short summary and explicit assumptions."
+    },
+    {
+      "id": "decompose",
+      "title": "Decompose task",
+      "instruction": "Break the task into small implementation steps. Number them and mark dependencies."
+    },
+    {
+      "id": "implement",
+      "title": "Implement step",
+      "instruction": "For the chosen step, output a unified diff or exact file contents to create/modify. Keep explanations short."
+    },
+    {
+      "id": "test-and-check",
+      "title": "Test and check",
+      "instruction": "Describe test commands or checks to validate the change; include expected outputs."
+    }
+  ],
+  "metadata": {
+    "author": "worklyhub-architect",
+    "createdAt": "2026-03-02"
+  }
+}

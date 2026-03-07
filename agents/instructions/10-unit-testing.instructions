@@ -1,0 +1,47 @@
+# Testes unitarios e padrao oficial
+
+Objetivo
+- Garantir um padrao unico e profissional para testes unitarios no frontend.
+- Evitar fragmentacao de cenarios em varios arquivos para o mesmo arquivo-fonte.
+- Validar continuamente para evitar regressao durante a implementacao.
+
+Escopo
+- Aplica para testes `*.spec.ts` e `*.spec.tsx` em `src/`.
+- Regra central: 1 arquivo de teste por arquivo de desenvolvimento.
+
+Padrao obrigatorio de estrutura
+1) Nomenclatura e localizacao
+- Nome: `<arquivo>.spec.ts` ou `<arquivo>.spec.tsx`.
+- O teste deve ficar ao lado do arquivo testado.
+- Nao criar sufixos paralelos (`.more`, `.extra`, `.branches`, `.helpers`) para o mesmo alvo.
+
+2) Organizacao interna
+- Um `describe("<Arquivo/Servico>")` principal.
+- `beforeEach` para reset de mocks e estado compartilhado.
+- Cenarios de sucesso, erro e fallback no mesmo arquivo.
+- Helpers de teste locais para reduzir duplicacao.
+
+3) Mocks e isolamento
+- Mockar apenas dependencias externas (HTTP, storage, auth, providers, integrações).
+- Evitar `jest.resetModules()` sem necessidade arquitetural real.
+- Preferir spies e mocks deterministas, com entrada/saida clara.
+
+4) Qualidade de cenarios
+- Cobrir fluxo feliz + guardrails (validacoes obrigatorias) + tratamento de erro.
+- Cobrir wrappers/exportacoes publicas quando o arquivo expor funcoes auxiliares.
+- Evitar testes superficiais sem assertiva de comportamento.
+
+Validacao durante desenvolvimento (obrigatorio)
+1) Rodar testes impactados logo apos cada bloco de alteracao:
+- `npx jest <paths-impactados> --runInBand --coverage=false`
+2) Rodada final completa:
+- `npm test -- --runInBand`
+3) Validacoes complementares do projeto:
+- `npm run lint`
+- `npm run depcruise`
+
+Definition of done para testes
+- 1 arquivo de teste por arquivo-fonte.
+- Padrao estrutural aplicado (describe principal, beforeEach, cenarios claros).
+- Sem arquivos fragmentados de teste para o mesmo alvo.
+- Suite de testes passando nas validacoes acordadas.

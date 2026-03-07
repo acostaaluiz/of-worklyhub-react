@@ -1,5 +1,10 @@
+type WorkOrderStatusPayload = { label?: string; code?: string };
+type WorkOrderPayload = Record<string, unknown>;
+
 export default class WorkOrderApi {
-  constructor(client: any) {
+  private readonly client: unknown;
+
+  constructor(client: unknown) {
     this.client = client;
   }
 
@@ -7,11 +12,11 @@ export default class WorkOrderApi {
     return [];
   }
 
-  async createStatus(_workspaceId: string | undefined, payload: any) {
+  async createStatus(_workspaceId: string | undefined, payload: WorkOrderStatusPayload) {
     return { id: 's1', label: payload.label ?? 'status', code: payload.code ?? 'code' };
   }
 
-  async listWorkOrders(_workspaceId: string | undefined, _filters: any) {
+  async listWorkOrders(_workspaceId: string | undefined, _filters: Record<string, unknown>) {
     return { data: [], total: 0 };
   }
 
@@ -19,11 +24,11 @@ export default class WorkOrderApi {
     return { id: _id };
   }
 
-  async createWorkOrder(_workspaceId: string | undefined, payload: any) {
+  async createWorkOrder(_workspaceId: string | undefined, payload: WorkOrderPayload) {
     return { ...payload, id: 'wo_1' };
   }
 
-  async updateWorkOrder(_workspaceId: string | undefined, _id: string, payload: any) {
+  async updateWorkOrder(_workspaceId: string | undefined, _id: string, payload: WorkOrderPayload) {
     return { ...payload, id: _id };
   }
 
@@ -31,7 +36,7 @@ export default class WorkOrderApi {
     return;
   }
 
-  async getOverview(_workspaceId: string | undefined, _options: any) {
+  async getOverview(_workspaceId: string | undefined, _options: Record<string, unknown>) {
     return {
       generatedAt: new Date().toISOString(),
       totals: { active: 0, terminal: 0, overdue: 0, dueSoon: 0, highPriorityOpen: 0, unscheduled: 0, checklistAtRisk: 0 },

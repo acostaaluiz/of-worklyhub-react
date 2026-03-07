@@ -1,7 +1,10 @@
-import { LoginForm } from './login-form.component';
+import React from "react";
+import { LoginForm } from "./login-form.component";
 
-describe('LoginForm', () => {
-  test('is defined', () => {
-    expect(LoginForm).toBeDefined();
+describe("LoginForm", () => {
+  it("creates element with LoginForm type", () => {
+    const element = <LoginForm />;
+
+    expect(element.type).toBe(LoginForm);
   });
 });

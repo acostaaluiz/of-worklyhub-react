@@ -1,78 +1,63 @@
-import { AuthManager } from './auth-manager';
+import { AuthManager } from "./auth-manager";
 
-describe('AuthManager', () => {
-  test('set/get tokens and signOut', () => {
-    const mgr = new AuthManager();
-    expect(mgr.getAccessToken()).toBeNull();
-    mgr.setTokens('a', 'r');
-    expect(mgr.getAccessToken()).toBe('a');
-    expect(mgr.getRefreshToken()).toBe('r');
-    mgr.signOut();
-    expect(mgr.getAccessToken()).toBeNull();
-    expect(mgr.getRefreshToken()).toBeNull();
+describe("AuthManager", () => {
+  it("stores and clears tokens", () => {
+    const manager = new AuthManager();
+
+    expect(manager.getAccessToken()).toBeNull();
+    expect(manager.getRefreshToken()).toBeNull();
+
+    manager.setTokens("access-token", "refresh-token");
+
+    expect(manager.getAccessToken()).toBe("access-token");
+    expect(manager.getRefreshToken()).toBe("refresh-token");
+
+    manager.signOut();
+
+    expect(manager.getAccessToken()).toBeNull();
+    expect(manager.getRefreshToken()).toBeNull();
   });
 
-  test('refresh uses handler and updates tokens', async () => {
-    let calledWith: any = null;
-    const handler = jest.fn().mockImplementation(async (refreshToken) => {
-      calledWith = refreshToken;
-      return { accessToken: 'newA', refreshToken: 'newR' };
+  it("refreshes using the configured handler", async () => {
+    const refreshHandler = jest.fn().mockResolvedValue({
+      accessToken: "new-access-token",
+      refreshToken: "new-refresh-token",
     });
+    const manager = new AuthManager({ refreshHandler });
+    manager.setTokens("old-access-token", "old-refresh-token");
 
-    const mgr = new AuthManager({ refreshHandler: handler });
-    mgr.setTokens('oldA', 'oldR');
-    const res = await mgr.refresh();
-    expect(res).toBe('newA');
-    expect(calledWith).toBe('oldR');
-    expect(mgr.getAccessToken()).toBe('newA');
-    expect(mgr.getRefreshToken()).toBe('newR');
+    const refreshedAccessToken = await manager.refresh();
+
+    expect(refreshedAccessToken).toBe("new-access-token");
+    expect(manager.getAccessToken()).toBe("new-access-token");
+    expect(manager.getRefreshToken()).toBe("new-refresh-token");
+    expect(refreshHandler).toHaveBeenCalledWith("old-refresh-token");
   });
 
-  test('refresh returns null without handler or invalid result', async () => {
-    const mgr = new AuthManager();
-    mgr.setTokens('a', 'b');
-    const r = await mgr.refresh();
-    expect(r).toBeNull();
+  it("keeps previous refresh token when handler omits refreshToken", async () => {
+    const refreshHandler = jest.fn().mockResolvedValue({
+      accessToken: "new-access-token",
+    });
+    const manager = new AuthManager({ refreshHandler });
+    manager.setTokens("old-access-token", "old-refresh-token");
 
-    const mgr2 = new AuthManager({ refreshHandler: jest.fn().mockResolvedValue({}) as any });
-    mgr2.setTokens('a', 'b');
-    const r2 = await mgr2.refresh();
-    expect(r2).toBeNull();
-  });
-});
-import { AuthManager } from '@core/auth/auth-manager';
+    const refreshedAccessToken = await manager.refresh();
 
-describe('AuthManager', () => {
-  test('set and get tokens', () => {
-    const m = new AuthManager();
-    expect(m.getAccessToken()).toBeNull();
-    expect(m.getRefreshToken()).toBeNull();
-
-    m.setTokens('a', 'r');
-    expect(m.getAccessToken()).toBe('a');
-    expect(m.getRefreshToken()).toBe('r');
-
-    m.setTokens(null, null);
-    expect(m.getAccessToken()).toBeNull();
+    expect(refreshedAccessToken).toBe("new-access-token");
+    expect(manager.getRefreshToken()).toBe("old-refresh-token");
   });
 
-  test('refresh uses handler and updates tokens', async () => {
-    const handler = jest.fn().mockResolvedValue({ accessToken: 'newA', refreshToken: 'newR' });
-    const m = new AuthManager({ refreshHandler: handler });
-    m.setTokens('oldA', 'oldR');
+  it("returns null when refresh cannot be completed", async () => {
+    const managerWithoutHandler = new AuthManager();
+    managerWithoutHandler.setTokens("access-token", "refresh-token");
 
-    const token = await m.refresh();
-    expect(token).toBe('newA');
-    expect(m.getAccessToken()).toBe('newA');
-    expect(m.getRefreshToken()).toBe('newR');
-    expect(handler).toHaveBeenCalledWith('oldR');
-  });
+    await expect(managerWithoutHandler.refresh()).resolves.toBeNull();
 
-  test('signOut clears tokens', () => {
-    const m = new AuthManager();
-    m.setTokens('a', 'b');
-    m.signOut();
-    expect(m.getAccessToken()).toBeNull();
-    expect(m.getRefreshToken()).toBeNull();
+    const managerWithInvalidResult = new AuthManager({
+      refreshHandler: jest.fn().mockResolvedValue({}),
+    });
+    managerWithInvalidResult.setTokens("access-token", "refresh-token");
+
+    await expect(managerWithInvalidResult.refresh()).resolves.toBeNull();
   });
 });

@@ -1,0 +1,44 @@
+{
+  "id": "sequential-thinking-copilot",
+  "name": "Sequential Thinking - Copilot",
+  "description": "MCP template to drive step-by-step reasoning and code changes using Copilot-style assistants.",
+  "type": "sequential-thinking",
+  "provider": "copilot",
+  "version": "1.0",
+  "settings": {
+    "model": "github-copilot",
+    "temperature": 0.1,
+    "max_tokens": 800
+  },
+  "steps": [
+    {
+      "id": "understand",
+      "title": "Understand context",
+      "instruction": "Read the repository context and the user request. Summarize the goal in 1-2 sentences and list assumptions."
+    },
+    {
+      "id": "identify-goals",
+      "title": "Identify goals and constraints",
+      "instruction": "List discrete goals needed to satisfy the request and any constraints (safety, no secrets, file edit permissions)."
+    },
+    {
+      "id": "plan",
+      "title": "Propose plan",
+      "instruction": "Propose an ordered plan of small changeable steps (1-5 items). Each step should be atomic and reversible."
+    },
+    {
+      "id": "execute-step",
+      "title": "Execute step",
+      "instruction": "For the chosen step, produce the exact file edits (diff/patch) or code block to apply. Keep changes minimal and explain briefly why."
+    },
+    {
+      "id": "verify",
+      "title": "Verify",
+      "instruction": "Describe how to locally validate the change (tests, commands). If risky, propose a safety rollback."
+    }
+  ],
+  "metadata": {
+    "author": "worklyhub-architect",
+    "createdAt": "2026-03-02"
+  }
+}

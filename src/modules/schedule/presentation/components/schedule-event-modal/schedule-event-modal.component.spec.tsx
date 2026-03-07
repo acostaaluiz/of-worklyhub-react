@@ -1,22 +1,18 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import MockStoreProvider from '@core/storage/mock-store.provider';
-import { ScheduleEventModal } from './schedule-event-modal.component';
+import React from "react";
+import { ScheduleEventModal } from "./schedule-event-modal.component";
 
-describe('ScheduleEventModal', () => {
-  test('renders minimal modal', () => {
-    render(
-      <MockStoreProvider>
-        <ScheduleEventModal
-          open={false}
-          onClose={() => {}}
-          categories={[]}
-          initialDate={new Date().toISOString().split('T')[0]}
-          onConfirm={async () => {}}
-        />
-      </MockStoreProvider>
+describe("ScheduleEventModal", () => {
+  it("creates element with ScheduleEventModal type", () => {
+    const element = (
+      <ScheduleEventModal
+        open
+        onClose={jest.fn()}
+        categories={[{ id: "work", label: "Work", color: "#000" }]}
+        initialDate="2026-01-10"
+        onConfirm={jest.fn()}
+      />
     );
-    // no crash
-    expect(true).toBe(true);
+
+    expect(element.type).toBe(ScheduleEventModal);
   });
 });

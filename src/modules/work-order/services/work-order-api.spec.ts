@@ -1,94 +1,152 @@
-import { WorkOrderApi } from './work-order-api';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { WorkOrderApi } from "./work-order-api";
 
-function makeHttp(mockImpl: any = {}) {
-  const req = jest.fn();
-  if (mockImpl.mockResolvedValue) req.mockResolvedValue(mockImpl.mockResolvedValue);
-  if (mockImpl.impl) req.mockImplementation(mockImpl.impl);
-  return { request: req } as any;
+function createApi(response: DataValue) {
+  const request = jest.fn().mockResolvedValue({ data: response });
+  const http = { request } as any;
+  const api = new WorkOrderApi(http);
+
+  return { api, request };
 }
 
-describe('WorkOrderApi', () => {
-  test('buildHeaders includes workspace id when provided', async () => {
-    const http = makeHttp({ mockResolvedValue: { data: { data: [] } } });
-    const api = new WorkOrderApi(http);
-    await api.getStatuses('ws-1');
-    const call = (http.request as jest.Mock).mock.calls[0][0];
-    expect(call.headers['x-workspace-id']).toBe('ws-1');
+describe("WorkOrderApi", () => {
+  it("includes workspace header in requests when workspaceId is provided", async () => {
+    const { api, request } = createApi({ data: [] });
+
+    await api.getStatuses("ws-1");
+
+    expect(request.mock.calls[0][0].headers["x-workspace-id"]).toBe("ws-1");
   });
 
-  test('listWorkOrders handles array payload and computes pagination', async () => {
-    const items = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-    const http = makeHttp({ mockResolvedValue: { data: items } });
-    const api = new WorkOrderApi(http);
-    const res = await api.listWorkOrders(undefined, { limit: 2 });
-    expect(Array.isArray(res.data)).toBe(true);
-    expect(res.pagination.limit).toBe(2);
-    expect(res.pagination.offset).toBe(0);
-    expect(res.pagination.nextOffset === null || typeof res.pagination.nextOffset === 'number').toBe(true);
+  it("creates statuses and work orders using POST payloads", async () => {
+    const createStatusApi = createApi({ data: { id: "status-1" } });
+    const createWorkOrderApi = createApi({ data: { id: "wo-1" } });
+
+    await expect(
+      createStatusApi.api.createStatus("ws-1", { code: "opened", label: "Opened" } as any)
+    ).resolves.toEqual({ id: "status-1" });
+    expect(createStatusApi.request.mock.calls[0][0]).toMatchObject({
+      method: "POST",
+      url: "/work-order/statuses",
+      body: { code: "opened", label: "Opened" },
+    });
+
+    await expect(
+      createWorkOrderApi.api.createWorkOrder("ws-1", { title: "Repair", workspaceId: "ws-1" } as any)
+    ).resolves.toEqual({ id: "wo-1" });
+    expect(createWorkOrderApi.request.mock.calls[0][0]).toMatchObject({
+      method: "POST",
+      url: "/work-order/work-orders",
+    });
   });
 
-  test('listWorkOrders handles paged response with meta', async () => {
-    const payload = { data: [{ id: 'x' }], pagination: { limit: 1, offset: 0, total: 10, hasMore: true, nextOffset: 1 } };
-    const http = makeHttp({ mockResolvedValue: { data: payload } });
-    const api = new WorkOrderApi(http);
-    const res = await api.listWorkOrders('ws', {});
-    expect(res.data.length).toBe(1);
-    expect(res.pagination.total).toBeDefined();
-    expect(res.pagination.hasMore).toBe(true);
+  it("normalizes pagination when list returns a plain array", async () => {
+    const { api } = createApi([{ id: "wo-1" }, { id: "wo-2" }, { id: "wo-3" }]);
+
+    const page = await api.listWorkOrders(undefined, { limit: 2, offset: 0 });
+
+    expect(page.data).toHaveLength(3);
+    expect(page.pagination.limit).toBe(2);
+    expect(page.pagination.offset).toBe(0);
+    expect(typeof page.pagination.hasMore).toBe("boolean");
   });
 
-  test('getOverview returns data when present', async () => {
-    const overview = { totals: { open: 1 } } as any;
-    const http = makeHttp({ mockResolvedValue: { data: { data: overview } } });
-    const api = new WorkOrderApi(http);
-    const res = await api.getOverview('ws');
-    expect(res.totals.open).toBe(1);
+  it("reads pagination from meta/pagination/pageInfo payloads", async () => {
+    const withPagination = createApi({
+      data: [{ id: "wo-1" }],
+      pagination: { limit: 1, offset: 2, total: 10, hasMore: true, nextOffset: 3 },
+    });
+    const withPageInfo = createApi({
+      data: [{ id: "wo-2" }],
+      pageInfo: { limit: 1, offset: 0, total: 1, hasMore: false, nextOffset: null },
+    });
+
+    const first = await withPagination.api.listWorkOrders("ws-1");
+    const second = await withPageInfo.api.listWorkOrders("ws-1", { workspaceId: "custom-ws" } as any);
+
+    expect(first.pagination).toMatchObject({
+      limit: 1,
+      offset: 2,
+      total: 10,
+      hasMore: true,
+      nextOffset: 3,
+    });
+    expect(second.data).toHaveLength(1);
+    expect(withPageInfo.request.mock.calls[0][0].query.workspaceId).toBe("custom-ws");
   });
 
-  test('getWorkOrderById returns work order data', async () => {
-    const wo = { id: 'wo' } as any;
-    const http = makeHttp({ mockResolvedValue: { data: { data: wo } } });
-    const api = new WorkOrderApi(http);
-    const out = await api.getWorkOrderById('ws', 'wo');
-    expect(out.id).toBe('wo');
+  it("falls back to empty list when payload shape is not an array", async () => {
+    const { api } = createApi({ data: null });
+
+    const page = await api.listWorkOrders("ws-1", { limit: -1, offset: -2 } as any);
+
+    expect(page.data).toEqual([]);
+    expect(page.pagination.limit).toBe(25);
+    expect(page.pagination.offset).toBe(0);
   });
 
-  test('updateWorkOrder and deleteWorkOrder call http methods', async () => {
-    const http = makeHttp({ mockResolvedValue: { data: { data: { id: 'u' } } } });
-    const api = new WorkOrderApi(http);
-    const u = await api.updateWorkOrder('ws', 'id', { title: 'x' } as any);
-    expect(u.id).toBe('u');
-    await expect(api.deleteWorkOrder('ws', 'id')).resolves.toBeUndefined();
+  it("gets, updates and deletes work orders", async () => {
+    const getApi = createApi({ data: { id: "wo-1" } });
+    const updateApi = createApi({ data: { id: "wo-1", title: "Updated" } });
+    const deleteApi = createApi(undefined);
+
+    await expect(getApi.api.getWorkOrderById("ws-1", "wo-1")).resolves.toEqual({ id: "wo-1" });
+    await expect(
+      updateApi.api.updateWorkOrder("ws-1", "wo-1", { title: "Updated" } as any)
+    ).resolves.toEqual({ id: "wo-1", title: "Updated" });
+    await expect(deleteApi.api.deleteWorkOrder("ws-1", "wo-1")).resolves.toBeUndefined();
+    expect(deleteApi.request.mock.calls[0][0].method).toBe("DELETE");
   });
 
-  test('history/comments/checklist and checklist item operations', async () => {
-    const http = makeHttp({ mockResolvedValue: { data: { data: [{ id: 'h' }] } } });
-    const api = new WorkOrderApi(http);
-    const h = await api.getHistory('ws', 'id');
-    expect(Array.isArray(h)).toBe(true);
-    const c = await api.getComments('ws', 'id');
-    expect(Array.isArray(c)).toBe(true);
-    const cl = await api.getChecklist('ws', 'id');
-    expect(Array.isArray(cl)).toBe(true);
+  it("handles overview, history, comments and checklist endpoints", async () => {
+    const overviewApi = createApi({ data: { totals: { active: 1 } } });
+    const historyApi = createApi({ data: [{ id: "history-1" }] });
+    const commentsApi = createApi({ data: [{ id: "comment-1" }] });
+    const createCommentApi = createApi({ data: { id: "comment-2" } });
+    const checklistApi = createApi({ data: [{ id: "item-1" }] });
+    const createChecklistApi = createApi({ data: { id: "item-2" } });
+    const updateChecklistApi = createApi({ data: { id: "item-3" } });
+    const deleteChecklistApi = createApi(undefined);
 
-    const httpCreateComment = makeHttp({ mockResolvedValue: { data: { data: { id: 'cm' } } } });
-    const apiCreate = new WorkOrderApi(httpCreateComment);
-    const comment = await apiCreate.createComment('ws', 'id', { body: 'x' } as any);
-    expect(comment.id).toBe('cm');
+    await expect(overviewApi.api.getOverview("ws-1")).resolves.toEqual({ totals: { active: 1 } });
+    await expect(historyApi.api.getHistory("ws-1", "wo-1")).resolves.toEqual([{ id: "history-1" }]);
+    await expect(commentsApi.api.getComments("ws-1", "wo-1")).resolves.toEqual([{ id: "comment-1" }]);
+    await expect(
+      createCommentApi.api.createComment("ws-1", "wo-1", { body: "new comment" } as any)
+    ).resolves.toEqual({ id: "comment-2" });
+    await expect(checklistApi.api.getChecklist("ws-1", "wo-1")).resolves.toEqual([{ id: "item-1" }]);
+    await expect(
+      createChecklistApi.api.createChecklistItem("ws-1", "wo-1", { title: "Step 1" } as any)
+    ).resolves.toEqual({ id: "item-2" });
+    await expect(
+      updateChecklistApi.api.updateChecklistItem("ws-1", "wo-1", "item-2", { done: true } as any)
+    ).resolves.toEqual({ id: "item-3" });
+    await expect(
+      deleteChecklistApi.api.deleteChecklistItem("ws-1", "wo-1", "item-2")
+    ).resolves.toBeUndefined();
+  });
 
-    const httpChecklist = makeHttp({ mockResolvedValue: { data: { data: { id: 'ci' } } } });
-    const apiChecklist = new WorkOrderApi(httpChecklist);
-    const item = await apiChecklist.createChecklistItem('ws', 'id', { title: 't' } as any);
-    expect(item.id).toBe('ci');
+  it("covers helper methods through instance access", () => {
+    const { api } = createApi({});
+    const anyApi = api as any;
 
-    const httpUpdateChecklist = makeHttp({ mockResolvedValue: { data: { data: { id: 'ui' } } } });
-    const apiUpdate = new WorkOrderApi(httpUpdateChecklist);
-    const ui = await apiUpdate.updateChecklistItem('ws', 'id', 'it', { done: true } as any);
-    expect(ui.id).toBe('ui');
+    expect(anyApi.toPositiveInt(undefined, 10)).toBe(10);
+    expect(anyApi.toPositiveInt(null, 10)).toBe(0);
+    expect(anyApi.toPositiveInt("7", 10)).toBe(7);
+    expect(anyApi.toPositiveInt(-5, 10)).toBe(10);
 
-    const httpDel = makeHttp({ mockResolvedValue: { data: undefined } });
-    const apiDel = new WorkOrderApi(httpDel);
-    await apiDel.deleteChecklistItem('ws', 'id', 'it');
-    expect((httpDel.request as jest.Mock).mock.calls[0][0].method).toBe('DELETE');
+    const pagination = anyApi.normalizePagination(
+      [{ id: "wo-1" }],
+      { limit: undefined, offset: undefined },
+      { nextOffset: 5 }
+    );
+    expect(pagination).toMatchObject({
+      limit: 25,
+      offset: 0,
+      hasMore: true,
+      nextOffset: 5,
+    });
   });
 });
+
+
