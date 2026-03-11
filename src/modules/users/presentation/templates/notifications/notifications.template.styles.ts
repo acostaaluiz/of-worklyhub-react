@@ -35,9 +35,21 @@ export const HeroCard = styled(motion.div)`
   border-radius: var(--radius-lg);
   border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
   background:
-    radial-gradient(circle at 8% 18%, rgba(70, 220, 192, 0.22), transparent 32%),
-    radial-gradient(circle at 84% 18%, rgba(48, 120, 255, 0.2), transparent 34%),
-    linear-gradient(112deg, rgba(20, 50, 90, 0.72), rgba(11, 84, 78, 0.7));
+    radial-gradient(
+      circle at 8% 18%,
+      color-mix(in srgb, var(--color-secondary) 28%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 84% 18%,
+      color-mix(in srgb, var(--color-primary) 22%, transparent),
+      transparent 44%
+    ),
+    linear-gradient(
+      112deg,
+      color-mix(in srgb, var(--color-surface-2) 88%, var(--color-surface)),
+      color-mix(in srgb, var(--color-surface) 92%, var(--color-secondary) 8%)
+    );
   padding: clamp(14px, 1.8vw, 20px);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -47,7 +59,12 @@ export const HeroCard = styled(motion.div)`
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: linear-gradient(140deg, transparent 30%, rgba(255, 255, 255, 0.05), transparent 70%);
+    background: linear-gradient(
+      140deg,
+      transparent 34%,
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
+      transparent 72%
+    );
   }
 `;
 
@@ -90,7 +107,7 @@ export const HeroTitle = styled.h2`
 
 export const HeroSubtitle = styled.p`
   margin: 6px 0 0;
-  color: color-mix(in srgb, var(--color-text-muted) 78%, white 22%);
+  color: var(--color-text-muted);
 `;
 
 export const HeroStats = styled.div`
@@ -139,9 +156,9 @@ export const FilterButton = styled.button<{ $active?: boolean }>`
   border-radius: 999px;
   background: ${({ $active }) =>
     $active
-      ? "linear-gradient(120deg, color-mix(in srgb, var(--color-primary) 80%, white 20%), color-mix(in srgb, var(--color-primary) 58%, black 10%))"
+      ? "linear-gradient(120deg, color-mix(in srgb, var(--color-primary) 82%, var(--color-surface)), color-mix(in srgb, var(--color-primary) 66%, var(--color-secondary)))"
       : "transparent"};
-  color: ${({ $active }) => ($active ? "#062426" : "var(--color-text-muted)")};
+  color: ${({ $active }) => ($active ? "var(--color-surface)" : "var(--color-text-muted)")};
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 700;
@@ -150,7 +167,7 @@ export const FilterButton = styled.button<{ $active?: boolean }>`
 
   &:hover {
     transform: translateY(-1px);
-    color: ${({ $active }) => ($active ? "#031a1b" : "var(--color-text)")};
+    color: ${({ $active }) => ($active ? "var(--color-surface)" : "var(--color-text)")};
   }
 `;
 
@@ -233,9 +250,9 @@ export const NotificationCard = styled(motion.article)<{ $read?: boolean; $prior
   border: 1px solid
     ${({ $priority }) =>
       $priority === "high"
-        ? "color-mix(in srgb, #ff6a7b 55%, var(--color-border))"
+        ? "color-mix(in srgb, var(--color-danger) 55%, var(--color-border))"
         : $priority === "medium"
-          ? "color-mix(in srgb, #ffbb5c 45%, var(--color-border))"
+          ? "color-mix(in srgb, var(--color-warning) 45%, var(--color-border))"
           : "color-mix(in srgb, var(--color-primary) 24%, var(--color-divider))"};
   background:
     ${({ $read }) =>
@@ -283,22 +300,22 @@ export const Chip = styled.span<{ $variant?: "module" | "priority" | "read"; $pr
     if ($variant === "priority") {
       if ($priority === "high") {
         return `
-          color: #ff8fa2;
-          border-color: color-mix(in srgb, #ff6a7b 50%, transparent);
-          background: color-mix(in srgb, #5a1420 54%, transparent);
+          color: color-mix(in srgb, var(--color-danger) 86%, var(--color-text));
+          border-color: color-mix(in srgb, var(--color-danger) 50%, transparent);
+          background: color-mix(in srgb, var(--color-danger) 18%, transparent);
         `;
       }
       if ($priority === "medium") {
         return `
-          color: #ffc86c;
-          border-color: color-mix(in srgb, #ffbb5c 50%, transparent);
-          background: color-mix(in srgb, #563a0f 56%, transparent);
+          color: color-mix(in srgb, var(--color-warning) 86%, var(--color-text));
+          border-color: color-mix(in srgb, var(--color-warning) 50%, transparent);
+          background: color-mix(in srgb, var(--color-warning) 18%, transparent);
         `;
       }
       return `
-        color: #88d6ff;
-        border-color: color-mix(in srgb, #5bb6ff 42%, transparent);
-        background: color-mix(in srgb, #12294a 54%, transparent);
+        color: color-mix(in srgb, var(--color-primary) 84%, var(--color-text));
+        border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
+        background: color-mix(in srgb, var(--color-primary) 14%, transparent);
       `;
     }
 
@@ -311,9 +328,9 @@ export const Chip = styled.span<{ $variant?: "module" | "priority" | "read"; $pr
     }
 
     return `
-      color: #62f0cc;
-      border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
-      background: color-mix(in srgb, #0b4953 65%, transparent);
+      color: color-mix(in srgb, var(--color-secondary) 84%, var(--color-text));
+      border-color: color-mix(in srgb, var(--color-secondary) 35%, transparent);
+      background: color-mix(in srgb, var(--color-secondary) 16%, transparent);
     `;
   }}
 `;

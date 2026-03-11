@@ -1,5 +1,6 @@
-import React from "react";
+﻿import React from "react";
 import {
+  Tag,
   Button,
   Checkbox,
   DatePicker,
@@ -10,6 +11,7 @@ import {
   List,
   Modal,
   Popconfirm,
+  Popover,
   Select,
   Segmented,
   Space,
@@ -20,13 +22,41 @@ import {
   type UploadProps,
   message,
 } from "antd";
-import type { UploadFile } from "antd/es/upload/interface";
 import dayjs from "dayjs";
+import {
+  AppstoreOutlined,
+  CalendarOutlined,
+  ClockCircleOutlined,
+  CloseOutlined,
+  CodeOutlined,
+  DollarCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  FlagOutlined,
+  IdcardOutlined,
+  InboxOutlined,
+  InfoCircleOutlined,
+  MessageOutlined,
+  NumberOutlined,
+  PaperClipOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SaveOutlined,
+  ScheduleOutlined,
+  SettingOutlined,
+  TeamOutlined,
+  ToolOutlined,
+  UnorderedListOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 
 import type {
   CreateWorkOrderInput,
   UpdateWorkOrderInput,
   WorkOrder,
+  WorkOrderAttachment,
   WorkOrderChecklistItem,
   WorkOrderComment,
   WorkOrderInventoryLineInput,
@@ -41,11 +71,15 @@ import type { CompanyServiceModel } from "@modules/company/interfaces/service.mo
 import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import {
   createWorkOrderChecklistItem,
+  createWorkOrderAttachment,
   createWorkOrderComment,
+  deleteWorkOrderAttachment,
   deleteWorkOrderChecklistItem,
+  listWorkOrderAttachments,
   listWorkOrderChecklist,
   listWorkOrderComments,
   listWorkOrderHistory,
+  requestWorkOrderAttachmentUploadSignature,
   updateWorkOrderChecklistItem,
 } from "@modules/work-order/services/work-order.http.service";
 import {
@@ -105,6 +139,7 @@ type Props = {
 
 type LabeledFieldProps = {
   label: string;
+  icon?: React.ReactNode;
   children: React.ReactNode;
   style?: React.CSSProperties;
 };
@@ -117,16 +152,22 @@ const fieldContainerStyle: React.CSSProperties = {
 };
 
 const fieldLabelStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
   fontSize: 12,
   fontWeight: 600,
   color: "var(--color-text-muted)",
   lineHeight: 1.1,
 };
 
-function LabeledField({ label, children, style }: LabeledFieldProps) {
+function LabeledField({ label, icon, children, style }: LabeledFieldProps) {
   return (
     <div style={{ ...fieldContainerStyle, ...style }}>
-      <span style={fieldLabelStyle}>{label}</span>
+      <span style={fieldLabelStyle}>
+        {icon}
+        {label}
+      </span>
       {children}
     </div>
   );
@@ -134,6 +175,13 @@ function LabeledField({ label, children, style }: LabeledFieldProps) {
 
 function formatDateTime(value?: string | null): string {
   return formatAppDateTime(value, "--");
+}
+
+function formatAttachmentSize(sizeBytes?: number | null): string {
+  if (typeof sizeBytes !== "number" || !Number.isFinite(sizeBytes) || sizeBytes < 0) {
+    return "";
+  }
+  return `${(sizeBytes / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function buildEmptyDraft(workspaceId?: string, uid?: string | null): WorkOrderDraft {
@@ -238,132 +286,145 @@ export function WorkOrderForm({
   });
   const [checklistBusyId, setChecklistBusyId] = React.useState<string | null>(null);
   const [attachmentsOpen, setAttachmentsOpen] = React.useState(false);
-  const [attachmentFiles, setAttachmentFiles] = React.useState<UploadFile[]>([]);
-  const attachmentPreviewUrlsRef = React.useRef<Record<string, string>>({});
-
-  const clearAttachmentPreviewUrls = React.useCallback(() => {
-    Object.values(attachmentPreviewUrlsRef.current).forEach((url) => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch {
-        // ignore URL cleanup errors
-      }
-    });
-    attachmentPreviewUrlsRef.current = {};
-  }, []);
-
-  const getAttachmentPreviewUrl = React.useCallback((file: UploadFile) => {
-    if (typeof file.url === "string" && file.url.trim()) return file.url;
-    const existing = attachmentPreviewUrlsRef.current[file.uid];
-    if (existing) return existing;
-    if (!file.originFileObj) return null;
-
-    try {
-      const generatedUrl = URL.createObjectURL(file.originFileObj as File);
-      attachmentPreviewUrlsRef.current[file.uid] = generatedUrl;
-      return generatedUrl;
-    } catch {
-      return null;
-    }
-  }, []);
-
-  const releaseAttachmentPreviewUrl = React.useCallback((uid: string) => {
-    const existing = attachmentPreviewUrlsRef.current[uid];
-    if (!existing) return;
-    try {
-      URL.revokeObjectURL(existing);
-    } catch {
-      // ignore URL cleanup errors
-    }
-    delete attachmentPreviewUrlsRef.current[uid];
-  }, []);
-
-  const openAttachmentPreview = React.useCallback(
-    (file: UploadFile) => {
-      const previewUrl = getAttachmentPreviewUrl(file);
-      if (!previewUrl) {
-        message.info("Unable to preview this file.");
-        return;
-      }
-      window.open(previewUrl, "_blank", "noopener,noreferrer");
-    },
-    [getAttachmentPreviewUrl]
+  const [attachments, setAttachments] = React.useState<WorkOrderAttachment[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = React.useState(false);
+  const [attachmentsUploading, setAttachmentsUploading] = React.useState(0);
+  const [attachmentBusyId, setAttachmentBusyId] = React.useState<string | null>(null);
+  const workOrderId = initial?.id ?? null;
+  const isEditing = Boolean(workOrderId);
+  const canManageActivity = Boolean(workspaceId && workOrderId);
+  const activityUpdatedAt = initial?.updatedAt ?? "";
+  const financeEntryId = initial?.financeEntryId ?? null;
+  const hasFinanceEntry = Boolean(financeEntryId);
+  const selectedStatus = React.useMemo(
+    () => statuses.find((status) => status.id === draft.statusId) ?? initial?.status ?? null,
+    [statuses, draft.statusId, initial?.status]
   );
+  const isFinalStatus = React.useMemo(() => {
+    if (!selectedStatus) return false;
+    if (selectedStatus.isTerminal) return true;
+    const code = selectedStatus.code?.toLowerCase() ?? "";
+    return (
+      code.includes("complete") ||
+      code.includes("done") ||
+      code.includes("finish") ||
+      code.includes("close")
+    );
+  }, [selectedStatus]);
+  const expectedAutomation = isEditing && isFinalStatus;
+  const automationTag = hasFinanceEntry
+    ? {
+        color: "success" as const,
+        label: "Finance entry linked",
+      }
+    : expectedAutomation
+      ? {
+          color: "warning" as const,
+          label: "Pending financial launch",
+        }
+      : {
+          color: "processing" as const,
+          label: "Will launch on completion",
+        };
+  const automationSummary = hasFinanceEntry
+    ? "Execution completion already generated a financial entry."
+    : expectedAutomation
+      ? "This work order is in a final status and should create finance entry automatically."
+      : "Finance entry is automatically created when the work order reaches a final execution status.";
+  const isDevEnvironment = import.meta.env.MODE !== "production";
+  const automationNfeNote = isDevEnvironment
+    ? "NF-e trigger is optional and in development it may fail when GOV endpoints are unavailable."
+    : "NF-e trigger is optional and depends on billing configuration.";
+  const openPath = React.useCallback((path: string) => {
+    if (typeof window === "undefined") return;
+    window.location.assign(path);
+  }, []);
 
-  const removeAttachmentByUid = React.useCallback(
-    (uid: string) => {
-      releaseAttachmentPreviewUrl(uid);
-      setAttachmentFiles((prev) => prev.filter((file) => file.uid !== uid));
-    },
-    [releaseAttachmentPreviewUrl]
-  );
+  const openAttachmentPreview = React.useCallback((attachment: WorkOrderAttachment) => {
+    if (!attachment.downloadUrl) {
+      message.info("Attachment URL expired. Refresh activity and try again.");
+      return;
+    }
+    window.open(attachment.downloadUrl, "_blank", "noopener,noreferrer");
+  }, []);
 
   const handleAttachmentBeforeUpload = React.useCallback<NonNullable<UploadProps["beforeUpload"]>>(
-    (file) => {
+    async (file) => {
       const fileSizeMb = file.size / (1024 * 1024);
       if (fileSizeMb > maxAttachmentSizeMb) {
         message.error(`File "${file.name}" exceeds ${maxAttachmentSizeMb} MB.`);
         return Upload.LIST_IGNORE;
       }
-      return false;
-    },
-    []
-  );
+      if (!workspaceId || !workOrderId) {
+        message.info("Save the work order before uploading attachments.");
+        return Upload.LIST_IGNORE;
+      }
 
-  const handleAttachmentChange = React.useCallback<NonNullable<UploadProps["onChange"]>>(
-    ({ fileList }) => {
-      setAttachmentFiles(fileList);
-    },
-    []
-  );
+      const contentType = file.type?.trim() ? file.type : "application/octet-stream";
+      const maxSizeBytes = maxAttachmentSizeMb * 1024 * 1024;
 
-  const handleAttachmentRemove = React.useCallback<NonNullable<UploadProps["onRemove"]>>(
-    (file) => {
-      releaseAttachmentPreviewUrl(file.uid);
-      return true;
-    },
-    [releaseAttachmentPreviewUrl]
-  );
+      setAttachmentsUploading((prev) => prev + 1);
+      try {
+        const signature = await requestWorkOrderAttachmentUploadSignature(workspaceId, workOrderId, {
+          filename: file.name,
+          contentType,
+          maxSize: maxSizeBytes,
+          userUid: currentUserUid ?? undefined,
+        });
 
-  const handleAttachmentPreview = React.useCallback<NonNullable<UploadProps["onPreview"]>>(
-    async (file) => {
-      openAttachmentPreview(file);
+        const uploadResponse = await fetch(signature.url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": contentType,
+          },
+          body: file as File,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error(`upload_failed_${uploadResponse.status}`);
+        }
+
+        await createWorkOrderAttachment(workspaceId, workOrderId, {
+          storagePath: signature.path,
+          fileName: file.name,
+          contentType,
+          sizeBytes: file.size,
+          authorUid: currentUserUid ?? undefined,
+        });
+
+        const updated = await listWorkOrderAttachments(workspaceId, workOrderId);
+        setAttachments(updated ?? []);
+        message.success(`Attachment "${file.name}" uploaded.`);
+      } catch {
+        message.error(`Failed to upload "${file.name}".`);
+      } finally {
+        setAttachmentsUploading((prev) => Math.max(0, prev - 1));
+      }
+
+      return Upload.LIST_IGNORE;
     },
-    [openAttachmentPreview]
+    [workspaceId, workOrderId, currentUserUid]
   );
 
   React.useEffect(() => {
     if (initial) {
       setDraft(mapFromInitial(initial));
       setMetadataText(JSON.stringify(initial.metadata ?? {}, null, 2));
-      setAttachmentFiles([]);
+      setAttachments([]);
       setAttachmentsOpen(false);
-      clearAttachmentPreviewUrls();
       return;
     }
 
     setDraft(buildEmptyDraft(workspaceId, currentUserUid));
     setMetadataText("{}");
-    setAttachmentFiles([]);
+    setAttachments([]);
     setAttachmentsOpen(false);
-    clearAttachmentPreviewUrls();
-  }, [initial, workspaceId, currentUserUid, clearAttachmentPreviewUrls]);
-
-  React.useEffect(() => {
-    return () => {
-      clearAttachmentPreviewUrls();
-    };
-  }, [clearAttachmentPreviewUrls]);
+  }, [initial, workspaceId, currentUserUid]);
 
   React.useEffect(() => {
     if (draft.statusId || statuses.length === 0) return;
     setDraft((prev) => ({ ...prev, statusId: statuses[0]?.id }));
   }, [draft.statusId, statuses]);
-
-  const workOrderId = initial?.id ?? null;
-  const isEditing = Boolean(workOrderId);
-  const canManageActivity = Boolean(workspaceId && workOrderId);
-  const activityUpdatedAt = initial?.updatedAt ?? "";
 
   const canSubmit = Boolean(workspaceId && draft.title.trim());
 
@@ -589,19 +650,23 @@ export function WorkOrderForm({
   const loadActivity = React.useCallback(async () => {
     if (!workspaceId || !workOrderId) return;
     setActivityLoading(true);
+    setAttachmentsLoading(true);
     try {
-      const [historyRows, commentRows, checklistRows] = await Promise.all([
+      const [historyRows, commentRows, checklistRows, attachmentRows] = await Promise.all([
         listWorkOrderHistory(workspaceId, workOrderId),
         listWorkOrderComments(workspaceId, workOrderId),
         listWorkOrderChecklist(workspaceId, workOrderId),
+        listWorkOrderAttachments(workspaceId, workOrderId),
       ]);
       setHistory(historyRows ?? []);
       setComments(commentRows ?? []);
       setChecklist(checklistRows ?? []);
+      setAttachments(attachmentRows ?? []);
     } catch (err) {
       message.error("Failed to load work order activity.");
     } finally {
       setActivityLoading(false);
+      setAttachmentsLoading(false);
     }
   }, [workspaceId, workOrderId]);
 
@@ -614,6 +679,8 @@ export function WorkOrderForm({
       setChecklistTitle("");
       setChecklistSortOrder(null);
       setChecklistEditingId(null);
+      setAttachments([]);
+      setAttachmentBusyId(null);
       return;
     }
 
@@ -756,6 +823,20 @@ export function WorkOrderForm({
     }
   };
 
+  const handleDeleteAttachment = async (attachment: WorkOrderAttachment) => {
+    if (!workspaceId || !workOrderId) return;
+    setAttachmentBusyId(attachment.id);
+    try {
+      await deleteWorkOrderAttachment(workspaceId, workOrderId, attachment.id);
+      setAttachments((prev) => prev.filter((row) => row.id !== attachment.id));
+      message.success("Attachment removed.");
+    } catch {
+      message.error("Failed to remove attachment.");
+    } finally {
+      setAttachmentBusyId(null);
+    }
+  };
+
   React.useEffect(() => {
     if (!currentUserUid) return;
     if (!initial) {
@@ -771,8 +852,11 @@ export function WorkOrderForm({
   ) : (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ fontWeight: 600 }}>Activity</div>
-        <Button size="small" onClick={loadActivity} loading={activityLoading}>
+        <div style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <ScheduleOutlined />
+          Activity
+        </div>
+        <Button size="small" icon={<ReloadOutlined />} onClick={loadActivity} loading={activityLoading}>
           Refresh
         </Button>
       </div>
@@ -782,7 +866,12 @@ export function WorkOrderForm({
         items={[
           {
             key: "activity-history",
-            label: "History",
+            label: (
+              <Space size={6}>
+                <ClockCircleOutlined />
+                History
+              </Space>
+            ),
             children: activityLoading ? (
               <div style={{ color: "var(--color-text-muted)" }}>Loading history...</div>
             ) : sortedHistory.length === 0 ? (
@@ -790,16 +879,16 @@ export function WorkOrderForm({
             ) : (
               <Timeline
                 items={sortedHistory.map((entry) => {
-                  const previous = entry.previousStatus?.label ?? "—";
-                  const next = entry.newStatus?.label ?? "—";
+                  const previous = entry.previousStatus?.label ?? "--";
+                  const next = entry.newStatus?.label ?? "--";
                   const changedBy = entry.changedBy ? resolveEmployeeLabel(entry.changedBy) : "System";
-                  const title = entry.previousStatus ? `${previous} → ${next}` : `${next}`;
+                  const title = entry.previousStatus ? `${previous} -> ${next}` : `${next}`;
                   return {
                     children: (
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div style={{ fontWeight: 600 }}>{title}</div>
                         <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-                          {formatDateTime(entry.changedAt)} • {changedBy}
+                          {formatDateTime(entry.changedAt)} | {changedBy}
                         </div>
                         {entry.notes ? <div style={{ fontSize: 12 }}>{entry.notes}</div> : null}
                       </div>
@@ -811,10 +900,15 @@ export function WorkOrderForm({
           },
           {
             key: "activity-comments",
-            label: "Comments",
+            label: (
+              <Space size={6}>
+                <MessageOutlined />
+                Comments
+              </Space>
+            ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <LabeledField label="New comment">
+                <LabeledField label="New comment" icon={<MessageOutlined />}>
                   <Input.TextArea
                     placeholder="Write a comment"
                     value={commentDraft}
@@ -826,6 +920,7 @@ export function WorkOrderForm({
                   <Button
                     type="primary"
                     size="small"
+                    icon={<MessageOutlined />}
                     onClick={handleAddComment}
                     loading={commentSaving}
                     disabled={!commentDraft.trim()}
@@ -860,18 +955,23 @@ export function WorkOrderForm({
           },
           {
             key: "activity-checklist",
-            label: "Checklist",
+            label: (
+              <Space size={6}>
+                <UnorderedListOutlined />
+                Checklist
+              </Space>
+            ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
-                  <LabeledField label="Title" style={{ flex: 1, minWidth: 220 }}>
+                  <LabeledField label="Title" icon={<UnorderedListOutlined />} style={{ flex: 1, minWidth: 220 }}>
                     <Input
                       placeholder="Checklist item"
                       value={checklistTitle}
                       onChange={(e) => setChecklistTitle(e.target.value)}
                     />
                   </LabeledField>
-                  <LabeledField label="Sort order" style={{ width: 140 }}>
+                  <LabeledField label="Sort order" icon={<NumberOutlined />} style={{ width: 140 }}>
                     <InputNumber
                       min={0}
                       placeholder="Order"
@@ -883,6 +983,7 @@ export function WorkOrderForm({
                   <Button
                     type="primary"
                     size="small"
+                    icon={<PlusOutlined />}
                     onClick={handleAddChecklistItem}
                     loading={checklistSaving}
                     disabled={!checklistTitle.trim()}
@@ -911,6 +1012,7 @@ export function WorkOrderForm({
                               key="save"
                               type="primary"
                               size="small"
+                              icon={<SaveOutlined />}
                               onClick={handleSaveEditChecklist}
                               loading={isBusy}
                             >
@@ -919,6 +1021,7 @@ export function WorkOrderForm({
                             <Button
                               key="cancel"
                               size="small"
+                              icon={<CloseOutlined />}
                               onClick={handleCancelEditChecklist}
                               disabled={isBusy}
                             >
@@ -954,6 +1057,7 @@ export function WorkOrderForm({
                           <Button
                             key="edit"
                             size="small"
+                            icon={<EditOutlined />}
                             onClick={() => handleStartEditChecklist(item)}
                             disabled={isBusy}
                           >
@@ -966,7 +1070,7 @@ export function WorkOrderForm({
                             okButtonProps={{ danger: true }}
                             onConfirm={() => handleDeleteChecklistItem(item.id)}
                           >
-                            <Button danger size="small" disabled={isBusy}>
+                            <Button danger size="small" icon={<DeleteOutlined />} disabled={isBusy}>
                               Delete
                             </Button>
                           </Popconfirm>,
@@ -983,7 +1087,7 @@ export function WorkOrderForm({
                             </span>
                           </Checkbox>
                           <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-                            Order: {item.sortOrder} • {completionLabel}
+                            Order: {item.sortOrder} | {completionLabel}
                           </div>
                         </div>
                       </List.Item>
@@ -998,72 +1102,106 @@ export function WorkOrderForm({
     </div>
   );
 
+  const isAttachmentUploadRunning = attachmentsUploading > 0;
+
   const attachmentsModal = (
     <Modal
-      title={`Attachments (${attachmentFiles.length})`}
+      title={
+        <Space size={8}>
+          <PaperClipOutlined />
+          {"Attachments (" + attachments.length + ")"}
+        </Space>
+      }
       open={attachmentsOpen}
       onCancel={() => setAttachmentsOpen(false)}
       footer={[
-        <Button key="close" onClick={() => setAttachmentsOpen(false)}>
-          Close
+        <Button key="cancel" icon={<CloseOutlined />} onClick={() => setAttachmentsOpen(false)}>
+          Cancel
         </Button>,
       ]}
       width={760}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-          Front-only mode: attachments are kept in local memory and are not sent to backend yet.
+          {canManageActivity
+            ? "Files are stored in Firebase and linked to this work order."
+            : "Save the work order first to enable attachments."}
         </div>
 
         <Upload.Dragger
           multiple
           accept={attachmentAccept}
           beforeUpload={handleAttachmentBeforeUpload}
-          onChange={handleAttachmentChange}
-          onRemove={handleAttachmentRemove}
-          onPreview={handleAttachmentPreview}
-          fileList={attachmentFiles}
+          showUploadList={false}
+          disabled={!canManageActivity}
         >
+          <InboxOutlined style={{ fontSize: 28, color: "var(--color-text-muted)", marginBottom: 8 }} />
           <p style={{ marginBottom: 8, fontWeight: 600 }}>Click or drag files to attach</p>
           <p style={{ margin: 0, color: "var(--color-text-muted)" }}>
             Photos and documents up to {maxAttachmentSizeMb} MB per file.
           </p>
         </Upload.Dragger>
 
+        {isAttachmentUploadRunning ? (
+          <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
+            Uploading {attachmentsUploading} file{attachmentsUploading > 1 ? "s" : ""}...
+          </div>
+        ) : null}
+
         <Divider style={{ margin: "4px 0" }} />
 
-        <div style={{ fontWeight: 600 }}>Attached files</div>
+        <div style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <PaperClipOutlined />
+          Attached files
+        </div>
         <List
-          dataSource={attachmentFiles}
+          loading={attachmentsLoading}
+          dataSource={attachments}
           locale={{ emptyText: "No attachments yet." }}
-          renderItem={(file) => {
-            const fileSize =
-              typeof file.size === "number" ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : "";
+          renderItem={(attachment) => {
+            const fileSize = formatAttachmentSize(attachment.sizeBytes);
+            const createdBy = attachment.authorUid
+              ? resolveEmployeeLabel(attachment.authorUid)
+              : "System";
+            const isBusy = attachmentBusyId === attachment.id;
+
             return (
               <List.Item
                 actions={[
                   <Button
-                    key={`view-${file.uid}`}
+                    key={"view-" + attachment.id}
                     size="small"
-                    onClick={() => openAttachmentPreview(file)}
+                    icon={<EyeOutlined />}
+                    onClick={() => openAttachmentPreview(attachment)}
+                    disabled={!attachment.downloadUrl || isBusy}
                   >
                     View
                   </Button>,
-                  <Button
-                    key={`remove-${file.uid}`}
-                    size="small"
-                    danger
-                    onClick={() => removeAttachmentByUid(file.uid)}
+                  <Popconfirm
+                    key={"remove-" + attachment.id}
+                    title="Remove attachment?"
+                    okText="Remove"
+                    okButtonProps={{ danger: true }}
+                    onConfirm={() => handleDeleteAttachment(attachment)}
                   >
-                    Remove
-                  </Button>,
+                    <Button
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      disabled={isBusy || isAttachmentUploadRunning}
+                    >
+                      Remove
+                    </Button>
+                  </Popconfirm>,
                 ]}
               >
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <div style={{ fontWeight: 500 }}>{file.name}</div>
+                  <div style={{ fontWeight: 500 }}>{attachment.fileName}</div>
                   <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-                    {file.type || "DataValue type"}
-                    {fileSize ? ` • ${fileSize}` : ""}
+                    {attachment.contentType || "application/octet-stream"}
+                    {fileSize ? " | " + fileSize : ""}
+                    {" | " + formatDateTime(attachment.createdAt)}
+                    {" | " + createdBy}
                   </div>
                 </div>
               </List.Item>
@@ -1087,20 +1225,65 @@ export function WorkOrderForm({
     <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", minHeight: 0, maxWidth: "100%", overflowX: "hidden" }}>
       {attachmentsModal}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-        <div style={{ fontWeight: 600, fontSize: 16 }}>
+        <div style={{ fontWeight: 600, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 8 }}>
+          <AppstoreOutlined />
           {isEditing ? "Edit work order" : "New work order"}
         </div>
         <Space wrap>
-          <Button onClick={() => setAttachmentsOpen(true)}>
-            Attachments{attachmentFiles.length ? ` (${attachmentFiles.length})` : ""}
+          <Button icon={<PaperClipOutlined />} onClick={() => setAttachmentsOpen(true)}>
+            Attachments{attachments.length ? ` (${attachments.length})` : ""}
           </Button>
-          {onCancel ? <Button onClick={onCancel}>Clear</Button> : null}
+          <Button icon={<DollarCircleOutlined />} onClick={() => openPath("/finance/entries")}>
+            Finance entries
+          </Button>
+          <Button icon={<SettingOutlined />} onClick={() => openPath("/settings")}>
+            Billing settings
+          </Button>
+          {onCancel ? <Button icon={<CloseOutlined />} onClick={onCancel}>Clear</Button> : null}
           {isEditing && initial && onDelete ? (
-            <Button danger onClick={() => onDelete(initial)}>
+            <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(initial)}>
               Delete
             </Button>
           ) : null}
         </Space>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: -2 }}>
+        <Tag color={automationTag.color} icon={<DollarCircleOutlined />}>
+          {automationTag.label}
+        </Tag>
+        {financeEntryId ? (
+          <Tag color="blue">{`Entry: ${financeEntryId.slice(0, 10)}${financeEntryId.length > 10 ? "..." : ""}`}</Tag>
+        ) : null}
+        {isFinalStatus && !hasFinanceEntry ? (
+          <Tag color="orange" icon={<InfoCircleOutlined />}>
+            Review finance queue
+          </Tag>
+        ) : null}
+        <Popover
+          placement="bottomLeft"
+          title="Finance automation"
+          trigger={["hover", "click"]}
+          content={
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 320 }}>
+              <Typography.Text style={{ fontSize: 12 }}>{automationSummary}</Typography.Text>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {automationNfeNote}
+              </Typography.Text>
+              <Space wrap size={6}>
+                <Button size="small" icon={<DollarCircleOutlined />} onClick={() => openPath("/finance/entries")}>
+                  Finance entries
+                </Button>
+                <Button size="small" icon={<SettingOutlined />} onClick={() => openPath("/settings")}>
+                  Billing settings
+                </Button>
+              </Space>
+            </div>
+          }
+        >
+          <Button size="small" type="text" icon={<InfoCircleOutlined />}>
+            Details
+          </Button>
+        </Popover>
       </div>
 
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", paddingRight: 4, maxWidth: "100%" }}>
@@ -1111,17 +1294,22 @@ export function WorkOrderForm({
           items={[
           {
             key: "general",
-            label: "General",
+            label: (
+              <Space size={6}>
+                <FileTextOutlined />
+                General
+              </Space>
+            ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <LabeledField label="Title">
+                <LabeledField label="Title" icon={<FileTextOutlined />}>
                   <Input
                     placeholder="Title"
                     value={draft.title}
                     onChange={(e) => updateDraft({ title: e.target.value })}
                   />
                 </LabeledField>
-                <LabeledField label="Description">
+                <LabeledField label="Description" icon={<MessageOutlined />}>
                   <Input.TextArea
                     placeholder="Description"
                     value={draft.description ?? ""}
@@ -1131,7 +1319,7 @@ export function WorkOrderForm({
                 </LabeledField>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Priority">
+                  <LabeledField label="Priority" icon={<FlagOutlined />}>
                     <Select
                       placeholder="Priority"
                       value={draft.priority}
@@ -1139,7 +1327,7 @@ export function WorkOrderForm({
                       onChange={(value) => updateDraft({ priority: value })}
                     />
                   </LabeledField>
-                  <LabeledField label="Status">
+                  <LabeledField label="Status" icon={<InfoCircleOutlined />}>
                     <Select
                       placeholder="Status"
                       value={draft.statusId}
@@ -1150,7 +1338,7 @@ export function WorkOrderForm({
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Requester">
+                  <LabeledField label="Requester" icon={<UserOutlined />}>
                     <Select
                       placeholder="Select requester"
                       value={draft.requesterUserUid || undefined}
@@ -1166,7 +1354,7 @@ export function WorkOrderForm({
                       }
                     />
                   </LabeledField>
-                  <LabeledField label="Created by">
+                  <LabeledField label="Created by" icon={<IdcardOutlined />}>
                     <Input
                       placeholder="Created by"
                       value={resolveEmployeeLabel(draft.createdBy ?? currentUserUid)}
@@ -1175,7 +1363,7 @@ export function WorkOrderForm({
                   </LabeledField>
                 </div>
 
-                <LabeledField label="Metadata (JSON)">
+                <LabeledField label="Metadata (JSON)" icon={<CodeOutlined />}>
                   <Input.TextArea
                     placeholder="Metadata (JSON)"
                     value={metadataText}
@@ -1188,11 +1376,16 @@ export function WorkOrderForm({
           },
           {
             key: "schedule",
-            label: "Schedule",
+            label: (
+              <Space size={6}>
+                <CalendarOutlined />
+                Schedule
+              </Space>
+            ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Scheduled start">
+                  <LabeledField label="Scheduled start" icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
                       format={APP_DATE_TIME_FORMAT}
@@ -1201,7 +1394,7 @@ export function WorkOrderForm({
                       onChange={(value) => updateDraft({ scheduledStartAt: toIsoDateTimeValue(value) })}
                     />
                   </LabeledField>
-                  <LabeledField label="Scheduled end">
+                  <LabeledField label="Scheduled end" icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
                       format={APP_DATE_TIME_FORMAT}
@@ -1213,7 +1406,7 @@ export function WorkOrderForm({
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Due at">
+                  <LabeledField label="Due at" icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
                       format={APP_DATE_TIME_FORMAT}
@@ -1222,7 +1415,7 @@ export function WorkOrderForm({
                       onChange={(value) => updateDraft({ dueAt: toIsoDateTimeValue(value) })}
                     />
                   </LabeledField>
-                  <LabeledField label="Estimated duration (min)">
+                  <LabeledField label="Estimated duration (min)" icon={<ClockCircleOutlined />}>
                     <InputNumber
                       min={0}
                       placeholder="Estimated duration (min)"
@@ -1235,7 +1428,7 @@ export function WorkOrderForm({
 
                 {isEditing ? (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                    <LabeledField label="Actual duration (min)">
+                    <LabeledField label="Actual duration (min)" icon={<ClockCircleOutlined />}>
                       <InputNumber
                         min={0}
                         placeholder="Actual duration (min)"
@@ -1244,7 +1437,7 @@ export function WorkOrderForm({
                         style={{ width: "100%" }}
                       />
                     </LabeledField>
-                    <LabeledField label="Completed at">
+                    <LabeledField label="Completed at" icon={<CalendarOutlined />}>
                       <DatePicker
                         showTime={{ format: APP_TIME_FORMAT }}
                         format={APP_DATE_TIME_FORMAT}
@@ -1260,12 +1453,17 @@ export function WorkOrderForm({
           },
           {
             key: "team",
-            label: "Team",
+            label: (
+              <Space size={6}>
+                <TeamOutlined />
+                Team
+              </Space>
+            ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div style={{ fontWeight: 600 }}>Workers</div>
-                  <Button onClick={addWorker}>Add worker</Button>
+                  <Button icon={<PlusOutlined />} onClick={addWorker}>Add worker</Button>
                 </div>
 
                 {(draft.workers ?? []).length === 0 ? (
@@ -1274,7 +1472,7 @@ export function WorkOrderForm({
 
                 {(draft.workers ?? []).map((line, idx) => (
                   <Space key={`worker-${idx}`} wrap style={{ width: "100%" }} align="start">
-                    <LabeledField label="Worker" style={{ width: 260 }}>
+                    <LabeledField label="Worker" icon={<UserOutlined />} style={{ width: 260 }}>
                       <Select
                         placeholder="Select team member"
                         value={line.userUid || undefined}
@@ -1291,7 +1489,7 @@ export function WorkOrderForm({
                         style={{ width: "100%" }}
                       />
                     </LabeledField>
-                    <LabeledField label="Role" style={{ width: 170 }}>
+                    <LabeledField label="Role" icon={<IdcardOutlined />} style={{ width: 170 }}>
                       <Select
                         value={line.assignmentRole}
                         style={{ width: "100%" }}
@@ -1303,7 +1501,7 @@ export function WorkOrderForm({
                         onChange={(value) => updateWorker(idx, { assignmentRole: value })}
                       />
                     </LabeledField>
-                    <LabeledField label="Allocated minutes" style={{ width: 150 }}>
+                    <LabeledField label="Allocated minutes" icon={<ClockCircleOutlined />} style={{ width: 150 }}>
                       <InputNumber
                         min={0}
                         placeholder="Minutes"
@@ -1313,7 +1511,7 @@ export function WorkOrderForm({
                       />
                     </LabeledField>
                     <div style={{ display: "flex", alignItems: "flex-end", minHeight: "100%" }}>
-                      <Button danger onClick={() => removeWorker(idx)}>
+                      <Button danger icon={<DeleteOutlined />} onClick={() => removeWorker(idx)}>
                         Remove
                       </Button>
                     </div>
@@ -1324,10 +1522,15 @@ export function WorkOrderForm({
           },
           {
             key: "lines",
-            label: "Lines",
+            label: (
+              <Space size={6}>
+                <UnorderedListOutlined />
+                Lines
+              </Space>
+            ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <LabeledField label="Line type">
+                <LabeledField label="Line type" icon={<AppstoreOutlined />}>
                   <Segmented
                     value={lineMode}
                     options={[
@@ -1342,7 +1545,7 @@ export function WorkOrderForm({
                   <>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ fontWeight: 600 }}>Service lines</div>
-                      <Button onClick={addServiceLine}>Add service</Button>
+                      <Button icon={<PlusOutlined />} onClick={addServiceLine}>Add service</Button>
                     </div>
 
                     {(draft.serviceLines ?? []).length === 0 ? (
@@ -1362,7 +1565,7 @@ export function WorkOrderForm({
                         }}
                       >
                         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px", gap: 10 }}>
-                          <LabeledField label="Service" style={{ minWidth: 0 }}>
+                          <LabeledField label="Service" icon={<ToolOutlined />} style={{ minWidth: 0 }}>
                             <Select
                               placeholder="Select service"
                               value={line.serviceId || undefined}
@@ -1390,7 +1593,7 @@ export function WorkOrderForm({
                               style={{ width: "100%" }}
                             />
                           </LabeledField>
-                          <LabeledField label="Qty">
+                          <LabeledField label="Qty" icon={<NumberOutlined />}>
                             <InputNumber
                               min={1}
                               placeholder="Qty"
@@ -1409,7 +1612,7 @@ export function WorkOrderForm({
                             alignItems: "end",
                           }}
                         >
-                          <LabeledField label="Unit price (cents)">
+                          <LabeledField label="Unit price (cents)" icon={<NumberOutlined />}>
                             <InputNumber
                               min={0}
                               placeholder="Unit price"
@@ -1420,7 +1623,7 @@ export function WorkOrderForm({
                               style={{ width: "100%" }}
                             />
                           </LabeledField>
-                          <LabeledField label="Notes" style={{ minWidth: 0 }}>
+                          <LabeledField label="Notes" icon={<FileTextOutlined />} style={{ minWidth: 0 }}>
                             <Input
                               placeholder="Notes"
                               value={line.notes ?? ""}
@@ -1429,7 +1632,7 @@ export function WorkOrderForm({
                             />
                           </LabeledField>
                           <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                            <Button danger onClick={() => removeServiceLine(idx)}>
+                            <Button danger icon={<DeleteOutlined />} onClick={() => removeServiceLine(idx)}>
                               Remove
                             </Button>
                           </div>
@@ -1441,7 +1644,7 @@ export function WorkOrderForm({
                   <>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ fontWeight: 600 }}>Inventory lines</div>
-                      <Button onClick={addInventoryLine}>Add item</Button>
+                      <Button icon={<PlusOutlined />} onClick={addInventoryLine}>Add item</Button>
                     </div>
 
                     {(draft.inventoryLines ?? []).length === 0 ? (
@@ -1463,7 +1666,7 @@ export function WorkOrderForm({
 
                       return (
                         <Space key={`inventory-${idx}`} wrap style={{ width: "100%" }} align="start">
-                        <LabeledField label="Inventory item" style={{ width: 220 }}>
+                        <LabeledField label="Inventory item" icon={<InboxOutlined />} style={{ width: 220 }}>
                           <Select
                             placeholder="Select inventory item"
                             value={line.inventoryItemId || undefined}
@@ -1492,7 +1695,7 @@ export function WorkOrderForm({
                             </div>
                           ) : null}
                         </LabeledField>
-                        <LabeledField label="Direction" style={{ width: 130 }}>
+                        <LabeledField label="Direction" icon={<ScheduleOutlined />} style={{ width: 130 }}>
                           <Select
                             value={line.direction}
                             style={{ width: "100%" }}
@@ -1503,7 +1706,7 @@ export function WorkOrderForm({
                             onChange={(value) => updateInventoryLine(idx, { direction: value })}
                           />
                         </LabeledField>
-                        <LabeledField label="Planned quantity" style={{ width: 120 }}>
+                        <LabeledField label="Planned quantity" icon={<NumberOutlined />} style={{ width: 120 }}>
                           <InputNumber
                             min={0}
                             placeholder="Planned"
@@ -1512,7 +1715,7 @@ export function WorkOrderForm({
                             style={{ width: "100%" }}
                           />
                         </LabeledField>
-                        <LabeledField label="Consumed quantity" style={{ width: 120 }}>
+                        <LabeledField label="Consumed quantity" icon={<NumberOutlined />} style={{ width: 120 }}>
                           <InputNumber
                             min={0}
                             placeholder="Consumed"
@@ -1521,7 +1724,7 @@ export function WorkOrderForm({
                             style={{ width: "100%" }}
                           />
                         </LabeledField>
-                        <LabeledField label="Unit cost (cents)" style={{ width: 170 }}>
+                        <LabeledField label="Unit cost (cents)" icon={<NumberOutlined />} style={{ width: 170 }}>
                           <InputNumber
                             min={0}
                             placeholder="Unit cost (cents)"
@@ -1531,7 +1734,7 @@ export function WorkOrderForm({
                           />
                         </LabeledField>
                         <div style={{ display: "flex", alignItems: "flex-end", minHeight: "100%" }}>
-                          <Button danger onClick={() => removeInventoryLine(idx)}>
+                          <Button danger icon={<DeleteOutlined />} onClick={() => removeInventoryLine(idx)}>
                             Remove
                           </Button>
                         </div>
@@ -1545,7 +1748,12 @@ export function WorkOrderForm({
           },
           {
             key: "activity",
-            label: "Activity",
+            label: (
+              <Space size={6}>
+                <ScheduleOutlined />
+                Activity
+              </Space>
+            ),
             children: activityContent,
           },
           ]}
@@ -1555,7 +1763,13 @@ export function WorkOrderForm({
       <Divider style={{ margin: "0" }} />
 
       <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <Button type="primary" loading={loading} disabled={!canSubmit} onClick={handleSubmit}>
+        <Button
+          type="primary"
+          icon={isEditing ? <SaveOutlined /> : <PlusOutlined />}
+          loading={loading}
+          disabled={!canSubmit}
+          onClick={handleSubmit}
+        >
           {isEditing ? "Save changes" : "Create work order"}
         </Button>
       </div>

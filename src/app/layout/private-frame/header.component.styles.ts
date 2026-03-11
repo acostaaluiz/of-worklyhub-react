@@ -203,6 +203,15 @@ export const Right = styled.div`
       border-color var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
+  .notifications-badge {
+    display: inline-flex;
+    line-height: 1;
+  }
+
+  .notifications-badge .ant-badge-count {
+    box-shadow: 0 0 0 1px var(--color-surface);
+  }
+
   .notifications-button:hover {
     transform: translateY(-1px);
     box-shadow: var(--shadow-sm);

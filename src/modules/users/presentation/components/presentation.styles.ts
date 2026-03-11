@@ -1,15 +1,13 @@
-import { Button, Card } from "antd";
 import styled from "styled-components";
+import {
+  BaseFormCard,
+  BaseFormCardBody,
+  BasePrimaryButton,
+} from "@shared/ui/components/form-shell/form-shell.styles";
 
-export const FormCard = styled(Card)`
-  width: 100%;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
-  background: var(--color-surface);
-`;
+export const FormCard = styled(BaseFormCard)``;
 
-export const CardBody = styled.div`
+export const CardBody = styled(BaseFormCardBody)`
   padding: var(--space-7);
 
   @media (max-width: 480px) {
@@ -24,8 +22,9 @@ export const SocialRow = styled.div`
   gap: var(--space-3);
 `;
 
-export const SocialButton = styled(Button)`
+export const SocialButton = styled(BasePrimaryButton)`
   width: 56px;
+  height: auto;
 `;
 
 export const BottomRow = styled.div`
@@ -41,7 +40,4 @@ export const BottomRow = styled.div`
   flex-wrap: wrap;
 `;
 
-export const PrimaryButton = styled(Button)`
-  height: 44px;
-  border-radius: var(--radius-sm);
-`;
+export const PrimaryButton = styled(BasePrimaryButton)``;

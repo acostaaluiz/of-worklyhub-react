@@ -1,7 +1,19 @@
 import React from "react";
+import { Popover } from "antd";
 import ServicesCards from "@modules/users/presentation/components/home/services-cards.component";
 import MetricsCards from "@modules/users/presentation/components/home/metrics-cards.component";
-import { Briefcase, Box, CalendarDays, DollarSign, LayoutGrid, Sparkles } from "lucide-react";
+import {
+  BookOpenCheck,
+  Briefcase,
+  CalendarDays,
+  CheckCircle2,
+  CircleAlert,
+  DollarSign,
+  Gauge,
+  LayoutGrid,
+  Settings2,
+  Sparkles,
+} from "lucide-react";
 import { formatDate } from "@core/utils/mask";
 import { formatMoney } from "@core/utils/currency";
 import {
@@ -32,6 +44,12 @@ import {
   HomeShell,
   MetricsFallback,
   MetricsWrap,
+  ReadinessCardTrigger,
+  ReadinessTooltipCard,
+  ReadinessTooltipFootnote,
+  ReadinessTooltipHeader,
+  ReadinessTooltipItem,
+  ReadinessTooltipList,
   SectionDescription,
   SectionDivider,
   SectionTitle,
@@ -45,16 +63,18 @@ type Props = {
   companyName?: string;
   planTitle?: string;
   services: ServiceItem[];
-  servicesCount?: number;
   metrics?: {
     appointmentsToday: number;
     revenueThisMonthCents?: number | null;
     nextAppointment?: { title?: string; date?: string; time?: string };
+    overdueWorkOrders?: number;
+    inventoryAlerts?: number;
+    unreadNotifications?: number;
+    highPriorityUnreadNotifications?: number;
   };
   description?: string;
   onEditCompany?: () => void;
   onOpenTutorials?: () => void;
-  onOpenModules?: () => void;
 };
 
 function initialsFrom(name?: string) {
@@ -79,14 +99,63 @@ export default function UsersHomeTemplate({
   companyName,
   planTitle,
   services,
-  servicesCount,
   metrics,
   description,
   onEditCompany,
   onOpenTutorials,
-  onOpenModules,
 }: Props) {
   const initials = initialsFrom(companyName);
+  const readinessSignals = [
+    {
+      key: "company-name",
+      label: "Company name configured",
+      completed: Boolean(companyName),
+    },
+    {
+      key: "company-description",
+      label: "Company description configured",
+      completed: Boolean(description),
+    },
+    {
+      key: "plan",
+      label: "Active plan detected",
+      completed: Boolean(planTitle),
+    },
+    {
+      key: "next-appointment",
+      label: "At least one upcoming appointment",
+      completed: Boolean(metrics?.nextAppointment),
+    },
+  ];
+  const readinessTotal = readinessSignals.length;
+  const readinessCount = readinessSignals.filter((signal) => signal.completed).length;
+  const readinessPercent = Math.round((readinessCount / readinessTotal) * 100);
+  const missingReadinessSignals = readinessSignals.filter((signal) => !signal.completed);
+  const readinessTooltipContent = (
+    <ReadinessTooltipCard>
+      <ReadinessTooltipHeader>
+        <span className="title">Setup checklist</span>
+        <span className="meta">
+          {readinessCount}/{readinessTotal} complete
+        </span>
+      </ReadinessTooltipHeader>
+
+      <ReadinessTooltipList>
+        {readinessSignals.map((signal) => (
+          <ReadinessTooltipItem key={signal.key} $completed={signal.completed}>
+            {signal.completed ? <CheckCircle2 size={14} /> : <CircleAlert size={14} />}
+            <span>{signal.label}</span>
+          </ReadinessTooltipItem>
+        ))}
+      </ReadinessTooltipList>
+
+      <ReadinessTooltipFootnote $completed={missingReadinessSignals.length <= 0}>
+        {missingReadinessSignals.length <= 0
+          ? "All setup signals are complete."
+          : `${missingReadinessSignals.length} pending item(s) to reach 100%.`}
+      </ReadinessTooltipFootnote>
+    </ReadinessTooltipCard>
+  );
 
   return (
     <HomeShell>
@@ -112,15 +181,12 @@ export default function UsersHomeTemplate({
           <HeroActions>
             {onOpenTutorials ? (
               <HeroButton onClick={onOpenTutorials} $variant="ghost">
+                <BookOpenCheck size={16} />
                 Tutorials
               </HeroButton>
             ) : null}
-            {onOpenModules ? (
-              <HeroButton onClick={onOpenModules} $variant="ghost">
-                All modules
-              </HeroButton>
-            ) : null}
             <HeroButton onClick={onEditCompany} $variant="primary">
+              <Settings2 size={16} />
               Edit company
             </HeroButton>
           </HeroActions>
@@ -168,15 +234,16 @@ export default function UsersHomeTemplate({
       <ContentSection $delay="1">
         <SectionTitle>Indicators</SectionTitle>
         <SectionDescription>
-          Operational health in real time.
+          Watch risks and pending signals without duplicating top-line KPIs.
         </SectionDescription>
 
         <MetricsWrap>
           {metrics ? (
             <MetricsCards
-              appointmentsToday={metrics.appointmentsToday}
-              revenueThisMonthCents={metrics.revenueThisMonthCents}
-              nextAppointment={metrics.nextAppointment}
+              overdueWorkOrders={metrics.overdueWorkOrders}
+              inventoryAlerts={metrics.inventoryAlerts}
+              unreadNotifications={metrics.unreadNotifications}
+              highPriorityUnreadNotifications={metrics.highPriorityUnreadNotifications}
             />
           ) : (
             <MetricsFallback />
@@ -203,15 +270,22 @@ export default function UsersHomeTemplate({
             </CompanyMeta>
           </CompanyCard>
 
-          <CompanyCard className="surface">
-            <CompanyIcon>
-              <Box size={16} />
-            </CompanyIcon>
-            <CompanyMeta>
-              <CompanyLabel>Available modules</CompanyLabel>
-              <CompanyValue>{servicesCount ?? services?.length ?? 0}</CompanyValue>
-            </CompanyMeta>
-          </CompanyCard>
+          <Popover content={readinessTooltipContent} placement="top" trigger={["hover"]}>
+            <ReadinessCardTrigger>
+              <CompanyCard className="surface">
+                <CompanyIcon>
+                  <Gauge size={16} />
+                </CompanyIcon>
+                <CompanyMeta>
+                  <CompanyLabel>Setup readiness</CompanyLabel>
+                  <CompanyValue>{readinessPercent}% ready</CompanyValue>
+                  <CompanyText>
+                    {readinessCount}/{readinessTotal} key workspace signals configured
+                  </CompanyText>
+                </CompanyMeta>
+              </CompanyCard>
+            </ReadinessCardTrigger>
+          </Popover>
 
           <CompanyCard className="surface">
             <CompanyIcon>
@@ -225,7 +299,7 @@ export default function UsersHomeTemplate({
         </CompanyCards>
       </ContentSection>
 
-      <ContentSection $delay="3" $grow>
+      <ContentSection $delay="3">
         <SectionTitle>Choose a module to start</SectionTitle>
         <SectionDescription>
           Jump straight into the core workflows of your day.

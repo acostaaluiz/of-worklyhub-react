@@ -1,6 +1,24 @@
 import React from "react";
-import { Button, Form, Input, InputNumber, Select, Switch, Tabs, message } from "antd";
+import { Alert, Button, Form, Input, InputNumber, Select, Switch, Tabs, message } from "antd";
+import {
+  BgColorsOutlined,
+  CalendarOutlined,
+  DollarCircleOutlined,
+  DollarOutlined,
+  FileDoneOutlined,
+  FileTextOutlined,
+  InboxOutlined,
+  MoonOutlined,
+  PoweroffOutlined,
+  SunOutlined,
+  TeamOutlined,
+  ToolOutlined,
+  UsergroupAddOutlined,
+} from "@ant-design/icons";
+import { themeService } from "@core/config/theme/theme.service";
+import type { ThemeMode } from "@core/config/theme/theme.interface";
 import { BaseTemplate } from "@shared/base/base.template";
+import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
 import type {
   NfeConfigurationWritePayload,
   WorkspaceInvoiceModuleKey,
@@ -32,38 +50,45 @@ type ModuleOption = {
   key: WorkspaceInvoiceModuleKey;
   label: string;
   description: string;
+  icon: React.ReactNode;
 };
 
 const MODULE_OPTIONS: ModuleOption[] = [
   {
     key: "work-order",
     label: "Work order",
-    description: "Permite faturar e emitir NF-e a partir das ordens de servico.",
+    description: "Allows billing and NF-e issuance from work orders.",
+    icon: <FileTextOutlined />,
   },
   {
     key: "schedule",
     label: "Schedule",
-    description: "Permite faturar e emitir NF-e a partir dos agendamentos.",
+    description: "Allows billing and NF-e issuance from schedule completions.",
+    icon: <CalendarOutlined />,
   },
   {
     key: "finance",
     label: "Finance",
-    description: "Habilita emissao fiscal em lancamentos financeiros.",
+    description: "Enables fiscal issuance for finance entries.",
+    icon: <DollarOutlined />,
   },
   {
     key: "inventory",
     label: "Inventory",
-    description: "Reserva para vendas que originam baixa de estoque.",
+    description: "Reserved for sales that trigger stock reduction.",
+    icon: <InboxOutlined />,
   },
   {
     key: "people",
     label: "People",
-    description: "Reserva para faturamento por servicos prestados por colaboradores.",
+    description: "Reserved for billing based on services delivered by collaborators.",
+    icon: <TeamOutlined />,
   },
   {
     key: "clients",
     label: "Clients",
-    description: "Reserva para fluxos de venda iniciados no modulo de clientes.",
+    description: "Reserved for sales flows initiated in the Clients module.",
+    icon: <UsergroupAddOutlined />,
   },
 ];
 
@@ -116,22 +141,23 @@ type SettingsTemplateProps = {
 };
 
 function toSourceLabel(source: "database" | "defaults"): string {
-  if (source === "database") return "Dados carregados do workspace";
-  return "Sem registro ainda (valores padrao)";
+  if (source === "database") return "Loaded from workspace settings";
+  return "No saved record yet (default values)";
 }
 
 function toSourceCompactLabel(source: "database" | "defaults"): string {
   if (source === "database") return "workspace";
-  return "padrao";
+  return "default";
 }
 
 function toResolutionLabel(
   resolution: "workspace" | "workspace-default" | "platform" | "none"
 ): string {
-  if (resolution === "workspace") return "Configuracao fiscal propria do workspace";
-  if (resolution === "workspace-default") return "Configuracao fiscal default da plataforma";
-  if (resolution === "platform") return "Configuracao da plataforma";
-  return "Sem configuracao fiscal salva";
+  if (resolution === "workspace") return "Workspace-specific fiscal configuration";
+  if (resolution === "workspace-default")
+    return "Platform default workspace fiscal configuration";
+  if (resolution === "platform") return "Platform fiscal configuration";
+  return "No fiscal configuration saved";
 }
 
 function toResolutionCompactLabel(
@@ -139,15 +165,15 @@ function toResolutionCompactLabel(
 ): string {
   if (resolution === "workspace") return "workspace";
   if (resolution === "workspace-default") return "workspace-default";
-  if (resolution === "platform") return "plataforma";
-  return "nao configurado";
+  if (resolution === "platform") return "platform";
+  return "not configured";
 }
 
 function toDateLabel(value?: string): string {
-  if (!value) return "Nao atualizado";
+  if (!value) return "Not updated";
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return value;
-  return dt.toLocaleString("pt-BR");
+  return dt.toLocaleString("en-US");
 }
 
 function toWorkspaceLabel(value?: string): string {
@@ -172,10 +198,10 @@ function parseJsonObject(label: string, value: DataValue): DataMap | undefined {
   try {
     parsed = JSON.parse(trimmed);
   } catch {
-    throw new Error(`${label} precisa estar em JSON valido.`);
+    throw new Error(`${label} must be valid JSON.`);
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error(`${label} precisa ser um objeto JSON.`);
+    throw new Error(`${label} must be a JSON object.`);
   }
   return parsed as DataMap;
 }
@@ -270,7 +296,7 @@ function mapFormValuesToConfiguration(
       stateRegistration: values.issuer.stateRegistration,
       municipalRegistration: values.issuer.municipalRegistration,
       taxRegime: values.issuer.taxRegime,
-      address: parseJsonObject("Endereco do emissor", values.issuer.address),
+      address: parseJsonObject("Issuer address", values.issuer.address),
     },
     defaults: parseJsonObject("Defaults", values.defaults),
     metadata: parseJsonObject("Metadata", values.metadata),
@@ -291,8 +317,20 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   onSaveWorkspaceSettings,
   onSaveNfeConfiguration,
 }) => {
+  const tabLabel = (icon: React.ReactNode, label: string) => (
+    <IconLabel icon={icon} text={label} />
+  );
+
   const [settingsForm] = Form.useForm<DataMap>();
   const [configurationForm] = Form.useForm<NfeConfigurationFormValues>();
+  const [themePreference, setThemePreference] = React.useState<ThemeMode>(() => {
+    const storedPreference = themeService.getPreference();
+    if (storedPreference === "light" || storedPreference === "dark") {
+      return storedPreference;
+    }
+    const currentMode = document.documentElement.getAttribute("data-theme");
+    return currentMode === "light" ? "light" : "dark";
+  });
   const authType = Form.useWatch(["integration", "auth", "type"], configurationForm);
 
   React.useEffect(() => {
@@ -302,6 +340,13 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   React.useEffect(() => {
     configurationForm.setFieldsValue(mapConfigurationToFormValues(nfeConfiguration));
   }, [configurationForm, nfeConfiguration]);
+
+  React.useEffect(() => {
+    const unsubscribe = themeService.subscribe((nextState) => {
+      setThemePreference(nextState.mode);
+    });
+    return unsubscribe;
+  }, []);
 
   const handleSaveWorkspaceSettings = async () => {
     const values = await settingsForm.validateFields();
@@ -320,13 +365,31 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     }
   };
 
+  const handleThemeChange = (mode: ThemeMode) => {
+    themeService.setPreference(mode);
+    setThemePreference(mode);
+    message.success(`Theme updated to ${mode === "dark" ? "Dark" : "Light"}.`);
+  };
+
   const moduleTab = (
     <TabPaneBody>
       <Card>
-        <CardTitle>Regras de faturamento por modulo</CardTitle>
+        <CardTitle>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <DollarCircleOutlined />
+            <span>Billing rules by module</span>
+          </span>
+        </CardTitle>
         <CardSubtitle>
-          Ative os modulos que podem iniciar cobranca e emissao de NF-e.
+          Enable the modules that can start billing and NF-e issuance.
         </CardSubtitle>
+        <Alert
+          showIcon
+          type="info"
+          style={{ marginBottom: 8 }}
+          message="Execution-to-billing automation"
+          description="When Work Order or Schedule reaches a final execution status, the backend can automatically create a finance entry. NF-e issuance is optional."
+        />
 
         <Form
           form={settingsForm}
@@ -337,7 +400,12 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Form.Item
             name="enabled"
             valuePropName="checked"
-            label="Faturamento do workspace habilitado"
+            label={
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <PoweroffOutlined />
+                <span>Workspace billing enabled</span>
+              </span>
+            }
           >
             <Switch />
           </Form.Item>
@@ -346,7 +414,12 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             {MODULE_OPTIONS.map((moduleOption) => (
               <ModuleToggleRow key={moduleOption.key}>
                 <div>
-                  <ModuleTitle>{moduleOption.label}</ModuleTitle>
+                  <ModuleTitle>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      {moduleOption.icon}
+                      <span>{moduleOption.label}</span>
+                    </span>
+                  </ModuleTitle>
                   <ModuleDescription>{moduleOption.description}</ModuleDescription>
                 </div>
                 <Form.Item
@@ -366,7 +439,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               onClick={() => void handleSaveWorkspaceSettings()}
               loading={!!isSavingSettings}
             >
-              Salvar regras
+              Save rules
             </Button>
           </ActionsRow>
         </Form>
@@ -377,21 +450,26 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   const emissionTab = (
     <TabPaneBody>
       <Card>
-        <CardTitle>Conexao de emissao fiscal (NF-e)</CardTitle>
+        <CardTitle>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <FileDoneOutlined />
+            <span>Fiscal issuance connection (NF-e)</span>
+          </span>
+        </CardTitle>
         <CardSubtitle>
-          Configure o emissor fiscal do workspace para notas de venda de servico.
+          Configure workspace fiscal issuer settings for service-sale invoices.
         </CardSubtitle>
 
         <EmissionGrid>
           <Form.Item
             name="environment"
-            label="Ambiente"
-            rules={[{ required: true, message: "Selecione o ambiente." }]}
+            label="Environment"
+            rules={[{ required: true, message: "Select the environment." }]}
           >
             <Select
               options={[
-                { value: "homologation", label: "Homologacao" },
-                { value: "production", label: "Producao" },
+                { value: "homologation", label: "Homologation" },
+                { value: "production", label: "Production" },
               ]}
             />
           </Form.Item>
@@ -399,7 +477,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Form.Item
             name={["integration", "provider"]}
             label="Provider"
-            rules={[{ required: true, message: "Informe o provider." }]}
+            rules={[{ required: true, message: "Provide the provider." }]}
           >
             <Input placeholder="govbr" />
           </Form.Item>
@@ -415,12 +493,12 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
           <Form.Item
             name={["integration", "auth", "type"]}
-            label="Autenticacao"
+            label="Authentication"
             initialValue="none"
           >
             <Select
               options={[
-                { value: "none", label: "Sem autenticacao" },
+                { value: "none", label: "No authentication" },
                 { value: "bearer", label: "Bearer token" },
                 { value: "api-key", label: "API key" },
                 { value: "basic", label: "Basic auth" },
@@ -431,16 +509,16 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Form.Item
             className="span-two"
             name={["integration", "baseUrl"]}
-            label="Base URL da API fiscal"
-            rules={[{ required: true, message: "Informe a Base URL." }]}
+            label="Fiscal API base URL"
+            rules={[{ required: true, message: "Provide the base URL." }]}
           >
-            <Input placeholder="https://api.seu-provider.com" />
+            <Input placeholder="https://api.your-provider.com" />
           </Form.Item>
 
           <Form.Item
             name={["integration", "issuePath"]}
-            label="Path de emissao"
-            rules={[{ required: true, message: "Informe o path de emissao." }]}
+            label="Issue path"
+            rules={[{ required: true, message: "Provide the issue path." }]}
           >
             <Input placeholder="/nfe/emit" />
           </Form.Item>
@@ -458,7 +536,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               className="span-two"
               name={["integration", "auth", "token"]}
               label="Bearer token"
-              rules={[{ required: true, message: "Informe o token." }]}
+              rules={[{ required: true, message: "Provide the token." }]}
             >
               <Input.Password />
             </Form.Item>
@@ -468,15 +546,15 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <>
               <Form.Item
                 name={["integration", "auth", "headerName"]}
-                label="Header da API key"
-                rules={[{ required: true, message: "Informe o header." }]}
+                label="API key header"
+                rules={[{ required: true, message: "Provide the header." }]}
               >
                 <Input placeholder="x-api-key" />
               </Form.Item>
               <Form.Item
                 name={["integration", "auth", "apiKey"]}
                 label="API key"
-                rules={[{ required: true, message: "Informe a API key." }]}
+                rules={[{ required: true, message: "Provide the API key." }]}
               >
                 <Input.Password />
               </Form.Item>
@@ -487,15 +565,15 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <>
               <Form.Item
                 name={["integration", "auth", "username"]}
-                label="Usuario"
-                rules={[{ required: true, message: "Informe o usuario." }]}
+                label="Username"
+                rules={[{ required: true, message: "Provide the username." }]}
               >
                 <Input />
               </Form.Item>
               <Form.Item
                 name={["integration", "auth", "password"]}
-                label="Senha"
-                rules={[{ required: true, message: "Informe a senha." }]}
+                label="Password"
+                rules={[{ required: true, message: "Provide the password." }]}
               >
                 <Input.Password />
               </Form.Item>
@@ -505,29 +583,29 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Form.Item
             className="span-two"
             name={["issuer", "legalName"]}
-            label="Razao social"
-            rules={[{ required: true, message: "Informe a razao social." }]}
+            label="Legal name"
+            rules={[{ required: true, message: "Provide the legal name." }]}
           >
             <Input />
           </Form.Item>
 
           <Form.Item
             name={["issuer", "document"]}
-            label="CNPJ/CPF emissor"
-            rules={[{ required: true, message: "Informe o documento." }]}
+            label="Issuer document (CNPJ/CPF)"
+            rules={[{ required: true, message: "Provide the document." }]}
           >
             <Input />
           </Form.Item>
 
-          <Form.Item name={["issuer", "stateRegistration"]} label="Inscricao estadual">
+          <Form.Item name={["issuer", "stateRegistration"]} label="State registration">
             <Input />
           </Form.Item>
 
-          <Form.Item name={["issuer", "municipalRegistration"]} label="Inscricao municipal">
+          <Form.Item name={["issuer", "municipalRegistration"]} label="Municipal registration">
             <Input />
           </Form.Item>
 
-          <Form.Item name={["issuer", "taxRegime"]} label="Regime tributario">
+          <Form.Item name={["issuer", "taxRegime"]} label="Tax regime">
             <Input placeholder="simples_nacional, lucro_presumido..." />
           </Form.Item>
         </EmissionGrid>
@@ -538,7 +616,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             onClick={() => void handleSaveNfeConfiguration()}
             loading={!!isSavingConfiguration}
           >
-            Salvar emissao
+            Save issuance
           </Button>
         </ActionsRow>
       </Card>
@@ -548,9 +626,14 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   const advancedTab = (
     <TabPaneBody>
       <Card>
-        <CardTitle>Parametros avancados</CardTitle>
+        <CardTitle>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <ToolOutlined />
+            <span>Advanced parameters</span>
+          </span>
+        </CardTitle>
         <CardSubtitle>
-          Campos opcionais para headers extras, templates e metadados.
+          Optional fields for extra headers, templates, and metadata.
         </CardSubtitle>
 
         <AdvancedGrid>
@@ -567,7 +650,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           >
             <Input.TextArea
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"natureza_operacao":"Prestacao de servicos"}'
+              placeholder='{"operationNature":"Service provided"}'
             />
           </Form.Item>
 
@@ -577,14 +660,14 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           >
             <Input.TextArea
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"status":"status","accessKey":"chave"}'
+              placeholder='{"status":"status","accessKey":"access_key"}'
             />
           </Form.Item>
 
-          <Form.Item name={["issuer", "address"]} label="Endereco emissor (JSON)">
+          <Form.Item name={["issuer", "address"]} label="Issuer address (JSON)">
             <Input.TextArea
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"logradouro":"Rua X","numero":"123","municipio":"Sao Paulo","uf":"SP"}'
+              placeholder='{"street":"Street X","number":"123","city":"Sao Paulo","state":"SP"}'
             />
           </Form.Item>
 
@@ -609,7 +692,68 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             onClick={() => void handleSaveNfeConfiguration()}
             loading={!!isSavingConfiguration}
           >
-            Salvar avancado
+            Save advanced
+          </Button>
+        </ActionsRow>
+      </Card>
+    </TabPaneBody>
+  );
+
+  const appearanceTab = (
+    <TabPaneBody>
+      <Card>
+        <CardTitle>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <BgColorsOutlined />
+            <span>Appearance</span>
+          </span>
+        </CardTitle>
+        <CardSubtitle>Switch between light and dark themes for this device.</CardSubtitle>
+        <Alert
+          showIcon
+          type="info"
+          style={{ marginBottom: 8 }}
+          message="Theme mode"
+          description="The selected mode is applied immediately and saved to your local preferences."
+        />
+
+        <ModuleToggleList>
+          <ModuleToggleRow>
+            <div>
+              <ModuleTitle>
+                <SunOutlined style={{ marginRight: 6 }} />
+                Light
+              </ModuleTitle>
+              <ModuleDescription>Bright interface for daytime usage.</ModuleDescription>
+            </div>
+            <Button
+              type={themePreference === "light" ? "primary" : "default"}
+              onClick={() => handleThemeChange("light")}
+            >
+              Use light
+            </Button>
+          </ModuleToggleRow>
+
+          <ModuleToggleRow>
+            <div>
+              <ModuleTitle>
+                <MoonOutlined style={{ marginRight: 6 }} />
+                Dark
+              </ModuleTitle>
+              <ModuleDescription>Reduced glare in low-light environments.</ModuleDescription>
+            </div>
+            <Button
+              type={themePreference === "dark" ? "primary" : "default"}
+              onClick={() => handleThemeChange("dark")}
+            >
+              Use dark
+            </Button>
+          </ModuleToggleRow>
+        </ModuleToggleList>
+
+        <ActionsRow>
+          <Button icon={<BgColorsOutlined />} disabled>
+            Active mode: {themePreference === "dark" ? "Dark" : "Light"}
           </Button>
         </ActionsRow>
       </Card>
@@ -624,18 +768,18 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <HeroCard>
               <HeroTitle>Settings</HeroTitle>
               <HeroSubtitle>
-                Centralize parametros de faturamento e emissao de NF-e do workspace.
+                Centralize workspace billing and NF-e issuance configuration.
               </HeroSubtitle>
               <MetaRow>
                 <MetaPill title={workspaceId}>Workspace: {toWorkspaceLabel(workspaceId)}</MetaPill>
                 <MetaPill title={toSourceLabel(settingsSource)}>
-                  Origem: {toSourceCompactLabel(settingsSource)}
+                  Source: {toSourceCompactLabel(settingsSource)}
                 </MetaPill>
                 <MetaPill title={toResolutionLabel(nfeResolution)}>
                   NF-e: {toResolutionCompactLabel(nfeResolution)}
                 </MetaPill>
-                <MetaPill>Regras atualizadas: {toDateLabel(settingsUpdatedAt)}</MetaPill>
-                <MetaPill>NF-e atualizado: {toDateLabel(nfeUpdatedAt)}</MetaPill>
+                <MetaPill>Rules updated: {toDateLabel(settingsUpdatedAt)}</MetaPill>
+                <MetaPill>NF-e updated: {toDateLabel(nfeUpdatedAt)}</MetaPill>
               </MetaRow>
             </HeroCard>
 
@@ -650,9 +794,26 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                 <Tabs
                   defaultActiveKey="module-rules"
                   items={[
-                    { key: "module-rules", label: "Faturamento", children: moduleTab },
-                    { key: "issuance", label: "Emissao", children: emissionTab },
-                    { key: "advanced", label: "Avancado", children: advancedTab },
+                    {
+                      key: "module-rules",
+                      label: tabLabel(<DollarCircleOutlined />, "Billing"),
+                      children: moduleTab,
+                    },
+                    {
+                      key: "issuance",
+                      label: tabLabel(<FileDoneOutlined />, "Issuance"),
+                      children: emissionTab,
+                    },
+                    {
+                      key: "advanced",
+                      label: tabLabel(<ToolOutlined />, "Advanced"),
+                      children: advancedTab,
+                    },
+                    {
+                      key: "appearance",
+                      label: tabLabel(<BgColorsOutlined />, "Appearance"),
+                      children: appearanceTab,
+                    },
                   ]}
                 />
               </Form>

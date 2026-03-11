@@ -13,6 +13,7 @@ import {
   PackageMinus,
   PackagePlus,
   CheckCircle2,
+  BadgeDollarSign,
 } from "lucide-react";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
@@ -62,6 +63,7 @@ const DURATION_OPTIONS: DurationOption[] = [
   { label: "45 min", minutes: 45 },
   { label: "60 min", minutes: 60 },
 ];
+const IS_DEV_ENV = import.meta.env.MODE !== "production";
 
 function addMinutes(date: Dayjs, minutes: number) {
   return date.add(minutes, "minute");
@@ -317,6 +319,22 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
   protected renderView(): React.ReactNode {
     const { open, onClose } = this.props;
+    const selectedStatus = (this.props.statuses ?? []).find(
+      (status) => status.id === this.state.selectedStatusId
+    );
+    const isExecutionCompletedStatus = (() => {
+      if (!selectedStatus) return false;
+      const code = (selectedStatus.code ?? "").toLowerCase();
+      const label = (selectedStatus.label ?? "").toLowerCase();
+      return (
+        code.includes("complete") ||
+        code.includes("done") ||
+        code.includes("finish") ||
+        code.includes("close") ||
+        label.includes("completed") ||
+        label.includes("concl")
+      );
+    })();
 
     // available services / employees are accessed directly from props where needed
 
@@ -481,6 +499,29 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                           );
                         })}
                       </StatusRow>
+                      {isExecutionCompletedStatus ? (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            padding: "8px 10px",
+                            border: "1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border))",
+                            borderRadius: 10,
+                            background:
+                              "color-mix(in srgb, var(--color-surface-2) 76%, transparent)",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 8,
+                          }}
+                        >
+                          <BadgeDollarSign size={14} style={{ marginTop: 2 }} />
+                          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                            Saving a final execution status triggers automatic financial launch.
+                            {IS_DEV_ENV
+                              ? " NF-e trigger is optional and can fail in development when GOV endpoints are unavailable."
+                              : " NF-e trigger is optional and depends on billing configuration."}
+                          </Typography.Text>
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
 

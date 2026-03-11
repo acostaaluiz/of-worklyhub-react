@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { BarChart3, BriefcaseBusiness, Building2 } from "lucide-react";
 
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import { maskPhone } from "@core/utils/mask";
@@ -7,14 +8,20 @@ import { FormStepWizard } from "@shared/ui/components/form-step/form-step.compon
 import ResponseModal, { type ResponseVariant } from "@shared/ui/components/response-modal/response-modal.component";
 
 import { companyInfoStep } from "../../steps/company-info.step";
+import type { CompanyIntroductionValues } from "../../steps/company-introduction.types";
+import { launchServicesStep } from "../../steps/launch-services.step";
 import { personalInfoStep } from "../../steps/personal-info.step";
 import { servicesInfoStep } from "../../steps/services-info.step";
 import { summaryStep } from "../../steps/summary.step";
-import type { CompanyIntroductionValues } from "../../steps/personal-info.step";
 
 import {
-  TemplateShell,
+  HeaderHighlightCard,
+  HeaderHighlightIcon,
+  HeaderHighlightLabel,
+  HeaderHighlights,
+  HeaderHighlightValue,
   HeaderRow,
+  TemplateShell,
   TemplateSubtitle,
   TemplateTitle,
 } from "./company-introduction.template.styles";
@@ -43,6 +50,7 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
     personalInfoStep(),
     companyInfoStep(),
     servicesInfoStep(categories, industries),
+    launchServicesStep(categories),
     summaryStep(),
   ];
 
@@ -52,16 +60,20 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
     phone: "",
     accountType: "individual",
     companyName: "",
+    legalName: "",
     employees: undefined,
     primaryService: "",
+    primaryServiceCategory: "",
     industry: "",
     description: "",
+    services: [{}, {}, {}],
   };
 
   const initialValues: CompanyIntroductionValues = {
     ...defaultValues,
     ...(initialValuesProp ?? {}),
     phone: maskPhone(initialValuesProp?.phone ?? defaultValues.phone ?? ""),
+    services: initialValuesProp?.services ?? defaultValues.services,
   };
 
   return (
@@ -72,19 +84,52 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
             <HeaderRow>
               <TemplateTitle>Company setup</TemplateTitle>
               <TemplateSubtitle>
-                Let’s configure your profile so WorklyHub can tailor the
-                experience to your business.
+                Configure your workspace foundation in a few guided steps.
               </TemplateSubtitle>
+
+              <HeaderHighlights>
+                <HeaderHighlightCard>
+                  <HeaderHighlightIcon>
+                    <Building2 size={14} />
+                  </HeaderHighlightIcon>
+                  <div>
+                    <HeaderHighlightLabel>Identity</HeaderHighlightLabel>
+                    <HeaderHighlightValue>Workspace ownership and profile</HeaderHighlightValue>
+                  </div>
+                </HeaderHighlightCard>
+
+                <HeaderHighlightCard>
+                  <HeaderHighlightIcon>
+                    <BriefcaseBusiness size={14} />
+                  </HeaderHighlightIcon>
+                  <div>
+                    <HeaderHighlightLabel>Catalog</HeaderHighlightLabel>
+                    <HeaderHighlightValue>Primary service and launch offers</HeaderHighlightValue>
+                  </div>
+                </HeaderHighlightCard>
+
+                <HeaderHighlightCard>
+                  <HeaderHighlightIcon>
+                    <BarChart3 size={14} />
+                  </HeaderHighlightIcon>
+                  <div>
+                    <HeaderHighlightLabel>Activation</HeaderHighlightLabel>
+                    <HeaderHighlightValue>Improve readiness signals in Home</HeaderHighlightValue>
+                  </div>
+                </HeaderHighlightCard>
+              </HeaderHighlights>
             </HeaderRow>
 
-            <FormStepWizard<CompanyIntroductionValues>
-              title="Setup"
-              subtitle="Complete these steps to personalize your workspace."
-              steps={steps}
-              initialValues={initialValues}
-              onFinish={onFinish ?? (() => {})}
-            />
-            {/** Response modal is rendered inside the template so pages can control it */}
+            <div className="wizard-wrap" data-cy="company-setup-wizard">
+              <FormStepWizard<CompanyIntroductionValues>
+                title="Setup"
+                subtitle="Complete these steps to publish your workspace baseline."
+                steps={steps}
+                initialValues={initialValues}
+                onFinish={onFinish ?? (() => {})}
+              />
+            </div>
+
             {responseModal ? (
               <ResponseModal
                 open={responseModal.open}

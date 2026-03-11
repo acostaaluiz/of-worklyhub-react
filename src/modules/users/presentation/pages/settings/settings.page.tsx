@@ -91,7 +91,7 @@ export class SettingsPage extends BasePage<{}, State> {
       message.error(
         isAppError(err)
           ? err.message
-          : "Não foi possível carregar os parâmetros de faturamento."
+          : "Unable to load billing settings."
       );
     } finally {
       this.setSafeState({ isLoading: false });
@@ -110,13 +110,13 @@ export class SettingsPage extends BasePage<{}, State> {
         settingsSource: "database",
         settingsUpdatedAt: response.updatedAt,
       });
-      message.success("Regras de faturamento atualizadas.");
+      message.success("Billing rules updated.");
     } catch (err) {
       console.error("settings.saveWorkspaceSettings", err);
       message.error(
         isAppError(err)
           ? err.message
-          : "Não foi possível salvar as regras de faturamento."
+          : "Unable to save billing rules."
       );
     } finally {
       this.setSafeState({ isSavingSettings: false });
@@ -136,13 +136,13 @@ export class SettingsPage extends BasePage<{}, State> {
         nfeResolution: "workspace",
         nfeUpdatedAt: response.updatedAt,
       });
-      message.success("Parâmetros de emissão NF-e atualizados.");
+      message.success("NF-e issuance settings updated.");
     } catch (err) {
       console.error("settings.saveNfeConfiguration", err);
       message.error(
         isAppError(err)
           ? err.message
-          : "Não foi possível salvar os parâmetros de NF-e."
+          : "Unable to save NF-e settings."
       );
     } finally {
       this.setSafeState({ isSavingConfiguration: false });

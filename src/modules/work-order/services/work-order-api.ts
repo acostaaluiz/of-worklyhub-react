@@ -5,18 +5,24 @@ import type {
   CreateWorkOrderStatusInput,
   CreateWorkOrderChecklistItemInput,
   CreateWorkOrderCommentInput,
+  CreateWorkOrderAttachmentInput,
   GetWorkOrderOverviewOptions,
   ListWorkOrdersFilters,
+  RequestWorkOrderAttachmentUploadSignatureInput,
   WorkOrderListPage,
   WorkOrderListPagination,
   UpdateWorkOrderInput,
   UpdateWorkOrderChecklistItemInput,
   WorkOrder,
+  WorkOrderAttachment,
+  WorkOrderAttachmentUploadSignature,
   WorkOrderChecklistItem,
   WorkOrderComment,
   WorkOrderOverview,
   WorkOrderStatusHistoryEntry,
   WorkOrderStatus,
+  WorkOrderWorkspaceSettings,
+  WorkOrderWorkspaceSettingsBundle,
 } from "@modules/work-order/interfaces/work-order.model";
 
 export type WorkOrderStatusListResponse = { data: WorkOrderStatus[] };
@@ -42,7 +48,16 @@ export type WorkOrderCommentsResponse = { data: WorkOrderComment[] };
 export type WorkOrderCommentResponse = { data: WorkOrderComment };
 export type WorkOrderChecklistResponse = { data: WorkOrderChecklistItem[] };
 export type WorkOrderChecklistItemResponse = { data: WorkOrderChecklistItem };
+export type WorkOrderAttachmentsResponse = { data: WorkOrderAttachment[] };
+export type WorkOrderAttachmentResponse = { data: WorkOrderAttachment };
+export type WorkOrderAttachmentUploadSignatureResponse = WorkOrderAttachmentUploadSignature;
 export type WorkOrderOverviewResponse = { data: WorkOrderOverview };
+export type WorkOrderSettingsResponse = { data: WorkOrderWorkspaceSettingsBundle };
+export type UpsertWorkOrderSettingsRequest = {
+  workspaceId?: string;
+  settings: Partial<WorkOrderWorkspaceSettings>;
+  updatedBy?: string | null;
+};
 
 export class WorkOrderApi extends BaseHttpService {
   constructor(http: HttpClient) {
@@ -121,6 +136,29 @@ export class WorkOrderApi extends BaseHttpService {
       headers
     );
     return res?.data as WorkOrderStatus;
+  }
+
+  async getSettings(workspaceId?: string): Promise<WorkOrderWorkspaceSettingsBundle> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<WorkOrderSettingsResponse>(
+      "/work-order/settings",
+      workspaceId ? { workspaceId } : undefined,
+      headers
+    );
+    return res?.data as WorkOrderWorkspaceSettingsBundle;
+  }
+
+  async upsertSettings(
+    workspaceId: string | undefined,
+    payload: UpsertWorkOrderSettingsRequest
+  ): Promise<WorkOrderWorkspaceSettingsBundle> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.put<WorkOrderSettingsResponse, UpsertWorkOrderSettingsRequest>(
+      "/work-order/settings",
+      payload,
+      headers
+    );
+    return res?.data as WorkOrderWorkspaceSettingsBundle;
   }
 
   async createWorkOrder(
@@ -301,6 +339,59 @@ export class WorkOrderApi extends BaseHttpService {
     const headers = this.buildHeaders(workspaceId);
     await this.delete<void>(
       `/work-order/work-orders/${id}/checklist/${itemId}`,
+      undefined,
+      headers
+    );
+  }
+
+  async getAttachments(
+    workspaceId: string | undefined,
+    id: string
+  ): Promise<WorkOrderAttachment[]> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.get<WorkOrderAttachmentsResponse>(
+      `/work-order/work-orders/${id}/attachments`,
+      undefined,
+      headers
+    );
+    return res?.data ?? [];
+  }
+
+  async requestAttachmentUploadSignature(
+    workspaceId: string | undefined,
+    id: string,
+    payload: RequestWorkOrderAttachmentUploadSignatureInput
+  ): Promise<WorkOrderAttachmentUploadSignature> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.post<
+      WorkOrderAttachmentUploadSignatureResponse,
+      RequestWorkOrderAttachmentUploadSignatureInput
+    >(`/work-order/work-orders/${id}/attachments/signature`, payload, headers);
+    return res as WorkOrderAttachmentUploadSignature;
+  }
+
+  async createAttachment(
+    workspaceId: string | undefined,
+    id: string,
+    payload: CreateWorkOrderAttachmentInput
+  ): Promise<WorkOrderAttachment> {
+    const headers = this.buildHeaders(workspaceId);
+    const res = await this.post<WorkOrderAttachmentResponse, CreateWorkOrderAttachmentInput>(
+      `/work-order/work-orders/${id}/attachments`,
+      payload,
+      headers
+    );
+    return res?.data as WorkOrderAttachment;
+  }
+
+  async deleteAttachment(
+    workspaceId: string | undefined,
+    id: string,
+    attachmentId: string
+  ): Promise<void> {
+    const headers = this.buildHeaders(workspaceId);
+    await this.delete<void>(
+      `/work-order/work-orders/${id}/attachments/${attachmentId}`,
       undefined,
       headers
     );

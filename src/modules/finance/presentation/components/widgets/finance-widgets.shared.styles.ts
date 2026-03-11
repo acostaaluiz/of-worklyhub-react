@@ -1,6 +1,13 @@
 import styled from "styled-components";
+import {
+  ChartWrapBase,
+  TooltipCardBase,
+  WidgetBodyBase,
+  WidgetCardBase,
+  WidgetHeaderBase,
+} from "@shared/ui/styles/widget-shell.styles";
 
-export const WidgetCard = styled.div`
+export const WidgetCard = styled(WidgetCardBase)`
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -9,7 +16,7 @@ export const WidgetCard = styled.div`
   padding: var(--space-4);
 `;
 
-export const WidgetHeader = styled.div`
+export const WidgetHeader = styled(WidgetHeaderBase)`
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -42,35 +49,13 @@ export const WidgetHeader = styled.div`
   }
 `;
 
-export const WidgetBody = styled.div`
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
+export const WidgetBody = styled(WidgetBodyBase)``;
 
-  display: flex;
-  flex-direction: column;
-`;
+export const ChartWrap = styled(ChartWrapBase)``;
 
-export const ChartWrap = styled.div`
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-
-  /* make sure recharts respects the chain */
-  .recharts-responsive-container {
-    width: 100% !important;
-    height: 100% !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-  }
-`;
-
-export const TooltipCard = styled.div`
+export const TooltipCard = styled(TooltipCardBase)`
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
   border-radius: var(--radius-3);
-  padding: var(--space-3);
   box-shadow: var(--shadow-2);
   min-width: 180px;
 

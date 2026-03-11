@@ -1,7 +1,17 @@
 import React from "react";
 import type { ReactNode } from "react";
 import { message } from "antd";
-import { Briefcase, Calendar, Users, DollarSign, Box, CreditCard, LayoutDashboard, ClipboardList } from "lucide-react";
+import {
+  Briefcase,
+  Calendar,
+  Users,
+  DollarSign,
+  Box,
+  CreditCard,
+  LayoutDashboard,
+  ClipboardList,
+  Sparkles,
+} from "lucide-react";
 
 import { usersOverviewService } from "@modules/users/services/overview.service";
 import type { UserOverviewModule } from "@modules/users/services/overview-api";
@@ -10,6 +20,7 @@ import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.comp
 import type { ModuleLandingItem } from "@shared/ui/components/module-landing/module-landing.component";
 import AllModulesTemplate from "@modules/users/presentation/templates/all-modules/all-modules.template";
 import { resolveModulePath } from "@modules/users/presentation/utils/module-navigation";
+import { ensureGrowthModule } from "@modules/users/presentation/utils/overview-modules";
 
 type State = {
   isLoading: boolean;
@@ -95,12 +106,17 @@ export class AllModulesPage extends BasePage<{}, State> {
         case "workorder":
         case "work-orders":
           return <ClipboardList />;
+        case "sparkles":
+        case "growth":
+        case "megaphone":
+        case "rocket":
+          return <Sparkles />;
         default:
           return <Briefcase />;
       }
     };
 
-    const itemsFromApi: ModuleLandingItem[] = apiModules.map((service) => {
+    const itemsFromApi: ModuleLandingItem[] = ensureGrowthModule(apiModules).map((service) => {
       const item: ModuleLandingItem = {
         id: service.uid,
         title: service.name,

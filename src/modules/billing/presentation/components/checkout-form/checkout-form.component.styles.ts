@@ -1,24 +1,18 @@
-import { Button, Card } from "antd";
 import styled from "styled-components";
+import {
+  BaseFormCard,
+  BaseFormCardBody,
+  BasePrimaryButton,
+  BaseSecondaryButton,
+} from "@shared/ui/components/form-shell/form-shell.styles";
 
-export const FormCard = styled(Card)`
-  width: 100%;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
-  background: var(--color-surface);
-`;
+export const FormCard = styled(BaseFormCard)``;
 
-export const CardBody = styled.div`
-  padding: var(--space-6);
+export const CardBody = styled(BaseFormCardBody)`
   /* allow the body to grow so the card fills its container */
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: 480px) {
-    padding: var(--space-5);
-  }
 `;
 
 export const SectionTitle = styled.div`
@@ -34,12 +28,6 @@ export const Row = styled.div`
   }
 `;
 
-export const PrimaryButton = styled(Button)`
-  height: 44px;
-  border-radius: var(--radius-sm);
-`;
+export const PrimaryButton = styled(BasePrimaryButton)``;
 
-export const SecondaryButton = styled(Button)`
-  height: 44px;
-  border-radius: var(--radius-sm);
-`;
+export const SecondaryButton = styled(BaseSecondaryButton)``;

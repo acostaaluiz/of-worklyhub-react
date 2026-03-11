@@ -4,7 +4,14 @@ import { companyService, type Workspace } from "@modules/company/services/compan
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { toAppError } from "@core/errors/to-app-error";
 
-import { BillingApi, type BillingPlan, type PaymentConfig, type CheckoutRequest, type CheckoutResponse } from "./billing-api";
+import {
+  BillingApi,
+  type BillingPlan,
+  type PaymentConfig,
+  type CheckoutRequest,
+  type CheckoutResponse,
+  type PaymentGateway,
+} from "./billing-api";
 
 type PlansState = { plans: BillingPlan[]; payment: PaymentConfig } | null;
 
@@ -19,6 +26,20 @@ export class BillingService {
 
   getPlansValue(): PlansState {
     return this.plans$.getValue();
+  }
+
+  private resolveGatewayFlag(): PaymentGateway | undefined {
+    const runtimeEnv = (globalThis as { __WORKLYHUB_RUNTIME_ENV__?: Record<string, string | undefined> })
+      .__WORKLYHUB_RUNTIME_ENV__;
+    const processEnv =
+      typeof process !== "undefined"
+        ? (process.env as Record<string, string | undefined>)
+        : undefined;
+    const raw = runtimeEnv?.VITE_BILLING_ACTIVE_GATEWAY ?? processEnv?.VITE_BILLING_ACTIVE_GATEWAY;
+    if (!raw) return undefined;
+    const normalized = String(raw).trim().toLowerCase();
+    if (normalized === "mercadopago" || normalized === "paypal") return normalized;
+    return undefined;
   }
 
   private resolveWorkspaceId(): string | undefined {
@@ -64,7 +85,19 @@ export class BillingService {
     this.pendingFetchPlans = (async () => {
       const headers = this.buildIdentityHeaders();
       const res = await this.api.getPlans(headers);
-      const payload: PlansState = res?.data ? { plans: res.data.plans ?? [], payment: res.data.payment } : { plans: [], payment: { gateway: "mercadopago", configured: false } };
+      const fallbackGateway = this.resolveGatewayFlag() ?? "mercadopago";
+      const fallbackMethods: NonNullable<PaymentConfig["supportedMethods"]> =
+        fallbackGateway === "paypal" ? ["hosted"] : ["card", "hosted"];
+      const payload: PlansState = res?.data
+        ? { plans: res.data.plans ?? [], payment: res.data.payment }
+        : {
+            plans: [],
+            payment: {
+              gateway: fallbackGateway,
+              configured: false,
+              supportedMethods: fallbackMethods,
+            },
+          };
       this.plans$.next(payload);
       return payload;
     })();
@@ -88,8 +121,13 @@ export class BillingService {
 
       const body: CheckoutRequest = {
         billingCycle: "monthly",
-        paymentMethod: "card",
+        paymentMethod: "hosted",
         ...payload,
+        gateway:
+          payload.gateway ??
+          this.getPlansValue()?.payment?.gateway ??
+          this.resolveGatewayFlag() ??
+          "mercadopago",
         workspaceId,
         userUid,
       };

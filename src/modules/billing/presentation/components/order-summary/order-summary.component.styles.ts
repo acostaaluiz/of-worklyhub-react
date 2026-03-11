@@ -1,24 +1,16 @@
-import { Card } from "antd";
 import styled from "styled-components";
+import {
+  BaseFormCard,
+  BaseFormCardBody,
+} from "@shared/ui/components/form-shell/form-shell.styles";
 
-export const SummaryCard = styled(Card)`
-  width: 100%;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
-  background: var(--color-surface);
-`;
+export const SummaryCard = styled(BaseFormCard)``;
 
-export const CardBody = styled.div`
-  padding: var(--space-6);
+export const CardBody = styled(BaseFormCardBody)`
   /* allow the body to grow so the card fills the column height */
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: 480px) {
-    padding: var(--space-5);
-  }
 `;
 
 export const Line = styled.div`

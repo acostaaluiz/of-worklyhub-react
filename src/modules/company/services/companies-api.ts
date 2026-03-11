@@ -8,11 +8,19 @@ export type WorkspaceCreatePayload = {
   email: string;
   phone?: string;
   tradeName?: string;
+  legalName?: string;
   employeesCount?: number;
   industry?: string;
   primaryService?: string;
   description?: string;
-  services?: Array<{ name: string; category?: string; description?: string }>;
+  services?: Array<{
+    name: string;
+    category?: string;
+    description?: string;
+    durationMinutes?: number;
+    priceCents?: number;
+    capacity?: number;
+  }>;
 };
 
 export type WorkspaceModel = {

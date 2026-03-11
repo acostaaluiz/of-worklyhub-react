@@ -1,6 +1,19 @@
 import React from "react";
 import { Avatar, Menu, Button, Space, Dropdown, Badge, Drawer, type MenuProps } from "antd";
-import { Briefcase, Calendar, CreditCard, DollarSign, LayoutDashboard, LayoutGrid, Search, Users, Box, Bell, Menu as MenuIcon } from "lucide-react";
+import {
+  Briefcase,
+  Calendar,
+  CreditCard,
+  DollarSign,
+  LayoutDashboard,
+  LayoutGrid,
+  Search,
+  Users,
+  Box,
+  Bell,
+  Sparkles,
+  Menu as MenuIcon,
+} from "lucide-react";
 import { worklyHubLogoUrl } from "@shared/assets/brand";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import { BaseComponent } from "@shared/base/base.component";
@@ -63,6 +76,11 @@ export class AppHeader extends BaseComponent<Props, State> {
       case "inventory":
       case "stock":
         return <Box />;
+      case "sparkles":
+      case "growth":
+      case "megaphone":
+      case "rocket":
+        return <Sparkles />;
       default:
         return <Briefcase />;
     }
@@ -226,15 +244,21 @@ export class AppHeader extends BaseComponent<Props, State> {
 
             <Right>
               <Space size="small">
-                <Button
-                  className={`notifications-button${hasUnread ? " has-unread" : ""}`}
-                  onClick={() => this.props.onNotificationsClick?.()}
-                  aria-label="Notifications"
+                <Badge
+                  className="notifications-badge"
+                  count={unreadCount}
+                  size="small"
+                  overflowCount={99}
+                  showZero={false}
                 >
-                  <Badge count={unreadCount} size="small" overflowCount={99} showZero={false}>
+                  <Button
+                    className={`notifications-button${hasUnread ? " has-unread" : ""}`}
+                    onClick={() => this.props.onNotificationsClick?.()}
+                    aria-label="Notifications"
+                  >
                     <Bell size={16} />
-                  </Badge>
-                </Button>
+                  </Button>
+                </Badge>
 
                 <Button className="upgrade-button" onClick={() => this.props.onUpgrade?.()}>
                   Upgrade

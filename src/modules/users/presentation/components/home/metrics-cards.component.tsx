@@ -1,7 +1,5 @@
 import { Col } from "antd";
-import { Calendar, DollarSign, Clock } from "lucide-react";
-import { formatDate } from "@core/utils/mask";
-import { formatMoney } from "@core/utils/currency";
+import { AlertTriangle, Bell, ClipboardList } from "lucide-react";
 import {
   MetricCard,
   MetricContent,
@@ -12,41 +10,30 @@ import {
   MetricValue,
 } from "./metrics-cards.component.styles";
 
-type NextAppointment = { title?: string; date?: string; time?: string } | undefined;
-
 type Props = {
-  appointmentsToday: number;
-  revenueThisMonthCents?: number | null;
-  nextAppointment?: NextAppointment;
+  overdueWorkOrders?: number;
+  inventoryAlerts?: number;
+  unreadNotifications?: number;
+  highPriorityUnreadNotifications?: number;
 };
 
 export default function MetricsCards({
-  appointmentsToday,
-  revenueThisMonthCents,
-  nextAppointment,
+  overdueWorkOrders = 0,
+  inventoryAlerts = 0,
+  unreadNotifications = 0,
+  highPriorityUnreadNotifications = 0,
 }: Props) {
-  const formatNextLabel = (next?: NextAppointment) => {
-    if (!next) return "-";
-    const rawTitle = (next.title ?? "").trim();
-    const category = rawTitle.includes(":")
-      ? rawTitle.split(":")[0].trim()
-      : rawTitle || "Appointment";
-    const date = formatDate(next.date, "DD/MM");
-    const time = next.time ?? "";
-    return `${category} - ${date} ${time}`.trim();
-  };
-
   return (
     <MetricsRow gutter={[12, 12]}>
       <Col xs={24} sm={8}>
         <MetricCard className="surface">
           <MetricContent>
             <MetricIcon>
-              <Calendar size={18} />
+              <ClipboardList size={18} />
             </MetricIcon>
             <MetricMeta>
-              <MetricLabel>Appointments today</MetricLabel>
-              <MetricValue>{appointmentsToday}</MetricValue>
+              <MetricLabel>Overdue work orders</MetricLabel>
+              <MetricValue>{overdueWorkOrders}</MetricValue>
             </MetricMeta>
           </MetricContent>
         </MetricCard>
@@ -56,11 +43,11 @@ export default function MetricsCards({
         <MetricCard className="surface">
           <MetricContent>
             <MetricIcon>
-              <DollarSign size={18} />
+              <AlertTriangle size={18} />
             </MetricIcon>
             <MetricMeta>
-              <MetricLabel>Revenue (month)</MetricLabel>
-              <MetricValue>{formatMoney(revenueThisMonthCents ?? null)}</MetricValue>
+              <MetricLabel>Inventory alerts</MetricLabel>
+              <MetricValue>{inventoryAlerts}</MetricValue>
             </MetricMeta>
           </MetricContent>
         </MetricCard>
@@ -70,11 +57,16 @@ export default function MetricsCards({
         <MetricCard className="surface">
           <MetricContent>
             <MetricIcon>
-              <Clock size={18} />
+              <Bell size={18} />
             </MetricIcon>
             <MetricMeta>
-              <MetricLabel>Next appointment</MetricLabel>
-              <MetricValue $compact>{formatNextLabel(nextAppointment)}</MetricValue>
+              <MetricLabel>
+                Unread notifications
+                {highPriorityUnreadNotifications > 0
+                  ? ` (${highPriorityUnreadNotifications} high priority)`
+                  : ""}
+              </MetricLabel>
+              <MetricValue>{unreadNotifications}</MetricValue>
             </MetricMeta>
           </MetricContent>
         </MetricCard>

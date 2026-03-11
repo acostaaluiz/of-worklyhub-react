@@ -1,24 +1,10 @@
 import type { ReactNode } from "react";
 import { Form, Input } from "antd";
-import { Mail, User } from "lucide-react";
+import { Mail, Phone, User } from "lucide-react";
 
 import { maskPhone } from "@core/utils/mask";
 import type { WizardStep } from "@shared/ui/components/form-step/form-step.component";
 import { FieldIcon } from "@shared/styles/global";
-
-export type CompanyIntroductionValues = {
-  fullName: string;
-  email: string;
-  phone?: string;
-
-  accountType: "individual" | "company";
-  companyName?: string;
-  employees?: number;
-
-  primaryService?: string;
-  industry?: string;
-  description?: string;
-};
 
 export function personalInfoStep(): WizardStep {
   const content: ReactNode = (
@@ -31,6 +17,7 @@ export function personalInfoStep(): WizardStep {
         <Input
           size="large"
           placeholder="Enter your full name"
+          data-cy="company-setup-full-name-input"
           prefix={
             <FieldIcon aria-hidden>
               <User size={18} />
@@ -51,6 +38,7 @@ export function personalInfoStep(): WizardStep {
           size="large"
           placeholder="Enter your email"
           autoComplete="email"
+          data-cy="company-setup-email-input"
           prefix={
             <FieldIcon aria-hidden>
               <Mail size={18} />
@@ -60,15 +48,25 @@ export function personalInfoStep(): WizardStep {
       </Form.Item>
 
       <Form.Item label="Phone (optional)" name="phone" normalize={(value) => maskPhone(String(value ?? ""))}>
-        <Input size="large" placeholder="Enter your phone number" />
+        <Input
+          size="large"
+          placeholder="Enter your phone number"
+          data-cy="company-setup-phone-input"
+          prefix={
+            <FieldIcon aria-hidden>
+              <Phone size={18} />
+            </FieldIcon>
+          }
+        />
       </Form.Item>
     </>
   );
 
   return {
-    id: "personal",
-    title: "Personal info",
-    subtitle: "Tell us who you are so we can personalize your setup.",
+    id: "owner",
+    title: "Owner profile",
+    subtitle: "Basic account data used for authentication and communication.",
+    icon: <User size={16} />,
     content,
     fields: ["fullName", "email"],
   };

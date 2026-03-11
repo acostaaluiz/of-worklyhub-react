@@ -8,7 +8,7 @@ export const ServiceDetailShell = styled(TemplateShell)`
 
 export const HeroCover = styled.div<{ $image?: string }>`
   position: relative;
-  min-height: clamp(220px, 30vh, 300px);
+  min-height: clamp(230px, 31vh, 320px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   background-color: var(--color-surface-2);
@@ -23,9 +23,74 @@ export const HeroCover = styled.div<{ $image?: string }>`
     position: absolute;
     inset: 0;
     background:
-      linear-gradient(180deg, rgba(7, 13, 18, 0.05) 0%, rgba(7, 13, 18, 0.4) 80%),
-      linear-gradient(120deg, rgba(30, 112, 255, 0.18), rgba(0, 214, 160, 0.08));
+      linear-gradient(180deg, rgba(7, 13, 18, 0.02) 10%, rgba(7, 13, 18, 0.58) 95%),
+      linear-gradient(120deg, rgba(30, 112, 255, 0.24), rgba(0, 214, 160, 0.12));
   }
+`;
+
+export const HeroOverlay = styled.div`
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 1;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, rgba(7, 13, 18, 0.74) 86%, transparent),
+    color-mix(in srgb, rgba(7, 13, 18, 0.58) 80%, transparent)
+  );
+  backdrop-filter: blur(4px);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+export const HeroOverlayMeta = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+export const HeroOverlayTitle = styled.h2`
+  margin: 0;
+  color: #fff;
+  font-size: clamp(18px, 2.2vw, 24px);
+  letter-spacing: -0.01em;
+`;
+
+export const HeroOverlaySubtitle = styled.p`
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+`;
+
+export const HeroOverlayChips = styled.div`
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+export const HeroOverlayChip = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.14);
 `;
 
 export const TagRow = styled.div`
@@ -47,9 +112,9 @@ export const TagPill = styled.span`
 
 export const DetailGrid = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
@@ -59,12 +124,17 @@ export const DetailGrid = styled.div`
 export const InfoCard = styled.section`
   padding: var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-surface-2) 82%, transparent),
+    var(--color-surface)
+  );
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  height: 100%;
 `;
 
 export const InfoHeader = styled.div`
@@ -124,6 +194,55 @@ export const MetaChip = styled.span`
   font-weight: 600;
 `;
 
+export const QuickFactsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+export const QuickFactCard = styled.div`
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const QuickFactIcon = styled.span`
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  flex-shrink: 0;
+`;
+
+export const QuickFactMeta = styled.div`
+  min-width: 0;
+`;
+
+export const QuickFactLabel = styled.div`
+  font-size: 11px;
+  color: var(--color-text-muted);
+`;
+
+export const QuickFactValue = styled.div`
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
 export const AccentChip = styled.span`
   display: inline-flex;
   align-items: center;
@@ -141,6 +260,9 @@ export const AccentChip = styled.span`
 `;
 
 export const TabsShell = styled.div`
+  border-top: 1px solid var(--color-divider);
+  padding-top: var(--space-2);
+
   .ant-tabs-nav {
     margin-bottom: var(--space-3);
   }
@@ -148,6 +270,7 @@ export const TabsShell = styled.div`
   .ant-tabs-tab {
     font-weight: 600;
     color: var(--color-text-muted);
+    padding: 8px 0;
   }
 
   .ant-tabs-tab-active .ant-tabs-tab-btn {
@@ -157,6 +280,12 @@ export const TabsShell = styled.div`
   .ant-tabs-ink-bar {
     background: var(--color-primary);
   }
+`;
+
+export const TabLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 `;
 
 export const DetailText = styled.p`
@@ -194,12 +323,34 @@ export const PhotoItem = styled.div<{ $image?: string }>`
 export const BookingCard = styled.aside`
   padding: var(--space-4);
   border-radius: var(--radius-md);
-  background: var(--color-surface);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--color-surface-2) 74%, transparent),
+    var(--color-surface)
+  );
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  height: 100%;
+`;
+
+export const BookingHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+export const BookingHeaderIcon = styled.span`
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-2);
+  color: var(--color-primary);
 `;
 
 export const BookingTitle = styled.h4`
@@ -236,7 +387,19 @@ export const BookingListItem = styled.div`
   font-size: var(--font-size-sm);
   color: var(--color-text);
 
-  svg {
+  .icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-surface-2) 82%, transparent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .icon svg {
     color: var(--color-primary);
   }
 `;

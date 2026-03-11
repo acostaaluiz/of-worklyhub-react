@@ -27,6 +27,10 @@ type WorkOrderApiMock = {
   createChecklistItem: jest.Mock;
   updateChecklistItem: jest.Mock;
   deleteChecklistItem: jest.Mock;
+  getAttachments: jest.Mock;
+  requestAttachmentUploadSignature: jest.Mock;
+  createAttachment: jest.Mock;
+  deleteAttachment: jest.Mock;
 };
 
 function createApiMock(): WorkOrderApiMock {
@@ -48,6 +52,15 @@ function createApiMock(): WorkOrderApiMock {
     createChecklistItem: jest.fn().mockResolvedValue({ id: "item-2" }),
     updateChecklistItem: jest.fn().mockResolvedValue({ id: "item-3" }),
     deleteChecklistItem: jest.fn().mockResolvedValue(undefined),
+    getAttachments: jest.fn().mockResolvedValue([{ id: "attachment-1" }]),
+    requestAttachmentUploadSignature: jest.fn().mockResolvedValue({
+      url: "https://upload.example.com",
+      path: "work-orders/ws-1/wo-1/user-1/file.jpg",
+      expiresAt: "2026-03-07T12:00:00.000Z",
+      maxSize: 26214400,
+    }),
+    createAttachment: jest.fn().mockResolvedValue({ id: "attachment-2" }),
+    deleteAttachment: jest.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -130,6 +143,16 @@ describe("WorkOrderHttpService", () => {
     await expect(service.deleteChecklistItem(undefined, "wo-1", "item-1")).rejects.toThrow(
       "workspaceId is required"
     );
+    await expect(service.listAttachments(undefined, "wo-1")).rejects.toThrow("workspaceId is required");
+    await expect(
+      service.requestAttachmentUploadSignature(undefined, "wo-1", {} as any)
+    ).rejects.toThrow("workspaceId is required");
+    await expect(service.createAttachment(undefined, "wo-1", {} as any)).rejects.toThrow(
+      "workspaceId is required"
+    );
+    await expect(service.deleteAttachment(undefined, "wo-1", "attachment-1")).rejects.toThrow(
+      "workspaceId is required"
+    );
   });
 
   it("delegates overview, history, comments and checklist methods when workspace exists", async () => {
@@ -147,6 +170,16 @@ describe("WorkOrderHttpService", () => {
       service.updateChecklistItem("ws-1", "wo-1", "item-1", { done: true } as any)
     ).resolves.toEqual({ id: "item-3" });
     await expect(service.deleteChecklistItem("ws-1", "wo-1", "item-1")).resolves.toBeUndefined();
+    await expect(service.listAttachments("ws-1", "wo-1")).resolves.toEqual([{ id: "attachment-1" }]);
+    await expect(
+      service.requestAttachmentUploadSignature("ws-1", "wo-1", { contentType: "image/jpeg", maxSize: 1 } as any)
+    ).resolves.toMatchObject({
+      url: "https://upload.example.com",
+    });
+    await expect(service.createAttachment("ws-1", "wo-1", {} as any)).resolves.toEqual({
+      id: "attachment-2",
+    });
+    await expect(service.deleteAttachment("ws-1", "wo-1", "attachment-2")).resolves.toBeUndefined();
   });
 });
 
@@ -239,6 +272,30 @@ describe("work-order.http.service exported functions", () => {
       {
         method: "deleteChecklistItem",
         call: () => serviceModule.deleteWorkOrderChecklistItem("ws-1", "wo-1", "item-1"),
+        expected: undefined,
+      },
+      {
+        method: "listAttachments",
+        call: () => serviceModule.listWorkOrderAttachments("ws-1", "wo-1"),
+        expected: [{ id: "attachment-1" }],
+      },
+      {
+        method: "requestAttachmentUploadSignature",
+        call: () =>
+          serviceModule.requestWorkOrderAttachmentUploadSignature("ws-1", "wo-1", {
+            contentType: "image/jpeg",
+            maxSize: 26214400,
+          } as any),
+        expected: { url: "https://upload.example.com" },
+      },
+      {
+        method: "createAttachment",
+        call: () => serviceModule.createWorkOrderAttachment("ws-1", "wo-1", {} as any),
+        expected: { id: "attachment-2" },
+      },
+      {
+        method: "deleteAttachment",
+        call: () => serviceModule.deleteWorkOrderAttachment("ws-1", "wo-1", "attachment-2"),
         expected: undefined,
       },
     ];

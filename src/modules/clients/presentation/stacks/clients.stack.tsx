@@ -10,8 +10,8 @@ const ClientsLandingPage = lazy(
 const ServiceDetailPage = lazy(
   () => import("@modules/clients/presentation/pages/service-detail/service-detail.page")
 );
-const MyAppointmentsPage = lazy(
-  () => import("@modules/clients/presentation/pages/my-appointments/my-appointments.page")
+const Customer360Page = lazy(
+  () => import("@modules/clients/presentation/pages/customer-360/customer-360.page")
 );
 
 export const clientsStackRoutes: RouteObject[] = [
@@ -47,11 +47,11 @@ export const clientsStackRoutes: RouteObject[] = [
         ),
       },
       {
-        id: "clients.appointments",
-        path: "appointments",
+        id: "clients.customer-360",
+        path: "360",
         element: (
           <React.Suspense fallback={null}>
-            <MyAppointmentsPage />
+            <Customer360Page />
           </React.Suspense>
         ),
       },

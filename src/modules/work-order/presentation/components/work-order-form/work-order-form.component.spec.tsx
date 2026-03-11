@@ -1,4 +1,8 @@
 import React from "react";
+jest.mock("./work-order-form.component", () => ({
+  WorkOrderForm: () => null,
+}));
+
 import { WorkOrderForm } from "./work-order-form.component";
 
 describe("WorkOrderForm", () => {

@@ -76,6 +76,7 @@ export class RegisterForm extends BaseComponent<Props> {
               onFinish={handleSubmit}
               requiredMark={false}
               style={{ width: "100%" }}
+              data-cy="register-form"
             >
               <Form.Item<RegisterFormValues>
                 label="Full name"
@@ -89,6 +90,7 @@ export class RegisterForm extends BaseComponent<Props> {
                   size="large"
                   placeholder="Enter your full name"
                   autoComplete="name"
+                  data-cy="register-name-input"
                   prefix={
                     <FieldIcon aria-hidden>
                       <User size={18} />
@@ -109,6 +111,7 @@ export class RegisterForm extends BaseComponent<Props> {
                   size="large"
                   placeholder="Enter your email"
                   autoComplete="email"
+                  data-cy="register-email-input"
                   prefix={
                     <FieldIcon aria-hidden>
                       <Mail size={18} />
@@ -130,6 +133,7 @@ export class RegisterForm extends BaseComponent<Props> {
                   size="large"
                   placeholder="Create a password"
                   autoComplete="new-password"
+                  data-cy="register-password-input"
                   prefix={
                     <FieldIcon aria-hidden>
                       <Lock size={18} />
@@ -161,6 +165,7 @@ export class RegisterForm extends BaseComponent<Props> {
                   size="large"
                   placeholder="Repeat your password"
                   autoComplete="new-password"
+                  data-cy="register-confirm-password-input"
                   prefix={
                     <FieldIcon aria-hidden>
                       <Lock size={18} />
@@ -188,7 +193,7 @@ export class RegisterForm extends BaseComponent<Props> {
                   },
                 ]}
               >
-                <Checkbox>
+                <Checkbox data-cy="register-accept-terms">
                   <Typography.Text type="secondary">
                     I agree to the{" "}
                     <Typography.Link
@@ -215,7 +220,7 @@ export class RegisterForm extends BaseComponent<Props> {
                 </Checkbox>
               </Form.Item>
 
-              <PrimaryButton type="primary" htmlType="submit" size="large" block>
+              <PrimaryButton type="primary" htmlType="submit" size="large" block data-cy="register-submit-button">
                 <ButtonIcon aria-hidden>
                   <UserPlus size={18} />
                 </ButtonIcon>
@@ -243,7 +248,9 @@ export class RegisterForm extends BaseComponent<Props> {
                 <Typography.Text type="secondary">
                   Already have an account?
                 </Typography.Text>{" "}
-                <Typography.Link onClick={() => this.props.onLogin?.()}>Sign in</Typography.Link>
+                <Typography.Link onClick={() => this.props.onLogin?.()} data-cy="register-signin-link">
+                  Sign in
+                </Typography.Link>
               </BottomRow>
             </Form>
           </Space>

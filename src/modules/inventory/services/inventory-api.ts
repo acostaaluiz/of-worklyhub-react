@@ -116,10 +116,35 @@ export type InventoryAlertsResponse = {
   suggestions: InventoryPurchaseSuggestion[];
 };
 
+export type InventoryWorkspaceSettings = {
+  defaultMinQuantity: number;
+  defaultLocation?: string | null;
+  defaultIsActive: boolean;
+  requireSku: boolean;
+  requireCategory: boolean;
+  requireLocation: boolean;
+  requireReasonOnManualMovement: boolean;
+  suggestionCoverageDays: number;
+  highSeverityThresholdPercent: number;
+};
+
+export type InventoryWorkspaceSettingsBundle = {
+  workspaceId: string;
+  settings: InventoryWorkspaceSettings;
+  source: "database" | "defaults";
+  updatedAt?: string;
+};
+
 type InventoryListResponse = { data: InventoryItem[] };
 type InventoryItemResponse = { data: InventoryItem };
 type InventoryMovementListResponse = { data: InventoryMovement[] };
 type InventoryMovementResponse = { data: InventoryMovement };
+type InventorySettingsResponse = { data: InventoryWorkspaceSettingsBundle };
+type UpsertInventorySettingsRequest = {
+  workspaceId: string;
+  settings?: Partial<InventoryWorkspaceSettings>;
+  updatedBy?: string | null;
+};
 
 export class InventoryApi extends BaseHttpService {
   constructor(http: HttpClient) {
@@ -215,6 +240,29 @@ export class InventoryApi extends BaseHttpService {
     const headers = this.buildHeaders(workspaceId);
     const query: HttpQuery = { workspaceId };
     return this.get<InventoryAlertsResponse>("/inventory/internal/alerts", query, headers);
+  }
+
+  async getSettings(workspaceId: string): Promise<InventoryWorkspaceSettingsBundle> {
+    const headers = this.buildHeaders(workspaceId);
+    const query: HttpQuery = { workspaceId };
+    const res = await this.get<InventorySettingsResponse>(
+      "/inventory/internal/settings",
+      query,
+      headers
+    );
+    return res?.data as InventoryWorkspaceSettingsBundle;
+  }
+
+  async upsertSettings(
+    payload: UpsertInventorySettingsRequest
+  ): Promise<InventoryWorkspaceSettingsBundle> {
+    const headers = this.buildHeaders(payload.workspaceId);
+    const res = await this.put<InventorySettingsResponse, UpsertInventorySettingsRequest>(
+      "/inventory/internal/settings",
+      payload,
+      headers
+    );
+    return res?.data as InventoryWorkspaceSettingsBundle;
   }
 }
 

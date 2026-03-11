@@ -5,7 +5,7 @@ export const StepItem = styled.button<{ $status: StepStatus }>`
   width: 100%;
   border: 0;
   background: transparent;
-  padding: var(--space-3);
+  padding: 10px;
   border-radius: var(--radius-md);
   cursor: pointer;
   text-align: left;
@@ -17,25 +17,25 @@ export const StepItem = styled.button<{ $status: StepStatus }>`
     box-shadow: var(--focus-ring);
   }
 
-  ${(p) =>
-    p.$status === "active"
+  ${(props) =>
+    props.$status === "active"
       ? `
-    background: rgba(255,255,255,0.06);
-    border-color: var(--color-border);
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
   `
       : ""}
 
-  ${(p) =>
-    p.$status === "done"
+  ${(props) =>
+    props.$status === "done"
       ? `
     opacity: 0.95;
   `
       : ""}
 
-  ${(p) =>
-    p.$status === "pending"
+  ${(props) =>
+    props.$status === "pending"
       ? `
-    opacity: 0.75;
+    opacity: 0.78;
   `
       : ""}
 
@@ -54,8 +54,8 @@ export const StepItem = styled.button<{ $status: StepStatus }>`
     flex: 0 0 auto;
   }
 
-  ${(p) =>
-    p.$status === "active"
+  ${(props) =>
+    props.$status === "active"
       ? `
     .badge {
       background: var(--color-primary);
@@ -65,8 +65,8 @@ export const StepItem = styled.button<{ $status: StepStatus }>`
   `
       : ""}
 
-  ${(p) =>
-    p.$status === "done"
+  ${(props) =>
+    props.$status === "done"
       ? `
     .badge {
       background: var(--color-secondary);
@@ -79,8 +79,23 @@ export const StepItem = styled.button<{ $status: StepStatus }>`
 
 export const StepMeta = styled.div`
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: flex-start;
+`;
+
+export const StepTitleRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  .icon {
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+  }
 `;
 
 export const StepTitle = styled.div`
@@ -91,7 +106,7 @@ export const StepTitle = styled.div`
 
 export const StepSubtitle = styled.div`
   margin-top: 2px;
-  font-size: var(--font-size-sm);
+  font-size: 12px;
   color: var(--color-text-muted);
   line-height: 1.35;
 `;

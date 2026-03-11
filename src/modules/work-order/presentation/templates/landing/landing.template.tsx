@@ -1,4 +1,4 @@
-import { Calendar, ClipboardList, ListChecks } from "lucide-react";
+import { Calendar, ClipboardList, ListChecks, Settings2 } from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -30,6 +30,15 @@ export function WorkOrderLandingTemplate() {
       meta: "Workflow setup",
       to: "/work-order/statuses",
       icon: <ListChecks size={18} />,
+    },
+    {
+      id: "settings",
+      title: "Settings",
+      description:
+        "Set module parameters, automation rules, and execution validations by workspace.",
+      meta: "Module + billing automation",
+      to: "/work-order/settings",
+      icon: <Settings2 size={18} />,
     },
   ];
 

@@ -49,7 +49,7 @@ export function ResponseModal({
   const isSuccess = variant === "success";
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} centered destroyOnHidden width={520}>
+    <Modal open={open} onCancel={onClose} footer={null} centered destroyOnHidden width={520} data-cy="response-modal">
       <ModalRoot>
         <ModalContent>
           <HeadRow>
@@ -73,11 +73,17 @@ export function ResponseModal({
 
           <FooterRow>
             <Buttons>
-              <Button size="large" className="secondary" onClick={onClose}>
+              <Button size="large" className="secondary" onClick={onClose} data-cy="response-modal-secondary-button">
                 {secondaryLabel}
               </Button>
 
-              <Button size="large" type={isSuccess ? "primary" : "primary"} className="primary" onClick={onPrimary}>
+              <Button
+                size="large"
+                type={isSuccess ? "primary" : "primary"}
+                className="primary"
+                onClick={onPrimary}
+                data-cy="response-modal-primary-button"
+              >
                 {primaryLabel}
               </Button>
             </Buttons>

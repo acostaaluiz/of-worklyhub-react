@@ -2,6 +2,8 @@ import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 
 export type BillingCycle = "monthly" | "yearly";
+export type PaymentGateway = "mercadopago" | "paypal";
+export type PaymentMethod = "card" | "hosted";
 
 export type BillingPlan = {
   id: string;
@@ -15,9 +17,10 @@ export type BillingPlan = {
 };
 
 export type PaymentConfig = {
-  gateway: "mercadopago";
+  gateway: PaymentGateway;
   publicKey?: string;
   configured: boolean;
+  supportedMethods?: PaymentMethod[];
 };
 
 export type PlansResponse = {
@@ -27,8 +30,9 @@ export type PlansResponse = {
 export type CheckoutRequest = {
   planId: string | number;
   billingCycle?: BillingCycle;
+  gateway?: PaymentGateway;
   payer: { email: string; fullName?: string; company?: string };
-  paymentMethod?: "card" | "hosted";
+  paymentMethod?: PaymentMethod;
   cardToken?: string;
   installments?: number;
   successUrl?: string;
@@ -44,7 +48,7 @@ export type CheckoutResponse = {
     id: string;
     status: string;
     type: "card" | "preference";
-    provider: "mercadopago";
+    provider: PaymentGateway;
     checkoutUrl?: string;
     plan: BillingPlan;
     billingCycle: BillingCycle;

@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { Button, Tabs, message } from "antd";
-import { CalendarDays, CheckCircle2, Clock, MapPin, Star, Tag } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  CalendarPlus,
+  Clock3,
+  FileText,
+  ImageIcon,
+  MapPin,
+  MessageCircleMore,
+  ShieldCheck,
+  Sparkles,
+  Star,
+  Tag,
+} from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import type { ServiceModel } from "@modules/clients/interfaces/service.model";
@@ -13,6 +26,8 @@ import type {
 } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-event-modal.form.types";
 import {
   BookingCard,
+  BookingHeader,
+  BookingHeaderIcon,
   AccentChip,
   BookingHint,
   BookingList,
@@ -25,6 +40,12 @@ import {
   DetailText,
   HeaderStack,
   HeroCover,
+  HeroOverlay,
+  HeroOverlayChip,
+  HeroOverlayChips,
+  HeroOverlayMeta,
+  HeroOverlaySubtitle,
+  HeroOverlayTitle,
   InfoAddress,
   InfoCard,
   InfoHeader,
@@ -34,7 +55,14 @@ import {
   MetaRow,
   PhotoGrid,
   PhotoItem,
+  QuickFactCard,
+  QuickFactIcon,
+  QuickFactLabel,
+  QuickFactMeta,
+  QuickFactsGrid,
+  QuickFactValue,
   ServiceDetailShell,
+  TabLabel,
   TabsShell,
   TagPill,
   TagRow,
@@ -99,6 +127,9 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
   const reviewsLabel = service.reviewsCount
     ? `${formatCount(service.reviewsCount)} avaliacoes`
     : "Sem avaliacoes";
+  const reviewsCountLabel = service.reviewsCount
+    ? formatCount(service.reviewsCount)
+    : "0";
   const tags = service.tags ?? [];
   const gallery = service.imageUrl ? [service.imageUrl] : [];
 
@@ -107,7 +138,22 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
       content={
         <>
           <ServiceDetailShell>
-            <HeroCover $image={service.imageUrl} />
+            <HeroCover $image={service.imageUrl}>
+              <HeroOverlay>
+                <HeroOverlayMeta>
+                  <HeroOverlayTitle>{service.providerName}</HeroOverlayTitle>
+                  <HeroOverlaySubtitle>{service.title}</HeroOverlaySubtitle>
+                </HeroOverlayMeta>
+                <HeroOverlayChips>
+                  <HeroOverlayChip>
+                    <Star size={14} /> {ratingValue}
+                  </HeroOverlayChip>
+                  <HeroOverlayChip>
+                    <Tag size={14} /> {formattedPrice}
+                  </HeroOverlayChip>
+                </HeroOverlayChips>
+              </HeroOverlay>
+            </HeroCover>
 
             <DetailGrid>
               <InfoCard>
@@ -134,13 +180,50 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
                   </MetaChip>
                 </MetaRow>
 
+                <QuickFactsGrid>
+                  <QuickFactCard>
+                    <QuickFactIcon>
+                      <MessageCircleMore size={14} />
+                    </QuickFactIcon>
+                    <QuickFactMeta>
+                      <QuickFactLabel>Avaliacoes</QuickFactLabel>
+                      <QuickFactValue>{reviewsCountLabel} feedbacks</QuickFactValue>
+                    </QuickFactMeta>
+                  </QuickFactCard>
+                  <QuickFactCard>
+                    <QuickFactIcon>
+                      <Building2 size={14} />
+                    </QuickFactIcon>
+                    <QuickFactMeta>
+                      <QuickFactLabel>Parceiro</QuickFactLabel>
+                      <QuickFactValue>{service.providerName}</QuickFactValue>
+                    </QuickFactMeta>
+                  </QuickFactCard>
+                  <QuickFactCard>
+                    <QuickFactIcon>
+                      <Sparkles size={14} />
+                    </QuickFactIcon>
+                    <QuickFactMeta>
+                      <QuickFactLabel>Categorias</QuickFactLabel>
+                      <QuickFactValue>
+                        {tags.length ? `${tags.length} tags` : "Nao informado"}
+                      </QuickFactValue>
+                    </QuickFactMeta>
+                  </QuickFactCard>
+                </QuickFactsGrid>
+
                 <TabsShell>
                   <Tabs
                     defaultActiveKey="details"
                     items={[
                       {
                         key: "details",
-                        label: "Detalhes",
+                        label: (
+                          <TabLabel>
+                            <FileText size={14} />
+                            Detalhes
+                          </TabLabel>
+                        ),
                         children: (
                           <div>
                             <DetailText>
@@ -158,7 +241,12 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
                       },
                       {
                         key: "reviews",
-                        label: "Avaliacoes",
+                        label: (
+                          <TabLabel>
+                            <MessageCircleMore size={14} />
+                            Avaliacoes
+                          </TabLabel>
+                        ),
                         children: (
                           <div>
                             <DetailText>
@@ -172,7 +260,12 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
                       },
                       {
                         key: "photos",
-                        label: "Fotos",
+                        label: (
+                          <TabLabel>
+                            <ImageIcon size={14} />
+                            Fotos
+                          </TabLabel>
+                        ),
                         children: (
                           <div>
                             <PhotoGrid>
@@ -196,22 +289,37 @@ export function ServiceDetailTemplate({ service, onBooked }: Props) {
               </InfoCard>
 
               <BookingCard>
-                <BookingTitle>Agende agora</BookingTitle>
+                <BookingHeader>
+                  <BookingHeaderIcon>
+                    <CalendarDays size={18} />
+                  </BookingHeaderIcon>
+                  <BookingTitle>Agende agora</BookingTitle>
+                </BookingHeader>
                 <BookingPriceLabel>Preco a partir de</BookingPriceLabel>
                 <BookingPriceValue>{formattedPrice}</BookingPriceValue>
                 <Button type="primary" size="large" onClick={() => setIsOpen(true)} block>
+                  <CalendarPlus size={16} style={{ marginRight: 8 }} />
                   Agendar servico
                 </Button>
                 <BookingHint>Escolha data, horario e pronto.</BookingHint>
                 <BookingList>
                   <BookingListItem>
-                    <CalendarDays size={16} /> Selecione o melhor dia
+                    <span className="icon">
+                      <CalendarDays size={14} />
+                    </span>
+                    Selecione o melhor dia
                   </BookingListItem>
                   <BookingListItem>
-                    <Clock size={16} /> Ajuste o horario ideal
+                    <span className="icon">
+                      <Clock3 size={14} />
+                    </span>
+                    Ajuste o horario ideal
                   </BookingListItem>
                   <BookingListItem>
-                    <CheckCircle2 size={16} /> Receba confirmacao do parceiro
+                    <span className="icon">
+                      <ShieldCheck size={14} />
+                    </span>
+                    Receba confirmacao do parceiro
                   </BookingListItem>
                 </BookingList>
               </BookingCard>

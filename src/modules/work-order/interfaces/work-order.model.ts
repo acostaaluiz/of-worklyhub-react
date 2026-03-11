@@ -50,6 +50,65 @@ export type WorkOrderChecklistItem = {
   updatedAt: string;
 };
 
+export type WorkOrderAttachment = {
+  id: string;
+  workOrderId: string;
+  workspaceId: string;
+  authorUid?: string | null;
+  storagePath: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes?: number | null;
+  createdAt: string;
+  updatedAt: string;
+  downloadUrl?: string | null;
+  downloadUrlExpiresAt?: string | null;
+};
+
+export type WorkOrderWorkspaceSettings = {
+  defaultPriority: WorkOrderPriority;
+  defaultEstimatedDurationMinutes: number;
+  autoFillDueAtOnCreate: boolean;
+  defaultDueInHours: number;
+  dueSoonWindowHours: number;
+  requireWorkerOnCreate: boolean;
+  requireChecklistToComplete: boolean;
+  requireAttachmentToComplete: boolean;
+  attachmentsEnabled: boolean;
+  maxAttachmentsPerWorkOrder: number;
+  maxAttachmentSizeMb: number;
+  allowedAttachmentMimeTypes: string[];
+};
+
+export type WorkOrderWorkspaceSettingsBundle = {
+  workspaceId: string;
+  settings: WorkOrderWorkspaceSettings;
+  source: "database" | "defaults";
+  updatedAt?: string;
+};
+
+export type RequestWorkOrderAttachmentUploadSignatureInput = {
+  filename?: string;
+  contentType: string;
+  maxSize: number;
+  userUid?: string;
+};
+
+export type WorkOrderAttachmentUploadSignature = {
+  url: string;
+  path: string;
+  expiresAt: string;
+  maxSize: number;
+};
+
+export type CreateWorkOrderAttachmentInput = {
+  storagePath: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes?: number | null;
+  authorUid?: string | null;
+};
+
 export type WorkOrderOverviewInsightSeverity = "high" | "medium" | "low";
 
 export type WorkOrderOverview = {

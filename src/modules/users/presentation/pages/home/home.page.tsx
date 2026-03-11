@@ -1,7 +1,7 @@
 import React from "react";
 import { BasePage } from "@shared/base/base.page";
 import UsersHomeTemplate from "@modules/users/presentation/templates/home/home.template";
-import { Briefcase, Calendar, Users, DollarSign, Box, LayoutGrid } from "lucide-react";
+import { Briefcase, Calendar, Users, DollarSign, Box, LayoutGrid, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { Subscription } from "rxjs";
 import { usersService } from "@modules/users/services/user.service";
@@ -10,9 +10,13 @@ import type { UserOverviewModule } from "@modules/users/services/overview-api";
 import { companyService } from "@modules/company/services/company.service";
 import { ScheduleService } from "@modules/schedule/services/schedule.service";
 import { FinanceService } from "@modules/finance/services/finance.service";
+import { listWorkOrderOverview } from "@modules/work-order/services/work-order.http.service";
+import { getInventoryAlerts } from "@modules/inventory/services/inventory.http.service";
+import { usersNotificationsService } from "@modules/users/services/notifications.service";
 import { message } from "antd";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { navigateTo } from "@core/navigation/navigation.service";
+import { ensureGrowthModule } from "@modules/users/presentation/utils/overview-modules";
 
 function toDataMap(value: DataValue | null | undefined): DataMap | null {
   if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) {
@@ -34,7 +38,15 @@ export class UsersHomePage extends BasePage<
     name?: string;
     modules?: UserOverviewModule[] | null;
     planTitle?: string | null;
-    metrics?: { appointmentsToday: number; revenueThisMonthCents?: number | null; nextAppointment?: { title?: string; date?: string; time?: string } };
+    metrics?: {
+      appointmentsToday: number;
+      revenueThisMonthCents?: number | null;
+      nextAppointment?: { title?: string; date?: string; time?: string };
+      overdueWorkOrders?: number;
+      inventoryAlerts?: number;
+      unreadNotifications?: number;
+      highPriorityUnreadNotifications?: number;
+    };
   }
 > {
   protected override options = { title: "Home | WorklyHub", requiresAuth: true };
@@ -92,7 +104,49 @@ export class UsersHomePage extends BasePage<
         revenueThisMonthCents = null;
       }
 
-      this.setSafeState({ metrics: { appointmentsToday, revenueThisMonthCents, nextAppointment } });
+      const [
+        workOrderOverviewResult,
+        inventoryAlertsResult,
+        notificationsSummaryResult,
+      ] = await Promise.allSettled([
+        workspaceId
+          ? listWorkOrderOverview(workspaceId, { windowDays: 30, dueSoonHours: 24 })
+          : Promise.resolve(null),
+        workspaceId ? getInventoryAlerts(workspaceId) : Promise.resolve(null),
+        usersNotificationsService.fetchSummary({ workspaceId }),
+      ]);
+
+      const overdueWorkOrders =
+        workOrderOverviewResult.status === "fulfilled" && workOrderOverviewResult.value
+          ? workOrderOverviewResult.value.totals.overdue
+          : 0;
+
+      const inventoryAlerts =
+        inventoryAlertsResult.status === "fulfilled" && inventoryAlertsResult.value
+          ? inventoryAlertsResult.value.summary.total
+          : 0;
+
+      const unreadNotifications =
+        notificationsSummaryResult.status === "fulfilled"
+          ? notificationsSummaryResult.value.summary.unreadCount
+          : 0;
+
+      const highPriorityUnreadNotifications =
+        notificationsSummaryResult.status === "fulfilled"
+          ? notificationsSummaryResult.value.summary.highPriorityUnreadCount
+          : 0;
+
+      this.setSafeState({
+        metrics: {
+          appointmentsToday,
+          revenueThisMonthCents,
+          nextAppointment,
+          overdueWorkOrders,
+          inventoryAlerts,
+          unreadNotifications,
+          highPriorityUnreadNotifications,
+        },
+      });
     } catch (e) {
       console.debug("metrics fetch failed", e);
     }
@@ -172,12 +226,17 @@ export class UsersHomePage extends BasePage<
         case "inventory":
         case "stock":
           return <Box />;
+        case "sparkles":
+        case "growth":
+        case "megaphone":
+        case "rocket":
+          return <Sparkles />;
         default:
           return <Briefcase />;
       }
     };
 
-    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = apiModules.map((s: UserOverviewModule) => ({
+    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = ensureGrowthModule(apiModules).map((s: UserOverviewModule) => ({
       id: s.uid,
       title: s.name,
       subtitle: s.description,
@@ -216,12 +275,6 @@ export class UsersHomePage extends BasePage<
       { id: "all-modules", title: "See all", subtitle: "View all available modules", icon: <LayoutGrid /> },
     ];
 
-    const uniqueServices = new Map<string, { id: string; title: string; subtitle?: string; icon?: ReactNode }>();
-    services.forEach((s) => {
-      const key = `${s.id ?? ""}|${s.title ?? ""}`.toLowerCase();
-      uniqueServices.set(key, s);
-    });
-
     const ws = companyService.getWorkspaceValue();
     const workspace = toDataMap(ws);
     const companyProfile = toDataMap(workspace?.company_profile);
@@ -247,16 +300,12 @@ export class UsersHomePage extends BasePage<
         description={description}
         planTitle={this.state.planTitle ?? undefined}
         services={quickModules}
-        servicesCount={uniqueServices.size}
         metrics={this.state.metrics}
         onEditCompany={() => {
           navigateTo("/users?tab=company");
         }}
         onOpenTutorials={() => {
           navigateTo("/tutorials");
-        }}
-        onOpenModules={() => {
-          navigateTo("/modules");
         }}
       />
     );

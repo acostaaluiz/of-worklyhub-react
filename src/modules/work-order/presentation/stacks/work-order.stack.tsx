@@ -13,6 +13,9 @@ const WorkOrderStatusesPage = lazy(
 const WorkOrderCalendarPage = lazy(
   () => import("@modules/work-order/presentation/pages/calendar/calendar.page")
 );
+const WorkOrderSettingsPage = lazy(
+  () => import("@modules/work-order/presentation/pages/settings/settings.page")
+);
 
 export const workOrderStackRoutes: RouteObject[] = [
   {
@@ -43,6 +46,15 @@ export const workOrderStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <WorkOrderCalendarPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "work-order.settings",
+        path: "settings",
+        element: (
+          <React.Suspense fallback={null}>
+            <WorkOrderSettingsPage />
           </React.Suspense>
         ),
       },

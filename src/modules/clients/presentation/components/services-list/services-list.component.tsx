@@ -304,7 +304,7 @@ export class ServicesList extends BaseComponent<{}, State> {
             renderItem={(item) => (
               <List.Item>
                 <CardLink to={`/clients/service/${item.id}`}>
-                  <ServiceCard className="surface">
+                  <ServiceCard>
                     <Card bordered={false} bodyStyle={{ padding: 0 }}>
                       <ImageWrap style={{ backgroundImage: `url(${item.imageUrl})` }}>
                         <RatingBadge>

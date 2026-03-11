@@ -9,6 +9,7 @@ import clientsStackRoutes from "@modules/clients/presentation/stacks/clients.sta
 import { inventoryStackRoutes } from "@modules/inventory/presentation/stacks/inventory.stack";
 import { peopleStackRoutes } from "@modules/people/presentation/stacks/people.stack";
 import { workOrderStackRoutes } from "@modules/work-order/presentation/stacks/work-order.stack";
+import { growthStackRoutes } from "@modules/growth/presentation/stacks/growth.stack";
 
 export const privateStackRoutes: RouteObject[] = [
   ...usersStackRoutes,
@@ -21,4 +22,5 @@ export const privateStackRoutes: RouteObject[] = [
   ...inventoryStackRoutes,
   ...peopleStackRoutes,
   ...workOrderStackRoutes,
+  ...growthStackRoutes,
 ];

@@ -5,6 +5,7 @@ import type { RouteObject } from "react-router-dom";
 const InventoryCategoriesPage = lazy(() => import("@modules/inventory/presentation/pages/categories/categories.page"));
 const InventoryHomePage = lazy(() => import("@modules/inventory/presentation/pages/home/home.page"));
 const InventoryLandingPage = lazy(() => import("@modules/inventory/presentation/pages/landing/landing.page"));
+const InventorySettingsPage = lazy(() => import("@modules/inventory/presentation/pages/settings/settings.page"));
 
 export const inventoryStackRoutes: RouteObject[] = [
   {
@@ -44,6 +45,15 @@ export const inventoryStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <InventoryHomePage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "inventory.settings",
+        path: "settings",
+        element: (
+          <React.Suspense fallback={null}>
+            <InventorySettingsPage />
           </React.Suspense>
         ),
       },

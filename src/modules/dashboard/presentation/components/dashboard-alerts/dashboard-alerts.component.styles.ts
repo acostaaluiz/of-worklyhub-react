@@ -1,8 +1,11 @@
 import styled from "styled-components";
+import {
+  WidgetBodyBase,
+  WidgetCardBase,
+  WidgetHeaderBase,
+} from "@shared/ui/styles/widget-shell.styles";
 
-export const WidgetCard = styled.div`
-  height: 100%;
-  min-height: 0;
+export const WidgetCard = styled(WidgetCardBase)`
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   background:
@@ -13,7 +16,7 @@ export const WidgetCard = styled.div`
   overflow: hidden;
 `;
 
-export const WidgetHeader = styled.div`
+export const WidgetHeader = styled(WidgetHeaderBase)`
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--color-divider);
   display: flex;
@@ -47,9 +50,7 @@ export const WidgetHeader = styled.div`
   }
 `;
 
-export const WidgetBody = styled.div`
-  flex: 1;
-  min-height: 0;
+export const WidgetBody = styled(WidgetBodyBase)`
   overflow-y: auto;
   overflow-x: hidden;
 

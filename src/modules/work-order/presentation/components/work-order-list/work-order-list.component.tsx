@@ -3,6 +3,23 @@ import { Button, DatePicker, Input, Popconfirm, Select, Space, Spin, Table, Tag 
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
+import {
+  AppstoreOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
+  DeleteOutlined,
+  DollarCircleOutlined,
+  EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
+  FilterOutlined,
+  FlagOutlined,
+  InfoCircleOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  ToolOutlined,
+  UndoOutlined,
+} from "@ant-design/icons";
 
 import type {
   WorkOrder,
@@ -167,7 +184,12 @@ export function WorkOrderList({
 
   const columns = React.useMemo<ColumnsType<WorkOrder>>(() => {
     const titleColumn: ColumnsType<WorkOrder>[number] = {
-      title: "Title",
+      title: (
+        <Space size={6}>
+          <FileTextOutlined />
+          Title
+        </Space>
+      ),
       dataIndex: "title",
       key: "title",
       width: isMobileViewport ? undefined : 220,
@@ -186,7 +208,12 @@ export function WorkOrderList({
     };
 
     const statusColumn: ColumnsType<WorkOrder>[number] = {
-      title: "Status",
+      title: (
+        <Space size={6}>
+          <InfoCircleOutlined />
+          Status
+        </Space>
+      ),
       dataIndex: "status",
       key: "status",
       width: isMobileViewport ? 126 : 110,
@@ -203,7 +230,12 @@ export function WorkOrderList({
       titleColumn,
       statusColumn,
       {
-        title: "Priority",
+        title: (
+          <Space size={6}>
+            <FlagOutlined />
+            Priority
+          </Space>
+        ),
         dataIndex: "priority",
         key: "priority",
         width: 90,
@@ -214,7 +246,12 @@ export function WorkOrderList({
         ),
       },
       {
-        title: "Due",
+        title: (
+          <Space size={6}>
+            <CalendarOutlined />
+            Due
+          </Space>
+        ),
         dataIndex: "dueAt",
         key: "dueAt",
         width: 90,
@@ -225,7 +262,12 @@ export function WorkOrderList({
         },
       },
       {
-        title: "Total",
+        title: (
+          <Space size={6}>
+            <DollarCircleOutlined />
+            Total
+          </Space>
+        ),
         dataIndex: "totalEstimatedCents",
         key: "totalEstimatedCents",
         width: 100,
@@ -233,12 +275,17 @@ export function WorkOrderList({
           typeof value === "number" ? formatMoneyFromCents(value) : "--",
       },
       {
-        title: "Actions",
+        title: (
+          <Space size={6}>
+            <ToolOutlined />
+            Actions
+          </Space>
+        ),
         key: "actions",
         width: 110,
         render: (_, record) => (
           <Space>
-            <Button size="small" onClick={() => onSelect(record)}>
+            <Button size="small" icon={<EditOutlined />} onClick={() => onSelect(record)}>
               Edit
             </Button>
             <Popconfirm
@@ -247,7 +294,7 @@ export function WorkOrderList({
               okButtonProps={{ danger: true }}
               onConfirm={() => onDelete(record)}
             >
-              <Button size="small" danger>
+              <Button size="small" danger icon={<DeleteOutlined />}>
                 Delete
               </Button>
             </Popconfirm>
@@ -263,8 +310,10 @@ export function WorkOrderList({
         <PaneHeader>
           <PaneTitle>Work orders</PaneTitle>
           <PaneActions>
-            <Button onClick={onRefresh}>Refresh</Button>
-            <Button type="primary" onClick={onCreate}>
+            <Button icon={<ReloadOutlined />} onClick={onRefresh}>
+              Refresh
+            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
               New work order
             </Button>
           </PaneActions>
@@ -328,12 +377,14 @@ export function WorkOrderList({
           />
           <Button
             type="primary"
+            icon={<FilterOutlined />}
             onClick={onApplyFilters}
             style={isMobileViewport ? { flex: "1 1 calc(50% - 4px)" } : undefined}
           >
             Apply
           </Button>
           <Button
+            icon={<UndoOutlined />}
             onClick={onResetFilters}
             style={isMobileViewport ? { flex: "1 1 calc(50% - 4px)" } : undefined}
           >
@@ -405,16 +456,16 @@ export function WorkOrderList({
       </OverviewTags>
 
       <OverviewActions>
-        <Button size="small" onClick={() => applyRiskFilter("overdue")}>
+        <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("overdue")}>
           View overdue
         </Button>
-        <Button size="small" onClick={() => applyRiskFilter("due_soon")}>
+        <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("due_soon")}>
           View due soon
         </Button>
-        <Button size="small" onClick={() => applyRiskFilter("checklist_at_risk")}>
+        <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("checklist_at_risk")}>
           Checklist at risk
         </Button>
-        <Button size="small" onClick={() => applyRiskFilter("high_priority")}>
+        <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("high_priority")}>
           High priority
         </Button>
       </OverviewActions>
@@ -450,12 +501,22 @@ export function WorkOrderList({
         items={[
           {
             key: "work-orders",
-            label: "Work orders",
+            label: (
+              <Space size={6}>
+                <AppstoreOutlined />
+                Work orders
+              </Space>
+            ),
             children: workOrdersContent,
           },
           {
             key: "operations-overview",
-            label: "Operations overview",
+            label: (
+              <Space size={6}>
+                <BarChartOutlined />
+                Operations overview
+              </Space>
+            ),
             children: operationsOverviewContent,
           },
         ]}

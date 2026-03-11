@@ -1,6 +1,6 @@
 import React from "react";
 import { MotionConfig } from "framer-motion";
-import { LayoutGrid } from "lucide-react";
+import { BookOpenCheck, Compass, LayoutGrid } from "lucide-react";
 
 import { navigateTo } from "@core/navigation/navigation.service";
 import { BaseComponent } from "@shared/base/base.component";
@@ -122,10 +122,17 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
             </HeroMainRow>
 
             <HeroActions>
-              <HeroPrimaryButton type="primary" onClick={() => navigateTo("/tutorials")}>
+              <HeroPrimaryButton
+                type="primary"
+                icon={<BookOpenCheck size={16} />}
+                onClick={() => navigateTo("/tutorials")}
+              >
                 Guided tour
               </HeroPrimaryButton>
-              <HeroGhostButton onClick={() => this.openFirstAvailable(items)}>
+              <HeroGhostButton
+                icon={<Compass size={16} />}
+                onClick={() => this.openFirstAvailable(items)}
+              >
                 Start exploring
               </HeroGhostButton>
             </HeroActions>

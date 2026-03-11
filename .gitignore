@@ -26,3 +26,9 @@ dist-ssr
 # Jest coverage
 coverage
 
+# Cypress artifacts
+cypress/videos
+cypress/screenshots
+cypress/downloads
+cypress.env.json
+

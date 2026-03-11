@@ -1,6 +1,6 @@
 import { useState, type ReactElement, type ReactNode } from "react";
 import { Button, Form } from "antd";
-import { ChevronLeft, ChevronRight, Check } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Step } from "./step.component";
 import {
@@ -11,6 +11,7 @@ import {
   RightActions,
   StepsList,
   WizardContent,
+  WizardContentBody,
   WizardGrid,
   WizardShell,
   WizardSidebar,
@@ -23,8 +24,9 @@ export type WizardStep = {
   id: string;
   title: string;
   subtitle?: string;
+  icon?: ReactNode;
   content: ReactNode;
-  fields?: string[];
+  fields?: Array<string | number | (string | number)[]>;
 };
 
 type FormStepWizardProps<TValues extends object> = {
@@ -60,9 +62,7 @@ export function FormStepWizard<TValues extends object>({
     const fields = activeStep.fields;
 
     if (fields?.length) {
-      await form.validateFields(
-        fields as Array<string | number | (string | number)[]>
-      );
+      await form.validateFields(fields);
       return;
     }
 
@@ -71,10 +71,10 @@ export function FormStepWizard<TValues extends object>({
 
   const handleNext = async () => {
     await validateCurrentStep();
-    setCurrentIndex((v) => Math.min(v + 1, steps.length - 1));
+    setCurrentIndex((value) => Math.min(value + 1, steps.length - 1));
   };
 
-  const handleBack = () => setCurrentIndex((v) => Math.max(v - 1, 0));
+  const handleBack = () => setCurrentIndex((value) => Math.max(value - 1, 0));
 
   const handleSubmit = async () => {
     await validateCurrentStep();
@@ -103,7 +103,7 @@ export function FormStepWizard<TValues extends object>({
         layout="vertical"
         initialValues={initialValues}
         requiredMark={false}
-        style={{ width: "100%" }}
+        style={{ width: "100%", height: "100%" }}
       >
         <WizardGrid>
           <WizardSidebar aria-label="Steps navigation">
@@ -115,20 +115,21 @@ export function FormStepWizard<TValues extends object>({
             </WizardSidebarHeader>
 
             <StepsList>
-              {steps.map((s, idx) => (
+              {steps.map((step, index) => (
                 <Step
-                  key={s.id}
-                  index={idx + 1}
-                  title={s.title}
-                  subtitle={s.subtitle}
-                  status={statusFor(idx)}
-                  onClick={() => handleStepClick(idx)}
+                  key={step.id}
+                  index={index + 1}
+                  title={step.title}
+                  subtitle={step.subtitle}
+                  icon={step.icon}
+                  status={statusFor(index)}
+                  onClick={() => handleStepClick(index)}
                 />
               ))}
             </StepsList>
           </WizardSidebar>
 
-          <WizardContent aria-label="Step content">
+          <WizardContent aria-label="Step content" data-cy={`wizard-step-${activeStep.id}`}>
             <ContentHeader>
               <ContentTitle>{activeStep.title}</ContentTitle>
               {activeStep.subtitle ? (
@@ -136,7 +137,7 @@ export function FormStepWizard<TValues extends object>({
               ) : null}
             </ContentHeader>
 
-            {activeStep.content}
+            <WizardContentBody>{activeStep.content}</WizardContentBody>
 
             <FooterRow>
               <Button
@@ -144,6 +145,7 @@ export function FormStepWizard<TValues extends object>({
                 onClick={handleBack}
                 disabled={!canGoBack}
                 icon={<ChevronLeft size={18} />}
+                data-cy="wizard-back-button"
               >
                 Back
               </Button>
@@ -155,6 +157,7 @@ export function FormStepWizard<TValues extends object>({
                     size="large"
                     onClick={handleNext}
                     icon={<ChevronRight size={18} />}
+                    data-cy="wizard-next-button"
                   >
                     Next step
                   </Button>
@@ -164,6 +167,7 @@ export function FormStepWizard<TValues extends object>({
                     size="large"
                     onClick={handleSubmit}
                     icon={<Check size={18} />}
+                    data-cy="wizard-finish-button"
                   >
                     Finish
                   </Button>

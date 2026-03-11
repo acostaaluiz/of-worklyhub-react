@@ -1,10 +1,12 @@
 import { type PropsWithChildren, useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import type { MenuProps } from "antd";
+import { LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 
 import { companyService } from "@modules/company/services/company.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { usersNotificationsService } from "@modules/users/services/notifications.service";
+import { AssistantChatWidget } from "@modules/users/presentation/components/assistant-chat/assistant-chat.widget";
 import { AppFooter } from "@shared/ui/components/footer/footer.component";
 import AppHeader from "./header.component";
 import {
@@ -19,6 +21,7 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   const location = useLocation();
   const isNotificationsRoute = location.pathname.startsWith("/notifications");
   const isSettingsRoute = location.pathname.startsWith("/settings");
+  const isCompanySetupRoute = location.pathname.startsWith("/company/introduction");
 
   const [hasWorkspace, setHasWorkspace] = useState<boolean>(() => {
     return !!companyService.getWorkspaceValue();
@@ -92,15 +95,15 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   ];
 
   const userMenuItems: MenuProps["items"] = [
-    { key: "/users", label: "Profile" },
-    { key: "/settings", label: "Settings" },
+    { key: "/users", label: "Profile", icon: <UserOutlined /> },
+    { key: "/settings", label: "Settings", icon: <SettingOutlined /> },
     { type: "divider" as const },
-    { key: "logout", label: "Sign out" },
+    { key: "logout", label: "Sign out", icon: <LogoutOutlined /> },
   ];
 
   const frameClassName = [
     isNotificationsRoute ? "compact-frame" : null,
-    isSettingsRoute ? "no-page-scroll" : null,
+    isSettingsRoute || isCompanySetupRoute ? "no-page-scroll" : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -125,6 +128,8 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
           </PrivateFrame>
         </div>
       </ContentShell>
+
+      <AssistantChatWidget />
 
       <AppFooter />
     </PrivatePageShell>

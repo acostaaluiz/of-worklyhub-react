@@ -22,6 +22,8 @@
 
   --color-link: rgba(15, 23, 42, 0.72);
   --color-link-hover: rgba(15, 23, 42, 0.92);
+  --color-company-action: #44c7b6;
+  --on-company-action: #ffffff;
 
   --icon-color: currentColor;
   --icon-color-muted: var(--color-text-muted);
@@ -72,6 +74,8 @@
 
   --color-link: rgba(15, 23, 42, 0.9);
   --color-link-hover: rgba(15, 23, 42, 1);
+  --color-company-action: #44c7b6;
+  --on-company-action: #ffffff;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.12);
@@ -145,6 +149,8 @@
 
   --color-link: rgba(230, 241, 244, 0.78);
   --color-link-hover: rgba(230, 241, 244, 0.95);
+  --color-company-action: #44c7b6;
+  --on-company-action: #ffffff;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.45);
@@ -353,7 +359,8 @@ select:focus-visible,
       color-mix(in srgb, var(--color-surface-2) 72%, transparent),
       var(--color-surface)
     );
-  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  border: 1px solid
+    color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   transition:

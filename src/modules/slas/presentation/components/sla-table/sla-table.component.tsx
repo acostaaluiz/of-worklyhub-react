@@ -56,7 +56,11 @@ export class SlaTable extends BaseComponent<Props, State> {
           columns={columns}
           dataSource={rows}
           loading={!!loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{
+            pageSize: 6,
+            showSizeChanger: false,
+            hideOnSinglePage: true,
+          }}
           locale={{
             emptyText: (
               <Empty description="No SLA entries for the selected filters." />

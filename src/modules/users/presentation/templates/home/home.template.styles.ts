@@ -163,13 +163,17 @@ export const HeroActions = styled.div`
 `;
 
 export const HeroButton = styled.button<{ $variant?: "primary" | "ghost" }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid
     ${({ $variant }) =>
       $variant === "primary" ? "transparent" : "var(--color-border)"};
   background: ${({ $variant }) =>
-    $variant === "primary" ? "var(--color-primary)" : "transparent"};
+    $variant === "primary" ? "var(--color-company-action)" : "transparent"};
   color: ${({ $variant }) =>
-    $variant === "primary" ? "var(--on-primary)" : "var(--color-text)"};
+    $variant === "primary" ? "var(--on-company-action)" : "var(--color-text)"};
   padding: 7px 11px;
   border-radius: 999px;
   cursor: pointer;
@@ -386,6 +390,73 @@ export const CompanyText = styled.div`
   @media (max-height: 900px) {
     display: none;
   }
+`;
+
+export const ReadinessCardTrigger = styled.div`
+  cursor: help;
+`;
+
+export const ReadinessTooltipCard = styled.div`
+  min-width: 260px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const ReadinessTooltipHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  .title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .meta {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+`;
+
+export const ReadinessTooltipList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+export const ReadinessTooltipItem = styled.div<{ $completed: boolean }>`
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: ${({ $completed }) =>
+    $completed
+      ? "color-mix(in srgb, var(--color-text) 86%, var(--color-text-muted))"
+      : "var(--color-text)"};
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: ${({ $completed }) =>
+      $completed
+        ? "color-mix(in srgb, var(--color-success) 85%, var(--color-text))"
+        : "color-mix(in srgb, var(--color-warning) 85%, var(--color-text))"};
+  }
+`;
+
+export const ReadinessTooltipFootnote = styled.div<{ $completed: boolean }>`
+  margin-top: 2px;
+  font-size: 11px;
+  color: ${({ $completed }) =>
+    $completed
+      ? "color-mix(in srgb, var(--color-success) 92%, var(--color-text))"
+      : "var(--color-text-muted)"};
 `;
 
 export const ServicesArea = styled.div`

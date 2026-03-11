@@ -67,6 +67,7 @@ export class LoginForm extends BaseComponent<Props> {
               onFinish={handleSubmit}
               requiredMark={false}
               style={{ width: "100%" }}
+              data-cy="login-form"
             >
               <Form.Item<LoginFormValues>
                 label="Email"
@@ -80,6 +81,7 @@ export class LoginForm extends BaseComponent<Props> {
                   size="large"
                   placeholder="Enter your email"
                   autoComplete="email"
+                  data-cy="login-email-input"
                   prefix={
                     <FieldIcon aria-hidden>
                       <Mail size={18} />
@@ -100,6 +102,7 @@ export class LoginForm extends BaseComponent<Props> {
                   size="large"
                   placeholder="Enter your password"
                   autoComplete="current-password"
+                  data-cy="login-password-input"
                   prefix={
                     <FieldIcon aria-hidden>
                       <Lock size={18} />
@@ -117,7 +120,7 @@ export class LoginForm extends BaseComponent<Props> {
                 </Typography.Link>
               </ActionsRow>
 
-              <PrimaryButton type="primary" htmlType="submit" size="large" block>
+              <PrimaryButton type="primary" htmlType="submit" size="large" block data-cy="login-submit-button">
                 <ButtonIcon aria-hidden>
                   <LogIn size={18} />
                 </ButtonIcon>
@@ -143,7 +146,9 @@ export class LoginForm extends BaseComponent<Props> {
 
               <BottomRow>
                 <Typography.Text type="secondary">Not a member?</Typography.Text>{" "}
-                  <Typography.Link onClick={() => this.props.onRegister?.()}>Register now</Typography.Link>
+                  <Typography.Link onClick={() => this.props.onRegister?.()} data-cy="login-register-link">
+                    Register now
+                  </Typography.Link>
               </BottomRow>
             </Form>
           </Space>

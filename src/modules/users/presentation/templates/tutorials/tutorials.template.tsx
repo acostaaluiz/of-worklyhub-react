@@ -2,6 +2,8 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, type Variants, useReducedMotion } from "framer-motion";
 import {
+  ArrowLeft,
+  ArrowRight,
   BookOpen,
   Box,
   Briefcase,
@@ -9,7 +11,10 @@ import {
   ClipboardList,
   CreditCard,
   DollarSign,
+  ExternalLink,
   LayoutDashboard,
+  Play,
+  Sparkles,
   Users,
 } from "lucide-react";
 import {
@@ -282,6 +287,45 @@ const tutorialsCatalog: ModuleTutorial[] = [
     ],
   },
   {
+    id: "growth",
+    title: "Growth",
+    subtitle: "Retention, reactivation, and revenue recovery",
+    route: "/growth/landing",
+    icon: <Sparkles size={18} />,
+    slides: [
+      {
+        title: "Prioritize the right opportunities",
+        summary: "Use Growth Autopilot to rank opportunities from schedule, work-order, and finance signals.",
+        bullets: [
+          "Review new and queued opportunities with expected value",
+          "Filter by status and source module before dispatch",
+          "Select priority opportunities in batch for faster action",
+        ],
+        expectedResult: "You focus team effort on the highest commercial impact first.",
+      },
+      {
+        title: "Configure playbooks by objective",
+        summary: "Set goal, channel mix, and cadence once and apply it consistently.",
+        bullets: [
+          "Enable reactivation, upsell, and recovery playbooks",
+          "Set channels (WhatsApp, email, SMS) per objective",
+          "Define delay and max touches to avoid message fatigue",
+        ],
+        expectedResult: "Campaign execution becomes repeatable and less dependent on manual follow-up.",
+      },
+      {
+        title: "Track conversion and recovered revenue",
+        summary: "Use attribution indicators to validate campaign impact over the selected window.",
+        bullets: [
+          "Monitor dispatched vs converted opportunities",
+          "Measure recovered revenue tied to growth actions",
+          "Adjust playbooks based on conversion rate trends",
+        ],
+        expectedResult: "You shorten time from execution to billing and improve cashflow predictability.",
+      },
+    ],
+  },
+  {
     id: "inventory",
     title: "Inventory",
     subtitle: "Stock and supplies control",
@@ -323,39 +367,39 @@ const tutorialsCatalog: ModuleTutorial[] = [
   {
     id: "people",
     title: "People",
-    subtitle: "Team members and staff access",
-    route: "/people/landing",
+    subtitle: "Team capacity and availability",
+    route: "/people",
     icon: <Users size={18} />,
     slides: [
       {
-        title: "Organize your workforce",
-        summary: "Manage collaborators with clear ownership and visibility.",
+        title: "Set weekly availability",
+        summary: "Define the weekly capacity baseline for each collaborator in one shared flow.",
         bullets: [
-          "Keep staff records up to date",
-          "Define who is responsible for each operation",
-          "Support growth with structured onboarding",
+          "Open People and use the Capacity & availability tab",
+          "Set minutes per weekday for each collaborator",
+          "Save once and keep backend persistence for multi-user visibility",
         ],
-        expectedResult: "You improve team coordination.",
+        expectedResult: "Your team works from a single source of truth for availability.",
       },
       {
-        title: "Assign work with clarity",
-        summary: "Use people data to allocate tasks and capacity better.",
+        title: "Register availability blocks",
+        summary: "Capture exceptions such as PTO, training, and meetings to prevent unrealistic planning.",
         bullets: [
-          "Map roles to real execution responsibilities",
-          "Balance workload across available staff",
-          "Reduce ambiguity in assignment flow",
+          "Create date and time blocks directly from the capacity panel",
+          "Use blocks to reduce effective daily availability automatically",
+          "Keep updates visible for managers and auditors",
         ],
-        expectedResult: "Execution quality improves with less rework.",
+        expectedResult: "Planned load reflects real available hours.",
       },
       {
-        title: "Create performance rhythm",
-        summary: "Use team visibility to guide coaching and process evolution.",
+        title: "Track load and over-allocation",
+        summary: "Review operational indicators and collaborator load before assignment conflicts escalate.",
         bullets: [
-          "Review output and blockers regularly",
-          "Align team priorities to business goals",
-          "Capture learning and update routines",
+          "Monitor conflict rate, productive hours, and planned workload",
+          "Compare schedule load and work-order load per collaborator",
+          "Act on over-allocation alerts before dispatching new work",
         ],
-        expectedResult: "Your team matures operationally month after month.",
+        expectedResult: "You reduce schedule conflicts and improve productivity planning.",
       },
     ],
   },
@@ -688,6 +732,7 @@ export default function TutorialsTemplate() {
               </FloatingTag>
               <HeroMainButton
                 type="primary"
+                icon={<Play size={16} />}
                 onClick={() => {
                   if (tutorials.length) activateModule(tutorials[0].id, 0, 1);
                 }}
@@ -924,18 +969,19 @@ export default function TutorialsTemplate() {
 
                   <StageActions>
                     <StageActionButtons>
-                      <GhostButton onClick={goToPreviousSlide} disabled={isFirstSlide}>
+                      <GhostButton icon={<ArrowLeft size={16} />} onClick={goToPreviousSlide} disabled={isFirstSlide}>
                         Previous
                       </GhostButton>
                       <PrimaryPillButton
                         type="primary"
+                        icon={<ArrowRight size={16} />}
                         onClick={goToNextSlide}
                         disabled={isLastSlide}
                       >
                         Next
                       </PrimaryPillButton>
                     </StageActionButtons>
-                    <GhostButton onClick={() => navigate(selectedModule.route)}>
+                    <GhostButton icon={<ExternalLink size={16} />} onClick={() => navigate(selectedModule.route)}>
                       Open module
                     </GhostButton>
                   </StageActions>

@@ -6,17 +6,23 @@ import type {
   CreateWorkOrderStatusInput,
   CreateWorkOrderChecklistItemInput,
   CreateWorkOrderCommentInput,
+  CreateWorkOrderAttachmentInput,
   GetWorkOrderOverviewOptions,
   ListWorkOrdersFilters,
+  RequestWorkOrderAttachmentUploadSignatureInput,
   UpdateWorkOrderInput,
   UpdateWorkOrderChecklistItemInput,
   WorkOrderListPage,
   WorkOrder,
+  WorkOrderAttachment,
+  WorkOrderAttachmentUploadSignature,
   WorkOrderChecklistItem,
   WorkOrderComment,
   WorkOrderOverview,
   WorkOrderStatusHistoryEntry,
   WorkOrderStatus,
+  WorkOrderWorkspaceSettings,
+  WorkOrderWorkspaceSettingsBundle,
 } from "@modules/work-order/interfaces/work-order.model";
 
 export class WorkOrderHttpService {
@@ -211,6 +217,83 @@ export class WorkOrderHttpService {
       throw toAppError(err);
     }
   }
+
+  async getSettings(workspaceId: string | undefined): Promise<WorkOrderWorkspaceSettingsBundle> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.getSettings(workspaceId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async upsertSettings(
+    workspaceId: string | undefined,
+    settings: Partial<WorkOrderWorkspaceSettings>,
+    updatedBy?: string | null
+  ): Promise<WorkOrderWorkspaceSettingsBundle> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.upsertSettings(workspaceId, {
+        workspaceId,
+        settings,
+        updatedBy,
+      });
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async listAttachments(
+    workspaceId: string | undefined,
+    workOrderId: string
+  ): Promise<WorkOrderAttachment[]> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.getAttachments(workspaceId, workOrderId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async requestAttachmentUploadSignature(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    payload: RequestWorkOrderAttachmentUploadSignatureInput
+  ): Promise<WorkOrderAttachmentUploadSignature> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.requestAttachmentUploadSignature(workspaceId, workOrderId, payload);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async createAttachment(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    payload: CreateWorkOrderAttachmentInput
+  ): Promise<WorkOrderAttachment> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      return await this.api.createAttachment(workspaceId, workOrderId, payload);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async deleteAttachment(
+    workspaceId: string | undefined,
+    workOrderId: string,
+    attachmentId: string
+  ): Promise<void> {
+    try {
+      if (!workspaceId) throw new Error("workspaceId is required");
+      await this.api.deleteAttachment(workspaceId, workOrderId, attachmentId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
 }
 
 export const workOrderHttpService = new WorkOrderHttpService();
@@ -224,6 +307,20 @@ export async function createWorkOrderStatus(
   payload: CreateWorkOrderStatusInput
 ): Promise<WorkOrderStatus> {
   return workOrderHttpService.createStatus(workspaceId, payload);
+}
+
+export async function getWorkOrderSettings(
+  workspaceId: string | undefined
+): Promise<WorkOrderWorkspaceSettingsBundle> {
+  return workOrderHttpService.getSettings(workspaceId);
+}
+
+export async function upsertWorkOrderSettings(
+  workspaceId: string | undefined,
+  settings: Partial<WorkOrderWorkspaceSettings>,
+  updatedBy?: string | null
+): Promise<WorkOrderWorkspaceSettingsBundle> {
+  return workOrderHttpService.upsertSettings(workspaceId, settings, updatedBy);
 }
 
 export async function listWorkOrders(
@@ -328,6 +425,37 @@ export async function deleteWorkOrderChecklistItem(
   itemId: string
 ): Promise<void> {
   return workOrderHttpService.deleteChecklistItem(workspaceId, workOrderId, itemId);
+}
+
+export async function listWorkOrderAttachments(
+  workspaceId: string | undefined,
+  workOrderId: string
+): Promise<WorkOrderAttachment[]> {
+  return workOrderHttpService.listAttachments(workspaceId, workOrderId);
+}
+
+export async function requestWorkOrderAttachmentUploadSignature(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  payload: RequestWorkOrderAttachmentUploadSignatureInput
+): Promise<WorkOrderAttachmentUploadSignature> {
+  return workOrderHttpService.requestAttachmentUploadSignature(workspaceId, workOrderId, payload);
+}
+
+export async function createWorkOrderAttachment(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  payload: CreateWorkOrderAttachmentInput
+): Promise<WorkOrderAttachment> {
+  return workOrderHttpService.createAttachment(workspaceId, workOrderId, payload);
+}
+
+export async function deleteWorkOrderAttachment(
+  workspaceId: string | undefined,
+  workOrderId: string,
+  attachmentId: string
+): Promise<void> {
+  return workOrderHttpService.deleteAttachment(workspaceId, workOrderId, attachmentId);
 }
 
 export default workOrderHttpService;

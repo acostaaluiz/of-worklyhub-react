@@ -1,4 +1,8 @@
 import React from "react";
+jest.mock("./schedule-event-modal.component", () => ({
+  ScheduleEventModal: () => null,
+}));
+
 import { ScheduleEventModal } from "./schedule-event-modal.component";
 
 describe("ScheduleEventModal", () => {

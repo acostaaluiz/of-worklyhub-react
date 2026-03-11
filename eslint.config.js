@@ -76,4 +76,18 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    files: ['cypress/**/*.ts', 'cypress.config.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        cy: 'readonly',
+        Cypress: 'readonly',
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-namespace': 'off',
+    },
+  },
 ])

@@ -126,6 +126,42 @@ describe("WorkOrderApi", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("handles attachments endpoints", async () => {
+    const listAttachmentsApi = createApi({ data: [{ id: "attachment-1" }] });
+    const requestUploadSignatureApi = createApi({
+      url: "https://upload.example.com",
+      path: "work-orders/ws-1/wo-1/user-1/file.jpg",
+      expiresAt: "2026-03-07T12:00:00.000Z",
+      maxSize: 26214400,
+    });
+    const createAttachmentApi = createApi({ data: { id: "attachment-2" } });
+    const deleteAttachmentApi = createApi(undefined);
+
+    await expect(listAttachmentsApi.api.getAttachments("ws-1", "wo-1")).resolves.toEqual([
+      { id: "attachment-1" },
+    ]);
+    await expect(
+      requestUploadSignatureApi.api.requestAttachmentUploadSignature("ws-1", "wo-1", {
+        filename: "evidence.jpg",
+        contentType: "image/jpeg",
+        maxSize: 26214400,
+      } as any)
+    ).resolves.toMatchObject({
+      url: "https://upload.example.com",
+      path: "work-orders/ws-1/wo-1/user-1/file.jpg",
+    });
+    await expect(
+      createAttachmentApi.api.createAttachment("ws-1", "wo-1", {
+        storagePath: "work-orders/ws-1/wo-1/user-1/file.jpg",
+        fileName: "evidence.jpg",
+        contentType: "image/jpeg",
+      } as any)
+    ).resolves.toEqual({ id: "attachment-2" });
+    await expect(
+      deleteAttachmentApi.api.deleteAttachment("ws-1", "wo-1", "attachment-2")
+    ).resolves.toBeUndefined();
+  });
+
   it("covers helper methods through instance access", () => {
     const { api } = createApi({});
     const anyApi = api as any;

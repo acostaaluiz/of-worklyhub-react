@@ -6,6 +6,8 @@ import InventoryApi, {
   type InventoryAlertsResponse,
   type InventoryItem,
   type InventoryMovement,
+  type InventoryWorkspaceSettings,
+  type InventoryWorkspaceSettingsBundle,
   type ListInventoryMovementsQuery,
 } from "./inventory-api";
 
@@ -81,6 +83,30 @@ export class InventoryHttpService {
       throw toAppError(err);
     }
   }
+
+  async getSettings(workspaceId: string): Promise<InventoryWorkspaceSettingsBundle> {
+    try {
+      return await this.api.getSettings(workspaceId);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async upsertSettings(
+    workspaceId: string,
+    settings: Partial<InventoryWorkspaceSettings>,
+    updatedBy?: string | null
+  ): Promise<InventoryWorkspaceSettingsBundle> {
+    try {
+      return await this.api.upsertSettings({
+        workspaceId,
+        settings,
+        updatedBy: updatedBy ?? null,
+      });
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
 }
 
 export const inventoryHttpService = new InventoryHttpService();
@@ -130,6 +156,20 @@ export async function getInventoryAlerts(
   workspaceId: string
 ): Promise<InventoryAlertsResponse> {
   return inventoryHttpService.getAlerts(workspaceId);
+}
+
+export async function getInventorySettings(
+  workspaceId: string
+): Promise<InventoryWorkspaceSettingsBundle> {
+  return inventoryHttpService.getSettings(workspaceId);
+}
+
+export async function upsertInventorySettings(
+  workspaceId: string,
+  settings: Partial<InventoryWorkspaceSettings>,
+  updatedBy?: string | null
+): Promise<InventoryWorkspaceSettingsBundle> {
+  return inventoryHttpService.upsertSettings(workspaceId, settings, updatedBy);
 }
 
 export default inventoryHttpService;

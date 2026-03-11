@@ -1,0 +1,530 @@
+PROMPT PARA AGENT GERADOR DE SLIDES - WORKLYHUB (VERSAO COMPLETA)
+
+Contexto:
+Voce e um agente especializado em criar apresentacoes executivas e de produto. Sua tarefa e gerar uma apresentacao completa sobre o WorklyHub, explicando de forma clara o que e a plataforma, como cada modulo funciona, quais dores resolve, quais resultados gera e quais diferenciais competitivos entrega.
+
+Objetivo da apresentacao:
+- Explicar o WorklyHub de ponta a ponta para publico de negocio e operacao.
+- Mostrar como os modulos se conectam em uma operacao real.
+- Destacar ganhos praticos: produtividade, previsibilidade, receita e experiencia do cliente.
+- Evidenciar diferenciais estrategicos para competir em mercados locais e internacionais.
+
+Publico-alvo da apresentacao:
+- Dono(a) de clinica/empresa de servicos
+- Gestor(a) de operacoes
+- Financeiro
+- Recepcao/atendimento
+- Lider de time tecnico
+- Parceiros e investidores potenciais
+
+Tom e estilo:
+- Profissional, moderno, objetivo e orientado a resultado.
+- Evitar jargao tecnico desnecessario.
+- Priorizar beneficios de negocio com exemplos reais de uso.
+- Usar linguagem de "antes e depois" para mostrar impacto.
+
+Regras obrigatorias para o deck:
+1. Criar narrativa em funil:
+   - problema de mercado
+   - proposta de valor WorklyHub
+   - visao da plataforma
+   - modulos
+   - jornadas integradas
+   - diferenciais
+   - indicadores de sucesso
+   - roadmap e proximos passos
+2. Para cada modulo, sempre incluir:
+   - dor que resolve
+   - quem usa (persona)
+   - principais funcionalidades
+   - fluxo de uso recomendado
+   - KPI/metricas associadas
+3. Incluir pelo menos 1 slide de integracoes entre modulos.
+4. Incluir pelo menos 1 slide de automacoes inteligentes.
+5. Incluir pelo menos 1 slide sobre IA assistiva no produto.
+6. Incluir fechamento com vantagens competitivas e plano de expansao.
+
+==================================================
+1) O QUE E O WORKLYHUB
+==================================================
+
+WorklyHub e uma plataforma de gestao operacional e crescimento para negocios de servicos, com foco em unificar execucao, agenda, pessoas, faturamento, relacionamento com cliente e automacoes inteligentes em um unico sistema.
+
+Proposta central:
+"Transformar sinais operacionais em execucao previsivel, receita recorrente e melhor experiencia do cliente."
+
+Pilares do produto:
+- Operacao centralizada (agenda, ordens de servico, equipe e SLAs)
+- Controles de negocio (financeiro, faturamento e configuracoes)
+- Experiencia do cliente (catalogo, jornada de atendimento e Client 360)
+- Crescimento orientado a dados (Growth Autopilot)
+- Assistencia inteligente em contexto (WorklyPilot AI Chat)
+
+Resultado esperado:
+- Menos retrabalho e conflitos de agenda
+- Menos atraso entre execucao e faturamento
+- Maior rastreabilidade e auditoria
+- Melhor aproveitamento da equipe
+- Maior retencao e recompra de clientes
+
+==================================================
+2) VISAO DE ARQUITETURA E OPERACAO
+==================================================
+
+Caracteristicas de arquitetura (visao de produto):
+- Workspace-first: cada empresa opera em ambiente proprio com configuracoes dedicadas.
+- Modulos especializados e integrados: cada dominio resolve uma area, mas compartilha dados para jornadas completas.
+- Automacoes por eventos: mudancas de status e marcos operacionais podem acionar processos financeiros/comerciais.
+- Persistencia e auditoria: foco em historico, metadados e rastreabilidade de acoes.
+- Design system e theming: experiencia visual coerente (light/dark) e componentes reutilizaveis.
+- Assistente IA em contexto de pagina: respostas orientadas ao uso correto do WorklyHub.
+
+Principios de experiencia:
+- Interface modular por landing pages
+- Fluxos orientados a acao
+- Indicadores e alertas para decisao rapida
+- Tutorial guiado e onboarding por modulo
+
+==================================================
+3) MAPA DE MODULOS DO WORKLYHUB
+==================================================
+
+Modulo 1: HOME (Dashboard Executivo de Entrada)
+Dor que resolve:
+- Falta de visao rapida do estado do negocio ao iniciar o dia.
+Personas:
+- Dono, gestor de operacoes, coordenador.
+Principais capacidades:
+- Hero com indicadores de contexto diario.
+- Bloco de indicadores operacionais (sem duplicidade de KPI).
+- Company snapshot com sinais de preparo da operacao.
+- Atalho para modulos prioritarios.
+- Tooltip de setup readiness com itens pendentes detalhados.
+KPIs:
+- Carga do dia
+- Receita do periodo
+- Alertas operacionais (ex.: OS atrasadas, inventario, notificacoes)
+- Setup readiness
+
+Modulo 2: BILLING
+Dor que resolve:
+- Complexidade de assinatura, cobranca e evolucao de plano.
+Personas:
+- Financeiro, dono.
+Principais capacidades:
+- Jornada de checkout simplificada para uso com gateways.
+- Configuracao de gateway por flag (ex.: Mercado Pago / outros gateways futuros).
+- Tratamento de erro amigavel no checkout.
+- Resumo de plano e conversao.
+KPIs:
+- Conversao de checkout
+- Taxa de erro por gateway
+- Tempo medio de conclusao de assinatura
+
+Modulo 3: USERS
+Dor que resolve:
+- Gestao de usuarios e acessos dispersa.
+Personas:
+- Admin workspace, RH operacional, gestor.
+Principais capacidades:
+- Cadastro e manutencao de usuarios.
+- Controle de acesso por workspace.
+- Perfil, menu de usuario e acoes rapidas.
+KPIs:
+- Usuarios ativos
+- Tempo de onboarding de usuario
+- Cobertura de perfis cadastrados
+
+Modulo 4: COMPANY
+Dor que resolve:
+- Configuracoes corporativas espalhadas e sem padrao.
+Personas:
+- Dono, administrativo, gestor de operacoes.
+Principais capacidades:
+- Setup institucional da empresa/workspace.
+- Configuracoes gerais e dados corporativos.
+- Base para sinal de setup readiness exibido na Home.
+KPIs:
+- Percentual de setup concluido
+- Campos corporativos completos
+
+Modulo 5: DASHBOARD
+Dor que resolve:
+- Falta de visao consolidada de performance.
+Personas:
+- Lideranca, dono, financeiro.
+Principais capacidades:
+- KPIs de negocio e operacao em painel executivo.
+- Leitura de tendencias para tomada de decisao.
+KPIs:
+- Receita
+- Demanda
+- Efetividade operacional
+
+Modulo 6: FINANCE
+Dor que resolve:
+- Lancamentos financeiros desconectados da execucao.
+Personas:
+- Financeiro, dono, administrativo.
+Principais capacidades:
+- Registro de entradas e saidas.
+- Relatorios e analise de fluxo.
+- Integracao com automacao de faturamento por conclusao de OS/Agenda.
+KPIs:
+- Tempo de execucao ate faturamento
+- Percentual de lancamentos automaticos vs manuais
+- Receita recuperada
+
+Modulo 7: INVENTORY
+Dor que resolve:
+- Falta de controle sobre categorias e consumo de estoque.
+Personas:
+- Operacao, compras, gestor.
+Principais capacidades:
+- Landing e home do modulo.
+- Gestao de categorias.
+- Settings dedicados (espelhando padrao de Work Order settings).
+- Integracao com operacao e possiveis eventos de faturamento.
+KPIs:
+- Alertas de inventario
+- Ruptura de estoque
+- Giro por categoria
+
+Modulo 8: PEOPLE
+Dor que resolve:
+- Alocacao de equipe sem visao de capacidade real.
+Personas:
+- Gestor de operacoes.
+Principais capacidades:
+- Capacity & Availability.
+- Disponibilidade semanal por colaborador.
+- Bloqueios e indisponibilidades.
+- Carga planejada por colaborador.
+- Alerta de sobrealocacao.
+- Persistencia backend para uso multiusuario e auditoria (sem fallback localStorage).
+- Endpoint agregado de capacidade para evitar carga excessiva no frontend.
+- Tabelas com paginacao/organizacao para evitar scroll de pagina.
+KPIs:
+- Taxa de conflitos de agenda
+- Horas produtivas por colaborador
+- Utilizacao por colaborador
+
+Modulo 9: SLA (Employee SLA / Service Level)
+Dor que resolve:
+- Dificuldade de medir performance por colaborador e periodo.
+Personas:
+- Gestor, dono.
+Principais capacidades:
+- Filtro por colaborador e intervalo de datas.
+- Relatorio de horas concluido por dia.
+- Tabela paginada (ex.: 6 registros por pagina) para melhor UX.
+- Correcoes de compatibilidade de filtros de data.
+KPIs:
+- Horas concluidas por colaborador
+- Tendencia de produtividade
+- Cumprimento de metas operacionais
+
+Modulo 10: SCHEDULE
+Dor que resolve:
+- Agenda sem controle integrado com equipe e execucao.
+Personas:
+- Recepcao, coordenador, gestor.
+Principais capacidades:
+- Gestao de agendamentos.
+- Integracao com People (capacidade/disponibilidade).
+- Integracao com faturamento quando evento atinge status final.
+KPIs:
+- Conflitos de agenda
+- Taxa de comparecimento
+- Tempo entre agendamento e conclusao
+
+Modulo 11: SERVICES (Catalogo e Service Detail)
+Dor que resolve:
+- Catalogo de servicos pouco atrativo e sem padrao de conversao.
+Personas:
+- Cliente final, recepcao, comercial.
+Principais capacidades:
+- Catalogo visual com cards de servicos/workspaces.
+- Service detail acessado a partir do catalogo.
+- Melhorias visuais para layout mais amigavel.
+- Uso de icones e refinamento de disposicao de blocos.
+- Padronizacao de bordas e destaque visual coerente com tema.
+KPIs:
+- CTR em servicos
+- Conversao em agendamento
+- Ticket medio por servico
+
+Modulo 12: WORK ORDER (OS)
+Dor que resolve:
+- Execucao de servicos sem padrao, sem rastreabilidade e com retrabalho.
+Personas:
+- Tecnico de campo, auditor/gestor, recepcao, operacao.
+Principais capacidades:
+- Landing com acesso aos fluxos principais.
+- Board/lista de OS com filtros e edicao.
+- Calendar de OS.
+- Status/workflow setup.
+- Work-order settings por workspace com valores default customizaveis.
+- Tabs para configuracoes evitando pagina longa com scroll.
+- Regras de validacao de fluxo (ex.: obrigatoriedade de worker/checklist/anexo).
+- Regras de anexos (tipos, limite por arquivo, limite por OS).
+- Anexos de evidencias com persistencia real em Firebase Storage.
+  - Estrategia de caminho com marcacao de user/workspace/workOrderId.
+  - Upload, listagem e exclusao de anexos com metadados de autor/data.
+- Historico de atividade, comentarios e checklist.
+- Integracao de automacao financeira quando OS e concluida.
+- Ajustes visuais com icones em labels/botoes e modal de anexos.
+KPIs:
+- Percentual de OS com evidencias anexadas
+- Tempo de resolucao de contestacao
+- Tempo de ciclo da OS
+- Taxa de retrabalho
+
+Modulo 13: CLIENTS (inclui CLIENT 360)
+Dor que resolve:
+- Historico de cliente fragmentado entre agenda, OS e financeiro.
+Personas:
+- Dono, recepcao, atendimento.
+Principais capacidades:
+- Landing de clients orientando entradas certas.
+- Service catalog (exploracao de servicos).
+- Client 360 com cadastro unificado e timeline consolidada.
+- Busca por telefone/email.
+- Perfil unico com eventos de agenda, OS e faturamento.
+- Otimizacao de requests para evitar chamadas excessivas.
+- Ajustes de layout: lista de profiles com limite de exibicao e scroll interno em container.
+- Harmonizacao de tamanho entre cards de profile/timeline.
+KPIs:
+- Tempo medio de atendimento
+- Taxa de recompra em 60 dias
+- Engajamento por cliente
+- Receita por cliente
+
+Modulo 14: NOTIFICATIONS CENTER
+Dor que resolve:
+- Sinais importantes perdidos no dia a dia.
+Personas:
+- Todo usuario logado.
+Principais capacidades:
+- Feed de notificacoes com filtro de leitura/prioridade.
+- Badge no header com contador alinhado.
+- Acoes: abrir, marcar como lida/nao lida, arquivar.
+- Visual alinhado ao tema ativo (light/dark).
+KPIs:
+- Notificacoes nao lidas
+- Tempo medio para acao apos alerta
+- Taxa de resolucao por alerta
+
+Modulo 15: TUTORIALS
+Dor que resolve:
+- Onboarding lento e baixa adocao de funcionalidades.
+Personas:
+- Novos usuarios, usuarios em reciclagem.
+Principais capacidades:
+- Catalogo de tutoriais por modulo.
+- Tour guiado completo.
+- Slides didaticos por dominio.
+- Botoes com icones (next, previous, open module, start full tour).
+- Conteudo atualizado para novos fluxos (ex.: People availability/capacity).
+KPIs:
+- Taxa de conclusao de tutorial
+- Tempo para primeiro valor percebido (TTFV)
+- Adocao de modulos apos tutorial
+
+Modulo 16: SETTINGS (Global de workspace)
+Dor que resolve:
+- Parametros criticos dispersos e dificeis de manter.
+Personas:
+- Admin workspace, dono, financeiro.
+Principais capacidades:
+- Pagina de settings em ingles.
+- Tabs de configuracao (Billing, Issuance, Advanced, Appearance).
+- Theme switch (Light/Dark) via configuracao.
+- Iconografia para tabs, labels e cards.
+- Ajustes de mensagens backend para consistencia em ingles.
+- Remocao de alertas desnecessarios para reduzir ruido.
+KPIs:
+- Cobertura de configuracao do workspace
+- Tempo para configurar ambiente
+- Erros operacionais por setup incompleto
+
+Modulo 17: GROWTH AUTOPILOT (Novo diferencial)
+Dor que resolve:
+- Oportunidades de receita e retencao se perdem por falta de acao sistematica.
+Personas:
+- Dono, marketing, comercial, operacoes.
+Principais capacidades:
+- Aba Opportunities:
+  - lista de oportunidades geradas por sinais operacionais
+  - priorizacao por potencial
+  - disparo de acao
+- Aba Playbooks:
+  - playbooks de reativacao, upsell e recuperacao
+  - configuracao de objetivo, canais, delay, max touches
+  - salvar regras de automacao
+  - melhoria de UX com layout em carousel para cards de playbooks
+- Aba Attribution:
+  - metricas de conversao e receita recuperada
+  - pipeline status mix
+  - proximas acoes recomendadas
+  - refinamento de espacamento/padding para leitura executiva
+- Integracao com IA para orientar melhor uso do modulo.
+KPIs:
+- Oportunidades disparadas
+- Taxa de conversao por playbook
+- Receita recuperada
+- Tempo medio para converter oportunidade
+
+==================================================
+4) AUTOMACOES E FLUXOS CHAVE
+==================================================
+
+Fluxo A: Execucao -> Faturamento
+1. OS/Agenda atinge status final configurado.
+2. Sistema cria lancamento financeiro automaticamente (idempotente).
+3. Opcional: aciona fluxo de emissao fiscal (NF-e), quando habilitado.
+4. Em ambiente de desenvolvimento, falhas de endpoint GOV nao devem quebrar faturamento.
+Valor:
+- Reduz atraso de cobranca
+- Melhora caixa
+- Menos trabalho manual do financeiro
+
+Fluxo B: Evidencia operacional em OS
+1. Tecnico anexa evidencias (foto/documento).
+2. Arquivo persiste em Firebase Storage com trilha user/workspace/workOrderId.
+3. Gestor/auditor consulta metadados e historico.
+Valor:
+- Rastreabilidade
+- Reducao de disputas/contestacoes
+
+Fluxo C: Planejamento de equipe
+1. Gestor define disponibilidade e bloqueios.
+2. Sistema calcula capacidade e sobrealocacao agregada.
+3. People + Schedule + Work Order operam com visao integrada.
+Valor:
+- Menos conflito de agenda
+- Melhor produtividade do time
+
+Fluxo D: Cliente 360 e crescimento
+1. Dados de agenda, OS e financeiro convergem no perfil unico.
+2. Growth Autopilot identifica oportunidade (reativacao/upsell/recuperacao).
+3. Playbook direciona acao com canal e cadencia.
+Valor:
+- Aumento de retencao
+- Receita incremental
+
+==================================================
+5) ASSISTENTE IA - WORKLYPILOT
+==================================================
+
+Nome do assistente:
+WorklyPilot
+
+Papel:
+- Assistente virtual em contexto para instruir usuarios sobre uso correto do WorklyHub.
+- Disponivel globalmente via botao flutuante no canto inferior direito.
+- Acesso restrito a usuarios autenticados (nao publico).
+
+Boas praticas de funcionamento:
+- Responde sobre paginas, fluxos, configuracoes e boas praticas de operacao no WorklyHub.
+- Nao responde pedidos fora do contexto WorklyHub.
+- Para pedidos fora do escopo, retorna mensagem padrao de limite de contexto.
+- Deve orientar com passos praticos e linguagem objetiva.
+
+Integracao LLM:
+- Endpoint de completions do provedor configurado para chat.
+- Tratamento de erro robusto para sempre exibir feedback amigavel no front.
+
+Valor de negocio:
+- Reduz curva de aprendizado
+- Aumenta adocao correta de funcionalidades
+- Diminui erros operacionais por desconhecimento
+
+==================================================
+6) DIFERENCIAIS COMPETITIVOS DO WORKLYHUB
+==================================================
+
+1. Plataforma realmente integrada (operacao + financeiro + cliente + crescimento).
+2. Automacao direta entre execucao e monetizacao (menos latency de caixa).
+3. Client 360 com historico unificado e busca operacional.
+4. Growth Autopilot orientado por sinais reais do negocio.
+5. IA contextual (WorklyPilot) focada em produtividade dentro do produto.
+6. Workspace settings granulares por modulo (ex.: Work Order e Inventory).
+7. UX orientada a operacao: tabs, paginacao, containers com scroll interno, melhor legibilidade.
+8. Evolucao preparada para escala e multiworkspace.
+
+==================================================
+7) KPIs E METRICAS ESTRATEGICAS (SUGESTAO DE SLIDE)
+==================================================
+
+Operacao:
+- Taxa de conflitos de agenda
+- Taxa de sobrealocacao
+- Tempo medio de ciclo da OS
+
+Qualidade e rastreabilidade:
+- Percentual de OS com evidencias anexadas
+- Tempo de resolucao de contestacoes
+
+Financeiro:
+- Tempo execucao -> faturamento
+- Percentual automacao vs manual
+- Receita recuperada por automacoes
+
+Cliente:
+- Tempo medio de atendimento
+- Recompra em 60 dias
+- Receita por cliente
+
+Crescimento:
+- Taxa de conversao de oportunidades
+- Receita incremental por playbook
+- Retencao de clientes inativos reativados
+
+Adocao de produto:
+- Conclusao de tutoriais
+- Uso de modulos por workspace
+- Engajamento com WorklyPilot
+
+==================================================
+8) ROTEIRO RECOMENDADO DE APRESENTACAO (SLIDE BY SLIDE)
+==================================================
+
+Slide 1: Titulo e visao geral do WorklyHub
+Slide 2: Dor de mercado e oportunidade
+Slide 3: Proposta de valor da plataforma
+Slide 4: Arquitetura funcional por modulos
+Slide 5: Jornada integrada ponta a ponta (agenda -> execucao -> faturamento)
+Slide 6: Work Order em destaque (controle e evidencias)
+Slide 7: People + Schedule (capacidade e produtividade)
+Slide 8: Client 360 (atendimento e retencao)
+Slide 9: Growth Autopilot (pipeline de crescimento)
+Slide 10: WorklyPilot AI (assistencia contextual)
+Slide 11: Settings e governanca por workspace
+Slide 12: KPI framework de acompanhamento
+Slide 13: Diferenciais competitivos vs mercado
+Slide 14: Casos de impacto esperado (antes/depois)
+Slide 15: Roadmap de expansao e fechamento
+
+==================================================
+9) INSTRUCOES FINAIS PARA O AGENT DE SLIDES
+==================================================
+
+Ao gerar os slides:
+- Use linguagem executiva e orientada a resultado.
+- Mostre exemplos de telas/modulos quando possivel.
+- Sempre conectar funcionalidade a impacto de negocio.
+- Evite apenas listar features; conte uma historia de transformacao operacional.
+- Valorizar especialmente:
+  - automacao execucao -> faturamento
+  - Client 360
+  - Growth Autopilot
+  - Assistente IA WorklyPilot
+  - configurabilidade por workspace
+
+Formato de entrega esperado:
+- Deck pronto para apresentacao comercial/estrategica.
+- Visual moderno, consistente e com hierarquia clara de informacao.
+- Texto curto por slide, com aprofundamento em notas do apresentador quando necessario.
+
+Fim do prompt.
