@@ -351,49 +351,51 @@ function WorkOrdersPageContent(): React.ReactElement {
   }
 
   return (
-    <WorkOrdersTemplate
-      list={
-        <WorkOrderList
-          orders={orders}
-          statuses={statuses}
-          loading={listLoading}
-          selectedId={selected?.id ?? null}
-          filters={filters}
-          overview={overview}
-          hasMore={pagination.hasMore}
-          loadingMore={loadingMore}
-          onChangeFilters={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
-          onApplyFilters={handleApplyFilters}
-          onApplyFilterPatch={(patch) => {
-            const next = { ...filters, ...patch };
-            setFilters(next);
-            fetchOrders({ override: next, mode: "replace", offset: 0 });
-          }}
-          onResetFilters={handleResetFilters}
-          onLoadMore={fetchMoreOrders}
-          onSelect={(order) => setSelected(order)}
-          onCreate={() => setSelected(null)}
-          onDelete={handleDelete}
-          onRefresh={() => fetchOrders({ mode: "replace", offset: 0 })}
-        />
-      }
-      editor={
-        <WorkOrderForm
-          workspaceId={workspaceId}
-          currentUserUid={currentUserUid}
-          currentUserName={currentUserName}
-          employees={employees}
-          services={services}
-          inventoryItems={inventoryItems}
-          statuses={statuses}
-          initial={selected ?? undefined}
-          loading={saving}
-          onSubmit={handleSubmit}
-          onDelete={handleDelete}
-          onCancel={() => setSelected(null)}
-        />
-      }
-    />
+    <div data-cy="work-order-page">
+      <WorkOrdersTemplate
+        list={
+          <WorkOrderList
+            orders={orders}
+            statuses={statuses}
+            loading={listLoading}
+            selectedId={selected?.id ?? null}
+            filters={filters}
+            overview={overview}
+            hasMore={pagination.hasMore}
+            loadingMore={loadingMore}
+            onChangeFilters={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
+            onApplyFilters={handleApplyFilters}
+            onApplyFilterPatch={(patch) => {
+              const next = { ...filters, ...patch };
+              setFilters(next);
+              fetchOrders({ override: next, mode: "replace", offset: 0 });
+            }}
+            onResetFilters={handleResetFilters}
+            onLoadMore={fetchMoreOrders}
+            onSelect={(order) => setSelected(order)}
+            onCreate={() => setSelected(null)}
+            onDelete={handleDelete}
+            onRefresh={() => fetchOrders({ mode: "replace", offset: 0 })}
+          />
+        }
+        editor={
+          <WorkOrderForm
+            workspaceId={workspaceId}
+            currentUserUid={currentUserUid}
+            currentUserName={currentUserName}
+            employees={employees}
+            services={services}
+            inventoryItems={inventoryItems}
+            statuses={statuses}
+            initial={selected ?? undefined}
+            loading={saving}
+            onSubmit={handleSubmit}
+            onDelete={handleDelete}
+            onCancel={() => setSelected(null)}
+          />
+        }
+      />
+    </div>
   );
 }
 

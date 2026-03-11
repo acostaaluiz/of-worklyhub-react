@@ -305,7 +305,7 @@ export function WorkOrderList({
   }, [isMobileViewport, onDelete, onSelect]);
 
   const workOrdersContent = (
-    <WorkOrdersPane>
+    <WorkOrdersPane data-cy="work-order-list-pane">
       <PaneToolbar>
         <PaneHeader>
           <PaneTitle>Work orders</PaneTitle>
@@ -313,7 +313,12 @@ export function WorkOrderList({
             <Button icon={<ReloadOutlined />} onClick={onRefresh}>
               Refresh
             </Button>
-            <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={onCreate}
+              data-cy="work-order-new-button"
+            >
               New work order
             </Button>
           </PaneActions>
@@ -492,8 +497,9 @@ export function WorkOrderList({
   );
 
   return (
-    <ListRoot>
+    <ListRoot data-cy="work-order-list">
       <StyledTabs
+        data-cy="work-order-list-tabs"
         activeKey={activeTab}
         onChange={(key) =>
           setActiveTab(key as "work-orders" | "operations-overview")

@@ -1222,7 +1222,10 @@ export function WorkOrderForm({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", minHeight: 0, maxWidth: "100%", overflowX: "hidden" }}>
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", minHeight: 0, maxWidth: "100%", overflowX: "hidden" }}
+      data-cy="work-order-form"
+    >
       {attachmentsModal}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
         <div style={{ fontWeight: 600, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -1288,6 +1291,7 @@ export function WorkOrderForm({
 
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", paddingRight: 4, maxWidth: "100%" }}>
         <Tabs
+          data-cy="work-order-form-tabs"
           defaultActiveKey="general"
           tabBarGutter={isMobileViewport ? 8 : 16}
           style={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}
@@ -1295,7 +1299,7 @@ export function WorkOrderForm({
           {
             key: "general",
             label: (
-              <Space size={6}>
+              <Space size={6} data-cy="work-order-tab-general">
                 <FileTextOutlined />
                 General
               </Space>
@@ -1307,6 +1311,7 @@ export function WorkOrderForm({
                     placeholder="Title"
                     value={draft.title}
                     onChange={(e) => updateDraft({ title: e.target.value })}
+                    data-cy="work-order-title-input"
                   />
                 </LabeledField>
                 <LabeledField label="Description" icon={<MessageOutlined />}>
@@ -1315,6 +1320,7 @@ export function WorkOrderForm({
                     value={draft.description ?? ""}
                     onChange={(e) => updateDraft({ description: e.target.value })}
                     rows={3}
+                    data-cy="work-order-description-input"
                   />
                 </LabeledField>
 
@@ -1325,6 +1331,7 @@ export function WorkOrderForm({
                       value={draft.priority}
                       options={priorityOptions}
                       onChange={(value) => updateDraft({ priority: value })}
+                      data-cy="work-order-priority-select"
                     />
                   </LabeledField>
                   <LabeledField label="Status" icon={<InfoCircleOutlined />}>
@@ -1333,6 +1340,7 @@ export function WorkOrderForm({
                       value={draft.statusId}
                       options={statuses.map((s) => ({ value: s.id, label: s.label }))}
                       onChange={(value) => updateDraft({ statusId: value })}
+                      data-cy="work-order-status-select"
                     />
                   </LabeledField>
                 </div>
@@ -1352,6 +1360,7 @@ export function WorkOrderForm({
                           .toLowerCase()
                           .includes(input.toLowerCase())
                       }
+                      data-cy="work-order-requester-select"
                     />
                   </LabeledField>
                   <LabeledField label="Created by" icon={<IdcardOutlined />}>
@@ -1359,6 +1368,7 @@ export function WorkOrderForm({
                       placeholder="Created by"
                       value={resolveEmployeeLabel(draft.createdBy ?? currentUserUid)}
                       disabled
+                      data-cy="work-order-created-by-input"
                     />
                   </LabeledField>
                 </div>
@@ -1369,6 +1379,7 @@ export function WorkOrderForm({
                     value={metadataText}
                     onChange={(e) => setMetadataText(e.target.value)}
                     rows={4}
+                    data-cy="work-order-metadata-input"
                   />
                 </LabeledField>
               </div>
@@ -1377,7 +1388,7 @@ export function WorkOrderForm({
           {
             key: "schedule",
             label: (
-              <Space size={6}>
+              <Space size={6} data-cy="work-order-tab-schedule">
                 <CalendarOutlined />
                 Schedule
               </Space>
@@ -1392,6 +1403,7 @@ export function WorkOrderForm({
                       placeholder="Scheduled start"
                       value={toDayjsValue(draft.scheduledStartAt)}
                       onChange={(value) => updateDraft({ scheduledStartAt: toIsoDateTimeValue(value) })}
+                      data-cy="work-order-scheduled-start-input"
                     />
                   </LabeledField>
                   <LabeledField label="Scheduled end" icon={<CalendarOutlined />}>
@@ -1401,6 +1413,7 @@ export function WorkOrderForm({
                       placeholder="Scheduled end"
                       value={toDayjsValue(draft.scheduledEndAt)}
                       onChange={(value) => updateDraft({ scheduledEndAt: toIsoDateTimeValue(value) })}
+                      data-cy="work-order-scheduled-end-input"
                     />
                   </LabeledField>
                 </div>
@@ -1413,6 +1426,7 @@ export function WorkOrderForm({
                       placeholder="Due at"
                       value={toDayjsValue(draft.dueAt)}
                       onChange={(value) => updateDraft({ dueAt: toIsoDateTimeValue(value) })}
+                      data-cy="work-order-due-at-input"
                     />
                   </LabeledField>
                   <LabeledField label="Estimated duration (min)" icon={<ClockCircleOutlined />}>
@@ -1422,6 +1436,7 @@ export function WorkOrderForm({
                       value={draft.estimatedDurationMinutes ?? undefined}
                       onChange={(value) => updateDraft({ estimatedDurationMinutes: value ?? null })}
                       style={{ width: "100%" }}
+                      data-cy="work-order-estimated-duration-input"
                     />
                   </LabeledField>
                 </div>
@@ -1454,7 +1469,7 @@ export function WorkOrderForm({
           {
             key: "team",
             label: (
-              <Space size={6}>
+              <Space size={6} data-cy="work-order-tab-team">
                 <TeamOutlined />
                 Team
               </Space>
@@ -1463,7 +1478,9 @@ export function WorkOrderForm({
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div style={{ fontWeight: 600 }}>Workers</div>
-                  <Button icon={<PlusOutlined />} onClick={addWorker}>Add worker</Button>
+                  <Button icon={<PlusOutlined />} onClick={addWorker} data-cy="work-order-add-worker-button">
+                    Add worker
+                  </Button>
                 </div>
 
                 {(draft.workers ?? []).length === 0 ? (
@@ -1471,7 +1488,13 @@ export function WorkOrderForm({
                 ) : null}
 
                 {(draft.workers ?? []).map((line, idx) => (
-                  <Space key={`worker-${idx}`} wrap style={{ width: "100%" }} align="start">
+                  <Space
+                    key={`worker-${idx}`}
+                    wrap
+                    style={{ width: "100%" }}
+                    align="start"
+                    data-cy={`work-order-worker-row-${idx}`}
+                  >
                     <LabeledField label="Worker" icon={<UserOutlined />} style={{ width: 260 }}>
                       <Select
                         placeholder="Select team member"
@@ -1487,6 +1510,7 @@ export function WorkOrderForm({
                             .includes(input.toLowerCase())
                         }
                         style={{ width: "100%" }}
+                        data-cy={`work-order-worker-select-${idx}`}
                       />
                     </LabeledField>
                     <LabeledField label="Role" icon={<IdcardOutlined />} style={{ width: 170 }}>
@@ -1499,6 +1523,7 @@ export function WorkOrderForm({
                           { value: "reviewer", label: "Reviewer" },
                         ]}
                         onChange={(value) => updateWorker(idx, { assignmentRole: value })}
+                        data-cy={`work-order-worker-role-select-${idx}`}
                       />
                     </LabeledField>
                     <LabeledField label="Allocated minutes" icon={<ClockCircleOutlined />} style={{ width: 150 }}>
@@ -1508,10 +1533,16 @@ export function WorkOrderForm({
                         value={line.allocatedMinutes}
                         onChange={(value) => updateWorker(idx, { allocatedMinutes: value ?? undefined })}
                         style={{ width: "100%" }}
+                        data-cy={`work-order-worker-minutes-input-${idx}`}
                       />
                     </LabeledField>
                     <div style={{ display: "flex", alignItems: "flex-end", minHeight: "100%" }}>
-                      <Button danger icon={<DeleteOutlined />} onClick={() => removeWorker(idx)}>
+                      <Button
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => removeWorker(idx)}
+                        data-cy={`work-order-worker-remove-button-${idx}`}
+                      >
                         Remove
                       </Button>
                     </div>
@@ -1523,7 +1554,7 @@ export function WorkOrderForm({
           {
             key: "lines",
             label: (
-              <Space size={6}>
+              <Space size={6} data-cy="work-order-tab-lines">
                 <UnorderedListOutlined />
                 Lines
               </Space>
@@ -1538,6 +1569,7 @@ export function WorkOrderForm({
                       { label: "Inventory", value: "inventory" },
                     ]}
                     onChange={(value) => setLineMode(value as "services" | "inventory")}
+                    data-cy="work-order-line-mode-segmented"
                   />
                 </LabeledField>
 
@@ -1545,7 +1577,13 @@ export function WorkOrderForm({
                   <>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ fontWeight: 600 }}>Service lines</div>
-                      <Button icon={<PlusOutlined />} onClick={addServiceLine}>Add service</Button>
+                      <Button
+                        icon={<PlusOutlined />}
+                        onClick={addServiceLine}
+                        data-cy="work-order-add-service-line-button"
+                      >
+                        Add service
+                      </Button>
                     </div>
 
                     {(draft.serviceLines ?? []).length === 0 ? (
@@ -1563,6 +1601,7 @@ export function WorkOrderForm({
                           paddingBottom: 10,
                           borderBottom: "1px solid var(--color-border)",
                         }}
+                        data-cy={`work-order-service-line-${idx}`}
                       >
                         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px", gap: 10 }}>
                           <LabeledField label="Service" icon={<ToolOutlined />} style={{ minWidth: 0 }}>
@@ -1591,6 +1630,7 @@ export function WorkOrderForm({
                                   .includes(input.toLowerCase())
                               }
                               style={{ width: "100%" }}
+                              data-cy={`work-order-service-select-${idx}`}
                             />
                           </LabeledField>
                           <LabeledField label="Qty" icon={<NumberOutlined />}>
@@ -1600,6 +1640,7 @@ export function WorkOrderForm({
                               value={line.quantity}
                               onChange={(value) => updateServiceLine(idx, { quantity: value ?? undefined })}
                               style={{ width: "100%" }}
+                              data-cy={`work-order-service-qty-input-${idx}`}
                             />
                           </LabeledField>
                         </div>
@@ -1621,6 +1662,7 @@ export function WorkOrderForm({
                                 updateServiceLine(idx, { unitPriceCents: value ?? undefined })
                               }
                               style={{ width: "100%" }}
+                              data-cy={`work-order-service-unit-price-input-${idx}`}
                             />
                           </LabeledField>
                           <LabeledField label="Notes" icon={<FileTextOutlined />} style={{ minWidth: 0 }}>
@@ -1629,10 +1671,16 @@ export function WorkOrderForm({
                               value={line.notes ?? ""}
                               onChange={(e) => updateServiceLine(idx, { notes: e.target.value })}
                               style={{ width: "100%" }}
+                              data-cy={`work-order-service-notes-input-${idx}`}
                             />
                           </LabeledField>
                           <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                            <Button danger icon={<DeleteOutlined />} onClick={() => removeServiceLine(idx)}>
+                            <Button
+                              danger
+                              icon={<DeleteOutlined />}
+                              onClick={() => removeServiceLine(idx)}
+                              data-cy={`work-order-service-remove-button-${idx}`}
+                            >
                               Remove
                             </Button>
                           </div>
@@ -1644,7 +1692,13 @@ export function WorkOrderForm({
                   <>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ fontWeight: 600 }}>Inventory lines</div>
-                      <Button icon={<PlusOutlined />} onClick={addInventoryLine}>Add item</Button>
+                      <Button
+                        icon={<PlusOutlined />}
+                        onClick={addInventoryLine}
+                        data-cy="work-order-add-inventory-line-button"
+                      >
+                        Add item
+                      </Button>
                     </div>
 
                     {(draft.inventoryLines ?? []).length === 0 ? (
@@ -1665,7 +1719,13 @@ export function WorkOrderForm({
                         Math.max(plannedQuantity, consumedQuantity) > availableQuantity;
 
                       return (
-                        <Space key={`inventory-${idx}`} wrap style={{ width: "100%" }} align="start">
+                        <Space
+                          key={`inventory-${idx}`}
+                          wrap
+                          style={{ width: "100%" }}
+                          align="start"
+                          data-cy={`work-order-inventory-line-${idx}`}
+                        >
                         <LabeledField label="Inventory item" icon={<InboxOutlined />} style={{ width: 220 }}>
                           <Select
                             placeholder="Select inventory item"
@@ -1681,6 +1741,7 @@ export function WorkOrderForm({
                                 .includes(input.toLowerCase())
                             }
                             style={{ width: "100%" }}
+                            data-cy={`work-order-inventory-item-select-${idx}`}
                           />
                           {line.inventoryItemId ? (
                             <div style={{ marginTop: 4, fontSize: 12 }}>
@@ -1704,6 +1765,7 @@ export function WorkOrderForm({
                               { value: "output", label: "Output" },
                             ]}
                             onChange={(value) => updateInventoryLine(idx, { direction: value })}
+                            data-cy={`work-order-inventory-direction-select-${idx}`}
                           />
                         </LabeledField>
                         <LabeledField label="Planned quantity" icon={<NumberOutlined />} style={{ width: 120 }}>
@@ -1713,6 +1775,7 @@ export function WorkOrderForm({
                             value={line.plannedQuantity}
                             onChange={(value) => updateInventoryLine(idx, { plannedQuantity: value ?? undefined })}
                             style={{ width: "100%" }}
+                            data-cy={`work-order-inventory-planned-input-${idx}`}
                           />
                         </LabeledField>
                         <LabeledField label="Consumed quantity" icon={<NumberOutlined />} style={{ width: 120 }}>
@@ -1722,6 +1785,7 @@ export function WorkOrderForm({
                             value={line.consumedQuantity}
                             onChange={(value) => updateInventoryLine(idx, { consumedQuantity: value ?? undefined })}
                             style={{ width: "100%" }}
+                            data-cy={`work-order-inventory-consumed-input-${idx}`}
                           />
                         </LabeledField>
                         <LabeledField label="Unit cost (cents)" icon={<NumberOutlined />} style={{ width: 170 }}>
@@ -1731,10 +1795,16 @@ export function WorkOrderForm({
                             value={line.unitCostCents}
                             onChange={(value) => updateInventoryLine(idx, { unitCostCents: value ?? undefined })}
                             style={{ width: "100%" }}
+                            data-cy={`work-order-inventory-unit-cost-input-${idx}`}
                           />
                         </LabeledField>
                         <div style={{ display: "flex", alignItems: "flex-end", minHeight: "100%" }}>
-                          <Button danger icon={<DeleteOutlined />} onClick={() => removeInventoryLine(idx)}>
+                          <Button
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => removeInventoryLine(idx)}
+                            data-cy={`work-order-inventory-remove-button-${idx}`}
+                          >
                             Remove
                           </Button>
                         </div>
@@ -1749,7 +1819,7 @@ export function WorkOrderForm({
           {
             key: "activity",
             label: (
-              <Space size={6}>
+              <Space size={6} data-cy="work-order-tab-activity">
                 <ScheduleOutlined />
                 Activity
               </Space>
@@ -1769,6 +1839,7 @@ export function WorkOrderForm({
           loading={loading}
           disabled={!canSubmit}
           onClick={handleSubmit}
+          data-cy="work-order-submit-button"
         >
           {isEditing ? "Save changes" : "Create work order"}
         </Button>
