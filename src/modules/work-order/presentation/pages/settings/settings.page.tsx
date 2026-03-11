@@ -201,45 +201,52 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
   };
 
   return (
-    <BaseTemplate
-      content={
-        <PageStack>
-          <SettingsPageHeader
-            icon={<Settings2 size={22} />}
-            title="Work-order settings"
-            description="Configure default behavior and validation rules per workspace."
-            meta={
-              <SettingsSourceTags
-                source={source}
-                updatedAt={updatedAt}
-                formatUpdatedAt={(value) => formatAppDateTime(value, "--")}
-              />
-            }
-          />
-
-          <SettingsSurfaceCard
-            loading={loading}
-          >
-            <Alert
-              showIcon
-              type="info"
-              style={{ marginBottom: 16 }}
-              message="These settings are workspace-specific and start with default values."
+    <div data-cy="work-order-settings-page">
+      <BaseTemplate
+        content={
+          <PageStack>
+            <SettingsPageHeader
+              icon={<Settings2 size={22} />}
+              title="Work-order settings"
+              description="Configure default behavior and validation rules per workspace."
+              meta={
+                <SettingsSourceTags
+                  source={source}
+                  updatedAt={updatedAt}
+                  formatUpdatedAt={(value) => formatAppDateTime(value, "--")}
+                />
+              }
             />
 
-            <Form<WorkOrderWorkspaceSettings>
-              form={form}
-              layout="vertical"
-              initialValues={DEFAULT_SETTINGS}
-              onFinish={handleSubmit}
+            <SettingsSurfaceCard
+              loading={loading}
             >
-              <Tabs
-                defaultActiveKey="planning"
-                items={[
-                  {
-                    key: "planning",
-                    label: <IconLabel icon={<CalendarClock size={14} />} text="Planning" />,
-                    children: (
+              <Alert
+                showIcon
+                type="info"
+                style={{ marginBottom: 16 }}
+                message="These settings are workspace-specific and start with default values."
+              />
+
+              <Form<WorkOrderWorkspaceSettings>
+                form={form}
+                layout="vertical"
+                initialValues={DEFAULT_SETTINGS}
+                onFinish={handleSubmit}
+                data-cy="work-order-settings-form"
+              >
+                <Tabs
+                  defaultActiveKey="planning"
+                  data-cy="work-order-settings-tabs"
+                  items={[
+                    {
+                      key: "planning",
+                      label: (
+                        <span data-cy="work-order-settings-tab-planning">
+                          <IconLabel icon={<CalendarClock size={14} />} text="Planning" />
+                        </span>
+                      ),
+                      children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
                           Planning defaults
@@ -257,6 +264,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                                 { value: "high", label: "High" },
                                 { value: "urgent", label: "Urgent" },
                               ]}
+                              data-cy="work-order-settings-default-priority-select"
                             />
                           </Form.Item>
 
@@ -265,7 +273,13 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                             label={<IconLabel icon={<CalendarClock size={14} />} text="Default estimated duration (min)" />}
                             style={{ minWidth: 240 }}
                           >
-                            <InputNumber min={15} max={24 * 60} step={15} style={{ width: "100%" }} />
+                            <InputNumber
+                              min={15}
+                              max={24 * 60}
+                              step={15}
+                              style={{ width: "100%" }}
+                              data-cy="work-order-settings-default-duration-input"
+                            />
                           </Form.Item>
 
                           <Form.Item
@@ -273,7 +287,13 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                             label={<IconLabel icon={<CalendarClock size={14} />} text="Default due in (hours)" />}
                             style={{ minWidth: 240 }}
                           >
-                            <InputNumber min={1} max={30 * 24} step={1} style={{ width: "100%" }} />
+                            <InputNumber
+                              min={1}
+                              max={30 * 24}
+                              step={1}
+                              style={{ width: "100%" }}
+                              data-cy="work-order-settings-default-due-hours-input"
+                            />
                           </Form.Item>
 
                           <Form.Item
@@ -281,7 +301,13 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                             label={<IconLabel icon={<CalendarClock size={14} />} text="Due-soon window (hours)" />}
                             style={{ minWidth: 240 }}
                           >
-                            <InputNumber min={1} max={7 * 24} step={1} style={{ width: "100%" }} />
+                            <InputNumber
+                              min={1}
+                              max={7 * 24}
+                              step={1}
+                              style={{ width: "100%" }}
+                              data-cy="work-order-settings-due-soon-window-input"
+                            />
                           </Form.Item>
                         </Space>
 
@@ -290,14 +316,18 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                           valuePropName="checked"
                           label={<IconLabel icon={<CalendarClock size={14} />} text="Auto-fill due date on creation" />}
                         >
-                          <Switch />
+                          <Switch data-cy="work-order-settings-auto-fill-due-switch" />
                         </Form.Item>
                       </>
                     ),
                   },
                   {
                     key: "workflow",
-                    label: <IconLabel icon={<ShieldCheck size={14} />} text="Workflow" />,
+                    label: (
+                      <span data-cy="work-order-settings-tab-workflow">
+                        <IconLabel icon={<ShieldCheck size={14} />} text="Workflow" />
+                      </span>
+                    ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
@@ -309,21 +339,21 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                             valuePropName="checked"
                             label={<IconLabel icon={<ShieldCheck size={14} />} text="Require worker on create" />}
                           >
-                            <Switch />
+                            <Switch data-cy="work-order-settings-require-worker-switch" />
                           </Form.Item>
                           <Form.Item
                             name="requireChecklistToComplete"
                             valuePropName="checked"
                             label={<IconLabel icon={<ShieldCheck size={14} />} text="Require full checklist to complete" />}
                           >
-                            <Switch />
+                            <Switch data-cy="work-order-settings-require-checklist-switch" />
                           </Form.Item>
                           <Form.Item
                             name="requireAttachmentToComplete"
                             valuePropName="checked"
                             label={<IconLabel icon={<ShieldCheck size={14} />} text="Require attachment to complete" />}
                           >
-                            <Switch />
+                            <Switch data-cy="work-order-settings-require-attachment-switch" />
                           </Form.Item>
                         </Space>
                       </>
@@ -331,7 +361,11 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                   },
                   {
                     key: "attachments",
-                    label: <IconLabel icon={<Paperclip size={14} />} text="Attachments" />,
+                    label: (
+                      <span data-cy="work-order-settings-tab-attachments">
+                        <IconLabel icon={<Paperclip size={14} />} text="Attachments" />
+                      </span>
+                    ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
@@ -343,21 +377,33 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                             valuePropName="checked"
                             label={<IconLabel icon={<Paperclip size={14} />} text="Enable attachments" />}
                           >
-                            <Switch />
+                            <Switch data-cy="work-order-settings-attachments-enabled-switch" />
                           </Form.Item>
                           <Form.Item
                             name="maxAttachmentsPerWorkOrder"
                             label={<IconLabel icon={<Paperclip size={14} />} text="Max files per work order" />}
                             style={{ minWidth: 240 }}
                           >
-                            <InputNumber min={1} max={200} step={1} style={{ width: "100%" }} />
+                            <InputNumber
+                              min={1}
+                              max={200}
+                              step={1}
+                              style={{ width: "100%" }}
+                              data-cy="work-order-settings-max-attachments-input"
+                            />
                           </Form.Item>
                           <Form.Item
                             name="maxAttachmentSizeMb"
                             label={<IconLabel icon={<Paperclip size={14} />} text="Max file size (MB)" />}
                             style={{ minWidth: 240 }}
                           >
-                            <InputNumber min={1} max={250} step={1} style={{ width: "100%" }} />
+                            <InputNumber
+                              min={1}
+                              max={250}
+                              step={1}
+                              style={{ width: "100%" }}
+                              data-cy="work-order-settings-max-attachment-size-input"
+                            />
                           </Form.Item>
                         </Space>
 
@@ -370,6 +416,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                             options={MIME_TYPE_OPTIONS}
                             tokenSeparators={[",", " "]}
                             style={{ width: "100%" }}
+                            data-cy="work-order-settings-allowed-mime-select"
                           />
                         </Form.Item>
                       </>
@@ -377,7 +424,11 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                   },
                   {
                     key: "billing-automation",
-                    label: <IconLabel icon={<ReceiptText size={14} />} text="Billing automation" />,
+                    label: (
+                      <span data-cy="work-order-settings-tab-billing">
+                        <IconLabel icon={<ReceiptText size={14} />} text="Billing automation" />
+                      </span>
+                    ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
@@ -408,6 +459,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                           onClick={() => {
                             if (typeof window !== "undefined") window.location.assign("/settings");
                           }}
+                          data-cy="work-order-settings-open-billing-button"
                         >
                           Open billing settings
                         </Button>
@@ -418,18 +470,31 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
               />
 
               <Space style={{ marginTop: 8 }}>
-                <Button htmlType="button" onClick={handleResetDefaults} disabled={saving} icon={<RotateCcw size={15} />}>
+                <Button
+                  htmlType="button"
+                  onClick={handleResetDefaults}
+                  disabled={saving}
+                  icon={<RotateCcw size={15} />}
+                  data-cy="work-order-settings-restore-defaults-button"
+                >
                   Restore defaults
                 </Button>
-                <Button type="primary" htmlType="submit" loading={saving} icon={<Save size={16} />}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={saving}
+                  icon={<Save size={16} />}
+                  data-cy="work-order-settings-save-button"
+                >
                   Save settings
                 </Button>
               </Space>
-            </Form>
-          </SettingsSurfaceCard>
-        </PageStack>
-      }
-    />
+              </Form>
+            </SettingsSurfaceCard>
+          </PageStack>
+        }
+      />
+    </div>
   );
 }
 

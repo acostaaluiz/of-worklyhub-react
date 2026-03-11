@@ -45,13 +45,14 @@ export class SlaTable extends BaseComponent<Props, State> {
     const totalHours = totalMinutes / 60;
 
     return (
-      <TableWrapper>
+      <TableWrapper data-cy="sla-table-wrapper">
         <TableMeta>
-          <span>{rows.length} day entries</span>
-          <span>Total: {this.formatHours(totalHours)}</span>
+          <span data-cy="sla-day-entries">{rows.length} day entries</span>
+          <span data-cy="sla-total-hours">Total: {this.formatHours(totalHours)}</span>
         </TableMeta>
 
         <Table
+          data-cy="sla-table"
           rowKey="key"
           columns={columns}
           dataSource={rows}

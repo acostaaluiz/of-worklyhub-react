@@ -1,4 +1,19 @@
 /** @type {import('cz-git').UserConfig} */
+const applicationModules = [
+  "billing",
+  "clients",
+  "company",
+  "dashboard",
+  "finance",
+  "growth",
+  "inventory",
+  "people",
+  "schedule",
+  "slas",
+  "users",
+  "work-order",
+];
+
 module.exports = {
   extends: ["@commitlint/config-conventional"],
 
@@ -9,6 +24,7 @@ module.exports = {
       ["feat", "fix", "hotfix", "release", "merge", "arch"],
     ],
     "scope-empty": [2, "never"],
+    "scope-enum": [2, "always", applicationModules],
     "subject-case": [2, "always", ["sentence-case", "lower-case"]],
   },
 
@@ -24,21 +40,7 @@ module.exports = {
       { value: "release", name: "release: Release/publicação" },
     ],
 
-    scopes: [
-      "auth",
-      "users",
-      "billing",
-      "schedule",
-      "company",
-      "work-order",
-      "shared",
-      "core",
-      "app",
-      "finance",
-      "dashboard",
-      "clients",
-      "inventory",
-    ],
+    scopes: applicationModules,
 
     messages: {
       type: "Tipo do commit:",

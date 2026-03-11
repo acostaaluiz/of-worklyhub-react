@@ -448,7 +448,7 @@ export class ProfilePage extends BasePage<{}, State> {
     const defaultTab = tabParam === "company" ? "company" : "personal";
 
     return (
-      <>
+      <div data-cy="users-profile-page">
         <ProfileTemplate
           personal={this.state.personal}
           company={this.state.company}
@@ -484,7 +484,7 @@ export class ProfilePage extends BasePage<{}, State> {
           isUploading={!!this.state.isUploadingWallpaper}
           maxFiles={1}
         />
-      </>
+      </div>
     );
   }
 }

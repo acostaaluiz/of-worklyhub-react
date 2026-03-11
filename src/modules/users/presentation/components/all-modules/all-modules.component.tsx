@@ -49,6 +49,14 @@ type State = {
 export class AllModulesComponent extends BaseComponent<Props, State> {
   public state: State = { isLoading: false, error: undefined };
 
+  private toModuleTestId(value: string): string {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
   private openPath(path?: string) {
     if (!path) return;
     navigateTo(path);
@@ -64,7 +72,7 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
 
     if (!items || items.length === 0) {
       return (
-        <EmptyState className="surface">
+        <EmptyState className="surface" data-cy="all-modules-empty-state">
           <EmptyTitle>No modules available</EmptyTitle>
           <EmptyText>
             There are no services available to show yet.
@@ -78,11 +86,13 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
     return (
       <MotionConfig reducedMotion="user">
         <ModulesShowcase
+          data-cy="all-modules-showcase"
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
         >
           <ShowcaseHero
+            data-cy="all-modules-hero"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.36, delay: 0.06 }}
@@ -126,25 +136,30 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
                 type="primary"
                 icon={<BookOpenCheck size={16} />}
                 onClick={() => navigateTo("/tutorials")}
+                data-cy="all-modules-guided-tour-button"
               >
                 Guided tour
               </HeroPrimaryButton>
               <HeroGhostButton
                 icon={<Compass size={16} />}
                 onClick={() => this.openFirstAvailable(items)}
+                data-cy="all-modules-start-exploring-button"
               >
                 Start exploring
               </HeroGhostButton>
             </HeroActions>
           </ShowcaseHero>
 
-          <ModulesGrid>
+          <ModulesGrid data-cy="all-modules-grid">
             {items.map((item, index) => {
               const isDisabled = item.disabled || !item.to;
+              const moduleTestId = this.toModuleTestId(item.id || item.title || `module-${index}`);
 
               return (
                 <ModuleCard
                   key={item.id}
+                  data-cy="all-modules-card"
+                  data-module-id={moduleTestId}
                   $disabled={isDisabled}
                   role="button"
                   tabIndex={isDisabled ? -1 : 0}

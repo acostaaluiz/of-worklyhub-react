@@ -476,8 +476,8 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   }, [company, companyForm]);
 
   const content = (
-    <ProfileShell>
-      <MainCard>
+    <ProfileShell data-cy="users-profile-template">
+      <MainCard data-cy="users-profile-main-card">
         <MainHeader>
           <div>
             <MainTitle>Profile settings</MainTitle>
@@ -511,7 +511,9 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                 <PlanName>{personal?.planName ?? "No plan"}</PlanName>
                 {personal?.planPrice ? <PlanPrice>{personal.planPrice}</PlanPrice> : null}
               </PlanBadge>
-              <ActionButton type="default" onClick={onOpenAvatar}>Change photo</ActionButton>
+              <ActionButton type="default" onClick={onOpenAvatar} data-cy="users-profile-change-photo-button">
+                Change photo
+              </ActionButton>
             </HeroActions>
           </HeroContent>
         </HeroFrame>
@@ -542,9 +544,16 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
           </HighlightCard>
         </ProfileHighlights>
 
-        <ProfileTabs defaultActiveKey={defaultTab ?? "personal"}>
-            <TabPane tab="Personal info" key="personal">
-              <Form form={personalForm} initialValues={{ ...personal, phone: maskPhone(personal?.phone) }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSavePersonal(v as PersonalModel)}>
+        <ProfileTabs defaultActiveKey={defaultTab ?? "personal"} data-cy="users-profile-tabs">
+            <TabPane tab={<span data-cy="users-profile-tab-personal">Personal info</span>} key="personal">
+              <Form
+                form={personalForm}
+                initialValues={{ ...personal, phone: maskPhone(personal?.phone) }}
+                layout="vertical"
+                style={FormStackStyle}
+                onFinish={(v) => onSavePersonal(v as PersonalModel)}
+                data-cy="users-personal-form"
+              >
                 <PersonalGrid>
                   <Form.Item
                     name="fullName"
@@ -556,7 +565,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     }
                     rules={[{ required: true, message: "Please enter your full name" }]}
                   >
-                    <Input placeholder="Full name" />
+                    <Input placeholder="Full name" data-cy="users-personal-full-name-input" />
                   </Form.Item>
                   <Form.Item
                     name="email"
@@ -567,7 +576,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <Input disabled />
+                    <Input disabled data-cy="users-personal-email-input" />
                   </Form.Item>
                   <Form.Item
                     className="span-full"
@@ -584,6 +593,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                   >
                     <Input
                       placeholder="Phone"
+                      data-cy="users-personal-phone-input"
                       onBlur={(e) => {
                         try {
                           // apply mask on blur so the user can type freely while editing
@@ -599,7 +609,14 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                   <FormActions>
                     <Tooltip title="Save your personal profile changes">
                       <span>
-                        <Button type="primary" htmlType="submit" loading={isSavingPersonal}>Save personal</Button>
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          loading={isSavingPersonal}
+                          data-cy="users-personal-save-button"
+                        >
+                          Save personal
+                        </Button>
                       </span>
                     </Tooltip>
                   </FormActions>
@@ -607,8 +624,15 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
               </Form>
             </TabPane>
 
-            <TabPane tab="Company info" key="company" forceRender>
-              <Form form={companyForm} initialValues={company ?? { accountType: "individual" }} layout="vertical" style={FormStackStyle} onFinish={(v) => onSaveCompany(v as CompanyModel)}>
+            <TabPane tab={<span data-cy="users-profile-tab-company">Company info</span>} key="company" forceRender>
+              <Form
+                form={companyForm}
+                initialValues={company ?? { accountType: "individual" }}
+                layout="vertical"
+                style={FormStackStyle}
+                onFinish={(v) => onSaveCompany(v as CompanyModel)}
+                data-cy="users-company-form"
+              >
                 <CompanyGrid>
                   <Form.Item
                     name="accountType"
@@ -619,9 +643,13 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <Radio.Group>
-                      <Radio value="individual">Individual</Radio>
-                      <Radio value="company">Company</Radio>
+                    <Radio.Group data-cy="users-company-account-type-radio-group">
+                      <Radio value="individual" data-cy="users-company-account-type-individual-radio">
+                        Individual
+                      </Radio>
+                      <Radio value="company" data-cy="users-company-account-type-company-radio">
+                        Company
+                      </Radio>
                     </Radio.Group>
                   </Form.Item>
 
@@ -634,7 +662,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <InputNumber style={{ width: "100%" }} min={0} />
+                    <InputNumber
+                      style={{ width: "100%" }}
+                      min={0}
+                      data-cy="users-company-employees-input"
+                    />
                   </Form.Item>
 
                   <Form.Item
@@ -649,7 +681,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <Input placeholder="Legal name" />
+                    <Input placeholder="Legal name" data-cy="users-company-legal-name-input" />
                   </Form.Item>
 
                   <Form.Item
@@ -661,7 +693,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <Input placeholder="Trade name" />
+                    <Input placeholder="Trade name" data-cy="users-company-trade-name-input" />
                   </Form.Item>
 
                   <Form.Item
@@ -673,7 +705,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <Select placeholder="Select primary service" options={serviceOptions} />
+                    <Select
+                      placeholder="Select primary service"
+                      options={serviceOptions}
+                      data-cy="users-company-primary-service-select"
+                    />
                   </Form.Item>
 
                   <Form.Item
@@ -685,7 +721,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       </FieldLabel>
                     }
                   >
-                    <Select placeholder="Select an industry" options={industryOptions} />
+                    <Select
+                      placeholder="Select an industry"
+                      options={industryOptions}
+                      data-cy="users-company-industry-select"
+                    />
                   </Form.Item>
 
                   <Form.Item
@@ -698,7 +738,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     }
                     className="span-full"
                   >
-                    <Input.TextArea rows={2} />
+                    <Input.TextArea rows={2} data-cy="users-company-description-input" />
                   </Form.Item>
                 </CompanyGrid>
 
@@ -706,12 +746,21 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                   <FormActions>
                     <Tooltip title="Upload a new company wallpaper">
                       <span>
-                        <Button type="default" onClick={onOpenWallpaper}>Change wallpaper</Button>
+                        <Button type="default" onClick={onOpenWallpaper} data-cy="users-company-change-wallpaper-button">
+                          Change wallpaper
+                        </Button>
                       </span>
                     </Tooltip>
                     <Tooltip title="Save your company profile changes">
                       <span>
-                        <Button type="primary" htmlType="submit" loading={isSavingCompany}>Save company</Button>
+                        <Button
+                          type="primary"
+                          htmlType="submit"
+                          loading={isSavingCompany}
+                          data-cy="users-company-save-button"
+                        >
+                          Save company
+                        </Button>
                       </span>
                     </Tooltip>
                   </FormActions>

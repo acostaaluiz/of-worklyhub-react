@@ -130,7 +130,11 @@ export class AllModulesPage extends BasePage<{}, State> {
       };
     });
 
-    return <AllModulesTemplate items={itemsFromApi} planTitle={this.state.planTitle ?? undefined} />;
+    return (
+      <div data-cy="all-modules-page">
+        <AllModulesTemplate items={itemsFromApi} planTitle={this.state.planTitle ?? undefined} />
+      </div>
+    );
   }
 }
 

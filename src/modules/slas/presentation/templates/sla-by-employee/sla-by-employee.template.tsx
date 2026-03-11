@@ -36,8 +36,8 @@ export function SlaByEmployeeTemplate({
   return (
     <BaseTemplate
       content={
-        <PageStack>
-          <TemplateTitleRow>
+        <PageStack data-cy="sla-page">
+          <TemplateTitleRow data-cy="sla-page-header">
             <TemplateTitleBlock>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div
@@ -57,7 +57,7 @@ export function SlaByEmployeeTemplate({
                   <Gauge size={22} />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Typography.Title level={2} style={{ margin: 0 }}>
+                  <Typography.Title level={2} style={{ margin: 0 }} data-cy="sla-page-title">
                     Employee SLA
                   </Typography.Title>
                   <Typography.Text type="secondary">
@@ -68,7 +68,7 @@ export function SlaByEmployeeTemplate({
             </TemplateTitleBlock>
           </TemplateTitleRow>
 
-          <FiltersCard>
+          <FiltersCard data-cy="sla-filters-card">
             <SlaFiltersComponent
               employees={employees}
               filters={filters}
@@ -82,7 +82,7 @@ export function SlaByEmployeeTemplate({
             </HelperText>
           </FiltersCard>
 
-          <ResultsCard>
+          <ResultsCard data-cy="sla-results-card">
             <SlaTable rows={rows} loading={loading} />
           </ResultsCard>
         </PageStack>

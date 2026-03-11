@@ -317,8 +317,14 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   onSaveWorkspaceSettings,
   onSaveNfeConfiguration,
 }) => {
-  const tabLabel = (icon: React.ReactNode, label: string) => (
-    <IconLabel icon={icon} text={label} />
+  const tabLabel = (
+    icon: React.ReactNode,
+    label: string,
+    dataCy: string
+  ) => (
+    <span data-cy={dataCy}>
+      <IconLabel icon={icon} text={label} />
+    </span>
   );
 
   const [settingsForm] = Form.useForm<DataMap>();
@@ -396,6 +402,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           layout="vertical"
           initialValues={workspaceSettings}
           disabled={!!isLoading}
+          data-cy="settings-billing-form"
         >
           <Form.Item
             name="enabled"
@@ -407,7 +414,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               </span>
             }
           >
-            <Switch />
+            <Switch data-cy="settings-billing-enabled-switch" />
           </Form.Item>
 
           <ModuleToggleList>
@@ -427,7 +434,9 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                   name={["modules", moduleOption.key]}
                   valuePropName="checked"
                 >
-                  <Switch />
+                  <Switch
+                    data-cy={`settings-billing-module-${moduleOption.key}-switch`}
+                  />
                 </Form.Item>
               </ModuleToggleRow>
             ))}
@@ -438,6 +447,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               type="primary"
               onClick={() => void handleSaveWorkspaceSettings()}
               loading={!!isSavingSettings}
+              data-cy="settings-billing-save-button"
             >
               Save rules
             </Button>
@@ -460,13 +470,14 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           Configure workspace fiscal issuer settings for service-sale invoices.
         </CardSubtitle>
 
-        <EmissionGrid>
+        <EmissionGrid data-cy="settings-issuance-form">
           <Form.Item
             name="environment"
             label="Environment"
             rules={[{ required: true, message: "Select the environment." }]}
           >
             <Select
+              data-cy="settings-issuance-environment-select"
               options={[
                 { value: "homologation", label: "Homologation" },
                 { value: "production", label: "Production" },
@@ -479,11 +490,12 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Provider"
             rules={[{ required: true, message: "Provide the provider." }]}
           >
-            <Input placeholder="govbr" />
+            <Input data-cy="settings-issuance-provider-input" placeholder="govbr" />
           </Form.Item>
 
           <Form.Item name={["integration", "method"]} label="HTTP method">
             <Select
+              data-cy="settings-issuance-method-select"
               options={[
                 { value: "POST", label: "POST" },
                 { value: "PUT", label: "PUT" },
@@ -497,6 +509,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             initialValue="none"
           >
             <Select
+              data-cy="settings-issuance-auth-type-select"
               options={[
                 { value: "none", label: "No authentication" },
                 { value: "bearer", label: "Bearer token" },
@@ -512,7 +525,10 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Fiscal API base URL"
             rules={[{ required: true, message: "Provide the base URL." }]}
           >
-            <Input placeholder="https://api.your-provider.com" />
+            <Input
+              data-cy="settings-issuance-base-url-input"
+              placeholder="https://api.your-provider.com"
+            />
           </Form.Item>
 
           <Form.Item
@@ -520,15 +536,25 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Issue path"
             rules={[{ required: true, message: "Provide the issue path." }]}
           >
-            <Input placeholder="/nfe/emit" />
+            <Input data-cy="settings-issuance-issue-path-input" placeholder="/nfe/emit" />
           </Form.Item>
 
           <Form.Item name={["integration", "timeoutMs"]} label="Timeout (ms)">
-            <InputNumber min={1000} max={120000} style={{ width: "100%" }} />
+            <InputNumber
+              data-cy="settings-issuance-timeout-input"
+              min={1000}
+              max={120000}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           <Form.Item name={["integration", "retries"]} label="Retries">
-            <InputNumber min={0} max={5} style={{ width: "100%" }} />
+            <InputNumber
+              data-cy="settings-issuance-retries-input"
+              min={0}
+              max={5}
+              style={{ width: "100%" }}
+            />
           </Form.Item>
 
           {authType === "bearer" ? (
@@ -549,14 +575,17 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                 label="API key header"
                 rules={[{ required: true, message: "Provide the header." }]}
               >
-                <Input placeholder="x-api-key" />
+                <Input
+                  data-cy="settings-issuance-api-key-header-input"
+                  placeholder="x-api-key"
+                />
               </Form.Item>
               <Form.Item
                 name={["integration", "auth", "apiKey"]}
                 label="API key"
                 rules={[{ required: true, message: "Provide the API key." }]}
               >
-                <Input.Password />
+                <Input.Password data-cy="settings-issuance-api-key-input" />
               </Form.Item>
             </>
           ) : null}
@@ -586,7 +615,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Legal name"
             rules={[{ required: true, message: "Provide the legal name." }]}
           >
-            <Input />
+            <Input data-cy="settings-issuance-legal-name-input" />
           </Form.Item>
 
           <Form.Item
@@ -594,7 +623,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Issuer document (CNPJ/CPF)"
             rules={[{ required: true, message: "Provide the document." }]}
           >
-            <Input />
+            <Input data-cy="settings-issuance-document-input" />
           </Form.Item>
 
           <Form.Item name={["issuer", "stateRegistration"]} label="State registration">
@@ -615,6 +644,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             type="primary"
             onClick={() => void handleSaveNfeConfiguration()}
             loading={!!isSavingConfiguration}
+            data-cy="settings-issuance-save-button"
           >
             Save issuance
           </Button>
@@ -636,9 +666,10 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           Optional fields for extra headers, templates, and metadata.
         </CardSubtitle>
 
-        <AdvancedGrid>
+        <AdvancedGrid data-cy="settings-advanced-form">
           <Form.Item name={["integration", "headers"]} label="Headers (JSON)">
             <Input.TextArea
+              data-cy="settings-advanced-headers-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
               placeholder='{"x-tenant":"worklyhub"}'
             />
@@ -649,6 +680,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Payload template (JSON)"
           >
             <Input.TextArea
+              data-cy="settings-advanced-payload-template-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
               placeholder='{"operationNature":"Service provided"}'
             />
@@ -659,6 +691,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label="Response mapping (JSON)"
           >
             <Input.TextArea
+              data-cy="settings-advanced-response-mapping-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
               placeholder='{"status":"status","accessKey":"access_key"}'
             />
@@ -666,6 +699,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
           <Form.Item name={["issuer", "address"]} label="Issuer address (JSON)">
             <Input.TextArea
+              data-cy="settings-advanced-address-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
               placeholder='{"street":"Street X","number":"123","city":"Sao Paulo","state":"SP"}'
             />
@@ -673,6 +707,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
           <Form.Item name={["defaults"]} label="Defaults (JSON)">
             <Input.TextArea
+              data-cy="settings-advanced-defaults-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
               placeholder='{"serviceCode":"1401"}'
             />
@@ -680,6 +715,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
           <Form.Item name={["metadata"]} label="Metadata (JSON)">
             <Input.TextArea
+              data-cy="settings-advanced-metadata-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
               placeholder='{"owner":"workspace"}'
             />
@@ -691,6 +727,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             type="primary"
             onClick={() => void handleSaveNfeConfiguration()}
             loading={!!isSavingConfiguration}
+            data-cy="settings-advanced-save-button"
           >
             Save advanced
           </Button>
@@ -729,6 +766,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <Button
               type={themePreference === "light" ? "primary" : "default"}
               onClick={() => handleThemeChange("light")}
+              data-cy="settings-appearance-use-light-button"
             >
               Use light
             </Button>
@@ -745,6 +783,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <Button
               type={themePreference === "dark" ? "primary" : "default"}
               onClick={() => handleThemeChange("dark")}
+              data-cy="settings-appearance-use-dark-button"
             >
               Use dark
             </Button>
@@ -752,7 +791,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         </ModuleToggleList>
 
         <ActionsRow>
-          <Button icon={<BgColorsOutlined />} disabled>
+          <Button icon={<BgColorsOutlined />} disabled data-cy="settings-appearance-active-mode">
             Active mode: {themePreference === "dark" ? "Dark" : "Light"}
           </Button>
         </ActionsRow>
@@ -763,7 +802,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   return (
     <BaseTemplate
       content={
-        <SettingsTemplateRoot>
+        <SettingsTemplateRoot data-cy="settings-page">
           <SettingsShell>
             <HeroCard>
               <HeroTitle>Settings</HeroTitle>
@@ -783,7 +822,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               </MetaRow>
             </HeroCard>
 
-            <TabsFrame>
+            <TabsFrame data-cy="settings-tabs-frame">
               <Form
                 form={configurationForm}
                 layout="vertical"
@@ -792,26 +831,43 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                 disabled={!!isLoading}
               >
                 <Tabs
+                  data-cy="settings-tabs"
                   defaultActiveKey="module-rules"
                   items={[
                     {
                       key: "module-rules",
-                      label: tabLabel(<DollarCircleOutlined />, "Billing"),
+                      label: tabLabel(
+                        <DollarCircleOutlined />,
+                        "Billing",
+                        "settings-tab-billing"
+                      ),
                       children: moduleTab,
                     },
                     {
                       key: "issuance",
-                      label: tabLabel(<FileDoneOutlined />, "Issuance"),
+                      label: tabLabel(
+                        <FileDoneOutlined />,
+                        "Issuance",
+                        "settings-tab-issuance"
+                      ),
                       children: emissionTab,
                     },
                     {
                       key: "advanced",
-                      label: tabLabel(<ToolOutlined />, "Advanced"),
+                      label: tabLabel(
+                        <ToolOutlined />,
+                        "Advanced",
+                        "settings-tab-advanced"
+                      ),
                       children: advancedTab,
                     },
                     {
                       key: "appearance",
-                      label: tabLabel(<BgColorsOutlined />, "Appearance"),
+                      label: tabLabel(
+                        <BgColorsOutlined />,
+                        "Appearance",
+                        "settings-tab-appearance"
+                      ),
                       children: appearanceTab,
                     },
                   ]}

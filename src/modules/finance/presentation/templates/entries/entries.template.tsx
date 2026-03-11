@@ -26,13 +26,13 @@ export function EntriesTemplate({ workspaceId }: Props) {
     <BaseTemplate
       content={
         <TemplateShell>
-          <HeaderRow>
+          <HeaderRow data-cy="finance-entries-header">
             <HeaderMain>
               <HeaderIcon>
                 <ReceiptText size={20} />
               </HeaderIcon>
               <HeaderCopy>
-                <HeaderTitle>Entries</HeaderTitle>
+                <HeaderTitle data-cy="finance-entries-title">Entries</HeaderTitle>
                 <HeaderSubtitle>
                   Incomes, expenses, and fixed costs from your daily operation.
                 </HeaderSubtitle>
@@ -40,14 +40,14 @@ export function EntriesTemplate({ workspaceId }: Props) {
             </HeaderMain>
           </HeaderRow>
 
-          <ContentGrid>
-            <MainPanel>
+          <ContentGrid data-cy="finance-entries-content">
+            <MainPanel data-cy="finance-entries-main-panel">
               <FinanceKpis workspaceId={workspaceId} />
               <FinanceEntriesList workspaceId={workspaceId} />
             </MainPanel>
 
-            <SidePanel>
-              <SidePanelInner>
+            <SidePanel data-cy="finance-entries-side-panel">
+              <SidePanelInner data-cy="finance-entries-form-panel">
                 <h3 style={{ marginTop: 0 }}>Add new entry</h3>
                 <FinanceEntryForm workspaceId={workspaceId} />
               </SidePanelInner>

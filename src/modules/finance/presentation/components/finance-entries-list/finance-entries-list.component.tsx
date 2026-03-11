@@ -53,8 +53,11 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
   const visibleItems = items.slice(start, start + pageSize);
 
   return (
-    <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "stretch", marginBottom: 12 }}>
+    <div data-cy="finance-entries-list">
+      <div
+        style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "stretch", marginBottom: 12 }}
+        data-cy="finance-entries-list-cards"
+      >
         {loading
           ? Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} className="surface" style={{ width: "100%", minHeight: 100, padding: "10px" }}>
@@ -62,10 +65,21 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
               </Card>
             ))
           : visibleItems.map((it) => (
-              <Card key={it.id} className="surface" style={{ width: "100%", minHeight: 100, padding: "10px" }}>
+              <Card
+                key={it.id}
+                className="surface"
+                style={{ width: "100%", minHeight: 100, padding: "10px" }}
+                data-cy={`finance-entry-card-${it.id}`}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
                   <div style={{ flex: "1 1 auto", minWidth: 0 }}>
-                    <Typography.Text strong style={{ display: "block", fontSize: 16 }}>{stripCodeFromDescription(it.description) ?? "Entry"}</Typography.Text>
+                    <Typography.Text
+                      strong
+                      style={{ display: "block", fontSize: 16 }}
+                      data-cy={`finance-entry-description-${it.id}`}
+                    >
+                      {stripCodeFromDescription(it.description) ?? "Entry"}
+                    </Typography.Text>
                     <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{formatDate(it.date)}</div>
                   </div>
                   <div style={{ textAlign: "right", minWidth: 120 }}>
@@ -77,7 +91,10 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
                       const formatted = formatMoney(Math.abs(amountNum));
                       const color = getFinanceValueColor(amountNum, { context });
                       return (
-                        <div style={{ fontWeight: 600, fontSize: 16 }}>
+                        <div
+                          style={{ fontWeight: 600, fontSize: 16 }}
+                          data-cy={`finance-entry-amount-${it.id}`}
+                        >
                           {isNegative && <span style={{ color, marginRight: 4 }}>-</span>}
                           <span style={{ color }}>{formatted}</span>
                         </div>

@@ -258,9 +258,10 @@ export function GrowthAutopilotTemplate({
     .slice(0, 4);
 
   const opportunitiesPane = (
-    <PaneShell>
+    <PaneShell data-cy="growth-opportunities-pane">
       <Toolbar>
         <Input.Search
+          data-cy="growth-opportunities-search-input"
           allowClear
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
@@ -269,6 +270,7 @@ export function GrowthAutopilotTemplate({
         />
 
         <Select<GrowthOpportunityStatus | "all">
+          data-cy="growth-opportunities-status-select"
           value={status}
           onChange={onStatusChange}
           style={{ width: 180 }}
@@ -283,6 +285,7 @@ export function GrowthAutopilotTemplate({
         />
 
         <Select<string>
+          data-cy="growth-opportunities-playbook-select"
           allowClear
           value={dispatchPlaybookId}
           onChange={(value) => onDispatchPlaybookChange(value)}
@@ -293,10 +296,16 @@ export function GrowthAutopilotTemplate({
 
         <ToolbarSpacer />
 
-        <HeroRefreshButton icon={<RefreshCw size={14} />} onClick={onRefresh} loading={loading}>
+        <HeroRefreshButton
+          data-cy="growth-opportunities-refresh-button"
+          icon={<RefreshCw size={14} />}
+          onClick={onRefresh}
+          loading={loading}
+        >
           Refresh
         </HeroRefreshButton>
         <HeroDispatchButton
+          data-cy="growth-opportunities-dispatch-button"
           type="primary"
           icon={<Send size={14} />}
           onClick={onDispatch}
@@ -307,8 +316,9 @@ export function GrowthAutopilotTemplate({
         </HeroDispatchButton>
       </Toolbar>
 
-      <TableWrap>
+      <TableWrap data-cy="growth-opportunities-table-wrap">
         <Table<GrowthOpportunity>
+          data-cy="growth-opportunities-table"
           rowKey="id"
           size="small"
           loading={loading}
@@ -331,7 +341,7 @@ export function GrowthAutopilotTemplate({
   );
 
   const playbooksPane = (
-    <PaneShell>
+    <PaneShell data-cy="growth-playbooks-pane">
       <Toolbar>
         <Typography.Text type="secondary">
           Configure objective, channels, and cadence for automated dispatch.
@@ -339,6 +349,7 @@ export function GrowthAutopilotTemplate({
         <ToolbarSpacer />
         <PlaybookCarouselControls>
           <Button
+            data-cy="growth-playbooks-previous-button"
             icon={<ChevronLeft size={14} />}
             onClick={goToPreviousPlaybook}
             disabled={totalPlaybooks <= 1}
@@ -349,6 +360,7 @@ export function GrowthAutopilotTemplate({
             {totalPlaybooks <= 0 ? "0 / 0" : `${safePlaybookIndex + 1} / ${totalPlaybooks}`}
           </PlaybookIndicator>
           <Button
+            data-cy="growth-playbooks-next-button"
             icon={<ChevronRight size={14} />}
             onClick={goToNextPlaybook}
             disabled={totalPlaybooks <= 1}
@@ -356,16 +368,23 @@ export function GrowthAutopilotTemplate({
             Next
           </Button>
         </PlaybookCarouselControls>
-        <Button type="primary" icon={<Megaphone size={14} />} onClick={onSavePlaybooks} loading={savingPlaybooks}>
+        <Button
+          data-cy="growth-playbooks-save-button"
+          type="primary"
+          icon={<Megaphone size={14} />}
+          onClick={onSavePlaybooks}
+          loading={savingPlaybooks}
+        >
           Save playbooks
         </Button>
       </Toolbar>
 
-      <PlaybookCarouselShell>
-        <PlaybookDots>
+      <PlaybookCarouselShell data-cy="growth-playbooks-carousel-shell">
+        <PlaybookDots data-cy="growth-playbooks-dots">
           {bundle.playbooks.map((playbook, index) => (
             <PlaybookDot
               key={playbook.id}
+              data-cy={`growth-playbook-dot-${playbook.id}`}
               $active={index === safePlaybookIndex}
               aria-label={`Go to playbook ${index + 1}`}
               onClick={() => setPlaybookIndex(index)}
@@ -374,7 +393,7 @@ export function GrowthAutopilotTemplate({
         </PlaybookDots>
 
         {currentPlaybook ? (
-          <PlaybookCard key={currentPlaybook.id}>
+          <PlaybookCard key={currentPlaybook.id} data-cy={`growth-playbook-card-${currentPlaybook.id}`}>
             <PlaybookHead>
               <div>
                 <PlaybookTitle>{currentPlaybook.title}</PlaybookTitle>
@@ -383,6 +402,7 @@ export function GrowthAutopilotTemplate({
                 ) : null}
               </div>
               <Switch
+                data-cy="growth-playbook-enabled-switch"
                 checked={currentPlaybook.enabled}
                 onChange={(checked) => onPlaybookChange(currentPlaybook.id, { enabled: checked })}
               />
@@ -392,6 +412,7 @@ export function GrowthAutopilotTemplate({
               <div>
                 <Typography.Text type="secondary">Goal</Typography.Text>
                 <Select<GrowthPlaybook["goal"]>
+                  data-cy="growth-playbook-goal-select"
                   value={currentPlaybook.goal}
                   onChange={(value) => onPlaybookChange(currentPlaybook.id, { goal: value })}
                   options={GOAL_OPTIONS}
@@ -402,6 +423,7 @@ export function GrowthAutopilotTemplate({
               <div>
                 <Typography.Text type="secondary">Channels</Typography.Text>
                 <Select
+                  data-cy="growth-playbook-channels-select"
                   mode="multiple"
                   value={currentPlaybook.channels as string[]}
                   options={CHANNEL_OPTIONS}
@@ -418,6 +440,7 @@ export function GrowthAutopilotTemplate({
                 <div>
                   <Typography.Text type="secondary">Delay (hours)</Typography.Text>
                   <InputNumber
+                    data-cy="growth-playbook-delay-input"
                     min={0}
                     max={168}
                     value={currentPlaybook.delayHours}
@@ -431,6 +454,7 @@ export function GrowthAutopilotTemplate({
                 <div>
                   <Typography.Text type="secondary">Max touches</Typography.Text>
                   <InputNumber
+                    data-cy="growth-playbook-max-touches-input"
                     min={1}
                     max={12}
                     value={currentPlaybook.maxTouches}
@@ -453,31 +477,31 @@ export function GrowthAutopilotTemplate({
   );
 
   const attributionPane = (
-    <PaneShell>
-      <AttributionScroll>
-        <AttributionGrid>
-          <AttributionCard>
+    <PaneShell data-cy="growth-attribution-pane">
+      <AttributionScroll data-cy="growth-attribution-scroll">
+        <AttributionGrid data-cy="growth-attribution-grid">
+          <AttributionCard data-cy="growth-attribution-card-dispatched">
             <Statistic
               title="Dispatched opportunities"
               value={bundle.summary.dispatchedCount}
               prefix={<Megaphone size={14} />}
             />
           </AttributionCard>
-          <AttributionCard>
+          <AttributionCard data-cy="growth-attribution-card-converted">
             <Statistic
               title="Converted opportunities"
               value={bundle.summary.convertedCount}
               prefix={<Target size={14} />}
             />
           </AttributionCard>
-          <AttributionCard>
+          <AttributionCard data-cy="growth-attribution-card-recovered-revenue">
             <Statistic
               title="Recovered revenue"
               value={formatMoneyFromCents(bundle.summary.recoveredRevenueCents)}
               prefix={<CircleDollarSign size={14} />}
             />
           </AttributionCard>
-          <AttributionCard>
+          <AttributionCard data-cy="growth-attribution-card-average-hours">
             <Statistic
               title="Avg hours to convert"
               value={bundle.summary.averageHoursToConvert ?? 0}
@@ -487,7 +511,7 @@ export function GrowthAutopilotTemplate({
           </AttributionCard>
         </AttributionGrid>
 
-        <AttributionCard>
+        <AttributionCard data-cy="growth-attribution-card-conversion-rate">
           <Statistic
             title="Conversion rate"
             value={bundle.summary.conversionRatePercent}
@@ -508,8 +532,8 @@ export function GrowthAutopilotTemplate({
           </AttributionMeta>
         </AttributionCard>
 
-        <AttributionDetailGrid>
-          <AttributionCard>
+        <AttributionDetailGrid data-cy="growth-attribution-detail-grid">
+          <AttributionCard data-cy="growth-attribution-pipeline-mix-card">
             <Typography.Text type="secondary">Pipeline status mix</Typography.Text>
             <Space direction="vertical" size={10} style={{ width: "100%", marginTop: 10 }}>
               <div>
@@ -566,7 +590,7 @@ export function GrowthAutopilotTemplate({
             </Space>
           </AttributionCard>
 
-          <AttributionCard>
+          <AttributionCard data-cy="growth-attribution-next-actions-card">
             <Typography.Text type="secondary">Next optimization actions</Typography.Text>
             <AttributionList style={{ marginTop: 10 }}>
               {topPending.length > 0 ? (
@@ -594,8 +618,8 @@ export function GrowthAutopilotTemplate({
   return (
     <BaseTemplate
       content={
-        <GrowthRoot>
-          <HeroCard>
+        <GrowthRoot data-cy="growth-autopilot-page">
+          <HeroCard data-cy="growth-autopilot-hero">
             <HeroTop>
               <HeroTitleWrap>
                 <HeroIconWrap>
@@ -609,23 +633,30 @@ export function GrowthAutopilotTemplate({
                 </div>
               </HeroTitleWrap>
 
-              <HeroActions size={8}>
-                <Tag>{bundle.opportunities.length} opportunities</Tag>
-                <Tag>{bundle.playbooks.length} playbooks</Tag>
-                <Tag>{bundle.source === "backend" ? "backend" : "fallback"}</Tag>
+              <HeroActions size={8} data-cy="growth-autopilot-hero-actions">
+                <Tag data-cy="growth-autopilot-opportunities-count">
+                  {bundle.opportunities.length} opportunities
+                </Tag>
+                <Tag data-cy="growth-autopilot-playbooks-count">
+                  {bundle.playbooks.length} playbooks
+                </Tag>
+                <Tag data-cy="growth-autopilot-source-tag">
+                  {bundle.source === "backend" ? "backend" : "fallback"}
+                </Tag>
               </HeroActions>
             </HeroTop>
           </HeroCard>
 
-          <BodyCard>
+          <BodyCard data-cy="growth-autopilot-body">
             <GrowthTabs
+              data-cy="growth-autopilot-tabs"
               activeKey={activeTab}
               onChange={(key) => onTabChange(key as GrowthTabKey)}
               items={[
                 {
                   key: "opportunities",
                   label: (
-                    <Space size={6}>
+                    <Space size={6} data-cy="growth-tab-opportunities">
                       <Target size={14} />
                       Opportunities
                     </Space>
@@ -635,7 +666,7 @@ export function GrowthAutopilotTemplate({
                 {
                   key: "playbooks",
                   label: (
-                    <Space size={6}>
+                    <Space size={6} data-cy="growth-tab-playbooks">
                       <Megaphone size={14} />
                       Playbooks
                     </Space>
@@ -645,7 +676,7 @@ export function GrowthAutopilotTemplate({
                 {
                   key: "attribution",
                   label: (
-                    <Space size={6}>
+                    <Space size={6} data-cy="growth-tab-attribution">
                       <BarChart3 size={14} />
                       Attribution
                     </Space>

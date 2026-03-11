@@ -33,11 +33,12 @@ export class SlaFilters extends BaseComponent<Props, State> {
     const isApplyDisabled = !filters.from || !filters.to;
 
     return (
-      <FiltersRow>
+      <FiltersRow data-cy="sla-filters">
         <FiltersGroup>
           <FilterField>
             <div className="label">Employee</div>
             <Select<string>
+              data-cy="sla-employee-select"
               allowClear
               placeholder="All employees"
               value={filters.userUid ?? undefined}
@@ -50,6 +51,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
           <FilterField>
             <div className="label">Date range</div>
             <DatePicker.RangePicker
+              data-cy="sla-date-range-picker"
               value={rangeValue}
               onChange={this.handleRangeChange}
               allowClear={false}
@@ -59,7 +61,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
         </FiltersGroup>
 
         <Actions>
-          <Button onClick={this.props.onReset} disabled={!!loading}>
+          <Button onClick={this.props.onReset} disabled={!!loading} data-cy="sla-reset-filters-button">
             Reset
           </Button>
           <Button
@@ -67,6 +69,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
             onClick={this.props.onApply}
             loading={!!loading}
             disabled={isApplyDisabled}
+            data-cy="sla-apply-filters-button"
           >
             Apply filters
           </Button>
