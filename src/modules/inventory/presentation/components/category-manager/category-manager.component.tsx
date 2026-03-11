@@ -48,8 +48,8 @@ export function CategoryManagerComponent() {
   }
 
   return (
-    <Card bordered={false} loading={loading}>
-      <h3>Categories</h3>
+    <Card bordered={false} loading={loading} data-cy="inventory-categories-manager-card">
+      <h3 data-cy="inventory-categories-title">Categories</h3>
       <CategoryFormComponent onSubmit={handleCreate} />
       <Divider />
       <CategoryListComponent categories={categories} onEdit={setEditing} onDeactivate={handleDeactivate} />

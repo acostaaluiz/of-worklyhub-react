@@ -23,17 +23,18 @@ export function CategoryFormComponent({ initial, onSubmit, submitting }: Props) 
           active: values.active ?? true,
         })
       }
+      data-cy="inventory-category-form"
     >
       <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-        <Input />
+        <Input data-cy="inventory-category-name-input" />
       </Form.Item>
 
       <Form.Item name="description" label="Description">
-        <Input.TextArea rows={2} />
+        <Input.TextArea rows={2} data-cy="inventory-category-description-input" />
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={submitting}>Save</Button>
+        <Button type="primary" htmlType="submit" loading={submitting} data-cy="inventory-category-save-button">Save</Button>
       </Form.Item>
     </Form>
   );

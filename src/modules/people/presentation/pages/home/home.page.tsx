@@ -227,7 +227,7 @@ export class PeopleHomePage extends BasePage<{}, State> {
         employees={this.state.employees ?? []}
         onEdit={this.handleOpenEdit}
         onDeactivate={this.handleDeactivate}
-        toolbarRight={<Button type="primary" onClick={this.handleOpenCreate} style={{ marginRight: 8 }}>New employee</Button>}
+        toolbarRight={<Button type="primary" onClick={this.handleOpenCreate} style={{ marginRight: 8 }} data-cy="people-new-employee-button">New employee</Button>}
       />
     );
 
@@ -248,6 +248,7 @@ export class PeopleHomePage extends BasePage<{}, State> {
     return (
       <PeopleTemplate>
         <Tabs
+          data-cy="people-home-tabs"
           activeKey={this.state.activeTab}
           onChange={(activeTab) => this.setSafeState({ activeTab: activeTab as "employees" | "capacity" })}
           items={[
@@ -256,7 +257,7 @@ export class PeopleHomePage extends BasePage<{}, State> {
           ]}
         />
 
-        <Modal title={this.state.editing ? "Edit employee" : "New employee"} open={!!this.state.showForm} footer={null} onCancel={this.handleCloseForm}>
+        <Modal title={this.state.editing ? "Edit employee" : "New employee"} open={!!this.state.showForm} footer={null} onCancel={this.handleCloseForm} data-cy="people-employee-modal">
           <EmployeeFormComponent initial={this.state.editing ?? undefined} onSubmit={(d) => (this.state.editing ? this.handleUpdate(this.state.editing!.id, d as Partial<EmployeeModel>) : this.handleCreate(d))} submitting={!!this.state.isLoading} />
         </Modal>
       </PeopleTemplate>

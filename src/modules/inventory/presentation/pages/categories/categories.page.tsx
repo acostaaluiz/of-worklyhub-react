@@ -6,7 +6,9 @@ import { BasePage } from "@shared/base/base.page";
 function InventoryCategoriesPageContent() {
   return (
     <StockTemplate>
-      <CategoryManagerComponent />
+      <div data-cy="inventory-categories-page">
+        <CategoryManagerComponent />
+      </div>
     </StockTemplate>
   );
 }

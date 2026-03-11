@@ -757,6 +757,7 @@ function InventoryHomePageContent(): React.ReactElement {
   return (
     <StockTemplate title="Smart Inventory">
       <div
+        data-cy="inventory-home-page"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -791,7 +792,7 @@ function InventoryHomePageContent(): React.ReactElement {
           </Typography.Text>
 
           <Space>
-            <Button type="primary" onClick={openCreate} disabled={!workspaceId}>
+            <Button type="primary" onClick={openCreate} disabled={!workspaceId} data-cy="inventory-new-product-button">
               New product
             </Button>
             <Button icon={<ReloadOutlined />} onClick={() => refreshData()} loading={loading}>

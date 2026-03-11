@@ -24,13 +24,14 @@ export function WorkOrderStatusForm({ loading, onSubmit }: Props) {
         layout="vertical"
         onFinish={handleFinish}
         initialValues={{ isTerminal: false, sortOrder: 10 }}
+        data-cy="work-order-status-form"
       >
         <Form.Item
           name="code"
           label="Code"
           rules={[{ required: true, message: "Status code is required" }]}
         >
-          <Input placeholder="e.g. opened" />
+          <Input placeholder="e.g. opened" data-cy="work-order-status-code-input" />
         </Form.Item>
 
         <Form.Item
@@ -38,19 +39,19 @@ export function WorkOrderStatusForm({ loading, onSubmit }: Props) {
           label="Label"
           rules={[{ required: true, message: "Status label is required" }]}
         >
-          <Input placeholder="e.g. Opened" />
+          <Input placeholder="e.g. Opened" data-cy="work-order-status-label-input" />
         </Form.Item>
 
         <Form.Item name="isTerminal" label="Terminal" valuePropName="checked">
-          <Switch />
+          <Switch data-cy="work-order-status-terminal-switch" />
         </Form.Item>
 
         <Form.Item name="sortOrder" label="Sort order">
-          <InputNumber min={0} style={{ width: "100%" }} />
+          <InputNumber min={0} style={{ width: "100%" }} data-cy="work-order-status-order-input" />
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" loading={loading}>
+          <Button type="primary" htmlType="submit" loading={loading} data-cy="work-order-status-save-button">
             Create status
           </Button>
         </Form.Item>

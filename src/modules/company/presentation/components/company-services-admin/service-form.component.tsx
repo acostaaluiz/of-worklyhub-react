@@ -53,38 +53,41 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
           }
           onSubmit(prepared);
         }}
+        data-cy="company-services-form"
       >
         <FormStack>
           <Form.Item name="title" label="Title" rules={[{ required: true }]}> 
-            <Input size="large" />
+            <Input size="large" data-cy="company-services-title-input" />
           </Form.Item>
 
           <Form.Item name="description" label="Description">
-            <Input.TextArea rows={4} />
+            <Input.TextArea rows={4} data-cy="company-services-description-input" />
           </Form.Item>
 
           <FieldRow3>
             <Form.Item name="durationMinutes" label="Duration">
-              <DurationTimeSelector mode="duration" size="large" chipMinWidth={72} />
+              <div data-cy="company-services-duration-input">
+                <DurationTimeSelector mode="duration" size="large" chipMinWidth={72} />
+              </div>
             </Form.Item>
 
             <Form.Item name="priceCents" label="Price">
-              <InputNumber min={0} style={{ width: "100%" }} size="large" step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+              <InputNumber min={0} style={{ width: "100%" }} size="large" step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} data-cy="company-services-price-input" />
             </Form.Item>
 
             <Form.Item name="capacity" label="Capacity">
-              <InputNumber min={1} style={{ width: "100%" }} size="large" />
+              <InputNumber min={1} style={{ width: "100%" }} size="large" data-cy="company-services-capacity-input" />
             </Form.Item>
           </FieldRow3>
 
           <FieldRow>
             <Form.Item name="active" label="Active" valuePropName="checked">
-              <Switch />
+              <Switch data-cy="company-services-active-switch" />
             </Form.Item>
           </FieldRow>
 
           <ContinueWrap>
-            <Button type="primary" htmlType="submit" size="large" block loading={submitting}>
+            <Button type="primary" htmlType="submit" size="large" block loading={submitting} data-cy="company-services-save-button">
               Save
             </Button>
           </ContinueWrap>

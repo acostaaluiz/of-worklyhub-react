@@ -57,41 +57,42 @@ export function EmployeeFormComponent({ initial, onSubmit, submitting }: Props) 
         };
         onSubmit(prepared);
       }}
+      data-cy="people-employee-form"
     >
       <Form.Item name="firstName" label="First name" rules={[{ required: true }]}>
-        <Input />
+        <Input data-cy="people-employee-first-name-input" />
       </Form.Item>
 
       <Form.Item name="lastName" label="Last name">
-        <Input />
+        <Input data-cy="people-employee-last-name-input" />
       </Form.Item>
 
       <Form.Item name="email" label="Email">
-        <Input />
+        <Input data-cy="people-employee-email-input" />
       </Form.Item>
 
       <Form.Item name="phone" label="Phone" normalize={(value) => maskPhone(String(value ?? ""))}>
-        <Input />
+        <Input data-cy="people-employee-phone-input" />
       </Form.Item>
 
       <Form.Item name="role" label="Role">
-        <Input />
+        <Input data-cy="people-employee-role-input" />
       </Form.Item>
 
       <Form.Item name="department" label="Department">
-        <Input />
+        <Input data-cy="people-employee-department-input" />
       </Form.Item>
 
       <Form.Item name="hiredAt" label="Hired at">
-        <DatePicker style={{ width: "100%" }} format={dateFormat} />
+        <DatePicker style={{ width: "100%" }} format={dateFormat} data-cy="people-employee-hired-at-input" />
       </Form.Item>
 
       <Form.Item name="salaryCents" label="Salary">
-        <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+        <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} data-cy="people-employee-salary-input" />
       </Form.Item>
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={submitting}>Save</Button>
+        <Button type="primary" htmlType="submit" loading={submitting} data-cy="people-employee-save-button">Save</Button>
       </Form.Item>
     </Form>
   );

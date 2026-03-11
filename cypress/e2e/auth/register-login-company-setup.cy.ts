@@ -263,3 +263,5 @@ describe("Auth + Company setup", () => {
     });
   });
 });
+
+export {};

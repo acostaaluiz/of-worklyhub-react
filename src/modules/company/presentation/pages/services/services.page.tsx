@@ -84,9 +84,11 @@ function CompanyServicesAdminPageContent(): JSX.Element {
       content={
         <>
           <div style={{ padding: 16 }}>
-            <h2 style={{ margin: 0 }}>Services you offer</h2>
+            <h2 style={{ margin: 0 }} data-cy="company-services-page-title">Services you offer</h2>
             <div style={{ marginTop: 12 }}>
-              <ServiceManagerComponent services={services} loading={loading} onCreate={handleCreate} onUpdate={handleUpdate} onDeactivate={handleDeactivate} />
+              <div data-cy="company-services-page">
+                <ServiceManagerComponent services={services} loading={loading} onCreate={handleCreate} onUpdate={handleUpdate} onDeactivate={handleDeactivate} />
+              </div>
             </div>
           </div>
         </>

@@ -81,10 +81,12 @@ function WorkOrderStatusesPageContent(): React.ReactElement {
   }
 
   return (
-    <WorkOrderStatusesTemplate
-      list={<WorkOrderStatusesList statuses={statuses} loading={loading} />}
-      form={<WorkOrderStatusForm loading={saving} onSubmit={handleCreateStatus} />}
-    />
+    <div data-cy="work-order-statuses-page">
+      <WorkOrderStatusesTemplate
+        list={<WorkOrderStatusesList statuses={statuses} loading={loading} />}
+        form={<WorkOrderStatusForm loading={saving} onSubmit={handleCreateStatus} />}
+      />
+    </div>
   );
 }
 

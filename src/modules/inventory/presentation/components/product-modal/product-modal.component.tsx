@@ -157,6 +157,7 @@ export class ProductModal extends BaseComponent<Props, State> {
             closeIcon={<CloseOutlined />}
             className="wh-product-modal"
             title={<Typography.Title level={4} style={{ margin: 0 }}>{initial ? "Edit Product" : "New Product"}</Typography.Title>}
+            data-cy="inventory-product-modal"
           >
           <div style={{ paddingTop: "var(--space-3)" }}>
             <Form<ProductFormValues>
@@ -165,27 +166,28 @@ export class ProductModal extends BaseComponent<Props, State> {
               layout="vertical"
               initialValues={initialValues}
               onFinish={(values) => this.handleSubmit(values)}
+              data-cy="inventory-product-form"
             >
               <Row gutter={16}>
                 <Col span={12}>
                   <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-                    <Input />
+                    <Input data-cy="inventory-product-name-input" />
                   </Form.Item>
 
                   <Form.Item name="sku" label="SKU">
-                    <Input />
+                    <Input data-cy="inventory-product-sku-input" />
                   </Form.Item>
 
                   <Form.Item name="description" label="Description">
-                    <Input.TextArea rows={4} />
+                    <Input.TextArea rows={4} data-cy="inventory-product-description-input" />
                   </Form.Item>
 
                   <Form.Item name="priceCents" label="Price">
-                    <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+                    <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} data-cy="inventory-product-price-input" />
                   </Form.Item>
 
                   <Form.Item name="categoryId" label="Category">
-                    <Select allowClear placeholder="Select a category">
+                    <Select allowClear placeholder="Select a category" data-cy="inventory-product-category-select">
                       {categories.map((c) => (
                         <Select.Option key={c.id} value={c.id}>
                           {c.name}
@@ -197,34 +199,34 @@ export class ProductModal extends BaseComponent<Props, State> {
 
                 <Col span={12}>
                   <Form.Item name="stock" label="Initial stock">
-                    <InputNumber style={{ width: "100%" }} min={0} />
+                    <InputNumber style={{ width: "100%" }} min={0} data-cy="inventory-product-stock-input" />
                   </Form.Item>
 
                   <Form.Item name="barcode" label="Barcode">
-                    <Input />
+                    <Input data-cy="inventory-product-barcode-input" />
                   </Form.Item>
 
                   <Form.Item name="costCents" label="Cost">
-                    <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+                    <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} data-cy="inventory-product-cost-input" />
                   </Form.Item>
 
                   <Form.Item name="minStock" label="Minimum stock">
-                    <InputNumber style={{ width: "100%" }} min={0} />
+                    <InputNumber style={{ width: "100%" }} min={0} data-cy="inventory-product-min-stock-input" />
                   </Form.Item>
 
                   <Form.Item name="location" label="Location">
-                    <Input />
+                    <Input data-cy="inventory-product-location-input" />
                   </Form.Item>
 
                   <Form.Item name="active" label="Active" valuePropName="checked">
-                    <Switch />
+                    <Switch data-cy="inventory-product-active-switch" />
                   </Form.Item>
                 </Col>
               </Row>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                <Button onClick={onClose}>Cancel</Button>
-                <Button type="primary" htmlType="submit" loading={this.state.submitting}>
+                <Button onClick={onClose} data-cy="inventory-product-cancel-button">Cancel</Button>
+                <Button type="primary" htmlType="submit" loading={this.state.submitting} data-cy="inventory-product-save-button">
                   Save
                 </Button>
               </div>

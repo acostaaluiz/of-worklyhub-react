@@ -19,7 +19,7 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
   const [showForm, setShowForm] = React.useState(false);
 
   return (
-    <Card bordered={false} loading={loading} style={{ marginTop: 12 }}>
+    <Card bordered={false} loading={loading} style={{ marginTop: 12 }} data-cy="company-services-manager-card">
       <ServiceListComponent
         services={services}
         onEdit={(s) => {
@@ -27,7 +27,18 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
           setShowForm(true);
         }}
         onDeactivate={onDeactivate}
-        toolbarRight={<Button type="primary" onClick={() => { setEditing(null); setShowForm(true); }}>New service</Button>}
+        toolbarRight={
+          <Button
+            type="primary"
+            onClick={() => {
+              setEditing(null);
+              setShowForm(true);
+            }}
+            data-cy="company-services-new-button"
+          >
+            New service
+          </Button>
+        }
       />
 
       <ModalOverrides>
@@ -41,6 +52,7 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
           width={760}
           closeIcon={<X size={18} />}
           className="wh-service-modal"
+          data-cy="company-services-form-modal"
         >
           <ServiceFormComponent
           initial={editing ?? undefined}

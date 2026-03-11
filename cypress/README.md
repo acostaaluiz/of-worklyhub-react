@@ -5,6 +5,12 @@
 - Cadastro (`/register`)
 - Login (`/login`)
 - Company setup (`/company/introduction`)
+- Login + cadastros basicos:
+  - Servicos (`/company/services`)
+  - Categorias de inventario (`/inventory/categories`)
+  - Produtos de inventario (`/inventory/home`)
+  - Colaboradores (`/people`)
+  - Status de work order (`/work-order/statuses`)
 
 ## Estrategia de execucao
 
