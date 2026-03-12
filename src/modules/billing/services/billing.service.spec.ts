@@ -8,16 +8,9 @@ jest.mock("@modules/company/services/company.service", () => ({
   },
 }));
 
-jest.mock("@modules/users/services/auth.service", () => ({
-  usersAuthService: {
-    getSessionValue: jest.fn(),
-  },
-}));
-
 import { BillingApi } from "./billing-api";
 import { BillingService } from "./billing.service";
 import { companyService } from "@modules/company/services/company.service";
-import { usersAuthService } from "@modules/users/services/auth.service";
 
 type BillingApiMock = {
   getPlans: jest.Mock;
@@ -51,7 +44,6 @@ function deferred<T>() {
 describe("BillingService", () => {
   const billingApiCtor = jest.mocked(BillingApi);
   const mockedCompanyService = jest.mocked(companyService);
-  const mockedAuthService = jest.mocked(usersAuthService);
   let apiMock: BillingApiMock;
 
   beforeEach(() => {
@@ -60,7 +52,6 @@ describe("BillingService", () => {
     apiMock = createApiMock();
     billingApiCtor.mockImplementation(() => apiMock as unknown as BillingApi);
     mockedCompanyService.getWorkspaceValue.mockReturnValue({ workspaceId: "ws-1" } as never);
-    mockedAuthService.getSessionValue.mockReturnValue({ uid: "user-1" } as never);
   });
 
   it("fetches plans and reuses cached value when force is false", async () => {
@@ -123,7 +114,7 @@ describe("BillingService", () => {
     });
   });
 
-  it("creates checkout using defaults and resolved identity", async () => {
+  it("creates checkout using defaults and resolved workspace", async () => {
     const service = new BillingService();
 
     await service.createCheckout({
@@ -137,13 +128,11 @@ describe("BillingService", () => {
         billingCycle: "monthly",
         paymentMethod: "hosted",
         workspaceId: "ws-1",
-        userUid: "user-1",
         gateway: "mercadopago",
       }),
       expect.objectContaining({
         "Content-Type": "application/json",
         "x-workspace-id": "ws-1",
-        "x-user-uid": "user-1",
       })
     );
   });
@@ -166,33 +155,27 @@ describe("BillingService", () => {
     );
   });
 
-  it("wraps validation and api failures into AppError", async () => {
+  it("creates checkout without workspace and wraps api failures into AppError", async () => {
     const service = new BillingService();
 
     mockedCompanyService.getWorkspaceValue.mockReturnValue(null as never);
-    await expect(
-      service.createCheckout({
-        planId: "standard",
-        payer: { email: "owner@worklyhub.com" },
-      })
-    ).rejects.toMatchObject({
-      message: "Workspace is required to create checkout.",
-      kind: "Unknown",
+    await service.createCheckout({
+      planId: "standard",
+      payer: { email: "owner@worklyhub.com" },
     });
+
+    expect(apiMock.createCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        planId: "standard",
+      }),
+      expect.objectContaining({
+        "Content-Type": "application/json",
+      })
+    );
+    const callBody = apiMock.createCheckout.mock.calls[0]?.[0] as { workspaceId?: string } | undefined;
+    expect(callBody?.workspaceId).toBeUndefined();
 
     mockedCompanyService.getWorkspaceValue.mockReturnValue({ workspaceId: "ws-1" } as never);
-    mockedAuthService.getSessionValue.mockReturnValue(null as never);
-    await expect(
-      service.createCheckout({
-        planId: "standard",
-        payer: { email: "owner@worklyhub.com" },
-      })
-    ).rejects.toMatchObject({
-      message: "User identity is required to create checkout.",
-      kind: "Unknown",
-    });
-
-    mockedAuthService.getSessionValue.mockReturnValue({ uid: "user-1" } as never);
     apiMock.createCheckout.mockRejectedValueOnce(new Error("checkout-failure"));
     await expect(
       service.createCheckout({
@@ -205,4 +188,3 @@ describe("BillingService", () => {
     });
   });
 });
-

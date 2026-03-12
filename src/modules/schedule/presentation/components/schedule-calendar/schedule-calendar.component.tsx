@@ -353,12 +353,17 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       });
       const rawCategoryColor = category?.color ?? themePrimary ?? "#1e70ff";
       const categoryColor =
-        normalizeCssColor(rawCategoryColor) ?? rawCategoryColor;
+        normalizeCssColor(rawCategoryColor) ??
+        normalizeCssColor(themePrimary) ??
+        "#1e70ff";
       const statusCode = event?.status?.code ?? null;
       const statusColorRaw = statusCode
         ? (getStatusColor(statusCode) ?? themePrimary ?? "#7c3aed")
         : undefined;
-      const statusColor = normalizeCssColor(statusColorRaw) ?? statusColorRaw;
+      const statusColor =
+        normalizeCssColor(statusColorRaw) ??
+        normalizeCssColor(themePrimary) ??
+        categoryColor;
       const textColor = themeOnPrimary || themeText || "#ffffff";
 
       const startText = formatDateTime(start);
@@ -577,7 +582,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         const rawStatus = (ev as TuiScheduleEvent).raw?.statusColor;
         const bgRaw =
           (ev as TuiScheduleEvent).backgroundColor || rawCategory || rawStatus || "";
-        const bg = normalizeCssColor(bgRaw) ?? bgRaw;
+        const bg = normalizeCssColor(bgRaw);
         if (id && bg) map.set(id, bg as string);
       });
       eventColorMapRef.current = map;
@@ -693,7 +698,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                   (ev as TuiScheduleEvent).raw?.statusColor ||
                   (ev as TuiScheduleEvent).raw?.categoryColor ||
                   (ev as TuiScheduleEvent).backgroundColor;
-                const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
+                const dotColor = normalizeCssColor(dotColorRaw) ?? preferredColor;
                 if (dotColor) {
                   dot.style.setProperty(
                     "background-color",
@@ -730,7 +735,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                   (ev as TuiScheduleEvent).raw?.statusColor ||
                   (ev as TuiScheduleEvent).raw?.categoryColor ||
                   (ev as TuiScheduleEvent).backgroundColor;
-                const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
+                const dotColor = normalizeCssColor(dotColorRaw) ?? preferredColor;
                 if (dotColor) dot.style.background = dotColor;
               }
             }
@@ -831,16 +836,11 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             getCategoryColor(code) ??
             codeColorMap[code] ??
             palette[idx % palette.length];
-          // normalize CSS variable references to concrete colors
-          chosen = normalizeCssColor(chosen) ?? chosen;
+          chosen = normalizeCssColor(chosen) ?? palette[idx % palette.length];
           // if exact color already used, pick first unused palette entry
           if (used.has(chosen)) {
             const found = palette.find((p) => !used.has(p));
-            if (found) chosen = normalizeCssColor(found) ?? found;
-            else {
-              const hue = (idx * 47) % 360;
-              chosen = `hsl(${hue} 65% 50%)`;
-            }
+            chosen = found ? normalizeCssColor(found) ?? found : palette[idx % palette.length];
           }
           used.add(chosen);
           return { ...c, color: chosen } as ScheduleCategory;

@@ -7,6 +7,10 @@ import { FieldIcon, ButtonIcon } from "@shared/styles/global.ts";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseState } from "@shared/base/interfaces/base-state.interface";
 import { navigateTo } from "@core/navigation/navigation.service";
+import {
+  resolveTrustedExternalHosts,
+  toSafeExternalUrl,
+} from "@core/navigation/safe-navigation";
 
 import {
   FormCard,
@@ -44,6 +48,18 @@ function gatewayLabel(gateway: PaymentGateway): string {
   if (gateway === "paypal") return "PayPal";
   return "Mercado Pago";
 }
+
+const CHECKOUT_GATEWAY_HOSTS: Record<PaymentGateway, readonly string[]> = {
+  mercadopago: [
+    "mercadopago.com",
+    "mercadopago.com.br",
+    "mercadopago.com.ar",
+    "mercadopago.com.mx",
+    "mercadopago.com.co",
+    "mercadopago.com.uy",
+  ],
+  paypal: ["paypal.com"],
+};
 
 export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
   private formRef = React.createRef<FormInstance<CheckoutValues>>();
@@ -169,6 +185,16 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     };
   }
 
+  private resolveSafeCheckoutUrl(url: string): string | null {
+    const trustedHosts = resolveTrustedExternalHosts({
+      envKeys: ["VITE_ALLOWED_CHECKOUT_HOSTS", "VITE_ALLOWED_EXTERNAL_HOSTS"],
+      extraHosts: CHECKOUT_GATEWAY_HOSTS[this.state.gateway],
+      includeApiBaseUrlHost: false,
+      includeWindowHost: false,
+    });
+    return toSafeExternalUrl(url, { allowedHosts: trustedHosts });
+  }
+
   protected override renderView(): React.ReactNode {
     const handleSubmit = async (values: CheckoutValues) => {
       if (!this.state.selectedPlanId) {
@@ -208,8 +234,14 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
 
         const data = res?.data;
         if (data?.type === "preference" && data.checkoutUrl) {
+          const safeCheckoutUrl = this.resolveSafeCheckoutUrl(data.checkoutUrl);
+          if (!safeCheckoutUrl) {
+            message.error("Invalid payment redirect URL. Please contact support.");
+            this.setError(new Error("invalid_checkout_redirect_url"));
+            return;
+          }
           message.info("Redirecting to the payment provider...");
-          window.location.href = data.checkoutUrl;
+          window.location.assign(safeCheckoutUrl);
           return;
         }
 
@@ -223,7 +255,6 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
           message.success("Checkout created.");
         }
       } catch (err) {
-        console.error("checkout error", err);
         const msg =
           err instanceof Error && err.message
             ? err.message

@@ -89,6 +89,12 @@ import {
   toDayjsValue,
   toIsoDateTimeValue,
 } from "@core/utils/date-time";
+import {
+  DEFAULT_ATTACHMENT_HOST_SUFFIXES,
+  resolveTrustedExternalHosts,
+  toSafeAppPath,
+  toSafeExternalUrl,
+} from "@core/navigation/safe-navigation";
 
 const priorityOptions: Array<{ value: WorkOrderPriority; label: string }> = [
   { value: "low", label: "Low" },
@@ -335,9 +341,23 @@ export function WorkOrderForm({
   const automationNfeNote = isDevEnvironment
     ? "NF-e trigger is optional and in development it may fail when GOV endpoints are unavailable."
     : "NF-e trigger is optional and depends on billing configuration.";
+  const trustedAttachmentHosts = React.useMemo(
+    () =>
+      resolveTrustedExternalHosts({
+        envKeys: ["VITE_ALLOWED_ATTACHMENT_HOSTS", "VITE_ALLOWED_EXTERNAL_HOSTS"],
+        includeApiBaseUrlHost: true,
+        includeWindowHost: true,
+      }),
+    []
+  );
   const openPath = React.useCallback((path: string) => {
     if (typeof window === "undefined") return;
-    window.location.assign(path);
+    const safePath = toSafeAppPath(path);
+    if (!safePath) {
+      message.error("Navigation path is invalid.");
+      return;
+    }
+    window.location.assign(safePath);
   }, []);
 
   const openAttachmentPreview = React.useCallback((attachment: WorkOrderAttachment) => {
@@ -345,8 +365,21 @@ export function WorkOrderForm({
       message.info("Attachment URL expired. Refresh activity and try again.");
       return;
     }
-    window.open(attachment.downloadUrl, "_blank", "noopener,noreferrer");
-  }, []);
+    const rawUrl = attachment.downloadUrl.trim();
+    const candidateUrl =
+      rawUrl.startsWith("/") && typeof window !== "undefined"
+        ? `${window.location.origin}${rawUrl}`
+        : rawUrl;
+    const safeDownloadUrl = toSafeExternalUrl(candidateUrl, {
+      allowedHosts: trustedAttachmentHosts,
+      allowedHostSuffixes: DEFAULT_ATTACHMENT_HOST_SUFFIXES,
+    });
+    if (!safeDownloadUrl) {
+      message.error("Attachment URL is invalid or not allowed.");
+      return;
+    }
+    window.open(safeDownloadUrl, "_blank", "noopener,noreferrer");
+  }, [trustedAttachmentHosts]);
 
   const handleAttachmentBeforeUpload = React.useCallback<NonNullable<UploadProps["beforeUpload"]>>(
     async (file) => {

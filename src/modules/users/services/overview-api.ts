@@ -8,6 +8,7 @@ export type UserOverviewProfile = {
   phone?: string | null;
   planId?: number;
   planTitle?: string;
+  planStatus?: "ACTIVE-PLAN" | "INACTIVE-PLAN";
   profilePhotoUrl?: string | null;
   profilePhotoPath?: string | null;
 };

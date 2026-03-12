@@ -2,11 +2,7 @@ type WorkOrderStatusPayload = { label?: string; code?: string };
 type WorkOrderPayload = Record<string, unknown>;
 
 export default class WorkOrderApi {
-  private readonly client: unknown;
-
-  constructor(client: unknown) {
-    this.client = client;
-  }
+  constructor(_client: unknown) {}
 
   async getStatuses() {
     return [];

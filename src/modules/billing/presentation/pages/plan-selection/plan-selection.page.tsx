@@ -153,71 +153,13 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
       // ignore
     }
 
-    const session = usersAuthService.getSessionValue();
-    const email = session?.email;
-    if (!email) {
-      message.error("Unable to determine your email. Please sign in again.");
-      this.handleCloseConfirm();
-      return;
+    this.setSafeState({ confirmOpen: false, pendingPlanId: undefined, pendingPlanName: undefined });
+    message.success("Plan selected. Continue to checkout to activate your subscription.");
+    try {
+      navigateTo("/billing/checkout");
+    } catch {
+      // ignore navigation errors
     }
-
-    await this.runAsync(async () => {
-      // call users service to set plan (API expects numeric plan id)
-      const plan = this.state.plans?.find((p) => String(p.id) === planId);
-      const numericPlan = plan?.dbId ?? plan?.id ?? planId;
-      await usersService.setPlan(email, Number(numericPlan));
-      // refresh profile
-      try {
-        await usersService.fetchByEmail(email);
-      } catch {
-        // ignore
-      }
-      // recompute recommendation immediately using updated profile
-      try {
-        const planList = this.state.plans ?? [];
-        const profile = usersService.getProfileValue();
-        const userPlanId = (profile as DataMap)?.planId ?? (profile as DataMap)?.plan_id ?? (profile as DataMap)?.plan ?? undefined;
-
-        const sorted = [...planList].sort((a, b) => Number(a.dbId ?? a.id) - Number(b.dbId ?? b.id));
-        let rec: string | undefined = undefined;
-        if (sorted.length > 0) {
-          if (userPlanId == null) {
-            rec = String(sorted[0].id);
-          } else {
-            const s = String(userPlanId).toLowerCase();
-            let idx = sorted.findIndex((p) => String(p.id) === String(userPlanId) || String(p.dbId) === String(userPlanId));
-            if (idx === -1) idx = sorted.findIndex((p) => (p.name ?? "").toLowerCase() === s);
-            if (idx === -1) idx = sorted.findIndex((p) => (p as DataMap).code === userPlanId || (p as DataMap).code === s);
-            if (idx >= 0) {
-              const next = sorted[idx + 1];
-              if (next) rec = String(next.id);
-              else rec = String(sorted[idx].id);
-            }
-            if (!rec) {
-              const numeric = Number(userPlanId);
-              if (!isNaN(numeric)) {
-                const byId = sorted.find((p) => Number(p.id) === numeric + 1 || Number(p.dbId) === numeric + 1);
-                if (byId) rec = String(byId.id);
-              }
-            }
-            if (!rec) {
-              const highlighted = sorted.find((p) => !!(p.recommended ?? (p as DataMap).highlight)) ?? sorted[0];
-              rec = highlighted ? String(highlighted.id) : undefined;
-            }
-          }
-        }
-        this.setSafeState({ confirmOpen: false, pendingPlanId: undefined, pendingPlanName: undefined, recommendedPlanId: rec });
-      } catch {
-        this.setSafeState({ confirmOpen: false, pendingPlanId: undefined, pendingPlanName: undefined });
-      }
-      message.success("Plan updated successfully");
-      // navigate to checkout so user can continue with payment flow
-      try {
-        navigateTo("/billing/checkout");
-      } catch {
-        // ignore navigation errors
-      }
-    });
   };
 }
 

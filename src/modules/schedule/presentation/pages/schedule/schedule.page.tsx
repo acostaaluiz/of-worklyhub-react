@@ -28,6 +28,7 @@ import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import { listInventoryItems } from "@modules/inventory/services/inventory.http.service";
 import type { ScheduleEventDraft } from "../../components/schedule-event-modal/schedule-event-modal.form.types";
 import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
+import { normalizeCssColor } from "../../components/schedule-calendar/schedule-calendar.factory";
 
 // Simple memoized fetches to avoid duplicate requests on double mount (e.g., StrictMode)
 const servicesPromise = companyWorkspaceService.listServices();
@@ -56,8 +57,9 @@ function mapCategoriesWithColor(
   ];
   const used = new Set<string>();
   return cats.map((c, idx) => {
-    let chosen = c.color?.toString().trim() ?? "";
-    if (!chosen || chosen.startsWith("var(")) {
+    const incoming = normalizeCssColor(c.color ?? undefined);
+    let chosen = incoming ?? "";
+    if (!chosen) {
       const pick = palette[idx % palette.length];
       chosen = used.has(pick) ? palette.find((p) => !used.has(p)) ?? pick : pick;
     }

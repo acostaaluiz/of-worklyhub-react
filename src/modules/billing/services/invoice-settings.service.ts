@@ -2,7 +2,6 @@ import { isAppError } from "@core/errors/is-app-error";
 import { toAppError } from "@core/errors/to-app-error";
 import { httpClient } from "@core/http/client.instance";
 import { companyService, type Workspace } from "@modules/company/services/company.service";
-import { usersAuthService } from "@modules/users/services/auth.service";
 import {
   InvoiceSettingsApi,
   type NfeAuthType,
@@ -10,6 +9,8 @@ import {
   type WorkspaceInvoiceModuleKey,
   type WorkspaceInvoiceSettings,
 } from "./invoice-settings-api";
+
+const NFE_SECRET_MASK = "__WORKLYHUB_SECRET_CONFIGURED__";
 
 const DEFAULT_MODULE_FLAGS: Record<WorkspaceInvoiceModuleKey, boolean> = {
   "work-order": false,
@@ -124,11 +125,20 @@ function sanitizeNfeConfiguration(
       ? { type: "none" as const }
       : {
           type: authType,
-          token: auth?.token?.trim() || undefined,
+          token:
+            auth?.token?.trim() && auth.token.trim() !== NFE_SECRET_MASK
+              ? auth.token.trim()
+              : undefined,
           headerName: auth?.headerName?.trim() || undefined,
-          apiKey: auth?.apiKey?.trim() || undefined,
+          apiKey:
+            auth?.apiKey?.trim() && auth.apiKey.trim() !== NFE_SECRET_MASK
+              ? auth.apiKey.trim()
+              : undefined,
           username: auth?.username?.trim() || undefined,
-          password: auth?.password?.trim() || undefined,
+          password:
+            auth?.password?.trim() && auth.password.trim() !== NFE_SECRET_MASK
+              ? auth.password.trim()
+              : undefined,
         };
 
   return {
@@ -193,24 +203,13 @@ export class InvoiceSettingsService {
     }
   }
 
-  private resolveUserUid(): string | undefined {
-    try {
-      const session = usersAuthService.getSessionValue();
-      return session?.uid ?? undefined;
-    } catch {
-      return undefined;
-    }
-  }
-
   private buildIdentityHeaders(workspaceId?: string): Record<string, string> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
     const resolvedWorkspaceId = workspaceId ?? this.resolveWorkspaceId();
-    const userUid = this.resolveUserUid();
 
     if (resolvedWorkspaceId) headers["x-workspace-id"] = resolvedWorkspaceId;
-    if (userUid) headers["x-user-uid"] = userUid;
     return headers;
   }
 
@@ -274,7 +273,6 @@ export class InvoiceSettingsService {
         {
           workspaceId,
           settings: normalizeWorkspaceSettings(settings),
-          updatedByUid: this.resolveUserUid(),
         },
         headers
       );
@@ -307,7 +305,6 @@ export class InvoiceSettingsService {
         {
           workspaceId,
           configuration: sanitizeNfeConfiguration(configuration),
-          updatedByUid: this.resolveUserUid(),
         },
         headers
       );

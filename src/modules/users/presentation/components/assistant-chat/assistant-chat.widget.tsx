@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Input, Spin, Tag, Tooltip, Typography } from "antd";
+import { Button, Input, Spin, Tag, Tooltip, Typography, message } from "antd";
 import {
   MessageCircle,
   SendHorizontal,
@@ -14,6 +14,7 @@ import type {
 } from "@modules/users/interfaces/assistant-chat.model";
 import { assistantChatService } from "@modules/users/services/assistant-chat.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
+import { toSafeAppPath } from "@core/navigation/safe-navigation";
 
 import {
   AssistantComposer,
@@ -78,6 +79,14 @@ export function AssistantChatWidget() {
   const location = useLocation();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const handleSuggestionNavigate = (rawPath: string) => {
+    const safePath = toSafeAppPath(rawPath);
+    if (!safePath) {
+      message.warning("Suggestion path is unavailable.");
+      return;
+    }
+    navigate(safePath);
+  };
 
   const hasStarterPrompts = useMemo(
     () =>
@@ -197,7 +206,7 @@ export function AssistantChatWidget() {
                       >
                         <Button
                           size="small"
-                          onClick={() => navigate(suggestion.path)}
+                          onClick={() => handleSuggestionNavigate(suggestion.path)}
                         >
                           {suggestion.label}
                         </Button>

@@ -32,6 +32,16 @@ function createUser(token = "id-token") {
   };
 }
 
+function setCurrentUser(
+  user: null | { getIdToken: (force?: boolean) => Promise<string> }
+): void {
+  Object.defineProperty(firebaseAuth, "currentUser", {
+    configurable: true,
+    writable: true,
+    value: user,
+  });
+}
+
 describe("FirebaseAuthService", () => {
   const mockedStorage = jest.mocked(localStorageProvider);
   const mockedSignIn = jest.mocked(signInWithEmailAndPassword);
@@ -40,7 +50,7 @@ describe("FirebaseAuthService", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    firebaseAuth.currentUser = null;
+    setCurrentUser(null);
     mockedStorage.get.mockReturnValue(null);
   });
 
@@ -71,7 +81,7 @@ describe("FirebaseAuthService", () => {
 
   it("refreshes token from current user in getToken", async () => {
     const user = createUser("fresh-token");
-    firebaseAuth.currentUser = user;
+    setCurrentUser(user);
     const service = new FirebaseAuthService();
 
     const token = await service.getToken();
@@ -93,7 +103,7 @@ describe("FirebaseAuthService", () => {
 
   it("refreshes token with force=true and clears token on failure", async () => {
     const successUser = createUser("forced-token");
-    firebaseAuth.currentUser = successUser;
+    setCurrentUser(successUser);
     const service = new FirebaseAuthService();
 
     await expect(service.refresh()).resolves.toBe("forced-token");
@@ -102,7 +112,7 @@ describe("FirebaseAuthService", () => {
     const failureUser = {
       getIdToken: jest.fn().mockRejectedValue(new Error("refresh-failed")),
     };
-    firebaseAuth.currentUser = failureUser as any;
+    setCurrentUser(failureUser as any);
 
     await expect(service.refresh()).resolves.toBeNull();
     expect(service.getAccessToken()).toBeNull();
@@ -150,13 +160,13 @@ describe("FirebaseAuthService", () => {
 
   it("returns compatible refresh handler output", async () => {
     const user = createUser("refreshed-token");
-    firebaseAuth.currentUser = user;
+    setCurrentUser(user);
     const service = new FirebaseAuthService();
 
     const refreshHandler = service.getRefreshHandler();
     await expect(refreshHandler()).resolves.toEqual({ accessToken: "refreshed-token" });
 
-    firebaseAuth.currentUser = null;
+    setCurrentUser(null);
     await expect(refreshHandler()).resolves.toBeNull();
   });
 });

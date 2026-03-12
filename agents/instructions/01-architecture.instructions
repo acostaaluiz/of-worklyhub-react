@@ -27,9 +27,12 @@ Roteamento e guardas
 - `src/app/router/routes.tsx` cria o router principal com `createBrowserRouter`.
 - `NavigationBoot` integra `react-router` com o `navigation.service` (core).
 - `RedirectIfAuthenticated` redireciona usuario logado:
-  - Se nao houver workspace -> `/company/introduction`.
-  - Se houver workspace -> `/home`.
+  - Se nao houver plano ativo -> `/billing/plans`.
+  - Se houver plano ativo e nao houver workspace -> `/company/introduction`.
+  - Se houver plano ativo e workspace -> `/home`.
 - `RequireAuth` protege rotas privadas e redireciona para `/login` quando nao ha sessao.
+  - Quando `INACTIVE-PLAN`, bloqueia rotas privadas fora de `/billing/*`.
+  - Modulos habilitados continuam validados por overview/modulo.
 - Pilhas de rotas:
   - Publico: `src/app/router/stacks/public.stack.ts` (auth).
   - Privado: `src/app/router/stacks/private.stack.ts` (todos os modulos privados).
@@ -50,6 +53,7 @@ Workspace (empresa)
 - `companyService` guarda o workspace em `localStorage` (`company.workspace`).
 - `fetchWorkspaceByEmail` e usado no fluxo de redirecionamento.
 - Qualquer funcionalidade que dependa de workspace precisa validar a existencia do ID.
+- Excecao: checkout de assinatura pode iniciar sem workspace (antes do company setup).
 
 HTTP e erros
 - Cliente HTTP base: `src/core/http/http-client.ts` (AxiosHttpClient).
@@ -76,3 +80,4 @@ Guardrails (nao negociar)
 - Nao importar UI de outro modulo diretamente; mover para `shared` se for reutilizavel.
 - Nao criar regra de negocio dentro de `shared`.
 - Nao duplicar modelos: reutilize os `interfaces` do modulo dono.
+- Nao ativar plano na selecao de card; ativacao acontece somente apos pagamento aprovado.

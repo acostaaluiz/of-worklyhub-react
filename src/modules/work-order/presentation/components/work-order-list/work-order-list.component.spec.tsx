@@ -1,4 +1,3 @@
-import React from "react";
 import { WorkOrderList } from "./work-order-list.component";
 
 describe("WorkOrderList", () => {

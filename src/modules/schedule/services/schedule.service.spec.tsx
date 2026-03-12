@@ -2,12 +2,15 @@
 import React from "react";
 import { render, waitFor } from "@testing-library/react";
 import { useMockStore } from "@core/storage/mock-store.provider";
+import type { ScheduleCategory } from "../interfaces/schedule-category.model";
+import type { ScheduleEvent } from "../interfaces/schedule-event.model";
 import { SchedulesApi } from "./schedules-api";
 import {
   ScheduleService,
   categoriesSeed,
   getNextSchedulesForWorkspace,
   getStatuses,
+  type ScheduleEventsWithHintResult,
   useScheduleApi,
 } from "./schedule.service";
 
@@ -26,6 +29,16 @@ type StoreMock = {
   removeService: jest.Mock;
   addFinanceEntry: jest.Mock;
   removeFinanceEntry: jest.Mock;
+};
+
+type ScheduleHookApi = {
+  getCategories: () => Promise<ScheduleCategory[]>;
+  getEvents: (params: DataMap) => Promise<ScheduleEvent[]>;
+  getEventsWithHint: (params: DataMap) => Promise<ScheduleEventsWithHintResult>;
+  createEvent: (payload: DataMap) => Promise<ScheduleEvent>;
+  removeEvent: (id: string) => Promise<boolean>;
+  createSchedule: (args: DataMap) => Promise<ScheduleEvent>;
+  updateEvent: (args: DataMap) => Promise<ScheduleEvent>;
 };
 
 function createStoreMock(events: Array<DataMap> = []): StoreMock {
@@ -56,9 +69,9 @@ function createStoreMock(events: Array<DataMap> = []): StoreMock {
   return store;
 }
 
-function hookHarness(onReady: (api: ReturnType<typeof useScheduleApi>) => void) {
+function hookHarness(onReady: (api: ScheduleHookApi) => void) {
   function Harness() {
-    const api = useScheduleApi();
+    const api = useScheduleApi() as unknown as ScheduleHookApi;
 
     React.useEffect(() => {
       onReady(api);
@@ -84,15 +97,14 @@ describe("schedule.service", () => {
   let deleteScheduleSpy: jest.SpyInstance;
 
   async function mountHookApi() {
-    let capturedApi: ReturnType<typeof useScheduleApi> | null = null;
+    let capturedApi: ScheduleHookApi | null = null;
     const Harness = hookHarness((api) => {
       capturedApi = api;
     });
 
     render(<Harness />);
     await waitFor(() => expect(capturedApi).not.toBeNull());
-
-    return capturedApi as ReturnType<typeof useScheduleApi>;
+    return capturedApi as unknown as ScheduleHookApi;
   }
 
   beforeEach(() => {

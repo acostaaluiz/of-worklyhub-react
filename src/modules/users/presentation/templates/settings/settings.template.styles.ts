@@ -24,8 +24,16 @@ export const HeroCard = styled.div`
   border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
   border-radius: var(--radius-lg);
   background:
-    radial-gradient(circle at 12% 18%, rgba(32, 167, 255, 0.2), transparent 42%),
-    radial-gradient(circle at 90% 82%, rgba(0, 204, 158, 0.16), transparent 48%),
+    radial-gradient(
+      circle at 12% 18%,
+      color-mix(in srgb, var(--color-primary) 20%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 90% 82%,
+      color-mix(in srgb, var(--color-secondary) 16%, transparent),
+      transparent 48%
+    ),
     color-mix(in srgb, var(--color-surface) 92%, transparent);
   box-shadow: var(--shadow-sm);
   padding: var(--space-2) var(--space-3);

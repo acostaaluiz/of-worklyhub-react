@@ -1,7 +1,6 @@
 import { BehaviorSubject } from "rxjs";
 import { httpClient } from "@core/http/client.instance";
 import { companyService, type Workspace } from "@modules/company/services/company.service";
-import { usersAuthService } from "@modules/users/services/auth.service";
 import { toAppError } from "@core/errors/to-app-error";
 
 import {
@@ -57,22 +56,11 @@ export class BillingService {
     }
   }
 
-  private resolveUserUid(): string | undefined {
-    try {
-      const session = usersAuthService.getSessionValue();
-      return session?.uid ?? undefined;
-    } catch {
-      return undefined;
-    }
-  }
-
   private buildIdentityHeaders(): Record<string, string> {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     const workspaceId = this.resolveWorkspaceId();
-    const userUid = this.resolveUserUid();
 
     if (workspaceId) headers["x-workspace-id"] = workspaceId;
-    if (userUid) headers["x-user-uid"] = userUid;
 
     return headers;
   }
@@ -112,10 +100,6 @@ export class BillingService {
   async createCheckout(payload: CheckoutRequest): Promise<CheckoutResponse> {
     try {
       const workspaceId = payload.workspaceId ?? this.resolveWorkspaceId();
-      const userUid = payload.userUid ?? this.resolveUserUid();
-
-      if (!workspaceId) throw new Error("Workspace is required to create checkout.");
-      if (!userUid) throw new Error("User identity is required to create checkout.");
 
       const headers = this.buildIdentityHeaders();
 
@@ -128,8 +112,7 @@ export class BillingService {
           this.getPlansValue()?.payment?.gateway ??
           this.resolveGatewayFlag() ??
           "mercadopago",
-        workspaceId,
-        userUid,
+        ...(workspaceId ? { workspaceId } : {}),
       };
 
       return await this.api.createCheckout(body, headers);

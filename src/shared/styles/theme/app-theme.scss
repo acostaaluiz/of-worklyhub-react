@@ -22,7 +22,11 @@
 
   --color-link: rgba(15, 23, 42, 0.72);
   --color-link-hover: rgba(15, 23, 42, 0.92);
-  --color-company-action: #44c7b6;
+  --color-company-action: color-mix(
+    in srgb,
+    var(--color-secondary) 78%,
+    var(--color-primary)
+  );
   --on-company-action: #ffffff;
 
   --icon-color: currentColor;
@@ -74,7 +78,11 @@
 
   --color-link: rgba(15, 23, 42, 0.9);
   --color-link-hover: rgba(15, 23, 42, 1);
-  --color-company-action: #44c7b6;
+  --color-company-action: color-mix(
+    in srgb,
+    var(--color-secondary) 78%,
+    var(--color-primary)
+  );
   --on-company-action: #ffffff;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
@@ -86,24 +94,24 @@
   --gradient-app-bg:
     radial-gradient(
       1200px 700px at 18% 12%,
-      rgba(122, 44, 255, 0.14),
+      color-mix(in srgb, var(--color-tertiary) 14%, transparent),
       transparent 55%
     ),
     radial-gradient(
       1200px 700px at 78% 82%,
-      rgba(0, 214, 160, 0.1),
+      color-mix(in srgb, var(--color-secondary) 10%, transparent),
       transparent 55%
     );
 
   --gradient-auth-hero:
     radial-gradient(
       900px 520px at 25% 20%,
-      rgba(122, 44, 255, 0.18),
+      color-mix(in srgb, var(--color-tertiary) 18%, transparent),
       transparent 55%
     ),
     radial-gradient(
       900px 520px at 65% 75%,
-      rgba(0, 214, 160, 0.12),
+      color-mix(in srgb, var(--color-secondary) 12%, transparent),
       transparent 55%
     ),
     linear-gradient(
@@ -149,7 +157,11 @@
 
   --color-link: rgba(230, 241, 244, 0.78);
   --color-link-hover: rgba(230, 241, 244, 0.95);
-  --color-company-action: #44c7b6;
+  --color-company-action: color-mix(
+    in srgb,
+    var(--color-secondary) 82%,
+    var(--color-primary)
+  );
   --on-company-action: #ffffff;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -161,29 +173,29 @@
   --gradient-app-bg:
     radial-gradient(
       1200px 700px at 14% 12%,
-      rgba(0, 214, 160, 0.14),
+      color-mix(in srgb, var(--color-secondary) 14%, transparent),
       transparent 55%
     ),
     radial-gradient(
       1200px 700px at 82% 82%,
-      rgba(122, 44, 255, 0.18),
+      color-mix(in srgb, var(--color-tertiary) 18%, transparent),
       transparent 55%
     ),
     radial-gradient(
       900px 520px at 55% 20%,
-      rgba(30, 112, 255, 0.12),
+      color-mix(in srgb, var(--color-primary) 12%, transparent),
       transparent 55%
     );
 
   --gradient-auth-hero:
     radial-gradient(
       900px 520px at 25% 18%,
-      rgba(0, 214, 160, 0.14),
+      color-mix(in srgb, var(--color-secondary) 14%, transparent),
       transparent 55%
     ),
     radial-gradient(
       900px 520px at 70% 70%,
-      rgba(122, 44, 255, 0.18),
+      color-mix(in srgb, var(--color-tertiary) 18%, transparent),
       transparent 55%
     ),
     linear-gradient(

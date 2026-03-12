@@ -1,13 +1,8 @@
-import { type PropsWithChildren, useEffect, useMemo, useState } from "react";
+import { type PropsWithChildren, useEffect, useState } from "react";
 import { ConfigProvider, theme } from "antd";
 
-import type { ThemeMode, ThemePreference } from "@core/config/theme/theme.interface";
+import type { ThemeMode, ThemeState } from "@core/config/theme/theme.interface";
 import { themeService } from "@core/config/theme/theme.service";
-
-type ThemeProviderState = {
-  mode: ThemeMode;
-  preference: ThemePreference;
-};
 
 function readCssVar(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -39,27 +34,24 @@ function buildAntdTokens(mode: ThemeMode) {
 }
 
 export function AppThemeProvider({ children }: PropsWithChildren) {
-  const [state, setState] = useState<ThemeProviderState>(() => themeService.init());
+  const [state, setState] = useState<ThemeState>(() => themeService.init());
 
   useEffect(() => {
     const unsubscribe = themeService.subscribe((next) => setState(next));
     return unsubscribe;
   }, []);
 
-  const antdTheme = useMemo(() => {
-    const algorithm = state.mode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm;
-
-    return {
-      algorithm,
-      ...buildAntdTokens(state.mode),
-      components: {
-        Typography: {
-          colorLink: "var(--color-link)",
-          colorLinkHover: "var(--color-link-hover)",
-        },
+  const algorithm = state.mode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm;
+  const antdTheme = {
+    algorithm,
+    ...buildAntdTokens(state.mode),
+    components: {
+      Typography: {
+        colorLink: "var(--color-link)",
+        colorLinkHover: "var(--color-link-hover)",
       },
-    };
-  }, [state.mode]);
+    },
+  };
 
   return <ConfigProvider theme={antdTheme}>{children}</ConfigProvider>;
 }

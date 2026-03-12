@@ -7,6 +7,7 @@ import { companyService } from "@modules/company/services/company.service";
 import { usersService } from "@modules/users/services/user.service";
 import { applicationService } from "@core/application/application.service";
 import { usersOverviewService } from "@modules/users/services/overview.service";
+import { themeService } from "@core/config/theme/theme.service";
 
 export type UserSession = { uid: string; claims: DataValue; email?: string; name?: string; photoUrl?: string } | null;
 
@@ -49,6 +50,7 @@ export class UsersAuthService {
 
     // update subject
     this.session$.next(session);
+    themeService.refreshForCurrentUser();
 
     return session;
   }
@@ -92,6 +94,7 @@ export class UsersAuthService {
       }
 
       this.session$.next(null);
+      themeService.refreshForCurrentUser();
     }
   }
 }

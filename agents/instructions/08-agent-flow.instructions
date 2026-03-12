@@ -26,6 +26,7 @@ Passo a passo obrigatorio
 - Classificar tipo de demanda: bug, melhoria, refactor, novo modulo.
 - Identificar dominio principal e carregar instrucoes do modulo correto.
 - Definir artefatos esperados da entrega.
+- Se a demanda envolver onboarding/monetizacao, tratar `users + billing + company` como escopo minimo de analise.
 
 2) Planejamento (`architect`)
 - Entregar pacote arquitetural com:
@@ -61,6 +62,10 @@ Selecao de instructions por modulo
   - `06-quality.instructions`
 - Depois carregar somente os modulos necessarios em `agents/instructions/modules/*.instructions`.
 - Em demandas multi-modulo, escolher modulo dono + modulo(s) de integracao diretamente afetados.
+- Para controle de acesso por plano, incluir obrigatoriamente:
+  - `modules/users.instructions`
+  - `modules/billing.instructions`
+  - `modules/company.instructions`
 
 Definition of done do fluxo
 - Planejamento arquitetural concluido e aplicado.

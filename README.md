@@ -6,6 +6,30 @@ Aplicacao web para gestao de negocios de servico, organizada por modulos e com a
 
 Plataforma SaaS para operacao de negocios de servico, com foco em agenda, clientes, equipe e financeiro. Indicada para pequenas e medias empresas que precisam centralizar atendimento, vendas de servicos e visao operacional em um unico sistema.
 
+## Jornada de Acesso e Monetizacao (obrigatoria)
+
+Fluxo oficial:
+
+1. `registro`
+2. `login`
+3. `selecao de plano` (`/billing/plans`)
+4. `checkout` (`/billing/checkout`)
+5. `company setup` (`/company/introduction`)
+6. `home` e modulos (`/home`)
+
+Regras de negocio:
+
+- Usuario novo inicia sem plano vinculado.
+- Acesso aos modulos privados exige plano ativo.
+- Quando o usuario esta com `INACTIVE-PLAN`, o app redireciona para billing.
+- O plano so deve ser ativado apos pagamento aprovado (nao na selecao do card).
+
+## Matriz de Acesso por Plano
+
+- `Starter`: `billing`, `clients`, `company`, `dashboard`, `schedule`, `services`.
+- `Standard`: tudo do Starter + `finance`, `inventory`, `people`, `work-order`.
+- `Premium`: acesso completo aos modulos (inclui `growth` e `sla`).
+
 ## Modulos Implementados
 
 - billing
@@ -158,6 +182,13 @@ npm run preview
 - `npm run depcruise:graph` gera `dependency-graph.html`.
 - `npm run depcruise:graph:svg` gera `dependency-graph.svg`.
 
+## CI/CD (GitLab)
+
+Este repositorio possui pipeline GitLab com validacoes de qualidade, testes, build e empacotamento Docker.
+
+- Pipeline: `.gitlab-ci.yml`
+- Guia operacional: `docs/ci/gitlab-ci.md`
+
 ## Qualidade e Pre-commit
 
 Este repositorio usa:
@@ -198,14 +229,14 @@ Se a mensagem nao seguir o padrao, o commit sera bloqueado.
 
 Breve mapa de responsabilidades por modulo:
 
-- `billing`: planos, checkout e ciclo de cobranca.
+- `billing`: planos, checkout e ciclo de cobranca (gate obrigatorio para usuarios sem plano ativo).
 - `clients`: cadastro e historico de clientes.
-- `company`: dados da empresa e configuracoes de workspace.
+- `company`: dados da empresa e configuracoes de workspace (onboarding apos plano ativo).
 - `dashboard`: indicadores operacionais.
 - `finance`: entradas, saidas e indicadores financeiros.
 - `inventory`: produtos, estoque e itens.
 - `people`: colaboradores e equipes.
 - `schedule`: agenda, eventos e disponibilidade.
 - `slas`: indicadores de SLA e produtividade.
-- `users`: perfis, autenticacao e preferencias do usuario.
+- `users`: perfis, autenticacao, status de plano e preferencias do usuario.
 - `work-order`: ordens de servico e status de execucao.

@@ -3,6 +3,7 @@
 Escopo
 - Autenticacao, perfil do usuario e overview (modulos disponiveis).
 - Fonte principal de sessao e identidade do usuario.
+- Controla status de plano (`ACTIVE-PLAN` | `INACTIVE-PLAN`) para gates de acesso.
 
 Rotas e entradas
 - Stack publico: `src/modules/users/presentation/stacks/auth.stack.tsx`.
@@ -15,8 +16,8 @@ Rotas e entradas
 
 Modelos principais
 - `UserSession` (`auth.service.ts`): uid, claims, email, name, photoUrl.
-- `UserProfileResponse` (`users-api.ts`): name, email, planId, phone, photoUrl.
-- `UserOverviewProfile` / `UserOverviewModule` (`overview-api.ts`).
+- `UserProfileResponse` (`users-api.ts`): name, email, planId, planStatus, phone, photoUrl.
+- `UserOverviewProfile` / `UserOverviewModule` (`overview-api.ts`) com status de plano.
 
 Services
 - `auth.service.ts`
@@ -34,9 +35,13 @@ Services
 
 Integracoes
 - `RedirectIfAuthenticated` usa `usersService.fetchByEmail` e `companyService.fetchWorkspaceByEmail`.
-- `billing` pode refletir plano no perfil do usuario.
+- `RedirectIfAuthenticated` prioriza `/billing/plans` quando nao ha plano ativo.
+- `RequireAuth` bloqueia rotas privadas fora de `/billing/*` quando `INACTIVE-PLAN`.
+- `billing` so reflete plano no perfil apos pagamento aprovado.
 
 Guardrails
 - Nunca guardar dados sensiveis fora dos services.
 - Sempre limpar cache ao deslogar.
 - Evitar usar dados de perfil sem verificar `UserSession`.
+- Usuario novo nao deve receber plano por padrao na criacao.
+- UI nao deve ativar plano diretamente via selecao de card.

@@ -146,15 +146,32 @@ describe("Clients360Service", () => {
       data: [
         {
           id: "wo-1",
+          workspaceId: "ws-1",
           title: "WO 2026-03-07 - Ana Costa - Deep Cleaning",
           description: "Deep cleaning completed",
-          status: { label: "Completed" },
+          priority: "medium",
+          status: {
+            id: "status-completed",
+            code: "completed",
+            label: "Completed",
+            isTerminal: true,
+            sortOrder: 1,
+            createdAt: "2026-03-07T21:00:00.000Z",
+            updatedAt: "2026-03-07T21:00:00.000Z",
+          },
+          serviceTotalCents: 25905,
+          inventoryTotalCents: 0,
           metadata: {
             patientName: "Ana Costa",
             patientEmail: "ana@clinic.com",
             patientPhone: "+55 (11) 99999-0000",
           },
           totalEstimatedCents: 25905,
+          serviceLines: [],
+          workers: [],
+          inventoryLines: [],
+          createdAt: "2026-03-07T20:00:00.000Z",
+          updatedAt: "2026-03-07T21:00:00.000Z",
           completedAt: "2026-03-07T21:00:00.000Z",
         },
       ],
@@ -226,9 +243,9 @@ describe("Clients360Service", () => {
   });
 
   it("reuses in-flight request for the same dashboard key", async () => {
-    let resolveBackend: ((value: DataValue) => void) | null = null;
+    let resolveBackend: ((value: DataValue) => void) | undefined;
     clientsApiMock.getBundle.mockReturnValueOnce(
-      new Promise((resolve) => {
+      new Promise<DataValue>((resolve) => {
         resolveBackend = resolve;
       })
     );

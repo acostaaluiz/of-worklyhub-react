@@ -91,7 +91,7 @@ describe("CompanyWorkspaceService", () => {
   });
 
   it("deduplicates concurrent listServices calls", async () => {
-    let resolveList: ((value: DataValue[]) => void) | null = null;
+    let resolveList: ((value: DataValue[]) => void) | undefined;
     apiMock.listWorkspaceServices.mockReturnValueOnce(
       new Promise((resolve) => {
         resolveList = resolve;
@@ -206,4 +206,3 @@ describe("CompanyWorkspaceService", () => {
     await expect(service.deactivateService("svc-1")).rejects.toThrow("Not implemented");
   });
 });
-

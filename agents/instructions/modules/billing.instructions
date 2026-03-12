@@ -3,6 +3,12 @@
 Escopo
 - Responsavel por planos de assinatura e checkout de pagamento.
 - Todo fluxo de cobranca deve passar por este modulo.
+- E a etapa obrigatoria para usuario com `INACTIVE-PLAN` antes do company setup.
+
+Matriz oficial de modulos por plano
+- Starter: `billing`, `clients`, `company`, `dashboard`, `schedule`, `services`.
+- Standard: Starter + `finance`, `inventory`, `people`, `work-order`.
+- Premium: acesso completo (inclui `growth` e `sla`).
 
 Rotas e entradas
 - Stack: `src/modules/billing/presentation/stacks/billing.stack.tsx`.
@@ -21,9 +27,9 @@ Modelos principais (billing-api.ts)
 Services
 - `billing.service.ts`
   - Cache com `BehaviorSubject` (`plans$`).
-  - Resolve `workspaceId` via `companyService`.
+  - Resolve `workspaceId` via `companyService` quando existir (checkout pode iniciar sem workspace).
   - Resolve `userUid` via `usersAuthService`.
-  - Monta headers `x-workspace-id` e `x-user-uid`.
+  - Monta headers com `x-workspace-id` somente quando disponivel.
   - `fetchPlans()` busca planos e cacheia.
   - `createCheckout()` monta payload completo e chama API.
 - `billing-api.ts`
@@ -33,8 +39,10 @@ Integracoes
 - Depende de `companyService` (workspace).
 - Depende de `usersAuthService` (sessao).
 - Usa `httpClient` do `core`.
+- Nao deve ativar plano no clique de selecao; apenas iniciar checkout.
 
 Guardrails
 - Nunca chamar endpoints de billing diretamente na UI; sempre via service.
-- Sempre garantir `workspaceId` e `userUid` no checkout.
+- `userUid` e obrigatorio no checkout; `workspaceId` e opcional no fluxo pre-company.
+- Selecao de plano nao pode vincular plano ao usuario antes de pagamento aprovado.
 - Qualquer novo metodo de pagamento deve ser padronizado aqui.

@@ -1,4 +1,3 @@
-import React from "react";
 jest.mock("./work-order-form.component", () => ({
   WorkOrderForm: () => null,
 }));

@@ -1,4 +1,3 @@
-import React from "react";
 jest.mock("./schedule-event-modal.component", () => ({
   ScheduleEventModal: () => null,
 }));

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import { BaseTemplate } from "@shared/base/base.template";
 import { formatAppDateTime } from "@core/utils/date-time";
+import { toSafeAppPath } from "@core/navigation/safe-navigation";
 import type { NotificationSummaryModel, UserNotificationModel } from "@modules/users/interfaces/notification.model";
 import {
   ActionsGroup,
@@ -171,48 +172,51 @@ function NotificationsContent({
                 : "No notifications generated yet for this workspace."}
             </EmptyState>
           ) : (
-            visibleItems.map((item, index) => (
-              <NotificationCard
-                key={item.id}
-                $read={item.isRead}
-                $priority={item.priority}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.18) }}
-              >
-                <NotificationMeta>
-                  <MetaChips>
-                    <Chip $variant="module">{toModuleLabel(item.sourceModule)}</Chip>
-                    <Chip $variant="priority" $priority={item.priority}>
-                      {item.priority}
-                    </Chip>
-                    {item.isRead ? <Chip $variant="read">read</Chip> : null}
-                  </MetaChips>
+            visibleItems.map((item, index) => {
+              const safeActionPath = toSafeAppPath(item.actionPath);
+              return (
+                <NotificationCard
+                  key={item.id}
+                  $read={item.isRead}
+                  $priority={item.priority}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.18) }}
+                >
+                  <NotificationMeta>
+                    <MetaChips>
+                      <Chip $variant="module">{toModuleLabel(item.sourceModule)}</Chip>
+                      <Chip $variant="priority" $priority={item.priority}>
+                        {item.priority}
+                      </Chip>
+                      {item.isRead ? <Chip $variant="read">read</Chip> : null}
+                    </MetaChips>
 
-                  <MetaTime>{formatAppDateTime(item.generatedAt, "--")}</MetaTime>
-                </NotificationMeta>
+                    <MetaTime>{formatAppDateTime(item.generatedAt, "--")}</MetaTime>
+                  </NotificationMeta>
 
-                <NotificationTitle>{item.title}</NotificationTitle>
-                <NotificationMessage>{item.message}</NotificationMessage>
+                  <NotificationTitle>{item.title}</NotificationTitle>
+                  <NotificationMessage>{item.message}</NotificationMessage>
 
-                <NotificationActions>
-                  {item.actionPath ? (
-                    <Button size="small" onClick={() => navigate(item.actionPath as string)}>
-                      Open
+                  <NotificationActions>
+                    {safeActionPath ? (
+                      <Button size="small" onClick={() => navigate(safeActionPath)}>
+                        Open
+                      </Button>
+                    ) : null}
+                    <Button
+                      size="small"
+                      onClick={() => onToggleRead(item, !item.isRead)}
+                    >
+                      {item.isRead ? "Mark unread" : "Mark read"}
                     </Button>
-                  ) : null}
-                  <Button
-                    size="small"
-                    onClick={() => onToggleRead(item, !item.isRead)}
-                  >
-                    {item.isRead ? "Mark unread" : "Mark read"}
-                  </Button>
-                  <Button size="small" danger onClick={() => onArchive(item)}>
-                    Archive
-                  </Button>
-                </NotificationActions>
-              </NotificationCard>
-            ))
+                    <Button size="small" danger onClick={() => onArchive(item)}>
+                      Archive
+                    </Button>
+                  </NotificationActions>
+                </NotificationCard>
+              );
+            })
           )}
         </FeedBody>
 

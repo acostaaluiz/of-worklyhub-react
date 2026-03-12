@@ -8,17 +8,10 @@ jest.mock("@modules/company/services/company.service", () => ({
   },
 }));
 
-jest.mock("@modules/users/services/auth.service", () => ({
-  usersAuthService: {
-    getSessionValue: jest.fn(),
-  },
-}));
-
 import { AppError } from "@core/errors/app-error";
 import { InvoiceSettingsApi } from "./invoice-settings-api";
 import { InvoiceSettingsService } from "./invoice-settings.service";
 import { companyService } from "@modules/company/services/company.service";
-import { usersAuthService } from "@modules/users/services/auth.service";
 
 type InvoiceSettingsApiMock = {
   getWorkspaceInvoiceSettings: jest.Mock;
@@ -103,7 +96,6 @@ function createApiMock(): InvoiceSettingsApiMock {
 describe("InvoiceSettingsService", () => {
   const invoiceApiCtor = jest.mocked(InvoiceSettingsApi);
   const mockedCompanyService = jest.mocked(companyService);
-  const mockedAuthService = jest.mocked(usersAuthService);
   let apiMock: InvoiceSettingsApiMock;
 
   beforeEach(() => {
@@ -111,7 +103,6 @@ describe("InvoiceSettingsService", () => {
     apiMock = createApiMock();
     invoiceApiCtor.mockImplementation(() => apiMock as unknown as InvoiceSettingsApi);
     mockedCompanyService.getWorkspaceValue.mockReturnValue({ workspaceId: "ws-1" } as never);
-    mockedAuthService.getSessionValue.mockReturnValue({ uid: "user-1" } as never);
   });
 
   it("fetches workspace bundle and normalizes settings/configuration", async () => {
@@ -136,7 +127,6 @@ describe("InvoiceSettingsService", () => {
       expect.objectContaining({
         "Content-Type": "application/json",
         "x-workspace-id": "ws-1",
-        "x-user-uid": "user-1",
       })
     );
   });
@@ -178,7 +168,6 @@ describe("InvoiceSettingsService", () => {
     expect(apiMock.upsertWorkspaceInvoiceSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "ws-1",
-        updatedByUid: "user-1",
       }),
       expect.any(Object)
     );
@@ -210,7 +199,6 @@ describe("InvoiceSettingsService", () => {
     expect(apiMock.upsertServiceSaleNfeConfiguration).toHaveBeenCalledWith(
       expect.objectContaining({
         workspaceId: "ws-1",
-        updatedByUid: "user-1",
         configuration: expect.objectContaining({
           integration: expect.objectContaining({
             provider: "govbr",
@@ -258,4 +246,3 @@ describe("InvoiceSettingsService", () => {
     });
   });
 });
-

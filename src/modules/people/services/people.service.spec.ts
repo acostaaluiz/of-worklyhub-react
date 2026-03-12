@@ -142,7 +142,7 @@ describe("PeopleService", () => {
   });
 
   it("reuses in-flight list promise to prevent duplicated backend calls", async () => {
-    let resolver: ((value: DataValue[]) => void) | null = null;
+    let resolver: ((value: DataValue[]) => void) | undefined;
     apiMock.listWorkspaceWorkers.mockReturnValueOnce(
       new Promise<DataValue[]>((resolve) => {
         resolver = resolve;

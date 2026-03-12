@@ -35,6 +35,33 @@ type Plan = {
 import type { BillingPlan } from "@modules/billing/services/billing-api";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 
+const PLAN_FEATURES_BY_SLUG: Record<string, string[]> = {
+  starter: [
+    "Core modules: Clients, Schedule, Services",
+    "Company profile and dashboard",
+    "Billing and plan management",
+    "Email support",
+  ],
+  standard: [
+    "Everything in Starter",
+    "People, Inventory and Work Order modules",
+    "Finance module and team operations",
+    "Priority support",
+  ],
+  premium: [
+    "Full module access",
+    "Includes SLA and Growth modules",
+    "Dedicated success",
+    "Onboarding",
+  ],
+};
+
+const PLAN_SLUG_BY_DB_ID: Record<number, keyof typeof PLAN_FEATURES_BY_SLUG> = {
+  1: "starter",
+  2: "standard",
+  3: "premium",
+};
+
 export class PlanSelector extends BaseComponent<
   BaseProps & { plans?: BillingPlan[]; onSelectPlan?: (planId: string, interval?: BillingInterval) => void; recommendedPlanId?: string },
   { isLoading: boolean; error?: DataValue; interval: BillingInterval; selectedPlanId?: string }
@@ -51,10 +78,9 @@ export class PlanSelector extends BaseComponent<
       currency: "USD",
       cta: "Choose Starter",
       features: [
-        "1 user",
-        "Up to 50 clients",
-        "200 schedules / month",
-        "Basic cash flow",
+        "Core modules: Clients, Schedule, Services",
+        "Company profile and dashboard",
+        "Billing and plan management",
         "Email support",
       ],
     },
@@ -68,10 +94,9 @@ export class PlanSelector extends BaseComponent<
       highlight: true,
       cta: "Choose Standard",
       features: [
-        "Up to 5 users",
-        "Up to 500 clients",
-        "Unlimited schedules",
-        "Basic reports",
+        "Everything in Starter",
+        "People, Inventory and Work Order modules",
+        "Finance module and team operations",
         "Priority support",
       ],
     },
@@ -84,17 +109,27 @@ export class PlanSelector extends BaseComponent<
       currency: "USD",
       cta: "Choose Premium",
       features: [
-        "Unlimited users",
-        "Multiple locations",
-        "Advanced reports",
-        "Role-based permissions",
-        "Premium support",
+        "Full module access",
+        "Includes SLA and Growth modules",
+        "Dedicated success",
+        "Onboarding",
       ],
     },
   ];
 
   private mapExternalPlans(plans?: BillingPlan[]): Plan[] | undefined {
     if (!plans || plans.length === 0) return undefined;
+
+    const resolveFeatures = (plan: BillingPlan): string[] => {
+      const idKey = String(plan.id ?? "").trim().toLowerCase();
+      const nameKey = String(plan.name ?? "").trim().toLowerCase();
+      const slugByDbId = PLAN_SLUG_BY_DB_ID[Number(plan.dbId)];
+      const slugById = (PLAN_FEATURES_BY_SLUG[idKey] ? idKey : undefined) as keyof typeof PLAN_FEATURES_BY_SLUG | undefined;
+      const slugByName = (PLAN_FEATURES_BY_SLUG[nameKey] ? nameKey : undefined) as keyof typeof PLAN_FEATURES_BY_SLUG | undefined;
+      const resolvedSlug = slugByDbId ?? slugById ?? slugByName;
+      if (resolvedSlug) return PLAN_FEATURES_BY_SLUG[resolvedSlug];
+      return plan.features ?? [];
+    };
 
     return plans.map((p) => ({
       id: String(p.id),
@@ -105,7 +140,7 @@ export class PlanSelector extends BaseComponent<
       currency: p.currency,
       highlight: !!(p.recommended ?? (p as DataMap).highlight),
       cta: `Choose ${p.name}`,
-      features: p.features ?? [],
+      features: resolveFeatures(p),
     }));
   }
 

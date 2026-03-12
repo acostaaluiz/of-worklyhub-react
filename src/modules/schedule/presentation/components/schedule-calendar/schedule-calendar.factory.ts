@@ -52,28 +52,75 @@ export function escapeHtml(input?: string | null) {
     .replace(/'/g, "&#039;");
 }
 
-export const normalizeCssColor = (value?: string | null): string | undefined => {
-  if (!value) return undefined;
-  if (typeof document === 'undefined') return value as string;
-  try {
-    const v = value.trim();
-    if (v.startsWith('#')) return v;
-    if (/^rgb/.test(v)) {
-      const m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-      if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
-    }
-    const el = document.createElement('div');
-    el.style.color = v;
-    el.style.display = 'none';
-    document.body.appendChild(el);
-    const computed = getComputedStyle(el).color || '';
-    document.body.removeChild(el);
-    const m = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-    if (m) return '#' + [m[1], m[2], m[3]].map(n => parseInt(n, 10).toString(16).padStart(2, '0')).join('');
-    return v;
-  } catch (err) {
-    return value as string;
+const HEX_COLOR_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const CSS_VAR_COLOR_RE = /^var\(--[a-z0-9-]+\)$/i;
+const RGB_COLOR_RE =
+  /^rgba?\(\s*(\d{1,3})\s*(?:,|\s)\s*(\d{1,3})\s*(?:,|\s)\s*(\d{1,3})(?:\s*(?:,|\/)\s*(0|1|0?\.\d+))?\s*\)$/i;
+
+function toHexByte(value: number): string {
+  return Math.max(0, Math.min(255, value))
+    .toString(16)
+    .padStart(2, "0");
+}
+
+function rgbToHex(
+  redRaw: string,
+  greenRaw: string,
+  blueRaw: string
+): string | undefined {
+  const red = Number.parseInt(redRaw, 10);
+  const green = Number.parseInt(greenRaw, 10);
+  const blue = Number.parseInt(blueRaw, 10);
+  if (
+    !Number.isFinite(red) ||
+    !Number.isFinite(green) ||
+    !Number.isFinite(blue) ||
+    red < 0 ||
+    red > 255 ||
+    green < 0 ||
+    green > 255 ||
+    blue < 0 ||
+    blue > 255
+  ) {
+    return undefined;
   }
+  return `#${toHexByte(red)}${toHexByte(green)}${toHexByte(blue)}`;
+}
+
+function normalizeHex(value: string): string {
+  if (value.length === 4) {
+    const r = value[1];
+    const g = value[2];
+    const b = value[3];
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return value.toLowerCase();
+}
+
+export const normalizeCssColor = (value?: string | null): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const v = value.trim();
+  if (!v) return undefined;
+
+  if (CSS_VAR_COLOR_RE.test(v)) return v;
+  if (HEX_COLOR_RE.test(v)) return normalizeHex(v);
+
+  const rgbMatch = v.match(RGB_COLOR_RE);
+  if (rgbMatch) {
+    return rgbToHex(rgbMatch[1], rgbMatch[2], rgbMatch[3]);
+  }
+
+  if (typeof document === "undefined") return undefined;
+  const el = document.createElement("div");
+  el.style.color = "";
+  el.style.color = v;
+  if (!el.style.color) return undefined;
+  document.body.appendChild(el);
+  const computed = getComputedStyle(el).color || "";
+  document.body.removeChild(el);
+  const computedMatch = computed.match(RGB_COLOR_RE);
+  if (!computedMatch) return undefined;
+  return rgbToHex(computedMatch[1], computedMatch[2], computedMatch[3]);
 };
 
 export const buildCalendarTemplates = () => ({
@@ -83,10 +130,17 @@ export const buildCalendarTemplates = () => ({
   monthGridEvent: (model: CalendarTemplateModel) => {
     try {
       // monthGridEvent template
-      const cardBg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-primary)`;
-      const dotColorRaw = model?.raw?.statusColor || model?.raw?.categoryColor || model.backgroundColor || `var(--color-primary)`;
-      const dotColor = normalizeCssColor(dotColorRaw) ?? dotColorRaw;
-      const fg = model.color || `var(--color-text)`;
+      const cardBg =
+        normalizeCssColor(model?.raw?.categoryColor) ??
+        normalizeCssColor(model?.raw?.statusColor) ??
+        normalizeCssColor(model.backgroundColor) ??
+        "var(--color-primary)";
+      const dotColor =
+        normalizeCssColor(model?.raw?.statusColor) ??
+        normalizeCssColor(model?.raw?.categoryColor) ??
+        normalizeCssColor(model.backgroundColor) ??
+        cardBg;
+      const fg = normalizeCssColor(model.color) ?? "var(--color-text)";
       return `
         <div class="tui-custom-month-event" style="display:flex;align-items:center;gap:8px;background:${cardBg} !important;padding:6px;border-radius:6px;color:${fg};">
           <span class="tui-custom-dot" style="width:8px;height:8px;border-radius:999px;display:inline-block;background:${dotColor} !important;"></span>
@@ -98,8 +152,12 @@ export const buildCalendarTemplates = () => ({
   },
   popupDetail: (model: CalendarTemplateModel) => {
     try {
-      const fg = model.color || `var(--color-text)`;
-      const bg = model?.raw?.categoryColor || model?.raw?.statusColor || model.backgroundColor || `var(--color-surface)`;
+      const fg = normalizeCssColor(model.color) ?? "var(--color-text)";
+      const bg =
+        normalizeCssColor(model?.raw?.categoryColor) ??
+        normalizeCssColor(model?.raw?.statusColor) ??
+        normalizeCssColor(model.backgroundColor) ??
+        "var(--color-surface)";
       const start = model.start ? dayjs(model.start) : null;
       const end = model.end ? dayjs(model.end) : null;
       const timeRange = start && end ? `${start.format("HH:mm")} — ${end.format("HH:mm")}` : "";

@@ -91,41 +91,30 @@ export class UsersService {
   }
 
   async fetchByEmail(email: string): Promise<UserProfile> {
+    const profile = await this.api.getByEmail(email);
+    // update subject and persist result so subscribers receive update
+    this.subject.next(profile);
     try {
-      console.log("usersService.fetchByEmail", { email });
-      const profile = await this.api.getByEmail(email);
-      // update subject and persist result so subscribers receive update
-      this.subject.next(profile);
-      try {
-        localStorageProvider.set(PROFILE_KEY, JSON.stringify(profile));
-      } catch {
-        // ignore
-      }
-      return profile;
-    } catch (err) {
-      console.error("usersService.fetchByEmail error", err);
-      throw err;
+      localStorageProvider.set(PROFILE_KEY, JSON.stringify(profile));
+    } catch {
+      // ignore
     }
+    return profile;
   }
 
   async setPlan(email: string, planId: number): Promise<void> {
-    try {
-      await this.api.setPlan(email, planId);
+    await this.api.setPlan(email, planId);
 
-      // update cached profile if present
-      const current = this.getProfileValue();
-      if (current) {
-        const updated = { ...current, planId } as UserProfileResponse;
-        this.subject.next(updated);
-        try {
-          localStorageProvider.set(PROFILE_KEY, JSON.stringify(updated));
-        } catch {
-          // ignore storage errors
-        }
+    // update cached profile if present
+    const current = this.getProfileValue();
+    if (current) {
+      const updated = { ...current, planId } as UserProfileResponse;
+      this.subject.next(updated);
+      try {
+        localStorageProvider.set(PROFILE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore storage errors
       }
-    } catch (err) {
-      console.error("usersService.setPlan error", err);
-      throw err;
     }
   }
 
@@ -140,6 +129,7 @@ export class UsersService {
         email: user?.email ?? payload.email,
         phone: user?.phone ?? payload.phone,
         planId: user?.planId ?? current?.planId,
+        planStatus: user?.planStatus ?? current?.planStatus,
         photoUrl: current?.photoUrl,
       };
 

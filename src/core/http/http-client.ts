@@ -6,6 +6,10 @@ import type { HttpClient, HttpRequestConfig, HttpResponse } from "./interfaces/h
 import type { AuthProvider } from "../auth/interfaces/auth-provider.interface";
 import { AppError } from "../errors/app-error";
 
+const IS_PRODUCTION =
+  ((import.meta as { env?: Record<string, string | undefined> }).env?.MODE ?? "production") ===
+  "production";
+
 function toQueryString(query?: Record<string, string | number | boolean | null | undefined>): string {
   if (!query) return "";
   const params = new URLSearchParams();
@@ -130,11 +134,13 @@ export class AxiosHttpClient implements HttpClient {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       });
 
-      this.logger?.debug("HTTP request", {
-        correlationId,
-        method: cfg.method?.toUpperCase(),
-        url: cfg.url,
-      });
+      if (!IS_PRODUCTION) {
+        this.logger?.debug("HTTP request", {
+          correlationId,
+          method: cfg.method?.toUpperCase(),
+          url: cfg.url,
+        });
+      }
 
       return cfg;
     });
@@ -144,11 +150,13 @@ export class AxiosHttpClient implements HttpClient {
         const correlationId = String(
           toHeaderMap(res.config.headers ?? null)["x-correlation-id"] || ""
         );
-        this.logger?.debug("HTTP response", {
-          correlationId,
-          status: res.status,
-          url: res.config.url,
-        });
+        if (!IS_PRODUCTION) {
+          this.logger?.debug("HTTP response", {
+            correlationId,
+            status: res.status,
+            url: res.config.url,
+          });
+        }
         return res;
       },
       (err) => {
@@ -182,14 +190,8 @@ export class AxiosHttpClient implements HttpClient {
       try {
         const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.();
 
-        // debug: log final request URL and headers to help diagnose canceled/invalid requests
-        try {
+        if (!IS_PRODUCTION) {
           this.logger?.debug?.("HTTP sending", { correlationId, url, method: config.method, token: !!token });
-          // also emit a console debug for local dev visibility
-           
-          console.log("HTTP ->", { url, method: config.method, headers: config.headers, tokenPresent: !!token });
-        } catch {
-          // swallow
         }
 
         const res = await this.axios.request<TData>({

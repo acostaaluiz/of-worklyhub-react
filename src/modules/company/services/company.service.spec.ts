@@ -128,7 +128,8 @@ describe("CompanyService", () => {
       id: "company-1",
       name: "Barbearia JJ",
     });
-    expect(profile.services.length).toBeGreaterThan(0);
+    expect(profile.services).toBeDefined();
+    expect(profile.services?.length ?? 0).toBeGreaterThan(0);
   });
 
   it("uploads workspace wallpaper and updates cached workspace", async () => {
@@ -197,4 +198,3 @@ describe("CompanyService", () => {
     );
   });
 });
-

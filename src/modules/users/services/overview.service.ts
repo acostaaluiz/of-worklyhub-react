@@ -30,6 +30,7 @@ type OverviewPayload = {
 type RawProfile = UserOverviewProfile & {
   full_name?: string;
   profile_photo_path?: string;
+  plan_status?: "ACTIVE-PLAN" | "INACTIVE-PLAN";
 };
 
 function unwrapOverviewPayload(
@@ -47,6 +48,7 @@ function normalizeProfile(profile: RawProfile | null): UserOverviewProfile | nul
   return {
     ...profile,
     name: profile.name ?? profile.fullName ?? profile.full_name ?? undefined,
+    planStatus: profile.planStatus ?? profile.plan_status ?? undefined,
     profilePhotoUrl:
       profile.profilePhotoUrl ??
       profile.profilePhotoPath ??

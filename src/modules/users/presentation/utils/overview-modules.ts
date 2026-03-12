@@ -1,12 +1,5 @@
 import type { UserOverviewModule } from "@modules/users/services/overview-api";
 
-const GROWTH_FALLBACK_MODULE: UserOverviewModule = {
-  uid: "growth-autopilot",
-  name: "Growth",
-  description: "Automate retention, reactivation, and billing recovery.",
-  icon: "sparkles",
-};
-
 export function isGrowthModule(module: UserOverviewModule): boolean {
   const bucket = `${module.uid ?? ""} ${module.name ?? ""}`.toLowerCase();
   return (
@@ -19,6 +12,14 @@ export function isGrowthModule(module: UserOverviewModule): boolean {
 
 export function ensureGrowthModule(modules: UserOverviewModule[] | null | undefined): UserOverviewModule[] {
   const current = Array.isArray(modules) ? modules : [];
-  if (current.some((module) => isGrowthModule(module))) return current;
-  return [...current, GROWTH_FALLBACK_MODULE];
+  return current.map((module) => {
+    if (!isGrowthModule(module)) return module;
+    return {
+      ...module,
+      uid: "growth",
+      name: module.name ?? "Growth",
+      description: module.description ?? "Automate retention, reactivation, and billing recovery.",
+      icon: module.icon ?? "sparkles",
+    };
+  });
 }

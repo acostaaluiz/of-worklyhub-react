@@ -102,9 +102,8 @@ export class ProfilePage extends BasePage<{}, State> {
     try {
       await this.preloadImage(url);
       this.setSafeState({ personal: { ...this.state.personal, photoUrl: url } });
-    } catch (err) {
+    } catch {
       // keep existing photoUrl (or undefined) on error
-      console.error("Avatar preload failed", err);
     } finally {
       this.setSafeState({ isAvatarLoading: false });
     }
@@ -117,8 +116,8 @@ export class ProfilePage extends BasePage<{}, State> {
       await this.preloadImage(url);
       const existing = this.state.company ?? ({} as CompanyModel);
       this.setSafeState({ company: { ...existing, wallpaperUrl: url } });
-    } catch (err) {
-      console.error("Wallpaper preload failed", err);
+    } catch {
+      // keep existing wallpaper on preload failure
     } finally {
       this.setSafeState({ isWallpaperLoading: false });
     }
@@ -296,7 +295,6 @@ export class ProfilePage extends BasePage<{}, State> {
           // if no cached workspace, fetch from API
           const workspace = await companyService.fetchWorkspaceByEmail(session.email);
           if (workspace) {
-            console.log(`workspace fetched for email ${session.email}:`, workspace);
             const mapped = this.mapWorkspaceToCompany(workspace, undefined, { preserveWallpaper: false });
             this.setSafeState({ personal, company: mapped.company, categories, industries });
             if (mapped.wallpaperCandidate) this.preloadAndSetWallpaper(mapped.wallpaperCandidate).catch(() => {});
@@ -336,8 +334,7 @@ export class ProfilePage extends BasePage<{}, State> {
       // preload and set only after fully loaded
       await this.preloadAndSetAvatar(path);
       message.success("Photo uploaded successfully");
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error("Failed to upload photo");
     } finally {
       this.setSafeState({ isUploadingAvatar: false, avatarModalOpen: false });
@@ -362,8 +359,7 @@ export class ProfilePage extends BasePage<{}, State> {
       }
 
       message.success("Wallpaper uploaded successfully");
-    } catch (err) {
-      console.error(err);
+    } catch {
       message.error("Failed to upload wallpaper");
     } finally {
       this.setSafeState({ isUploadingWallpaper: false, wallpaperModalOpen: false });
@@ -397,7 +393,6 @@ export class ProfilePage extends BasePage<{}, State> {
       this.setSafeState({ personal: nextPersonal });
       message.success("Personal information saved");
     } catch (err) {
-      console.error(err);
       message.error(isAppError(err) ? err.message : "Failed to save personal information");
     } finally {
       this.setSafeState({ isSavingPersonal: false });
@@ -433,7 +428,6 @@ export class ProfilePage extends BasePage<{}, State> {
 
       message.success("Company information saved");
     } catch (err) {
-      console.error(err);
       message.error(isAppError(err) ? err.message : "Failed to save company information");
     } finally {
       this.setSafeState({ isSavingCompany: false });

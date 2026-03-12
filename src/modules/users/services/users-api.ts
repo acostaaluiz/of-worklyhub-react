@@ -5,6 +5,7 @@ export type UserProfileResponse = {
   name: string;
   email: string;
   planId?: number;
+  planStatus?: "ACTIVE-PLAN" | "INACTIVE-PLAN";
   phone?: string;
   photoUrl?: string;
 };
@@ -21,6 +22,7 @@ export type UserProfileUpdateResponse = {
     email: string;
     phone?: string;
     planId?: number;
+    planStatus?: "ACTIVE-PLAN" | "INACTIVE-PLAN";
   };
 };
 

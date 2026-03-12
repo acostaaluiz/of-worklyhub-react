@@ -4,6 +4,7 @@ Escopo
 - Onboarding e dados da empresa (workspace).
 - Perfil da empresa e administracao de servicos.
 - Ponto central de dependencia para demais modulos.
+- No fluxo atual, onboarding de company acontece somente apos plano ativo.
 
 Rotas e entradas
 - Stack: `src/modules/company/presentation/stacks/company.stack.tsx`.
@@ -41,8 +42,10 @@ Integracoes
 - Usado por billing, people, finance, schedule e work-order para obter workspaceId.
 - `CompanyProfileModel` usa `ServiceModel` de `clients`.
 - `slas` aparece na rota `company/slas`.
+- `RedirectIfAuthenticated` so envia para `/company/introduction` quando o usuario ja tem plano ativo.
 
 Guardrails
 - Workspace e dependencia central: nao criar services que bypassam `companyService`.
 - Qualquer feature que depende de empresa deve validar workspaceId.
 - Evitar modificar shape do workspace sem alinhar com backend.
+- Nao assumir que todo usuario autenticado ja tem workspace; validar gate de plano antes.

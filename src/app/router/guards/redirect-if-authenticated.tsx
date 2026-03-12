@@ -3,11 +3,13 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { usersService } from "@modules/users/services/user.service";
 import { companyService } from "@modules/company/services/company.service";
+import { isActivePlan } from "@modules/users/services/plan-status";
 
 export default function RedirectIfAuthenticated() {
   const [session, setSession] = useState(() => usersAuthService.getSessionValue());
   const [redirectReady, setRedirectReady] = useState(false);
   const [hasWorkspace, setHasWorkspace] = useState<boolean | null>(null);
+  const [hasActivePlan, setHasActivePlan] = useState<boolean | null>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -18,9 +20,10 @@ export default function RedirectIfAuthenticated() {
   useEffect(() => {
     let cancelled = false;
     setRedirectReady(false);
+    setHasWorkspace(null);
+    setHasActivePlan(null);
 
     if (!session) {
-      // no session — nothing to load and no redirect
       setRedirectReady(false);
       return () => {
         cancelled = true;
@@ -29,7 +32,7 @@ export default function RedirectIfAuthenticated() {
 
     const email = (session as { email?: string } | null)?.email as string | undefined;
     if (!email) {
-      // no email available, proceed immediately
+      setHasActivePlan(false);
       setRedirectReady(true);
       return () => {
         cancelled = true;
@@ -37,16 +40,16 @@ export default function RedirectIfAuthenticated() {
     }
 
     (async () => {
-      // fetch profile in background — do not await so redirect isn't blocked
-      usersService.fetchByEmail(email).catch(() => {
-        /* ignore errors */
-      });
+      try {
+        const profile = await usersService.fetchByEmail(email);
+        if (!cancelled) setHasActivePlan(isActivePlan(profile));
+      } catch {
+        if (!cancelled) setHasActivePlan(false);
+      }
 
       try {
         const workspace = await companyService.fetchWorkspaceByEmail(email);
-        if (!cancelled) {
-          setHasWorkspace(workspace ? true : false);
-        }
+        if (!cancelled) setHasWorkspace(workspace ? true : false);
       } catch {
         if (!cancelled) setHasWorkspace(false);
       } finally {
@@ -60,14 +63,16 @@ export default function RedirectIfAuthenticated() {
   }, [session]);
 
   if (session) {
-    if (!redirectReady) return null; // wait until profile and workspace check complete
+    if (!redirectReady) return null;
+    if (hasActivePlan === false) {
+      return <Navigate to="/billing/plans" state={{ from: location.pathname }} replace />;
+    }
     if (hasWorkspace === false) {
-      return (
-        <Navigate to="/company/introduction" state={{ from: location.pathname }} replace />
-      );
+      return <Navigate to="/company/introduction" state={{ from: location.pathname }} replace />;
     }
     return <Navigate to="/home" state={{ from: location.pathname }} replace />;
   }
 
   return <Outlet />;
 }
+

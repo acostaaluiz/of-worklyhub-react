@@ -19,6 +19,7 @@ Regras de integracao
 - Converta erros com `toAppError`.
 - Sempre validar workspaceId quando o endpoint exigir.
 - Evitar chamadas diretas ao axios; use o client do `core`.
+- Em fluxos de onboarding/auth/billing, validar o gate de plano ativo (`INACTIVE-PLAN` -> `/billing/plans`).
 
 Checklist antes de entregar
 - `npm run lint` passou.
@@ -29,3 +30,7 @@ Pontos de atencao
 - Quando a feature afeta mais de um modulo, documente a integracao.
 - Se houver mock local, mantenha comportamento equivalente ao backend.
 - Nao introduza estado global sem aprovacao arquitetural.
+- Se tocar em `users`, `billing` ou `company`, validar os 3 cenarios:
+  - usuario sem plano ativo;
+  - usuario com plano ativo e sem workspace;
+  - usuario com plano ativo e workspace.

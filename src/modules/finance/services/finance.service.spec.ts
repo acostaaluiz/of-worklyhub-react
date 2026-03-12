@@ -24,6 +24,7 @@ import { CompanyServicesService } from "@modules/company/services/company-servic
 import { FinanceApi } from "@modules/finance/services/finance-api";
 import { companyService } from "@modules/company/services/company.service";
 import { useMockStore } from "@core/storage/mock-store.provider";
+import type { FinanceEntryListItem } from "@modules/finance/interfaces/finance-entry.model";
 import { FinanceService, useFinanceApi } from "./finance.service";
 
 type CompanyServicesMock = {
@@ -43,6 +44,28 @@ type StoreMock = {
   finance: Array<DataMap>;
   addFinanceEntry: jest.Mock;
   removeFinanceEntry: jest.Mock;
+};
+
+type FinanceHookApi = {
+  listEntries: (opts?: {
+    workspaceId?: string;
+    start?: string;
+    end?: string;
+    limit?: number;
+    offset?: number;
+    typeId?: string;
+  }) => Promise<FinanceEntryListItem[]>;
+  createEntry: (payload: {
+    workspaceId?: string;
+    serviceId?: string;
+    type?: string;
+    typeId?: string;
+    amount: number;
+    date: string;
+    note?: string;
+  }) => Promise<DataMap>;
+  removeEntry: (id: string) => Promise<boolean>;
+  listEntryTypes: (workspaceId?: string) => Promise<Array<{ id: string } & DataMap>>;
 };
 
 function createCompanyServicesMock(): CompanyServicesMock {
@@ -182,9 +205,9 @@ function createStoreMock(): StoreMock {
   return store;
 }
 
-function hookHarness(onReady: (api: ReturnType<typeof useFinanceApi>) => void) {
+function hookHarness(onReady: (api: FinanceHookApi) => void) {
   function Harness() {
-    const api = useFinanceApi();
+    const api = useFinanceApi() as unknown as FinanceHookApi;
 
     React.useEffect(() => {
       onReady(api);
@@ -197,14 +220,14 @@ function hookHarness(onReady: (api: ReturnType<typeof useFinanceApi>) => void) {
 }
 
 async function mountHookApi() {
-  let capturedApi: ReturnType<typeof useFinanceApi> | null = null;
+  let capturedApi: FinanceHookApi | null = null;
   const Harness = hookHarness((api) => {
     capturedApi = api;
   });
 
   render(React.createElement(Harness));
   await waitFor(() => expect(capturedApi).not.toBeNull());
-  return capturedApi as ReturnType<typeof useFinanceApi>;
+  return capturedApi as unknown as FinanceHookApi;
 }
 
 describe("FinanceService", () => {
@@ -409,8 +432,12 @@ describe("FinanceService", () => {
       date: "2026-03-11",
       note: "Fallback create",
     });
-    expect(typeof fallbackCreated.id).toBe("string");
-    expect(fallbackCreated.id.length).toBeGreaterThan(0);
+    const fallbackId = fallbackCreated.id;
+    expect(typeof fallbackId).toBe("string");
+    if (typeof fallbackId !== "string") {
+      throw new Error("Expected fallback entry id to be a string");
+    }
+    expect(fallbackId.length).toBeGreaterThan(0);
 
     await expect(api.removeEntry("entry-hook-1")).resolves.toBe(true);
     expect(store.removeFinanceEntry).toHaveBeenCalledWith("entry-hook-1");
@@ -435,4 +462,3 @@ describe("FinanceService", () => {
     );
   });
 });
-

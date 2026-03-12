@@ -1,0 +1,285 @@
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
+stages:
+  - validate
+  - test
+  - security
+  - build
+  - package
+
+variables:
+  GIT_DEPTH: "0"
+  NODE_VERSION: "20.19.4"
+  PNPM_VERSION: "10.26.2"
+  PNPM_STORE_PATH: ".pnpm-store"
+  SECURITY_SEVERITY_THRESHOLD: "HIGH,CRITICAL"
+
+default:
+  interruptible: true
+
+.node-job:
+  image: node:${NODE_VERSION}-bookworm-slim
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+    policy: pull-push
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir ${PNPM_STORE_PATH}
+    - pnpm install --frozen-lockfile
+
+.security-gate-rules:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
+commitlint:
+  stage: validate
+  extends: .node-job
+  script:
+    - |
+      if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then
+        FROM_SHA="${CI_MERGE_REQUEST_DIFF_BASE_SHA}"
+      else
+        FROM_SHA="${CI_COMMIT_BEFORE_SHA}"
+      fi
+      if [ -z "${FROM_SHA:-}" ] || [ "${FROM_SHA}" = "0000000000000000000000000000000000000000" ]; then
+        FROM_SHA="$(git rev-list --max-parents=0 HEAD | tail -n 1)"
+      fi
+      pnpm exec commitlint --from "${FROM_SHA}" --to "${CI_COMMIT_SHA}" --verbose
+
+lint:
+  stage: validate
+  extends: .node-job
+  script:
+    - pnpm lint
+
+depcruise:
+  stage: validate
+  extends: .node-job
+  script:
+    - pnpm depcruise
+
+unit_tests:
+  stage: test
+  extends: .node-job
+  script:
+    - pnpm test -- --ci
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - coverage/
+
+e2e_manual:
+  stage: test
+  image: cypress/included:14.5.4
+  allow_failure: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+    - when: never
+  cache:
+    key:
+      files:
+        - pnpm-lock.yaml
+    paths:
+      - .pnpm-store/
+    policy: pull-push
+  before_script:
+    - corepack enable
+    - corepack prepare pnpm@${PNPM_VERSION} --activate
+    - pnpm config set store-dir ${PNPM_STORE_PATH}
+    - pnpm install --frozen-lockfile
+  script:
+    - pnpm test:e2e
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - cypress/screenshots/
+      - cypress/videos/
+
+dependency_scan:
+  stage: security
+  extends:
+    - .node-job
+    - .security-gate-rules
+  script:
+    - |
+      set +e
+      pnpm audit --audit-level=high --json > pnpm-audit-report.json
+      AUDIT_EXIT_CODE=$?
+      cat pnpm-audit-report.json
+      exit ${AUDIT_EXIT_CODE}
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - pnpm-audit-report.json
+
+sast_scan:
+  stage: security
+  extends:
+    - .security-gate-rules
+  image:
+    name: returntocorp/semgrep:1.118.0
+    entrypoint: [""]
+  script:
+    - semgrep --version
+    - semgrep scan --config p/owasp-top-ten --config p/typescript --config p/javascript --exclude node_modules --exclude dist --metrics=off --error --json --output semgrep-report.json
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - semgrep-report.json
+
+secret_scan:
+  stage: security
+  extends:
+    - .security-gate-rules
+  image:
+    name: zricethezav/gitleaks:v8.24.2
+    entrypoint: [""]
+  script:
+    - gitleaks version
+    - gitleaks detect --source . --no-banner --redact --exit-code 1 --report-format sarif --report-path gitleaks-report.sarif
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - gitleaks-report.sarif
+
+container_image_build_for_scan:
+  stage: security
+  extends:
+    - .security-gate-rules
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  script:
+    - |
+      BUILD_ARGS=""
+      for key in VITE_API_BASE_URL VITE_CURRENCY_LOCALE VITE_CURRENCY_CODE VITE_CURRENCY_PRECISION; do
+        value="$(printenv "${key}" || true)"
+        if [ -n "${value}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} --build-arg ${key}=${value}"
+        fi
+      done
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --no-push \
+        --snapshot-mode=redo \
+        --tarPath "${CI_PROJECT_DIR}/app-image.tar" \
+        ${BUILD_ARGS}
+  artifacts:
+    when: always
+    expire_in: 1 day
+    paths:
+      - app-image.tar
+
+container_scan:
+  stage: build
+  extends:
+    - .security-gate-rules
+  image:
+    name: aquasec/trivy:0.63.0
+    entrypoint: [""]
+  needs:
+    - job: container_image_build_for_scan
+      artifacts: true
+  script:
+    - trivy --version
+    - trivy image --input app-image.tar --scanners vuln --ignore-unfixed --no-progress --severity "${SECURITY_SEVERITY_THRESHOLD}" --exit-code 1 --format sarif --output trivy-container-report.sarif
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - trivy-container-report.sarif
+
+build_app:
+  stage: build
+  extends: .node-job
+  script:
+    - pnpm build
+  artifacts:
+    expire_in: 7 days
+    paths:
+      - dist/
+
+docker_build_verify:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - |
+      BUILD_ARGS=""
+      for key in VITE_API_BASE_URL VITE_CURRENCY_LOCALE VITE_CURRENCY_CODE VITE_CURRENCY_PRECISION; do
+        value="$(printenv "${key}" || true)"
+        if [ -n "${value}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} --build-arg ${key}=${value}"
+        fi
+      done
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --no-push \
+        --snapshot-mode=redo \
+        ${BUILD_ARGS}
+
+docker_publish:
+  stage: package
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - |
+      cat > /kaniko/.docker/config.json <<EOF
+      {"auths":{"${CI_REGISTRY}":{"username":"${CI_REGISTRY_USER}","password":"${CI_REGISTRY_PASSWORD}"}}}
+      EOF
+    - |
+      BUILD_ARGS=""
+      for key in VITE_API_BASE_URL VITE_CURRENCY_LOCALE VITE_CURRENCY_CODE VITE_CURRENCY_PRECISION; do
+        value="$(printenv "${key}" || true)"
+        if [ -n "${value}" ]; then
+          BUILD_ARGS="${BUILD_ARGS} --build-arg ${key}=${value}"
+        fi
+      done
+
+      DEST_ARGS="--destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+      if [ -n "${CI_COMMIT_BRANCH:-}" ]; then
+        DEST_ARGS="${DEST_ARGS} --destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
+      fi
+      if [ "${CI_COMMIT_BRANCH:-}" = "${CI_DEFAULT_BRANCH}" ]; then
+        DEST_ARGS="${DEST_ARGS} --destination ${CI_REGISTRY_IMAGE}:latest"
+      fi
+      if [ -n "${CI_COMMIT_TAG:-}" ]; then
+        DEST_ARGS="${DEST_ARGS} --destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
+      fi
+
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
+        --snapshot-mode=redo \
+        --cache=true \
+        --cache-repo "${CI_REGISTRY_IMAGE}/cache" \
+        ${BUILD_ARGS} \
+        ${DEST_ARGS}

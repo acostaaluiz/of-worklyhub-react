@@ -16,7 +16,7 @@ import {
   UsergroupAddOutlined,
 } from "@ant-design/icons";
 import { themeService } from "@core/config/theme/theme.service";
-import type { ThemeMode } from "@core/config/theme/theme.interface";
+import type { ThemeCustomColors, ThemeMode } from "@core/config/theme/theme.interface";
 import { BaseTemplate } from "@shared/base/base.template";
 import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
 import type {
@@ -91,6 +91,90 @@ const MODULE_OPTIONS: ModuleOption[] = [
     icon: <UsergroupAddOutlined />,
   },
 ];
+
+type AppearanceColorKey = keyof ThemeCustomColors;
+
+type AppearanceColorOption = {
+  key: AppearanceColorKey;
+  label: string;
+  description: string;
+  cssVariable: string;
+  fallbackByMode: Record<ThemeMode, string>;
+};
+
+const HEX_COLOR_PATTERN = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+const APPEARANCE_COLOR_OPTIONS: AppearanceColorOption[] = [
+  {
+    key: "background",
+    label: "Background color",
+    description: "Main app backdrop color.",
+    cssVariable: "--color-background",
+    fallbackByMode: { light: "#f4f6f9", dark: "#0f1f26" },
+  },
+  {
+    key: "surface",
+    label: "Surface color",
+    description: "Card and panel base color.",
+    cssVariable: "--color-surface",
+    fallbackByMode: { light: "#ffffff", dark: "#132a33" },
+  },
+  {
+    key: "surfaceAlt",
+    label: "Surface alt color",
+    description: "Secondary panel color and layered surfaces.",
+    cssVariable: "--color-surface-2",
+    fallbackByMode: { light: "#eef4ff", dark: "#173642" },
+  },
+  {
+    key: "primary",
+    label: "Primary color",
+    description: "Main actions, highlights and interactive accents.",
+    cssVariable: "--color-primary",
+    fallbackByMode: { light: "#1e70ff", dark: "#4de6d3" },
+  },
+  {
+    key: "secondary",
+    label: "Secondary color",
+    description: "Secondary accents and supporting highlights.",
+    cssVariable: "--color-secondary",
+    fallbackByMode: { light: "#00d6a0", dark: "#2dd4bf" },
+  },
+  {
+    key: "tertiary",
+    label: "Tertiary color",
+    description: "Complementary accent used in gradients and details.",
+    cssVariable: "--color-tertiary",
+    fallbackByMode: { light: "#7a2cff", dark: "#7a2cff" },
+  },
+  {
+    key: "text",
+    label: "Text color",
+    description: "Main text color for headings and body content.",
+    cssVariable: "--color-text",
+    fallbackByMode: { light: "#071318", dark: "#e6f1f4" },
+  },
+];
+
+function normalizeHexColor(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!HEX_COLOR_PATTERN.test(trimmed)) return null;
+
+  if (trimmed.length === 4) {
+    const r = trimmed[1];
+    const g = trimmed[2];
+    const b = trimmed[3];
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+
+  return trimmed.toLowerCase();
+}
+
+function toColorInputValue(value: unknown, fallback: string): string {
+  return normalizeHexColor(value) ?? fallback;
+}
 
 type NfeConfigurationFormValues = {
   environment?: "production" | "homologation";
@@ -187,6 +271,16 @@ function toJsonText(value: DataValue): string | undefined {
   const keys = Object.keys(value as DataMap);
   if (keys.length <= 0) return undefined;
   return JSON.stringify(value, null, 2);
+}
+
+function readCssColorVariable(variableName: string, fallback: string): string {
+  if (typeof window === "undefined") return fallback;
+
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue(variableName)
+    .trim();
+
+  return toColorInputValue(raw, fallback);
 }
 
 function parseJsonObject(label: string, value: DataValue): DataMap | undefined {
@@ -337,6 +431,9 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     const currentMode = document.documentElement.getAttribute("data-theme");
     return currentMode === "light" ? "light" : "dark";
   });
+  const [customColors, setCustomColors] = React.useState<ThemeCustomColors>(() =>
+    themeService.getCustomColors()
+  );
   const authType = Form.useWatch(["integration", "auth", "type"], configurationForm);
 
   React.useEffect(() => {
@@ -350,6 +447,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   React.useEffect(() => {
     const unsubscribe = themeService.subscribe((nextState) => {
       setThemePreference(nextState.mode);
+      setCustomColors(nextState.customColors);
     });
     return unsubscribe;
   }, []);
@@ -376,6 +474,43 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     setThemePreference(mode);
     message.success(`Theme updated to ${mode === "dark" ? "Dark" : "Light"}.`);
   };
+
+  const resolveAppearanceColor = React.useCallback(
+    (option: AppearanceColorOption): string => {
+      const fallback = option.fallbackByMode[themePreference];
+      const stored = normalizeHexColor(customColors[option.key]);
+      if (stored) return stored;
+      return readCssColorVariable(option.cssVariable, fallback);
+    },
+    [customColors, themePreference]
+  );
+
+  const handleCustomColorChange = (
+    option: AppearanceColorOption,
+    rawColor: string
+  ) => {
+    const normalized = toColorInputValue(
+      rawColor,
+      option.fallbackByMode[themePreference]
+    );
+
+    const nextColors: ThemeCustomColors = {
+      ...themeService.getCustomColors(),
+      [option.key]: normalized,
+    };
+
+    themeService.setCustomColors(nextColors);
+  };
+
+  const handleResetCustomColors = () => {
+    themeService.clearCustomColors();
+    message.success("Custom colors removed. Default palette restored.");
+  };
+
+  const hasCustomColors = React.useMemo(
+    () => Object.keys(customColors).length > 0,
+    [customColors]
+  );
 
   const moduleTab = (
     <TabPaneBody>
@@ -745,7 +880,9 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <span>Appearance</span>
           </span>
         </CardTitle>
-        <CardSubtitle>Switch between light and dark themes for this device.</CardSubtitle>
+        <CardSubtitle>
+          Switch between light and dark themes and optionally customize key colors.
+        </CardSubtitle>
         <Alert
           showIcon
           type="info"
@@ -753,7 +890,6 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           message="Theme mode"
           description="The selected mode is applied immediately and saved to your local preferences."
         />
-
         <ModuleToggleList>
           <ModuleToggleRow>
             <div>
@@ -790,9 +926,57 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           </ModuleToggleRow>
         </ModuleToggleList>
 
-        <ActionsRow>
+        <ModuleToggleList>
+          {APPEARANCE_COLOR_OPTIONS.map((option) => {
+            const colorValue = resolveAppearanceColor(option);
+            return (
+              <ModuleToggleRow key={option.key}>
+                <div>
+                  <ModuleTitle>{option.label}</ModuleTitle>
+                  <ModuleDescription>{option.description}</ModuleDescription>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="color"
+                    value={colorValue}
+                    onChange={(event) =>
+                      handleCustomColorChange(option, event.target.value)
+                    }
+                    style={{
+                      width: 44,
+                      height: 32,
+                      border: "1px solid var(--color-border)",
+                      borderRadius: 8,
+                      background: "transparent",
+                      cursor: "pointer",
+                    }}
+                    data-cy={`settings-appearance-color-${option.key}-picker`}
+                  />
+                  <Input
+                    value={colorValue.toUpperCase()}
+                    readOnly
+                    style={{ width: 108 }}
+                    data-cy={`settings-appearance-color-${option.key}-value`}
+                  />
+                </div>
+              </ModuleToggleRow>
+            );
+          })}
+        </ModuleToggleList>
+
+        <ActionsRow style={{ gap: 8, flexWrap: "wrap" }}>
+          <Button
+            onClick={handleResetCustomColors}
+            disabled={!hasCustomColors}
+            data-cy="settings-appearance-reset-custom-colors-button"
+          >
+            Use default palette
+          </Button>
           <Button icon={<BgColorsOutlined />} disabled data-cy="settings-appearance-active-mode">
             Active mode: {themePreference === "dark" ? "Dark" : "Light"}
+          </Button>
+          <Button disabled data-cy="settings-appearance-custom-status">
+            Custom palette: {hasCustomColors ? "Enabled" : "Disabled"}
           </Button>
         </ActionsRow>
       </Card>

@@ -39,7 +39,7 @@ export class AutocompleteInput extends BaseComponent<Props, State> {
     open: false,
   };
 
-  private debounceTimer?: ReturnType<typeof setTimeout>;
+  private debounceTimer?: number | ReturnType<typeof setTimeout>;
   private requestId = 0;
 
   private maxVisible(): number {
@@ -66,7 +66,7 @@ export class AutocompleteInput extends BaseComponent<Props, State> {
       return;
     }
 
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
     this.debounceTimer = window.setTimeout(() => void this.runSearch(value), 180);
   };
 
@@ -95,7 +95,7 @@ export class AutocompleteInput extends BaseComponent<Props, State> {
 
   override componentWillUnmount(): void {
     super.componentWillUnmount();
-    if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
   }
 
   protected override renderView(): React.ReactNode {

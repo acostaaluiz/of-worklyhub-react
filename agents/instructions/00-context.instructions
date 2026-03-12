@@ -7,9 +7,15 @@ Visao do produto
 
 Jornadas principais (alto nivel)
 - Autenticacao: usuario registra ou faz login e valida token.
-- Onboarding: usuario cria workspace da empresa (company) antes de operar.
+- Monetizacao obrigatoria: usuario sem plano ativo e redirecionado para `/billing/plans` antes de seguir no onboarding.
+- Onboarding: com plano ativo, usuario cria workspace da empresa (company) antes de operar.
 - Operacao diaria: agenda, ordens de servico, equipe, estoque e financeiro.
 - Sustentacao: assinatura/planos e cobranca (billing).
+
+Regra oficial de acesso
+- Usuario novo inicia sem plano vinculado.
+- `INACTIVE-PLAN` bloqueia modulos privados e libera somente rotas de billing.
+- O plano passa a ativo somente apos pagamento aprovado no checkout.
 
 Stack oficial do frontend
 - React 19 + TypeScript

@@ -12,11 +12,13 @@ Glossario de negocio
 
 Fluxo de negocio principal
 1) Usuario cria conta ou faz login.
-2) Sistema verifica workspace por email.
-3) Se nao existir, o usuario completa o onboarding da empresa (company).
-4) Com workspace pronto, usuario entra no painel principal (`/home`).
-5) Operacao diaria ocorre nos modulos (agenda, clientes, people, inventory, work-order, finance).
-6) Billing controla assinatura e checkout de planos.
+2) Sistema verifica status do plano do usuario.
+3) Se `INACTIVE-PLAN`, o usuario deve ir para `/billing/plans` e seguir checkout.
+4) Com pagamento aprovado, o plano fica ativo.
+5) Com plano ativo, sistema verifica workspace por email.
+6) Se nao existir workspace, o usuario completa onboarding da empresa (company).
+7) Com workspace pronto, usuario entra no painel principal (`/home`).
+8) Operacao diaria ocorre nos modulos conforme permissao do plano.
 
 Relacoes entre dominios
 - Company (workspace) e dependencia central para billing, finance, people, schedule e work-order.
@@ -29,7 +31,7 @@ Relacoes entre dominios
 Como decidir o modulo correto
 - A regra e: a feature pertence ao dominio que possui o objeto de negocio principal.
 - Ex.: alterar fluxo de checkout = billing. Alterar agenda = schedule. Alterar status de OS = work-order.
-- Se a feature cruza dominios, escolha o modulo do objeto principal e faça integracoes via services.
+- Se a feature cruza dominios, escolha o modulo do objeto principal e faca integracoes via services.
 
 Padrao de linguagem
 - Use termos consistentes: workspace, service, work-order, schedule, entry, employee.
@@ -39,6 +41,8 @@ Guardrails do negocio
 - Nunca persistir dados sem associar a um workspace quando o dominio exigir.
 - Nao criar novos conceitos sem validar com o negocio (ex.: novo status, novo tipo de plano).
 - Evite duplicar o mesmo dado em modulos diferentes. Prefira consumir via service do modulo dono.
+- Usuario novo deve iniciar sem plano vinculado.
+- Vinculo/ativacao de plano so ocorre apos pagamento aprovado.
 
 Onde buscar referencias no codigo
 - Modelos e contratos: `src/modules/<modulo>/interfaces`.
