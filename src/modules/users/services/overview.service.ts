@@ -1,5 +1,6 @@
 import { BehaviorSubject } from "rxjs";
 
+import { parseSessionIdentity } from "@core/auth/session-security";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
 import { httpClient } from "@core/http/client.instance";
 import {
@@ -34,7 +35,7 @@ type RawProfile = UserOverviewProfile & {
 };
 
 function unwrapOverviewPayload(
-  value: UserOverviewResponse | { data?: UserOverviewResponse }
+  value: UserOverviewResponse | { data?: UserOverviewResponse },
 ): OverviewPayload | null {
   if (value && typeof value === "object" && "data" in value) {
     const data = value.data;
@@ -43,7 +44,9 @@ function unwrapOverviewPayload(
   return value as OverviewPayload;
 }
 
-function normalizeProfile(profile: RawProfile | null): UserOverviewProfile | null {
+function normalizeProfile(
+  profile: RawProfile | null,
+): UserOverviewProfile | null {
   if (!profile) return null;
   return {
     ...profile,
@@ -58,14 +61,9 @@ function normalizeProfile(profile: RawProfile | null): UserOverviewProfile | nul
 }
 
 function getCurrentSessionEmail(): string | null {
-  try {
-    const raw = localStorageProvider.get(SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { email?: string | null };
-    return parsed?.email ?? null;
-  } catch {
-    return null;
-  }
+  const raw = localStorageProvider.get(SESSION_KEY);
+  const session = parseSessionIdentity(raw);
+  return session?.email ?? null;
 }
 
 export class UsersOverviewService {
@@ -79,7 +77,8 @@ export class UsersOverviewService {
       if (!raw) return null;
       const parsed = JSON.parse(raw) as CachedOverview;
       const sessionEmail = getCurrentSessionEmail();
-      if (parsed?.user && sessionEmail && parsed.user !== sessionEmail) return null;
+      if (parsed?.user && sessionEmail && parsed.user !== sessionEmail)
+        return null;
       const cached = parsed?.overview ?? null;
       if (cached?.modules && cached.modules.length === 0) return null;
       return cached;

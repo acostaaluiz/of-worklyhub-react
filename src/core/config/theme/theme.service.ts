@@ -4,6 +4,7 @@ import type {
   ThemePreference,
   ThemeState,
 } from "./theme.interface";
+import { parseSessionIdentity } from "@core/auth/session-security";
 
 const PREFERENCE_STORAGE_KEY = "of-theme-preference";
 const AUTH_SESSION_KEY = "auth.session";
@@ -139,7 +140,9 @@ export class ThemeService {
   private resolveMode(preference: ThemePreference): ThemeMode {
     if (preference === "light" || preference === "dark") return preference;
     if (typeof window === "undefined") return "light";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   }
 
   private applyMode(mode: ThemeMode): void {
@@ -150,22 +153,25 @@ export class ThemeService {
   private applyCustomColors(colors: ThemeCustomColors): void {
     const rootStyle = document.documentElement.style;
 
-    (Object.keys(COLOR_VARIABLES) as Array<keyof ThemeCustomColors>).forEach((key) => {
-      const variableName = COLOR_VARIABLES[key];
-      const color = normalizeHexColor(colors[key]);
+    (Object.keys(COLOR_VARIABLES) as Array<keyof ThemeCustomColors>).forEach(
+      (key) => {
+        const variableName = COLOR_VARIABLES[key];
+        const color = normalizeHexColor(colors[key]);
 
-      if (color) {
-        rootStyle.setProperty(variableName, color);
-      } else {
-        rootStyle.removeProperty(variableName);
-      }
-    });
+        if (color) {
+          rootStyle.setProperty(variableName, color);
+        } else {
+          rootStyle.removeProperty(variableName);
+        }
+      },
+    );
   }
 
   private getStoredPreference(): ThemePreference {
     try {
       const value = localStorage.getItem(PREFERENCE_STORAGE_KEY);
-      if (value === "light" || value === "dark" || value === "system") return value;
+      if (value === "light" || value === "dark" || value === "system")
+        return value;
     } catch {
       // ignore storage errors
     }
@@ -199,7 +205,10 @@ export class ThemeService {
     }
   }
 
-  private normalizePaletteStorage(raw: DataMap, mode: ThemeMode): ThemeCustomPalette {
+  private normalizePaletteStorage(
+    raw: DataMap,
+    mode: ThemeMode,
+  ): ThemeCustomPalette {
     const hasModeKeys =
       typeof raw?.light === "object" || typeof raw?.dark === "object";
 
@@ -274,17 +283,14 @@ export class ThemeService {
   private getCurrentUserIdentifier(): string | null {
     try {
       const rawSession = localStorage.getItem(AUTH_SESSION_KEY);
-      if (!rawSession) return null;
+      const session = parseSessionIdentity(rawSession);
+      if (!session) return null;
 
-      const session = JSON.parse(rawSession) as {
-        uid?: string;
-        email?: string;
-      };
-
-      const uid = typeof session?.uid === "string" ? session.uid.trim() : "";
+      const uid = typeof session.uid === "string" ? session.uid.trim() : "";
       if (uid) return `uid:${uid}`;
 
-      const email = typeof session?.email === "string" ? session.email.trim() : "";
+      const email =
+        typeof session.email === "string" ? session.email.trim() : "";
       if (email) return `email:${email.toLowerCase()}`;
       return null;
     } catch {
@@ -292,15 +298,19 @@ export class ThemeService {
     }
   }
 
-  private normalizeCustomColors(colors: ThemeCustomColors | null | undefined): ThemeCustomColors {
+  private normalizeCustomColors(
+    colors: ThemeCustomColors | null | undefined,
+  ): ThemeCustomColors {
     if (!colors || typeof colors !== "object") return {};
 
     const normalized: ThemeCustomColors = {};
 
-    (Object.keys(COLOR_VARIABLES) as Array<keyof ThemeCustomColors>).forEach((key) => {
-      const value = normalizeHexColor(colors[key]);
-      if (value) normalized[key] = value;
-    });
+    (Object.keys(COLOR_VARIABLES) as Array<keyof ThemeCustomColors>).forEach(
+      (key) => {
+        const value = normalizeHexColor(colors[key]);
+        if (value) normalized[key] = value;
+      },
+    );
 
     return normalized;
   }

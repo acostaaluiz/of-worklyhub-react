@@ -30,6 +30,7 @@ export type ScheduleEvent = {
     code?: string;
     label?: string;
   } | null;
+  statusId?: string;
   // optional inventory lines returned by backend
   inventoryInputs?: InventoryItemLine[] | null;
   inventoryOutputs?: InventoryItemLine[] | null;

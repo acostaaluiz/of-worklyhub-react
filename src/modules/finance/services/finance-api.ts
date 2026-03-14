@@ -39,6 +39,45 @@ export type FinanceEntriesQuery = {
   offset?: number;
 };
 
+export type FinancePricingSuggestionApi = {
+  service_id: string;
+  service_name: string;
+  current_price_cents: number;
+  suggested_price_cents: number;
+  delta_cents: number;
+  expected_impact: "increase-margin" | "protect-demand" | "neutral";
+  confidence: number;
+  rationale: string;
+  evidence?: DataMap;
+  origin?: "rules" | "ai";
+};
+
+export type FinancePricingSuggestionsResponseApi = {
+  period: {
+    start: string;
+    end: string;
+    label?: string | null;
+  };
+  summary: {
+    total: number;
+    increases: number;
+    decreases: number;
+    unchanged: number;
+    with_history: number;
+    without_history: number;
+  };
+  suggestions: FinancePricingSuggestionApi[];
+  meta?: {
+    engine_requested?: "rules" | "ai" | "hybrid";
+    engine_used?: "rules" | "ai";
+    fallback_used?: boolean;
+    provider?: string | null;
+    model?: string | null;
+    ai_error?: string | null;
+  };
+  generated_at?: string;
+};
+
 export class FinanceApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "finance-api" });
@@ -115,6 +154,30 @@ export class FinanceApi extends BaseHttpService {
     const headers: Record<string, string> = { Accept: "application/json" };
     if (workspaceId) headers["x-workspace-id"] = workspaceId;
     return this.get<FinanceInsightsResponseApi>(`/finance/internal/insights`, query, headers);
+  }
+
+  async getPricingSuggestions(
+    workspaceId: string | undefined,
+    query: {
+      start?: string;
+      end?: string;
+      period?: string;
+      limit?: number;
+      engine?: "rules" | "ai" | "hybrid";
+    }
+  ): Promise<FinancePricingSuggestionsResponseApi | null> {
+    const headers: Record<string, string> = { Accept: "application/json" };
+    if (workspaceId) headers["x-workspace-id"] = workspaceId;
+
+    try {
+      return await this.get<FinancePricingSuggestionsResponseApi>(
+        `/finance/internal/pricing-suggestions`,
+        query,
+        headers
+      );
+    } catch {
+      return null;
+    }
   }
 }
 

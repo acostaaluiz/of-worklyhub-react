@@ -60,12 +60,21 @@ export function DashboardAlerts(props: Props) {
                     <div style={{ display: "flex", gap: 8 }}>
                       <Tag>{sourceLabel[item.source]}</Tag>
                       <Tag color={priorityColor[item.priority]}>{item.priority.toUpperCase()}</Tag>
+                      {item.engineUsed ? <Tag>{`Engine: ${item.engineUsed.toUpperCase()}`}</Tag> : null}
+                      {typeof item.confidence === "number" ? (
+                        <Tag>{`Confidence: ${(item.confidence * 100).toFixed(0)}%`}</Tag>
+                      ) : null}
                     </div>
                   </div>
 
                   <Typography.Paragraph style={{ marginBottom: 6 }}>
                     {item.description}
                   </Typography.Paragraph>
+                  {item.rationale ? (
+                    <Typography.Text type="secondary" style={{ display: "block", marginBottom: 6 }}>
+                      Why: {item.rationale}
+                    </Typography.Text>
+                  ) : null}
                   <Typography.Text type="secondary">
                     Action: {item.suggestedAction}
                   </Typography.Text>

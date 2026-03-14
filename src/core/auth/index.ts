@@ -8,6 +8,9 @@ firebaseAuthService.restoreFromStorage();
 const t = firebaseAuthService.getAccessToken();
 authManager.setTokens(t ?? null, null);
 authManager.setRefreshHandler(firebaseAuthService.getRefreshHandler());
+authManager.onSignOut(() => {
+  firebaseAuthService.setToken(null);
+});
 
 // export an api helper
 export const authApi = new AuthApi(httpClient);

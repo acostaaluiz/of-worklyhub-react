@@ -109,6 +109,30 @@ describe("FinanceApi", () => {
       summary: { total: 0, high: 0, medium: 0, low: 0 },
       insights: [],
     });
+    const pricingCtx = createApi({
+      period: { start: "2026-03-01", end: "2026-03-31", label: "month" },
+      summary: {
+        total: 1,
+        increases: 1,
+        decreases: 0,
+        unchanged: 0,
+        with_history: 1,
+        without_history: 0,
+      },
+      suggestions: [
+        {
+          service_id: "svc-1",
+          service_name: "Cleaning",
+          current_price_cents: 10000,
+          suggested_price_cents: 11000,
+          delta_cents: 1000,
+          expected_impact: "increase-margin",
+          confidence: 0.82,
+          rationale: "Strong demand supports increase.",
+          origin: "ai",
+        },
+      ],
+    });
 
     await expect(
       dashboardCtx.api.getDashboard("ws-1", {
@@ -127,6 +151,29 @@ describe("FinanceApi", () => {
     ).resolves.toMatchObject({
       summary: { total: 0, high: 0, medium: 0, low: 0 },
     });
+
+    await expect(
+      pricingCtx.api.getPricingSuggestions("ws-1", {
+        period: "month",
+        engine: "hybrid",
+      })
+    ).resolves.toMatchObject({
+      summary: {
+        total: 1,
+      },
+      suggestions: [expect.objectContaining({ service_id: "svc-1" })],
+    });
+  });
+
+  it("returns null when pricing suggestions endpoint fails", async () => {
+    const request = jest.fn().mockRejectedValue(new Error("pricing-down"));
+    const api = new FinanceApi({ request } as unknown as HttpClient);
+
+    await expect(
+      api.getPricingSuggestions("ws-1", {
+        period: "month",
+        engine: "hybrid",
+      })
+    ).resolves.toBeNull();
   });
 });
-

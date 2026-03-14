@@ -169,8 +169,12 @@ export function AssistantChatWidget() {
   if (!isAuthenticated) return null;
 
   return (
-    <AssistantRoot>
-      <AssistantPanel $open={isOpen} aria-hidden={!isOpen}>
+    <AssistantRoot data-cy="assistant-chat-widget">
+      <AssistantPanel
+        $open={isOpen}
+        aria-hidden={!isOpen}
+        data-cy="assistant-chat-panel"
+      >
         <AssistantHeader>
           <AssistantTitleWrap>
             <AssistantTitleIcon aria-hidden>
@@ -186,14 +190,20 @@ export function AssistantChatWidget() {
             type="text"
             aria-label="Fechar assistente"
             onClick={() => setIsOpen(false)}
+            data-cy="assistant-chat-close-button"
           >
             <X size={16} />
           </Button>
         </AssistantHeader>
 
-        <AssistantMessages ref={scrollRef}>
+        <AssistantMessages ref={scrollRef} data-cy="assistant-chat-messages">
           {messages.map((item) => (
-            <MessageRow key={item.id} $role={item.role}>
+            <MessageRow
+              key={item.id}
+              $role={item.role}
+              data-cy="assistant-chat-message-row"
+              data-role={item.role}
+            >
               <MessageBubble $role={item.role} $error={item.isError}>
                 {item.content}
 
@@ -207,6 +217,8 @@ export function AssistantChatWidget() {
                         <Button
                           size="small"
                           onClick={() => handleSuggestionNavigate(suggestion.path)}
+                          data-cy="assistant-chat-suggestion-button"
+                          data-suggestion-path={suggestion.path}
                         >
                           {suggestion.label}
                         </Button>
@@ -254,6 +266,7 @@ export function AssistantChatWidget() {
             onChange={(event) => setDraft(event.target.value)}
             autoSize={{ minRows: 2, maxRows: 4 }}
             placeholder="Ex: Como fechar uma OS e garantir que gere faturamento?"
+            data-cy="assistant-chat-input"
             onPressEnter={(event) => {
               if (event.shiftKey) return;
               event.preventDefault();
@@ -269,6 +282,7 @@ export function AssistantChatWidget() {
                 void submit();
               }}
               loading={isSending}
+              data-cy="assistant-chat-send-button"
             >
               Enviar
             </Button>
@@ -282,6 +296,7 @@ export function AssistantChatWidget() {
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label="Assistente virtual WorklyHub"
+          data-cy="assistant-chat-fab"
         >
           {isOpen ? <X size={20} /> : <MessageCircle size={22} />}
         </AssistantFab>

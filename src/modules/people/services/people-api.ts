@@ -1,6 +1,10 @@
 import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import type { HttpQuery } from "@core/http/interfaces/http-client.interface";
+import type {
+  PeopleWorkspaceSettings,
+  PeopleWorkspaceSettingsBundle,
+} from "@modules/people/interfaces/people-settings.model";
 
 export type CreateWorkerPayload = {
   workspace_id: string;
@@ -8,9 +12,17 @@ export type CreateWorkerPayload = {
   user_name: string;
   job_title?: string;
   department?: string;
+  access_profile_uid?: string | null;
   employee_code?: string | null;
   hired_at?: string;
   salary_cents?: number;
+};
+
+type PeopleSettingsResponse = { data: PeopleWorkspaceSettingsBundle };
+type UpsertPeopleSettingsRequest = {
+  workspaceId: string;
+  settings?: Partial<PeopleWorkspaceSettings>;
+  updatedBy?: string | null;
 };
 
 export type UpsertWorkerWeeklyAvailabilityPayload = {
@@ -86,6 +98,32 @@ export class PeopleApi extends BaseHttpService {
       `/people/internal/workspaces/${workspaceId}/workforce-capacity`,
       weekStart ? { weekStart } : undefined
     );
+  }
+
+  async getSettings(workspaceId: string): Promise<PeopleWorkspaceSettingsBundle> {
+    const headers = {
+      "x-workspace-id": workspaceId,
+    };
+    const res = await this.get<PeopleSettingsResponse>(
+      "/people/internal/settings",
+      { workspaceId },
+      headers
+    );
+    return res?.data as PeopleWorkspaceSettingsBundle;
+  }
+
+  async upsertSettings(
+    payload: UpsertPeopleSettingsRequest
+  ): Promise<PeopleWorkspaceSettingsBundle> {
+    const headers = {
+      "x-workspace-id": payload.workspaceId,
+    };
+    const res = await this.put<PeopleSettingsResponse, UpsertPeopleSettingsRequest>(
+      "/people/internal/settings",
+      payload,
+      headers
+    );
+    return res?.data as PeopleWorkspaceSettingsBundle;
   }
 }
 

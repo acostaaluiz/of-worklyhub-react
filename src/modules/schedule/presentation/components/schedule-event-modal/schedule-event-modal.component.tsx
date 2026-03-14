@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Input, Modal, Select, Segmented, Typography, Tag } from "antd";
+import { Button, Input, Modal, Select, Segmented, Typography, Tag, message } from "antd";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import {
@@ -24,6 +24,7 @@ import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-ev
 import type {
   DayPart,
   ScheduleEventDraft,
+  ScheduleEventModalSettings,
   ScheduleEventModalProps,
 } from "./schedule-event-modal.form.types";
 import {
@@ -64,9 +65,35 @@ const DURATION_OPTIONS: DurationOption[] = [
   { label: "60 min", minutes: 60 },
 ];
 const IS_DEV_ENV = import.meta.env.MODE !== "production";
+const DEFAULT_MODAL_SETTINGS: ScheduleEventModalSettings = {
+  defaultDurationMinutes: 30,
+  defaultDayPart: "morning",
+  defaultCategoryId: null,
+  requireDescription: false,
+  requireService: false,
+  requireEmployee: false,
+  autoSelectFirstService: false,
+  autoSelectFirstEmployee: false,
+  enableInventoryTracking: true,
+  confirmationPolicy: "required",
+  reminderEnabled: true,
+  reminderLeadMinutes: 120,
+  noShowPolicy: "none",
+  noShowFeePercent: 0,
+};
 
 function addMinutes(date: Dayjs, minutes: number) {
   return date.add(minutes, "minute");
+}
+
+function inferDayPartFromTime(time?: string): DayPart {
+  if (!time) return "morning";
+  const [hoursRaw] = time.split(":");
+  const hours = Number(hoursRaw);
+  if (!Number.isFinite(hours)) return "morning";
+  if (hours < 12) return "morning";
+  if (hours < 17) return "afternoon";
+  return "evening";
 }
 
 function getWeekDays(anchor: Dayjs) {
@@ -121,30 +148,87 @@ interface ScheduleEventModalState {
 }
 
 export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, ScheduleEventModalState> {
+  private get modalSettings(): ScheduleEventModalSettings {
+    return {
+      ...DEFAULT_MODAL_SETTINGS,
+      ...(this.props.settings ?? {}),
+    };
+  }
+
+  private getDefaultCategoryId(categories: Array<{ id: string; label: string }>): string {
+    const preferred = this.modalSettings.defaultCategoryId;
+    if (preferred && categories.some((category) => category.id === preferred)) {
+      return preferred;
+    }
+    return categories?.[0]?.id ?? "";
+  }
+
+  private getDefaultServiceIds(): string[] {
+    if (!this.modalSettings.autoSelectFirstService) return [];
+    const firstId = this.props.availableServices?.[0]?.id;
+    return firstId ? [firstId] : [];
+  }
+
+  private getDefaultEmployeeIds(): string[] {
+    if (!this.modalSettings.autoSelectFirstEmployee) return [];
+    const firstId = this.props.availableEmployees?.[0]?.id;
+    return firstId ? [firstId] : [];
+  }
+
+  private getDefaultStatusId(): string | undefined {
+    const statuses = this.props.statuses ?? [];
+    if (!statuses.length) return undefined;
+
+    const preferredCode =
+      this.modalSettings.confirmationPolicy === "optional"
+        ? "confirmed"
+        : "pending";
+
+    const byCode = statuses.find(
+      (status) => (status.code ?? "").toLowerCase() === preferredCode
+    );
+    if (byCode?.id) return byCode.id;
+
+    return statuses[0]?.id ?? undefined;
+  }
+
+  private getServiceTotalCents(serviceIds: string[]): number {
+    if (!serviceIds.length) return 0;
+    const serviceMap = new Map(
+      (this.props.availableServices ?? []).map((service) => [
+        service.id,
+        service.priceCents ?? 0,
+      ])
+    );
+    return serviceIds.reduce((acc, serviceId) => acc + (serviceMap.get(serviceId) ?? 0), 0);
+  }
+
   constructor(props: ScheduleEventModalProps) {
     super(props);
 
     const { categories, initialDate } = props;
     const base = initialDate ? dayjs(initialDate, "YYYY-MM-DD") : dayjs();
+    const defaultServiceIds = this.getDefaultServiceIds();
+    const defaultEmployeeIds = this.getDefaultEmployeeIds();
 
     this.state = {
       isLoading: false,
       error: undefined,
       weekAnchor: base,
       selectedDay: base,
-      dayPart: "morning",
+      dayPart: this.modalSettings.defaultDayPart,
       slotPage: 0,
       selectedTime: undefined,
       title: "",
       description: "",
-      categoryId: categories?.[0]?.id ?? "",
-      durationMinutes: 25,
-      priceCents: 5000,
-      selectedServiceIds: [],
-      selectedEmployeeIds: [],
+      categoryId: this.getDefaultCategoryId(categories),
+      durationMinutes: this.modalSettings.defaultDurationMinutes,
+      priceCents: this.getServiceTotalCents(defaultServiceIds),
+      selectedServiceIds: defaultServiceIds,
+      selectedEmployeeIds: defaultEmployeeIds,
       selectedInventoryInputs: [],
       selectedInventoryOutputs: [],
-      selectedStatusId: undefined,
+      selectedStatusId: this.getDefaultStatusId(),
       selectModalOpen: null,
     };
   }
@@ -158,13 +242,11 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
     if (open && !prevProps.open && !this.props.initialDraft) {
       const base = initialDate ? dayjs(initialDate, "YYYY-MM-DD") : dayjs();
+      const defaultServiceIds = this.getDefaultServiceIds();
+      const defaultEmployeeIds = this.getDefaultEmployeeIds();
       const dayPart = initialStartTime
-        ? (Number(initialStartTime.split(":")[0]) < 12
-            ? "morning"
-            : Number(initialStartTime.split(":")[0]) < 17
-            ? "afternoon"
-            : "evening")
-        : "morning";
+        ? inferDayPartFromTime(initialStartTime)
+        : this.modalSettings.defaultDayPart;
 
       this.setSafeState({
         weekAnchor: base,
@@ -174,13 +256,14 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         slotPage: 0,
         title: "",
         description: "",
-        categoryId: categories?.[0]?.id ?? "",
-        durationMinutes: 25,
-        priceCents: 5000,
-        selectedServiceIds: [],
-        selectedEmployeeIds: [],
+        categoryId: this.getDefaultCategoryId(categories),
+        durationMinutes: this.modalSettings.defaultDurationMinutes,
+        priceCents: this.getServiceTotalCents(defaultServiceIds),
+        selectedServiceIds: defaultServiceIds,
+        selectedEmployeeIds: defaultEmployeeIds,
         selectedInventoryInputs: [],
         selectedInventoryOutputs: [],
+        selectedStatusId: this.getDefaultStatusId(),
       });
     }
 
@@ -189,14 +272,11 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       const d = this.props.initialDraft;
       const base = dayjs(d.date, "YYYY-MM-DD");
       const dayPart = d.startTime
-        ? (Number(d.startTime.split(":")[0]) < 12
-            ? "morning"
-            : Number(d.startTime.split(":")[0]) < 17
-            ? "afternoon"
-            : "evening")
-        : "morning";
+        ? inferDayPartFromTime(d.startTime)
+        : this.modalSettings.defaultDayPart;
 
-      const resolvedCategoryId = d.categoryId ?? categories?.[0]?.id ?? "";
+      const resolvedCategoryId = d.categoryId ?? this.getDefaultCategoryId(categories);
+      const resolvedServiceIds = d.serviceIds ?? [];
 
       this.setSafeState({
         weekAnchor: base,
@@ -207,13 +287,19 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
         title: d.title ?? "",
         description: d.description ?? "",
         categoryId: resolvedCategoryId,
-        durationMinutes: d.durationMinutes ?? 25,
-        priceCents: d.totalPriceCents ?? 5000,
-        selectedServiceIds: d.serviceIds ?? [],
+        durationMinutes: d.durationMinutes ?? this.modalSettings.defaultDurationMinutes,
+        priceCents: d.totalPriceCents ?? this.getServiceTotalCents(resolvedServiceIds),
+        selectedServiceIds: resolvedServiceIds,
         selectedEmployeeIds: d.employeeIds ?? [],
         selectedInventoryInputs: d.inventoryInputs ?? [],
         selectedInventoryOutputs: d.inventoryOutputs ?? [],
-        selectedStatusId: d.statusId ?? null,
+        selectedStatusId: d.statusId ?? this.getDefaultStatusId(),
+      });
+    }
+
+    if (open && !this.props.initialDraft && this.props.statuses !== prevProps.statuses) {
+      this.setSafeState({
+        selectedStatusId: this.getDefaultStatusId(),
       });
     }
 
@@ -222,7 +308,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
       // If an initialDraft is present we already populated categoryId from it.
       // Also avoid resetting when state already contains a categoryId (preserve user's selection).
       if (!this.props.initialDraft && !this.state.categoryId) {
-        this.setSafeState({ categoryId: categories?.[0]?.id ?? "" });
+        this.setSafeState({ categoryId: this.getDefaultCategoryId(categories) });
       }
     }
   }
@@ -279,8 +365,18 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
   }
 
   private get canConfirm() {
+    const hasDescription = this.state.description.trim().length > 0;
+    const hasService = this.state.selectedServiceIds.length > 0;
+    const hasEmployee = this.state.selectedEmployeeIds.length > 0;
+
     return Boolean(
-      this.state.categoryId && this.state.title.trim() && this.selectedStart && this.selectedEnd
+      this.state.categoryId &&
+      this.state.title.trim() &&
+      this.selectedStart &&
+      this.selectedEnd &&
+      (!this.modalSettings.requireDescription || hasDescription) &&
+      (!this.modalSettings.requireService || hasService) &&
+      (!this.modalSettings.requireEmployee || hasEmployee)
     );
   }
 
@@ -288,6 +384,19 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
     const { onConfirm } = this.props;
 
     if (!this.selectedStart || !this.selectedEnd || !this.state.categoryId) return;
+
+    if (this.modalSettings.requireDescription && this.state.description.trim().length === 0) {
+      message.info("Description is required by workspace settings.");
+      return;
+    }
+    if (this.modalSettings.requireService && this.state.selectedServiceIds.length === 0) {
+      message.info("Add at least one service to continue.");
+      return;
+    }
+    if (this.modalSettings.requireEmployee && this.state.selectedEmployeeIds.length === 0) {
+      message.info("Assign at least one employee to continue.");
+      return;
+    }
 
     const draft: ScheduleEventDraft = {
       title: this.state.title.trim(),
@@ -468,9 +577,33 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                 <Input.TextArea
                   value={this.state.description}
                   onChange={(e) => this.setSafeState({ description: e.target.value })}
-                  placeholder="Description (optional)"
+                  placeholder={
+                    this.modalSettings.requireDescription
+                      ? "Description (required)"
+                      : "Description (optional)"
+                  }
                   rows={3}
                 />
+
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <Tag color="blue">
+                    {this.modalSettings.confirmationPolicy === "required"
+                      ? "Status default: Pending (confirmation required)"
+                      : "Status default: Confirmed"}
+                  </Tag>
+                  {this.modalSettings.reminderEnabled ? (
+                    <Tag>{`Reminder: ${this.modalSettings.reminderLeadMinutes} min before`}</Tag>
+                  ) : (
+                    <Tag>Reminder disabled</Tag>
+                  )}
+                  {this.modalSettings.noShowPolicy === "charge" ? (
+                    <Tag color="orange">{`No-show fee: ${this.modalSettings.noShowFeePercent}%`}</Tag>
+                  ) : this.modalSettings.noShowPolicy === "flag" ? (
+                    <Tag color="gold">No-show flagged (no charge)</Tag>
+                  ) : (
+                    <Tag>No-show action: none</Tag>
+                  )}
+                </div>
 
                 <InlineRow>
                   {/* Status selector - only shown when editing an existing event */}
@@ -566,13 +699,17 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                         Add employee
                       </Button>
 
-                      <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-in" })} icon={<PackageMinus size={14} />}>
-                        Add inventory input
-                      </Button>
+                      {this.modalSettings.enableInventoryTracking ? (
+                        <>
+                          <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-in" })} icon={<PackageMinus size={14} />}>
+                            Add inventory input
+                          </Button>
 
-                      <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-out" })} icon={<PackagePlus size={14} />}>
-                        Add inventory output
-                      </Button>
+                          <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-out" })} icon={<PackagePlus size={14} />}>
+                            Add inventory output
+                          </Button>
+                        </>
+                      ) : null}
                     </div>
 
                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -662,31 +799,35 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               }}
             />
 
-            <SelectCardModal
-              open={this.state.selectModalOpen === "inventory-in"}
-              title="Add inventory input"
-              items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
-              multiple={true}
-              initialSelected={(this.state.selectedInventoryInputs ?? []).map((l) => l.itemId)}
-              onCancel={() => this.setSafeState({ selectModalOpen: null })}
-              onConfirm={(ids) => {
-                const next = this.upsertInventoryLines(this.state.selectedInventoryInputs ?? [], ids);
-                this.setSafeState({ selectedInventoryInputs: next, selectModalOpen: null });
-              }}
-            />
+            {this.modalSettings.enableInventoryTracking ? (
+              <>
+                <SelectCardModal
+                  open={this.state.selectModalOpen === "inventory-in"}
+                  title="Add inventory input"
+                  items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
+                  multiple={true}
+                  initialSelected={(this.state.selectedInventoryInputs ?? []).map((l) => l.itemId)}
+                  onCancel={() => this.setSafeState({ selectModalOpen: null })}
+                  onConfirm={(ids) => {
+                    const next = this.upsertInventoryLines(this.state.selectedInventoryInputs ?? [], ids);
+                    this.setSafeState({ selectedInventoryInputs: next, selectModalOpen: null });
+                  }}
+                />
 
-            <SelectCardModal
-              open={this.state.selectModalOpen === "inventory-out"}
-              title="Add inventory output"
-              items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
-              multiple={true}
-              initialSelected={(this.state.selectedInventoryOutputs ?? []).map((l) => l.itemId)}
-              onCancel={() => this.setSafeState({ selectModalOpen: null })}
-              onConfirm={(ids) => {
-                const next = this.upsertInventoryLines(this.state.selectedInventoryOutputs ?? [], ids);
-                this.setSafeState({ selectedInventoryOutputs: next, selectModalOpen: null });
-              }}
-            />
+                <SelectCardModal
+                  open={this.state.selectModalOpen === "inventory-out"}
+                  title="Add inventory output"
+                  items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
+                  multiple={true}
+                  initialSelected={(this.state.selectedInventoryOutputs ?? []).map((l) => l.itemId)}
+                  onCancel={() => this.setSafeState({ selectModalOpen: null })}
+                  onConfirm={(ids) => {
+                    const next = this.upsertInventoryLines(this.state.selectedInventoryOutputs ?? [], ids);
+                    this.setSafeState({ selectedInventoryOutputs: next, selectModalOpen: null });
+                  }}
+                />
+              </>
+            ) : null}
 
             <FooterBar>
               <div />

@@ -1,10 +1,13 @@
 function loadIndexModule(accessToken: string | null) {
   const restoreFromStorage = jest.fn();
   const getAccessToken = jest.fn().mockReturnValue(accessToken);
-  const refreshHandler = jest.fn().mockResolvedValue({ accessToken: "refreshed-token" });
+  const refreshHandler = jest
+    .fn()
+    .mockResolvedValue({ accessToken: "refreshed-token" });
   const getRefreshHandler = jest.fn().mockReturnValue(refreshHandler);
   const setTokens = jest.fn();
   const setRefreshHandler = jest.fn();
+  const onSignOut = jest.fn();
 
   jest.isolateModules(() => {
     jest.doMock("./auth-api", () => ({
@@ -21,6 +24,7 @@ function loadIndexModule(accessToken: string | null) {
       authManager: {
         setTokens,
         setRefreshHandler,
+        onSignOut,
       },
     }));
     jest.doMock("@core/http/client.instance", () => ({
@@ -37,6 +41,7 @@ function loadIndexModule(accessToken: string | null) {
     getRefreshHandler,
     setTokens,
     setRefreshHandler,
+    onSignOut,
   };
 }
 
@@ -54,6 +59,8 @@ describe("core/auth index bootstrap", () => {
     expect(spies.getRefreshHandler).toHaveBeenCalledTimes(1);
     expect(spies.setTokens).toHaveBeenCalledWith("token-from-storage", null);
     expect(spies.setRefreshHandler).toHaveBeenCalledTimes(1);
+    expect(spies.onSignOut).toHaveBeenCalledTimes(1);
+    expect(spies.onSignOut).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it("normalizes missing token to null", () => {

@@ -1,0 +1,15 @@
+project_id = "my-worklyhub-dev-project"
+region     = "us-central1"
+
+artifact_registry_repository_id = "worklyhub-frontend-dev"
+cloud_run_service_name          = "worklyhub-frontend-dev"
+runtime_service_account_id      = "worklyhub-fe-dev-run"
+
+min_instance_count = 0
+max_instance_count = 2
+cpu                = "1"
+memory             = "512Mi"
+
+runtime_env_vars = {
+  ENVIRONMENT = "development"
+}

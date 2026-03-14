@@ -1,0 +1,15 @@
+project_id = "my-worklyhub-prod-project"
+region     = "us-central1"
+
+artifact_registry_repository_id = "worklyhub-frontend-prod"
+cloud_run_service_name          = "worklyhub-frontend-prod"
+runtime_service_account_id      = "worklyhub-fe-prd-run"
+
+min_instance_count = 1
+max_instance_count = 5
+cpu                = "1"
+memory             = "512Mi"
+
+runtime_env_vars = {
+  ENVIRONMENT = "production"
+}

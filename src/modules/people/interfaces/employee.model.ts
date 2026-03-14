@@ -6,6 +6,10 @@ export interface EmployeeModel {
   phone?: string;
   role?: string;
   department?: string;
+  accessProfileUid?: string | null;
+  invitationStatus?: "active" | "pending_activation";
+  invitationSentAt?: string | null;
+  activatedAt?: string | null;
   hiredAt?: string;
   salaryCents?: number;
   active: boolean;

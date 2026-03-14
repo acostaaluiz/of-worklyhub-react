@@ -10,9 +10,16 @@ type Props = {
   onSelect?: (svc: CompanyServiceModel, suggestedCents: number) => void;
 };
 
+type SuggestedServiceItem = CompanyServiceModel & {
+  suggestedCents: number;
+  confidence?: number | null;
+  rationale?: string;
+  origin?: "rules" | "ai";
+};
+
 export function ServicesFinanceList({ onSelect }: Props) {
   const svc = React.useMemo(() => new FinanceService(), []);
-  const [items, setItems] = useState<(CompanyServiceModel & { suggestedCents: number })[]>([]);
+  const [items, setItems] = useState<SuggestedServiceItem[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -84,6 +91,10 @@ export function ServicesFinanceList({ onSelect }: Props) {
                   >
                     Suggested: {formatMoneyFromCents(it.suggestedCents ?? 0)}
                   </Tag>
+                  {typeof it.confidence === "number" ? (
+                    <Tag>{`Confidence: ${(it.confidence * 100).toFixed(0)}%`}</Tag>
+                  ) : null}
+                  {it.origin ? <Tag>{`Engine: ${it.origin.toUpperCase()}`}</Tag> : null}
                 </div>
 
                 <div style={{ marginTop: 8 }}>
@@ -97,6 +108,11 @@ export function ServicesFinanceList({ onSelect }: Props) {
                   >
                     Delta: {formatMoneyFromCents((it.suggestedCents ?? 0) - (it.priceCents ?? 0))}
                   </div>
+                  {it.rationale ? (
+                    <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                      {it.rationale}
+                    </Typography.Text>
+                  ) : null}
                 </div>
               </div>
 

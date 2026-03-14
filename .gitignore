@@ -32,3 +32,11 @@ cypress/screenshots
 cypress/downloads
 cypress.env.json
 
+# Terraform artifacts
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+

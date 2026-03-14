@@ -1,4 +1,4 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Settings2 } from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -13,6 +13,13 @@ export function ScheduleLandingTemplate() {
       description: "View and organize appointments.",
       to: "/schedule",
       icon: <Calendar size={18} />,
+    },
+    {
+      id: "settings",
+      title: "Settings",
+      description: "Configure booking defaults and operational validation rules.",
+      to: "/schedule/settings",
+      icon: <Settings2 size={18} />,
     },
   ];
 

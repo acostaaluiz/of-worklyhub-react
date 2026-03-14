@@ -1,0 +1,30 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile
+      - --build-arg
+      - VITE_API_BASE_URL=${_VITE_API_BASE_URL}
+      - --build-arg
+      - VITE_CURRENCY_LOCALE=${_VITE_CURRENCY_LOCALE}
+      - --build-arg
+      - VITE_CURRENCY_CODE=${_VITE_CURRENCY_CODE}
+      - --build-arg
+      - VITE_CURRENCY_PRECISION=${_VITE_CURRENCY_PRECISION}
+      - -t
+      - ${_IMAGE_URI}
+      - .
+
+images:
+  - ${_IMAGE_URI}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _IMAGE_URI: us-docker.pkg.dev/example/example/worklyhub-frontend:latest
+  _VITE_API_BASE_URL: https://api.example.com/api/v1
+  _VITE_CURRENCY_LOCALE: en-US
+  _VITE_CURRENCY_CODE: USD
+  _VITE_CURRENCY_PRECISION: "2"

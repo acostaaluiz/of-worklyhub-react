@@ -7,6 +7,7 @@ import {
   type UserCredential,
 } from "firebase/auth";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
+import { isTokenExpired, sanitizeToken } from "@core/auth/session-security";
 
 const TOKEN_KEY = "auth.idToken";
 const SESSION_KEY = "auth.session";
@@ -14,8 +15,19 @@ const SESSION_KEY = "auth.session";
 export class FirebaseAuthService {
   private currentToken: string | null = null;
 
+  private toValidToken(token: string | null | undefined): string | null {
+    const normalized = sanitizeToken(token);
+    if (!normalized) return null;
+    if (isTokenExpired(normalized)) return null;
+    return normalized;
+  }
+
   async signInWithEmail(email: string, password: string) {
-    const cred: UserCredential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+    const cred: UserCredential = await signInWithEmailAndPassword(
+      firebaseAuth,
+      email,
+      password,
+    );
     const user = cred.user;
     const token = await user.getIdToken(false);
     this.setToken(token);
@@ -31,13 +43,19 @@ export class FirebaseAuthService {
   }
 
   getAccessToken(): string | null {
+    if (this.currentToken && isTokenExpired(this.currentToken)) {
+      this.setToken(null);
+      return null;
+    }
     return this.currentToken;
   }
 
   setToken(token: string | null) {
-    this.currentToken = token;
-    if (token) {
-      localStorageProvider.set(TOKEN_KEY, token);
+    const normalized = this.toValidToken(token);
+    this.currentToken = normalized;
+
+    if (normalized) {
+      localStorageProvider.set(TOKEN_KEY, normalized);
     } else {
       localStorageProvider.remove(TOKEN_KEY);
       localStorageProvider.remove(SESSION_KEY);
@@ -71,12 +89,18 @@ export class FirebaseAuthService {
 
   // restore token if present in storage (called on app init)
   restoreFromStorage(): void {
-    const t = localStorageProvider.get(TOKEN_KEY);
-    if (t) this.currentToken = t;
+    const restored = this.toValidToken(localStorageProvider.get(TOKEN_KEY));
+    if (!restored) {
+      this.setToken(null);
+      return;
+    }
+    this.currentToken = restored;
   }
 
   // expose refresh handler compatible with AuthManager
-  getRefreshHandler(): (refreshToken?: string | null) => Promise<RefreshResult> {
+  getRefreshHandler(): (
+    refreshToken?: string | null,
+  ) => Promise<RefreshResult> {
     return async () => {
       const t = await this.refresh();
       if (t) return { accessToken: t };

@@ -1,6 +1,5 @@
 import { toAppError } from "@core/errors/to-app-error";
 import { companyService } from "@modules/company/services/company.service";
-import { usersAuthService } from "@modules/users/services/auth.service";
 import { PeopleApi, type CreateWorkerPayload } from "@modules/people/services/people-api";
 import { httpClient } from "@core/http/client.instance";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
@@ -86,6 +85,7 @@ export class PeopleService {
           user_name: `${payload.firstName ?? ""} ${payload.lastName ?? ""}`.trim(),
           job_title: payload.role ?? undefined,
           department: payload.department ?? undefined,
+          access_profile_uid: payload.accessProfileUid ?? undefined,
           employee_code: undefined,
           hired_at: payload.hiredAt ?? undefined,
           salary_cents: payload.salaryCents ?? undefined,
@@ -133,23 +133,34 @@ export class PeopleService {
       // try to update via backend if workspace and user available
       const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
       const workspaceId = (ws?.workspaceId ?? ws?.id) as string | undefined;
-      const session = usersAuthService.getSessionValue();
-      const userUid = session?.uid ?? undefined;
-
-      if (workspaceId && userUid) {
+      if (workspaceId && id) {
         const body: DataMap = {};
         if (Object.prototype.hasOwnProperty.call(patch, "role")) body.job_title = patch.role ?? null;
         if (Object.prototype.hasOwnProperty.call(patch, "department")) body.department = patch.department ?? null;
+        if (Object.prototype.hasOwnProperty.call(patch, "accessProfileUid")) body.access_profile_uid = patch.accessProfileUid ?? null;
         if (Object.prototype.hasOwnProperty.call(patch, "hiredAt")) body.hired_at = patch.hiredAt ?? null;
         if (Object.prototype.hasOwnProperty.call(patch, "salaryCents")) body.salary_cents = patch.salaryCents ?? null;
 
-        const res = await this.api.updateWorker(workspaceId, userUid, body);
+        const res = await this.api.updateWorker(workspaceId, id, body);
         const data = (res ?? {}) as DataMap;
 
         // update local cache if present
         const idx = this.employees.findIndex((e) => e.id === id);
         if (idx !== -1) {
-          const updated: EmployeeModel = { ...this.employees[idx], role: (data["job_title"] as string) ?? patch.role ?? this.employees[idx].role, department: (data["department"] as string) ?? patch.department ?? this.employees[idx].department, hiredAt: (data["hired_at"] as string) ?? patch.hiredAt ?? this.employees[idx].hiredAt, salaryCents: (typeof data["salary_cents"] === "number" ? (data["salary_cents"] as number) : patch.salaryCents ?? this.employees[idx].salaryCents) } as EmployeeModel;
+          const updated: EmployeeModel = {
+            ...this.employees[idx],
+            role: (data["job_title"] as string) ?? patch.role ?? this.employees[idx].role,
+            department: (data["department"] as string) ?? patch.department ?? this.employees[idx].department,
+            accessProfileUid:
+              (data["access_profile_uid"] as string) ??
+              patch.accessProfileUid ??
+              this.employees[idx].accessProfileUid,
+            hiredAt: (data["hired_at"] as string) ?? patch.hiredAt ?? this.employees[idx].hiredAt,
+            salaryCents:
+              typeof data["salary_cents"] === "number"
+                ? (data["salary_cents"] as number)
+                : patch.salaryCents ?? this.employees[idx].salaryCents,
+          } as EmployeeModel;
           this.employees[idx] = updated;
           return updated;
         }
@@ -163,6 +174,10 @@ export class PeopleService {
           phone: (data["phone"] as string) ?? patch.phone,
           role: (data["job_title"] as string) ?? patch.role,
           department: (data["department"] as string) ?? patch.department,
+          accessProfileUid: (data["access_profile_uid"] as string) ?? patch.accessProfileUid,
+          invitationStatus: (data["invitation_status"] as "active" | "pending_activation") ?? patch.invitationStatus,
+          invitationSentAt: (data["invitation_sent_at"] as string) ?? patch.invitationSentAt,
+          activatedAt: (data["activated_at"] as string) ?? patch.activatedAt,
           hiredAt: (data["hired_at"] as string) ?? patch.hiredAt,
           salaryCents: (typeof data["salary_cents"] === "number" ? (data["salary_cents"] as number) : patch.salaryCents),
           active: (typeof data["active"] === "boolean" ? (data["active"] as boolean) : true),
@@ -206,6 +221,28 @@ function mapFromApi(item: DataMap): EmployeeModel {
   const phone = typeof item["phone"] === "string" ? (item["phone"] as string) : undefined;
   const role = typeof item["job_title"] === "string" ? (item["job_title"] as string) : (typeof item["role"] === "string" ? (item["role"] as string) : undefined);
   const department = typeof item["department"] === "string" ? (item["department"] as string) : undefined;
+  const accessProfileUid =
+    typeof item["access_profile_uid"] === "string"
+      ? (item["access_profile_uid"] as string)
+      : typeof item["accessProfileUid"] === "string"
+      ? (item["accessProfileUid"] as string)
+      : undefined;
+  const invitationStatus =
+    item["invitation_status"] === "pending_activation" || item["invitationStatus"] === "pending_activation"
+      ? "pending_activation"
+      : "active";
+  const invitationSentAt =
+    typeof item["invitation_sent_at"] === "string"
+      ? (item["invitation_sent_at"] as string)
+      : typeof item["invitationSentAt"] === "string"
+      ? (item["invitationSentAt"] as string)
+      : undefined;
+  const activatedAt =
+    typeof item["activated_at"] === "string"
+      ? (item["activated_at"] as string)
+      : typeof item["activatedAt"] === "string"
+      ? (item["activatedAt"] as string)
+      : undefined;
   const hiredAt = typeof item["hired_at"] === "string" ? (item["hired_at"] as string) : (typeof item["hiredAt"] === "string" ? (item["hiredAt"] as string) : undefined);
   const salaryCents = typeof item["salary_cents"] === "number" ? (item["salary_cents"] as number) : (typeof item["salaryCents"] === "number" ? (item["salaryCents"] as number) : undefined);
   const active = typeof item["active"] === "boolean" ? (item["active"] as boolean) : true;
@@ -219,6 +256,10 @@ function mapFromApi(item: DataMap): EmployeeModel {
     phone,
     role,
     department,
+    accessProfileUid,
+    invitationStatus,
+    invitationSentAt,
+    activatedAt,
     hiredAt,
     salaryCents,
     active,

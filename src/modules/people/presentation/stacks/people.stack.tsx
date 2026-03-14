@@ -3,6 +3,7 @@ import type { RouteObject } from "react-router-dom";
 
 const PeopleHomePage = lazy(() => import("@modules/people/presentation/pages/home/home.page"));
 const PeopleLandingPage = lazy(() => import("@modules/people/presentation/pages/landing/landing.page"));
+const PeopleSettingsPage = lazy(() => import("@modules/people/presentation/pages/settings/settings.page"));
 
 export const peopleStackRoutes: RouteObject[] = [
   {
@@ -24,6 +25,15 @@ export const peopleStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <PeopleHomePage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "people.settings",
+        path: "settings",
+        element: (
+          <React.Suspense fallback={null}>
+            <PeopleSettingsPage />
           </React.Suspense>
         ),
       },

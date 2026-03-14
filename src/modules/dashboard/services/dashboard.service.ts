@@ -153,6 +153,10 @@ export class DashboardService {
         title: alert.title,
         description: alert.description,
         suggestedAction: alert.suggestedAction,
+        origin: alert.origin,
+        confidence: alert.confidence ?? null,
+        rationale: alert.rationale ?? null,
+        engineUsed: alert.engineUsed ?? null,
       }));
 
       return {

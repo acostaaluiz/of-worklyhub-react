@@ -3,8 +3,30 @@ import type { CompanyServiceModel } from "@modules/company/interfaces/service.mo
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
+import type {
+  ScheduleDefaultDayPart,
+  ScheduleWorkspaceSettings,
+} from "@modules/schedule/interfaces/schedule-settings.model";
 
-export type DayPart = "morning" | "afternoon" | "evening";
+export type DayPart = ScheduleDefaultDayPart;
+
+export type ScheduleEventModalSettings = Pick<
+  ScheduleWorkspaceSettings,
+  | "defaultDurationMinutes"
+  | "defaultDayPart"
+  | "defaultCategoryId"
+  | "requireDescription"
+  | "requireService"
+  | "requireEmployee"
+  | "autoSelectFirstService"
+  | "autoSelectFirstEmployee"
+  | "enableInventoryTracking"
+  | "confirmationPolicy"
+  | "reminderEnabled"
+  | "reminderLeadMinutes"
+  | "noShowPolicy"
+  | "noShowFeePercent"
+>;
 
 export type ScheduleEventDraft = {
   title: string;
@@ -37,6 +59,7 @@ export type ScheduleEventModalProps = BaseProps & {
   initialStartTime?: string;
   initialDraft?: ScheduleEventDraft & { id?: string };
   statuses?: Array<{ id: string; code?: string; label?: string }>;
+  settings?: ScheduleEventModalSettings;
   onClose: () => void;
   onConfirm: (draft: ScheduleEventDraft) => void;
 };

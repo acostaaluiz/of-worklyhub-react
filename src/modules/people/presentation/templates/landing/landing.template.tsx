@@ -1,4 +1,4 @@
-import { Users } from "lucide-react";
+import { Settings2, Users } from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -13,6 +13,13 @@ export function PeopleLandingTemplate() {
       description: "Manage staff and roles.",
       to: "/people",
       icon: <Users size={18} />,
+    },
+    {
+      id: "settings",
+      title: "Settings",
+      description: "Configure defaults, validation rules, and module startup tab.",
+      to: "/people/settings",
+      icon: <Settings2 size={18} />,
     },
   ];
 

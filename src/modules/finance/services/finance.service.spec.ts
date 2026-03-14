@@ -38,6 +38,7 @@ type FinanceApiMock = {
   getRevenue: jest.Mock;
   getDashboard: jest.Mock;
   getInsights: jest.Mock;
+  getPricingSuggestions: jest.Mock;
 };
 
 type StoreMock = {
@@ -75,6 +76,11 @@ function createCompanyServicesMock(): CompanyServicesMock {
         id: "svc-1",
         title: "Cleaning",
         priceCents: 10000,
+      },
+      {
+        id: "svc-2",
+        title: "Polishing",
+        priceCents: 8000,
       },
     ]),
   };
@@ -179,6 +185,7 @@ function createFinanceApiMock(): FinanceApiMock {
         },
       ],
     }),
+    getPricingSuggestions: jest.fn().mockResolvedValue(null),
   };
 }
 
@@ -269,20 +276,69 @@ describe("FinanceService", () => {
     expect(missing).toBe(false);
   });
 
-  it("suggests service prices and wraps listing failures", async () => {
+  it("suggests service prices from backend and falls back to local rules", async () => {
     const service = new FinanceService();
 
     await expect(
       service.suggestPriceForService({ id: "svc-1", title: "Cleaning", priceCents: 10000 } as never)
     ).resolves.toBe(8500);
 
+    apiMock.getPricingSuggestions.mockResolvedValueOnce({
+      period: { start: "2026-03-01", end: "2026-03-31", label: "month" },
+      summary: {
+        total: 1,
+        increases: 1,
+        decreases: 0,
+        unchanged: 0,
+        with_history: 1,
+        without_history: 0,
+      },
+      suggestions: [
+        {
+          service_id: "svc-1",
+          service_name: "Cleaning",
+          current_price_cents: 10000,
+          suggested_price_cents: 11200,
+          delta_cents: 1200,
+          expected_impact: "increase-margin",
+          confidence: 0.82,
+          rationale: "Ticket medio acima do preco atual.",
+          origin: "ai",
+        },
+      ],
+    });
     const withSuggestions = await service.listServicesWithSuggestions();
-    expect(withSuggestions).toEqual([
-      expect.objectContaining({
-        id: "svc-1",
-        suggestedCents: 8500,
-      }),
-    ]);
+    expect(withSuggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "svc-1",
+          suggestedCents: 11200,
+          origin: "ai",
+        }),
+        expect.objectContaining({
+          id: "svc-2",
+          suggestedCents: 6800,
+          origin: "rules",
+        }),
+      ])
+    );
+
+    apiMock.getPricingSuggestions.mockResolvedValueOnce(null);
+    const fallbackSuggestions = await service.listServicesWithSuggestions();
+    expect(fallbackSuggestions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "svc-1",
+          suggestedCents: 8500,
+          origin: "rules",
+        }),
+        expect.objectContaining({
+          id: "svc-2",
+          suggestedCents: 6800,
+          origin: "rules",
+        }),
+      ])
+    );
 
     companyServicesMock.list.mockRejectedValueOnce(new Error("services-failure"));
     await expect(service.listServicesWithSuggestions()).rejects.toMatchObject({

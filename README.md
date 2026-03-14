@@ -188,6 +188,8 @@ Este repositorio possui pipeline GitLab com validacoes de qualidade, testes, bui
 
 - Pipeline: `.gitlab-ci.yml`
 - Guia operacional: `docs/ci/gitlab-ci.md`
+- Branches de deploy: `develop` (development) e `master` (production)
+- Terraform GCP: `infra/README.md`
 
 ## Qualidade e Pre-commit
 

@@ -47,6 +47,7 @@ import type {
   MonthViewHint,
   ScheduleStatus,
 } from "@modules/schedule/services/schedules-api";
+import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
 
 type ScheduleCalendarProps = {
   availableServices?: CompanyServiceModel[];
@@ -81,6 +82,7 @@ type ScheduleCalendarProps = {
   monthViewHint?: MonthViewHint | null;
   categories?: ScheduleCategory[] | null;
   statuses?: ScheduleStatus[] | null;
+  settings?: ScheduleWorkspaceSettings;
   // internal view mode only; parent no longer controls it
 };
 
@@ -210,6 +212,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<CalendarInstance | null>(null);
   const eventColorMapRef = useRef<Map<string, string>>(new Map());
+  const tuiEventsRef = useRef<TuiScheduleEvent[]>([]);
+  const seeMoreAnchorRectRef = useRef<DOMRect | null>(null);
 
   const [viewMode, setViewMode] = useState<CalendarViewMode>("month");
   const [headerLabel, setHeaderLabel] = useState<string>(
@@ -261,6 +265,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     availableServices: propAvailableServices,
     availableEmployees: propAvailableEmployees,
     availableInventoryItems: propAvailableInventoryItems,
+    settings: propSettings,
   } = props;
 
   const activeMonthViewHint = propMonthViewHint ?? localMonthViewHint;
@@ -558,8 +563,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                     0
                   )
                 : undefined,
-              statusId:
-                (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
+              statusId: (raw.status && raw.status.id) ?? undefined,
             };
 
             setModalInitialDraft(draft);
@@ -642,10 +646,24 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     // run on next frame to ensure calendar rendered
     requestAnimationFrame(() => {
       try {
-        tuiEvents.forEach((ev) => {
+        const latestTuiEvents = tuiEventsRef.current;
+        latestTuiEvents.forEach((ev) => {
           const id = ev.id as string;
           if (!id) return;
-          const nodes = host.querySelectorAll(`[data-event-id="${id}"]`);
+          const hostNodes = Array.from(
+            host.querySelectorAll<HTMLElement>(`[data-event-id="${id}"]`)
+          );
+          const globalNodes =
+            typeof document !== "undefined"
+              ? Array.from(
+                  document.querySelectorAll<HTMLElement>(
+                    `[data-event-id="${id}"]`
+                  )
+                )
+              : [];
+          const nodes = Array.from(
+            new Set<HTMLElement>([...hostNodes, ...globalNodes])
+          );
           nodes.forEach((n) => {
             const el = n as HTMLElement;
             // prefer explicit color from the eventColorMap (normalized), then raw values
@@ -667,6 +685,24 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 el.style.background = preferredColor;
                 // expose applied color as data attribute for debugging
                 el.setAttribute("data-applied-color", preferredColor);
+
+                const body = el.querySelector(
+                  ".toastui-calendar-weekday-event"
+                ) as HTMLElement | null;
+                if (body) {
+                  body.style.setProperty(
+                    "background-color",
+                    preferredColor,
+                    "important"
+                  );
+                  body.style.background = preferredColor;
+                  body.style.setProperty(
+                    "border-left-color",
+                    preferredColor,
+                    "important"
+                  );
+                  body.style.setProperty("opacity", "1", "important");
+                }
               }
             } catch (err) {
               if (preferredColor) el.style.background = preferredColor;
@@ -766,6 +802,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       requestAnimationFrame(() => doRender());
     });
   };
+
+  useEffect(() => {
+    tuiEventsRef.current = tuiEvents;
+  }, [tuiEvents]);
 
   const refreshHeaderLabel = () => {
     const inst = instanceRef.current;
@@ -1018,8 +1058,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 0
               )
             : undefined,
-          statusId:
-            (raw.status && (raw.status.id ?? raw.status.code)) ?? undefined,
+          statusId: (raw.status && raw.status.id) ?? undefined,
         };
 
         const augmented: SchedulePopupEvent = {
@@ -1249,6 +1288,101 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Re-anchor Toast UI month "x more" popup to the clicked button to avoid
+  // scroll-offset drift that moves it far away and expands the layout.
+  useEffect(() => {
+    const captureAnchor = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target) return;
+      const moreBtn = target.closest(
+        ".toastui-calendar-grid-cell-more-events"
+      ) as HTMLElement | null;
+      if (!moreBtn) return;
+      seeMoreAnchorRectRef.current = moreBtn.getBoundingClientRect();
+    };
+
+    const repositionSeeMore = () => {
+      const wrap = wrapRef.current;
+      if (!wrap) return;
+
+      const popup =
+        wrap.querySelector<HTMLElement>(".toastui-calendar-see-more-container") ??
+        document.querySelector<HTMLElement>(".toastui-calendar-see-more-container");
+      if (!popup) return;
+
+      const anchorRect = seeMoreAnchorRectRef.current;
+      if (!anchorRect) return;
+
+      const offsetParent =
+        popup.offsetParent instanceof HTMLElement ? popup.offsetParent : wrap;
+      const parentRect = offsetParent.getBoundingClientRect();
+      const parentWidth = Math.max(0, offsetParent.clientWidth || wrap.clientWidth);
+      const parentHeight = Math.max(
+        0,
+        offsetParent.clientHeight || wrap.clientHeight
+      );
+      if (!parentWidth || !parentHeight) return;
+
+      const popupWidth = popup.offsetWidth || 320;
+      const popupHeight = popup.offsetHeight || 320;
+      const margin = 8;
+
+      let left = anchorRect.left - parentRect.left;
+      let top = anchorRect.bottom - parentRect.top + 6;
+
+      if (left + popupWidth + margin > parentWidth) {
+        left = parentWidth - popupWidth - margin;
+      }
+      if (left < margin) left = margin;
+
+      if (top + popupHeight + margin > parentHeight) {
+        const aboveTop = anchorRect.top - parentRect.top - popupHeight - 6;
+        top = aboveTop >= margin ? aboveTop : parentHeight - popupHeight - margin;
+      }
+      if (top < margin) top = margin;
+
+      popup.style.setProperty("position", "absolute", "important");
+      popup.style.setProperty("left", `${Math.round(left)}px`, "important");
+      popup.style.setProperty("top", `${Math.round(top)}px`, "important");
+      popup.style.removeProperty("right");
+      popup.style.removeProperty("bottom");
+    };
+
+    const triggerReposition = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement | null;
+      if (!target) return;
+      const moreBtn = target.closest(
+        ".toastui-calendar-grid-cell-more-events"
+      ) as HTMLElement | null;
+      if (!moreBtn) return;
+      requestAnimationFrame(() => {
+        repositionSeeMore();
+        applyEventDomColors();
+        requestAnimationFrame(repositionSeeMore);
+      });
+    };
+
+    const observer = new MutationObserver(() => {
+      repositionSeeMore();
+      applyEventDomColors();
+    });
+
+    document.addEventListener("mousedown", captureAnchor, true);
+    document.addEventListener("click", triggerReposition, true);
+    window.addEventListener("resize", repositionSeeMore);
+    window.addEventListener("scroll", repositionSeeMore, true);
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      document.removeEventListener("mousedown", captureAnchor, true);
+      document.removeEventListener("click", triggerReposition, true);
+      window.removeEventListener("resize", repositionSeeMore);
+      window.removeEventListener("scroll", repositionSeeMore, true);
+      observer.disconnect();
+    };
   }, []);
 
   // Delegated handler for template-rendered popup delete buttons (native TUI popup).
@@ -1692,6 +1826,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         initialDraft={modalInitialDraft}
         availableServices={propAvailableServices}
         availableEmployees={propAvailableEmployees}
+        settings={propSettings}
         statuses={
           props.statuses
             ? props.statuses.map((s) => ({

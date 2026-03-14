@@ -24,6 +24,7 @@ import type {
   ScheduleStatus,
 } from "@modules/schedule/services/schedules-api";
 import type { ScheduleEventDraft } from "../../components/schedule-event-modal/schedule-event-modal.form.types";
+import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
 
 type ScheduleTemplateProps = {
   availableServices?: CompanyServiceModel[];
@@ -51,6 +52,7 @@ type ScheduleTemplateProps = {
   statusCounts?: Record<string, number> | null;
   selectedStatusIds?: Record<string, boolean> | null;
   onToggleStatus?: (id: string, checked: boolean) => void;
+  settings?: ScheduleWorkspaceSettings;
 };
 
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -110,6 +112,7 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   statusCounts={props.statusCounts}
                   selectedStatusIds={props.selectedStatusIds}
                   onToggleStatus={props.onToggleStatus}
+                  settings={props.settings}
                 />
               </SidebarCard>
 
@@ -124,6 +127,7 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   events={props.events}
                   categories={props.categories}
                   statuses={props.statuses}
+                  settings={props.settings}
                   onRangeChange={props.onRangeChange}
                   monthViewHint={props.monthViewHint}
                 />

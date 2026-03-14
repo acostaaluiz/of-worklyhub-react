@@ -7,6 +7,9 @@ const SchedulePage = lazy(
 const ScheduleLandingPage = lazy(
   () => import("@modules/schedule/presentation/pages/landing/landing.page")
 );
+const ScheduleSettingsPage = lazy(
+  () => import("@modules/schedule/presentation/pages/settings/settings.page")
+);
 
 export const scheduleStackRoutes: RouteObject[] = [
   {
@@ -28,6 +31,15 @@ export const scheduleStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <SchedulePage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "schedule.settings",
+        path: "settings",
+        element: (
+          <React.Suspense fallback={null}>
+            <ScheduleSettingsPage />
           </React.Suspense>
         ),
       },

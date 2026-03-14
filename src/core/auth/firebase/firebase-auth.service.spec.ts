@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 jest.mock("./firebase", () => ({
-  firebaseAuth: { currentUser: null as null | { getIdToken: (force?: boolean) => Promise<string> } },
+  firebaseAuth: {
+    currentUser: null as null | {
+      getIdToken: (force?: boolean) => Promise<string>;
+    },
+  },
 }));
 
 jest.mock("firebase/auth", () => ({
@@ -20,6 +24,7 @@ jest.mock("@core/storage/local-storage.provider", () => ({
 import { FirebaseAuthService } from "./firebase-auth.service";
 import { firebaseAuth } from "./firebase";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
+import { createUnsignedJwt } from "@core/auth/session-security";
 import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -33,7 +38,7 @@ function createUser(token = "id-token") {
 }
 
 function setCurrentUser(
-  user: null | { getIdToken: (force?: boolean) => Promise<string> }
+  user: null | { getIdToken: (force?: boolean) => Promise<string> },
 ): void {
   Object.defineProperty(firebaseAuth, "currentUser", {
     configurable: true,
@@ -59,17 +64,23 @@ describe("FirebaseAuthService", () => {
     mockedSignIn.mockResolvedValue({ user } as any);
     const service = new FirebaseAuthService();
 
-    const result = await service.signInWithEmail("person@worklyhub.com", "password");
+    const result = await service.signInWithEmail(
+      "person@worklyhub.com",
+      "password",
+    );
 
     expect(mockedSignIn).toHaveBeenCalledWith(
       firebaseAuth,
       "person@worklyhub.com",
-      "password"
+      "password",
     );
     expect(user.getIdToken).toHaveBeenCalledWith(false);
     expect(result.token).toBe("token-from-firebase");
     expect(service.getAccessToken()).toBe("token-from-firebase");
-    expect(mockedStorage.set).toHaveBeenCalledWith("auth.idToken", "token-from-firebase");
+    expect(mockedStorage.set).toHaveBeenCalledWith(
+      "auth.idToken",
+      "token-from-firebase",
+    );
   });
 
   it("returns cached token when no firebase user exists", async () => {
@@ -145,7 +156,10 @@ describe("FirebaseAuthService", () => {
 
     await service.sendPasswordReset("person@worklyhub.com");
 
-    expect(mockedReset).toHaveBeenCalledWith(firebaseAuth, "person@worklyhub.com");
+    expect(mockedReset).toHaveBeenCalledWith(
+      firebaseAuth,
+      "person@worklyhub.com",
+    );
   });
 
   it("restores token from storage when available", () => {
@@ -158,17 +172,31 @@ describe("FirebaseAuthService", () => {
     expect(service.getAccessToken()).toBe("stored-token");
   });
 
+  it("clears persisted auth when stored token is expired JWT", () => {
+    const expiredToken = createUnsignedJwt({
+      exp: Math.floor((Date.now() - 5 * 60 * 1000) / 1000),
+    });
+    mockedStorage.get.mockReturnValue(expiredToken);
+    const service = new FirebaseAuthService();
+
+    service.restoreFromStorage();
+
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.idToken");
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(service.getAccessToken()).toBeNull();
+  });
+
   it("returns compatible refresh handler output", async () => {
     const user = createUser("refreshed-token");
     setCurrentUser(user);
     const service = new FirebaseAuthService();
 
     const refreshHandler = service.getRefreshHandler();
-    await expect(refreshHandler()).resolves.toEqual({ accessToken: "refreshed-token" });
+    await expect(refreshHandler()).resolves.toEqual({
+      accessToken: "refreshed-token",
+    });
 
     setCurrentUser(null);
     await expect(refreshHandler()).resolves.toBeNull();
   });
 });
-
-

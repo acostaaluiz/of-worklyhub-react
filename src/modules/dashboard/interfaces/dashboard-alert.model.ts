@@ -8,5 +8,9 @@ export type DashboardAlertModel = {
   title: string;
   description: string;
   suggestedAction: string;
+  origin?: "rules" | "ai";
+  confidence?: number | null;
+  rationale?: string | null;
+  engineUsed?: "rules" | "ai" | null;
 };
 

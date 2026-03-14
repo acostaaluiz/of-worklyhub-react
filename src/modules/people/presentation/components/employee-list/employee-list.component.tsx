@@ -18,6 +18,18 @@ export function EmployeeListComponent({ employees, onEdit, onDeactivate, toolbar
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Role", dataIndex: "role", key: "role" },
     { title: "Dept.", dataIndex: "department", key: "department" },
+    {
+      title: "Profile",
+      dataIndex: "accessProfileUid",
+      key: "accessProfileUid",
+      render: (value?: string | null) => (value ? value : "-"),
+    },
+    {
+      title: "Invite",
+      dataIndex: "invitationStatus",
+      key: "invitationStatus",
+      render: (value?: string) => (value === "pending_activation" ? "Pending activation" : "Active"),
+    },
     { title: "Active", dataIndex: "active", key: "active", render: (v: boolean) => (v ? "Yes" : "No") },
     {
       title: "Actions",
@@ -31,7 +43,7 @@ export function EmployeeListComponent({ employees, onEdit, onDeactivate, toolbar
     },
   ];
 
-  return <SmartTable<EmployeeModel> columns={cols} dataSource={employees} rowKey="id" pageSize={10} searchFields={["firstName", "lastName", "email", "role", "department"]} topLeft={toolbarLeft} topRight={toolbarRight} />;
+  return <SmartTable<EmployeeModel> columns={cols} dataSource={employees} rowKey="id" pageSize={10} searchFields={["firstName", "lastName", "email", "role", "department", "accessProfileUid"]} topLeft={toolbarLeft} topRight={toolbarRight} />;
 }
 
 export default EmployeeListComponent;

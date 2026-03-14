@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Tabs } from "antd";
 
 export const SettingsTemplateRoot = styled.div`
   height: 100%;
@@ -289,4 +290,38 @@ export const ActionsRow = styled.div`
   padding-top: 8px;
   display: flex;
   justify-content: flex-end;
+`;
+
+export const AppearanceTabs = styled(Tabs)`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  .ant-tabs-nav {
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .ant-tabs-tab-btn {
+    font-weight: 600;
+  }
+
+  .ant-tabs-content-holder {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .ant-tabs-content,
+  .ant-tabs-tabpane {
+    min-height: 0;
+  }
+`;
+
+export const AppearanceTabContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
 `;

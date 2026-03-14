@@ -216,6 +216,135 @@ export const CalendarHost = styled.div`
     font-weight: 800;
   }
 
+  /* Keep "x more" popup anchored to the clicked day without resizing the calendar canvas. */
+  .toastui-calendar-month-daygrid {
+    position: relative;
+  }
+
+  .toastui-calendar-see-more-container {
+    position: absolute !important;
+    z-index: 30 !important;
+    pointer-events: auto;
+  }
+
+  .toastui-calendar-see-more {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 360px !important;
+    overflow: hidden !important;
+    border: 1px solid var(--toastui-calendar-border) !important;
+    border-radius: 10px !important;
+    background: var(--toastui-calendar-surface) !important;
+    box-shadow: var(--shadow-md) !important;
+  }
+
+  .toastui-calendar-see-more-header {
+    border-bottom: 1px solid var(--toastui-calendar-divider) !important;
+    padding: 10px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .toastui-calendar-see-more-header p {
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: baseline !important;
+    gap: 4px !important;
+  }
+
+  .toastui-calendar-month-more-list {
+    max-height: 280px !important;
+    overflow-y: auto !important;
+    padding: 8px 12px !important;
+  }
+
+  .toastui-calendar-see-more
+    .toastui-calendar-popup-button.toastui-calendar-popup-close {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    border-radius: 4px !important;
+    border: none !important;
+    background: transparent !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    position: static !important;
+    margin-left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    flex: 0 0 auto !important;
+  }
+
+  .toastui-calendar-see-more .tui-more-close-icon {
+    display: inline-block !important;
+    font-size: 20px !important;
+    line-height: 20px !important;
+    font-weight: 600 !important;
+    transform: translateY(-1px);
+  }
+
+  .toastui-calendar-see-more .toastui-calendar-weekday-event {
+    opacity: 1 !important;
+    border-left: none !important;
+    border-radius: 6px !important;
+    padding-inline: 8px !important;
+    padding-block: 4px !important;
+    min-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    line-height: 1.2 !important;
+  }
+
+  .toastui-calendar-see-more .toastui-calendar-weekday-event-block {
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    margin-bottom: 2px !important;
+  }
+
+  .toastui-calendar-see-more .toastui-calendar-weekday-event-block:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  .toastui-calendar-see-more .toastui-calendar-weekday-event-dot {
+    box-shadow: none !important;
+    width: 8px !important;
+    height: 8px !important;
+    min-width: 8px !important;
+    min-height: 8px !important;
+    flex: 0 0 8px !important;
+    border-radius: 999px !important;
+    display: inline-block !important;
+    aspect-ratio: 1 / 1 !important;
+    align-self: center !important;
+    vertical-align: middle !important;
+  }
+
+  .toastui-calendar-see-more
+    .toastui-calendar-weekday-event-dot + .toastui-calendar-weekday-event-title {
+    margin-left: 0 !important;
+  }
+
+  .toastui-calendar-see-more .toastui-calendar-weekday-event-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    line-height: 1.2 !important;
+    min-height: 16px !important;
+  }
+
+  .toastui-calendar-see-more .toastui-calendar-weekday-event-title,
+  .toastui-calendar-see-more .toastui-calendar-weekday-event strong,
+  .toastui-calendar-see-more .toastui-calendar-event-title,
+  .toastui-calendar-see-more .toastui-calendar-more-title-date,
+  .toastui-calendar-see-more .toastui-calendar-more-title-day {
+    font-weight: 700 !important;
+    color: var(--toastui-calendar-text) !important;
+  }
+
   /* Collapse non-time panels (milestone / task / allday) in week view so only the time grid is visible
      Use height:0 and visibility:hidden instead of display:none to preserve layout calculations. */
   .toastui-calendar-week-view {
@@ -619,5 +748,25 @@ export const ToastUIGlobalStyles = createGlobalStyle`
     -webkit-line-clamp: 3 !important;
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
+  }
+
+  :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-weekday-event-title,
+  :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-weekday-event strong,
+  :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-weekday-event span,
+  :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-event-title,
+  :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-more-title-date,
+  :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-more-title-day,
+  :root[data-theme="dark"] .toastui-calendar-see-more .tui-more-close-icon {
+    color: #ffffff !important;
+  }
+
+  :root[data-theme="light"] .toastui-calendar-see-more .toastui-calendar-weekday-event-title,
+  :root[data-theme="light"] .toastui-calendar-see-more .toastui-calendar-weekday-event strong,
+  :root[data-theme="light"] .toastui-calendar-see-more .toastui-calendar-weekday-event span,
+  :root[data-theme="light"] .toastui-calendar-see-more .toastui-calendar-event-title,
+  :root[data-theme="light"] .toastui-calendar-see-more .toastui-calendar-more-title-date,
+  :root[data-theme="light"] .toastui-calendar-see-more .toastui-calendar-more-title-day,
+  :root[data-theme="light"] .toastui-calendar-see-more .tui-more-close-icon {
+    color: #000000 !important;
   }
 `;

@@ -26,6 +26,8 @@ import type {
 } from "@modules/billing/services/invoice-settings-api";
 import {
   AdvancedGrid,
+  AppearanceTabContent,
+  AppearanceTabs,
   ActionsRow,
   Card,
   CardSubtitle,
@@ -871,6 +873,114 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     </TabPaneBody>
   );
 
+  const appearanceThemeContent = (
+    <AppearanceTabContent>
+      <Alert
+        showIcon
+        type="info"
+        style={{ marginBottom: 8 }}
+        message="Theme mode"
+        description="The selected mode is applied immediately and saved to your local preferences."
+      />
+      <ModuleToggleList>
+        <ModuleToggleRow>
+          <div>
+            <ModuleTitle>
+              <SunOutlined style={{ marginRight: 6 }} />
+              Light
+            </ModuleTitle>
+            <ModuleDescription>Bright interface for daytime usage.</ModuleDescription>
+          </div>
+          <Button
+            type={themePreference === "light" ? "primary" : "default"}
+            onClick={() => handleThemeChange("light")}
+            data-cy="settings-appearance-use-light-button"
+          >
+            Use light
+          </Button>
+        </ModuleToggleRow>
+
+        <ModuleToggleRow>
+          <div>
+            <ModuleTitle>
+              <MoonOutlined style={{ marginRight: 6 }} />
+              Dark
+            </ModuleTitle>
+            <ModuleDescription>Reduced glare in low-light environments.</ModuleDescription>
+          </div>
+          <Button
+            type={themePreference === "dark" ? "primary" : "default"}
+            onClick={() => handleThemeChange("dark")}
+            data-cy="settings-appearance-use-dark-button"
+          >
+            Use dark
+          </Button>
+        </ModuleToggleRow>
+      </ModuleToggleList>
+
+      <ActionsRow style={{ gap: 8, flexWrap: "wrap" }}>
+        <Button icon={<BgColorsOutlined />} disabled data-cy="settings-appearance-active-mode">
+          Active mode: {themePreference === "dark" ? "Dark" : "Light"}
+        </Button>
+      </ActionsRow>
+    </AppearanceTabContent>
+  );
+
+  const appearanceCustomColorsContent = (
+    <AppearanceTabContent>
+      <ModuleToggleList>
+        {APPEARANCE_COLOR_OPTIONS.map((option) => {
+          const colorValue = resolveAppearanceColor(option);
+          return (
+            <ModuleToggleRow key={option.key}>
+              <div>
+                <ModuleTitle>{option.label}</ModuleTitle>
+                <ModuleDescription>{option.description}</ModuleDescription>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="color"
+                  value={colorValue}
+                  onChange={(event) =>
+                    handleCustomColorChange(option, event.target.value)
+                  }
+                  style={{
+                    width: 44,
+                    height: 32,
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 8,
+                    background: "transparent",
+                    cursor: "pointer",
+                  }}
+                  data-cy={`settings-appearance-color-${option.key}-picker`}
+                />
+                <Input
+                  value={colorValue.toUpperCase()}
+                  readOnly
+                  style={{ width: 108 }}
+                  data-cy={`settings-appearance-color-${option.key}-value`}
+                />
+              </div>
+            </ModuleToggleRow>
+          );
+        })}
+      </ModuleToggleList>
+
+      <ActionsRow style={{ gap: 8, flexWrap: "wrap" }}>
+        <Button
+          onClick={handleResetCustomColors}
+          disabled={!hasCustomColors}
+          data-cy="settings-appearance-reset-custom-colors-button"
+        >
+          Use default palette
+        </Button>
+        <Button disabled data-cy="settings-appearance-custom-status">
+          Custom palette: {hasCustomColors ? "Enabled" : "Disabled"}
+        </Button>
+      </ActionsRow>
+    </AppearanceTabContent>
+  );
+
   const appearanceTab = (
     <TabPaneBody>
       <Card>
@@ -883,102 +993,30 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         <CardSubtitle>
           Switch between light and dark themes and optionally customize key colors.
         </CardSubtitle>
-        <Alert
-          showIcon
-          type="info"
-          style={{ marginBottom: 8 }}
-          message="Theme mode"
-          description="The selected mode is applied immediately and saved to your local preferences."
+        <AppearanceTabs
+          data-cy="settings-appearance-tabs"
+          defaultActiveKey="theme"
+          items={[
+            {
+              key: "theme",
+              label: tabLabel(
+                <SunOutlined />,
+                "Theme",
+                "settings-appearance-tab-theme"
+              ),
+              children: appearanceThemeContent,
+            },
+            {
+              key: "custom-colors",
+              label: tabLabel(
+                <BgColorsOutlined />,
+                "Custom colors",
+                "settings-appearance-tab-custom-colors"
+              ),
+              children: appearanceCustomColorsContent,
+            },
+          ]}
         />
-        <ModuleToggleList>
-          <ModuleToggleRow>
-            <div>
-              <ModuleTitle>
-                <SunOutlined style={{ marginRight: 6 }} />
-                Light
-              </ModuleTitle>
-              <ModuleDescription>Bright interface for daytime usage.</ModuleDescription>
-            </div>
-            <Button
-              type={themePreference === "light" ? "primary" : "default"}
-              onClick={() => handleThemeChange("light")}
-              data-cy="settings-appearance-use-light-button"
-            >
-              Use light
-            </Button>
-          </ModuleToggleRow>
-
-          <ModuleToggleRow>
-            <div>
-              <ModuleTitle>
-                <MoonOutlined style={{ marginRight: 6 }} />
-                Dark
-              </ModuleTitle>
-              <ModuleDescription>Reduced glare in low-light environments.</ModuleDescription>
-            </div>
-            <Button
-              type={themePreference === "dark" ? "primary" : "default"}
-              onClick={() => handleThemeChange("dark")}
-              data-cy="settings-appearance-use-dark-button"
-            >
-              Use dark
-            </Button>
-          </ModuleToggleRow>
-        </ModuleToggleList>
-
-        <ModuleToggleList>
-          {APPEARANCE_COLOR_OPTIONS.map((option) => {
-            const colorValue = resolveAppearanceColor(option);
-            return (
-              <ModuleToggleRow key={option.key}>
-                <div>
-                  <ModuleTitle>{option.label}</ModuleTitle>
-                  <ModuleDescription>{option.description}</ModuleDescription>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <input
-                    type="color"
-                    value={colorValue}
-                    onChange={(event) =>
-                      handleCustomColorChange(option, event.target.value)
-                    }
-                    style={{
-                      width: 44,
-                      height: 32,
-                      border: "1px solid var(--color-border)",
-                      borderRadius: 8,
-                      background: "transparent",
-                      cursor: "pointer",
-                    }}
-                    data-cy={`settings-appearance-color-${option.key}-picker`}
-                  />
-                  <Input
-                    value={colorValue.toUpperCase()}
-                    readOnly
-                    style={{ width: 108 }}
-                    data-cy={`settings-appearance-color-${option.key}-value`}
-                  />
-                </div>
-              </ModuleToggleRow>
-            );
-          })}
-        </ModuleToggleList>
-
-        <ActionsRow style={{ gap: 8, flexWrap: "wrap" }}>
-          <Button
-            onClick={handleResetCustomColors}
-            disabled={!hasCustomColors}
-            data-cy="settings-appearance-reset-custom-colors-button"
-          >
-            Use default palette
-          </Button>
-          <Button icon={<BgColorsOutlined />} disabled data-cy="settings-appearance-active-mode">
-            Active mode: {themePreference === "dark" ? "Dark" : "Light"}
-          </Button>
-          <Button disabled data-cy="settings-appearance-custom-status">
-            Custom palette: {hasCustomColors ? "Enabled" : "Disabled"}
-          </Button>
-        </ActionsRow>
       </Card>
     </TabPaneBody>
   );

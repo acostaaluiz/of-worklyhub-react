@@ -106,10 +106,59 @@ export class FinanceService {
     }
   }
 
-  async listServicesWithSuggestions(): Promise<Array<CompanyServiceModel & { suggestedCents: number }>> {
+  async listServicesWithSuggestions(): Promise<
+    Array<
+      CompanyServiceModel & {
+        suggestedCents: number;
+        rationale?: string;
+        confidence?: number | null;
+        origin?: "rules" | "ai";
+      }
+    >
+  > {
     try {
       const services = await this.companyService.list();
-      return await Promise.all(services.map(async (s) => ({ ...s, suggestedCents: await this.suggestPriceForService(s) })));
+      const workspaceId = getWorkspaceId(companyService.getWorkspaceValue());
+      const pricing = await this.api.getPricingSuggestions(workspaceId, {
+        period: "month",
+        limit: 60,
+        engine: "hybrid",
+      });
+
+      if (pricing?.suggestions && pricing.suggestions.length > 0) {
+        const suggestionsMap = new Map(
+          pricing.suggestions.map((item) => [item.service_id, item] as const)
+        );
+
+        return await Promise.all(
+          services.map(async (service) => {
+            const suggestion = suggestionsMap.get(service.id);
+            if (suggestion) {
+              return {
+                ...service,
+                suggestedCents: suggestion.suggested_price_cents,
+                rationale: suggestion.rationale,
+                confidence: suggestion.confidence,
+                origin: suggestion.origin ?? "ai",
+              };
+            }
+
+            return {
+              ...service,
+              suggestedCents: await this.suggestPriceForService(service),
+              origin: "rules" as const,
+            };
+          })
+        );
+      }
+
+      return await Promise.all(
+        services.map(async (s) => ({
+          ...s,
+          suggestedCents: await this.suggestPriceForService(s),
+          origin: "rules" as const,
+        }))
+      );
     } catch (err) {
       throw toAppError(err);
     }

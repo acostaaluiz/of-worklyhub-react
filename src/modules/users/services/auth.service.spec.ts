@@ -11,6 +11,7 @@ jest.mock("@core/auth/auth-manager", () => ({
   authManager: {
     setTokens: jest.fn(),
     signOut: jest.fn(),
+    onSignOut: jest.fn(),
   },
 }));
 
@@ -48,6 +49,10 @@ jest.mock("@modules/users/services/overview.service", () => ({
 import { authApi } from "@core/auth";
 import { authManager } from "@core/auth/auth-manager";
 import { firebaseAuthService } from "@core/auth/firebase/firebase-auth.service";
+import {
+  createUnsignedJwt,
+  parseSessionPayload,
+} from "@core/auth/session-security";
 import { applicationService } from "@core/application/application.service";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
 import { companyService } from "@modules/company/services/company.service";
@@ -68,12 +73,21 @@ describe("UsersAuthService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedStorage.get.mockReturnValue(null);
+    mockedAuthManager.onSignOut.mockReturnValue(() => undefined);
   });
 
-  it("loads session from storage when JSON is valid", () => {
-    mockedStorage.get.mockReturnValue(
-      JSON.stringify({ uid: "uid-1", claims: { role: "admin" }, email: "person@worklyhub.com" })
-    );
+  it("loads session from storage when persisted payload is valid", () => {
+    mockedStorage.get.mockImplementation((key: string) => {
+      if (key === "auth.idToken") return "id-token";
+      if (key === "auth.session") {
+        return JSON.stringify({
+          uid: "uid-1",
+          claims: { role: "admin" },
+          email: "person@worklyhub.com",
+        });
+      }
+      return null;
+    });
 
     const service = new UsersAuthService();
 
@@ -81,22 +95,34 @@ describe("UsersAuthService", () => {
       uid: "uid-1",
       claims: { role: "admin" },
       email: "person@worklyhub.com",
+      name: undefined,
+      photoUrl: undefined,
     });
   });
 
-  it("returns null session when stored JSON is invalid", () => {
-    mockedStorage.get.mockReturnValue("{invalid-json");
+  it("returns null session and clears invalid persisted payload", () => {
+    mockedStorage.get.mockImplementation((key: string) => {
+      if (key === "auth.idToken") return "id-token";
+      if (key === "auth.session") return "{invalid-json";
+      return null;
+    });
 
     const service = new UsersAuthService();
 
     expect(service.getSessionValue()).toBeNull();
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.idToken");
   });
 
   it("registers a user through authApi", async () => {
     mockedAuthApi.register.mockResolvedValue({ ok: true });
     const service = new UsersAuthService();
 
-    const result = await service.register("Person", "person@worklyhub.com", "password");
+    const result = await service.register(
+      "Person",
+      "person@worklyhub.com",
+      "password",
+    );
 
     expect(mockedAuthApi.register).toHaveBeenCalledWith({
       name: "Person",
@@ -113,31 +139,40 @@ describe("UsersAuthService", () => {
     await service.requestPasswordReset("person@worklyhub.com");
 
     expect(mockedFirebaseService.sendPasswordReset).toHaveBeenCalledWith(
-      "person@worklyhub.com"
+      "person@worklyhub.com",
     );
   });
 
   it("signs in, validates token and stores session", async () => {
-    mockedFirebaseService.signInWithEmail.mockResolvedValue({ token: "id-token" } as any);
-    mockedAuthApi.verifyToken.mockResolvedValue({ uid: "uid-1", claims: { role: "owner" } });
+    const token = createUnsignedJwt({
+      exp: Math.floor((Date.now() + 60 * 60 * 1000) / 1000),
+    });
+    mockedFirebaseService.signInWithEmail.mockResolvedValue({ token } as any);
+    mockedAuthApi.verifyToken.mockResolvedValue({
+      uid: "uid-1",
+      claims: { role: "owner" },
+    });
     const service = new UsersAuthService();
 
     const session = await service.signIn("person@worklyhub.com", "password");
 
     expect(mockedFirebaseService.signInWithEmail).toHaveBeenCalledWith(
       "person@worklyhub.com",
-      "password"
+      "password",
     );
-    expect(mockedAuthApi.verifyToken).toHaveBeenCalledWith("id-token");
+    expect(mockedAuthApi.verifyToken).toHaveBeenCalledWith(token);
     expect(mockedStorage.set).toHaveBeenCalledWith(
       "auth.session",
-      JSON.stringify({
-        uid: "uid-1",
-        claims: { role: "owner" },
-        email: "person@worklyhub.com",
-      })
+      expect.any(String),
     );
-    expect(mockedAuthManager.setTokens).toHaveBeenCalledWith("id-token", null);
+    const storedRaw = mockedStorage.set.mock.calls[0]?.[1];
+    const parsedStored = parseSessionPayload(storedRaw);
+    expect(parsedStored).toMatchObject({
+      uid: "uid-1",
+      claims: { role: "owner" },
+      email: "person@worklyhub.com",
+    });
+    expect(mockedAuthManager.setTokens).toHaveBeenCalledWith(token, null);
     expect(service.getSessionValue()).toEqual(session);
   });
 
@@ -155,12 +190,30 @@ describe("UsersAuthService", () => {
     expect(mockedUsersOverviewService.clear).toHaveBeenCalledTimes(1);
     expect(service.getSessionValue()).toBeNull();
 
-    mockedFirebaseService.signOut.mockRejectedValueOnce(new Error("firebase-signout-failure"));
+    mockedFirebaseService.signOut.mockRejectedValueOnce(
+      new Error("firebase-signout-failure"),
+    );
     await expect(service.signOut()).rejects.toThrow("firebase-signout-failure");
 
     expect(mockedStorage.remove).toHaveBeenCalledTimes(2);
     expect(mockedAuthManager.signOut).toHaveBeenCalledTimes(2);
   });
+
+  it("clears local session and caches when authManager triggers external signOut", () => {
+    let listener: (() => void) | null = null;
+    mockedAuthManager.onSignOut.mockImplementationOnce((cb: () => void) => {
+      listener = cb;
+      return () => undefined;
+    });
+    const service = new UsersAuthService();
+
+    listener?.();
+
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(mockedUsersService.clear).toHaveBeenCalledTimes(1);
+    expect(mockedCompanyService.clear).toHaveBeenCalledTimes(1);
+    expect(mockedApplicationService.clear).toHaveBeenCalledTimes(1);
+    expect(mockedUsersOverviewService.clear).toHaveBeenCalledTimes(1);
+    expect(service.getSessionValue()).toBeNull();
+  });
 });
-
-

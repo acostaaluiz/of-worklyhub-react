@@ -127,6 +127,8 @@ export const buildCalendarTemplates = () => ({
   milestoneTitle: () => "",
   taskTitle: () => "",
   alldayTitle: () => "",
+  monthMoreClose: () =>
+    '<span class="tui-more-close-icon" aria-hidden="true">&times;</span>',
   monthGridEvent: (model: CalendarTemplateModel) => {
     try {
       // monthGridEvent template
@@ -238,6 +240,7 @@ export const buildCalendarOptions = (opts: {
     startDayOfWeek: 0,
     visibleWeeksCount: 0,
     isAlways6Weeks: false,
+    visibleEventCount: 2,
   },
   usageStatistics: false,
   useDetailPopup: false,

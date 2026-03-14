@@ -29,6 +29,7 @@ import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { NextScheduleItem, ScheduleStatus } from "@modules/schedule/services/schedules-api";
+import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
 
 type ScheduleSidebarProps = {
   availableServices?: CompanyServiceModel[];
@@ -48,6 +49,7 @@ type ScheduleSidebarProps = {
   statusCounts?: Record<string, number> | null;
   selectedStatusIds?: Record<string, boolean> | null;
   onToggleStatus?: (id: string, checked: boolean) => void;
+  settings?: ScheduleWorkspaceSettings;
 };
 
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
@@ -289,6 +291,13 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
                 <div className="meta">
                   {n.startsIn ?? `${n.startsInMinutes} minutes`}
                 </div>
+                {props.settings?.reminderEnabled ? (
+                  <div className="meta">
+                    {`Reminder: ${dayjs(n.start)
+                      .subtract(props.settings.reminderLeadMinutes, "minute")
+                      .format("HH:mm")}`}
+                  </div>
+                ) : null}
               </NextCard>
             ))}
           </List>
@@ -307,6 +316,8 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
         onConfirm={handleCreate}
         availableServices={props.availableServices}
         availableEmployees={props.availableEmployees}
+        statuses={props.statuses ?? undefined}
+        settings={props.settings}
       />
     </div>
   );

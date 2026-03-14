@@ -11,6 +11,7 @@ export const statusColorMap: Record<string, string> = {
   completed: "#6B7280", // neutral gray for completed
   confirmed: "#06B6D4", // cyan
   in_progress: "#10B981", // green
+  no_show: "#EA580C", // orange
   pending: "#F59E0B", // amber
 };
 

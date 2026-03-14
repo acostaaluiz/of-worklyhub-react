@@ -3,6 +3,7 @@ import { Button, Modal, Tabs, message } from "antd";
 import PeopleTemplate from "@modules/people/presentation/templates/people/people.template";
 import EmployeeListComponent from "@modules/people/presentation/components/employee-list/employee-list.component";
 import EmployeeFormComponent from "@modules/people/presentation/components/employee-form/employee-form.component";
+import { EmployeeModalOverrides } from "@modules/people/presentation/components/employee-form/employee-form.component.styles";
 import { PeopleService } from "@modules/people/services/people.service";
 import EmployeeCapacityComponent from "@modules/people/presentation/components/employee-capacity/employee-capacity.component";
 import {
@@ -19,6 +20,12 @@ import { loadingService } from "@shared/ui/services/loading.service";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
+import type { PeopleWorkspaceSettings } from "@modules/people/interfaces/people-settings.model";
+import {
+  DEFAULT_PEOPLE_SETTINGS,
+  getPeopleSettings,
+} from "@modules/people/services/people-settings.service";
+import { X } from "lucide-react";
 
 type State = {
   employees: EmployeeModel[];
@@ -28,6 +35,7 @@ type State = {
   capacityWeekStart: string;
   capacitySnapshot: WorkforceCapacitySnapshot | null;
   capacityLoading: boolean;
+  settings: PeopleWorkspaceSettings;
 } & BasePageState;
 
 export class PeopleHomePage extends BasePage<{}, State> {
@@ -49,17 +57,31 @@ export class PeopleHomePage extends BasePage<{}, State> {
     capacityWeekStart: getWeekStartDate(),
     capacitySnapshot: null,
     capacityLoading: false,
+    settings: DEFAULT_PEOPLE_SETTINGS,
   } as State;
 
   protected override async onInit(): Promise<void> {
     await this.runAsync(async () => {
       try {
+        const workspaceId = this.getWorkspaceId();
+        const settingsBundle = workspaceId
+          ? await getPeopleSettings(workspaceId)
+          : {
+              workspaceId: "__defaults__",
+              settings: DEFAULT_PEOPLE_SETTINGS,
+              source: "defaults" as const,
+            };
         const res = await this.service.listEmployees();
         const capacitySnapshot = await this.loadCapacitySnapshot(
           res,
           this.state.capacityWeekStart
         );
-        this.setSafeState({ employees: res, capacitySnapshot });
+        this.setSafeState({
+          employees: res,
+          capacitySnapshot,
+          settings: settingsBundle.settings,
+          activeTab: settingsBundle.settings.defaultLandingTab,
+        });
       } catch (err) {
         message.error("Error loading employees");
       }
@@ -167,7 +189,10 @@ export class PeopleHomePage extends BasePage<{}, State> {
       }, { setLoading: false });
 
       if (created) {
-        const nextEmployees = [created as EmployeeModel, ...(this.state.employees ?? [])];
+        const nextEmployees = [
+          created as EmployeeModel,
+          ...(this.state.employees ?? []).filter((employee) => employee.id !== (created as EmployeeModel).id),
+        ];
         this.setSafeState({ showForm: false, employees: nextEmployees });
         await this.refreshCapacitySnapshot(undefined, nextEmployees);
         message.success("Employee created");
@@ -257,9 +282,32 @@ export class PeopleHomePage extends BasePage<{}, State> {
           ]}
         />
 
-        <Modal title={this.state.editing ? "Edit employee" : "New employee"} open={!!this.state.showForm} footer={null} onCancel={this.handleCloseForm} data-cy="people-employee-modal">
-          <EmployeeFormComponent initial={this.state.editing ?? undefined} onSubmit={(d) => (this.state.editing ? this.handleUpdate(this.state.editing!.id, d as Partial<EmployeeModel>) : this.handleCreate(d))} submitting={!!this.state.isLoading} />
-        </Modal>
+        <EmployeeModalOverrides>
+          <Modal
+            title={this.state.editing ? "Edit employee" : "New employee"}
+            open={!!this.state.showForm}
+            footer={null}
+            onCancel={this.handleCloseForm}
+            destroyOnClose
+            centered
+            width={860}
+            closeIcon={<X size={18} />}
+            className="wh-employee-modal"
+            data-cy="people-employee-modal"
+          >
+            <EmployeeFormComponent
+              initial={this.state.editing ?? undefined}
+              settings={this.state.settings}
+              onCancel={this.handleCloseForm}
+              onSubmit={(d) =>
+                this.state.editing
+                  ? this.handleUpdate(this.state.editing!.id, d as Partial<EmployeeModel>)
+                  : this.handleCreate(d)
+              }
+              submitting={!!this.state.isLoading}
+            />
+          </Modal>
+        </EmployeeModalOverrides>
       </PeopleTemplate>
     );
   }

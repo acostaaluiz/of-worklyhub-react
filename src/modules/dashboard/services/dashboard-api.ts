@@ -74,6 +74,10 @@ type DashboardAlertsApi = {
     description: string;
     suggestedAction: string;
     evidence?: DataMap;
+    origin?: "rules" | "ai";
+    confidence?: number | null;
+    rationale?: string | null;
+    engineUsed?: "rules" | "ai" | null;
   }>;
 };
 

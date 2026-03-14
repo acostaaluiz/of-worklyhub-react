@@ -2,6 +2,7 @@ import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 
 export type UserOverviewProfile = {
+  uid?: string;
   name?: string;
   fullName?: string;
   email: string;

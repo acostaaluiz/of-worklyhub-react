@@ -555,6 +555,7 @@ export function useScheduleApi() {
         workers: employeeIds?.map((eid) => ({ workspaceId: workspaceId ?? null, userUid: eid })) ?? undefined,
         inventoryInputs: inventoryInputs ?? undefined,
         inventoryOutputs: inventoryOutputs ?? undefined,
+        statusId: event.statusId ?? null,
       };
 
       // attach categoryCode when available (prefer explicit code on event, otherwise fallback to categoryId)

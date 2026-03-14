@@ -29,6 +29,11 @@ import { listInventoryItems } from "@modules/inventory/services/inventory.http.s
 import type { ScheduleEventDraft } from "../../components/schedule-event-modal/schedule-event-modal.form.types";
 import type { InventoryItemLine } from "@modules/schedule/interfaces/schedule-event.model";
 import { normalizeCssColor } from "../../components/schedule-calendar/schedule-calendar.factory";
+import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
+import {
+  DEFAULT_SCHEDULE_SETTINGS,
+  getScheduleSettings,
+} from "@modules/schedule/services/schedule-settings.service";
 
 // Simple memoized fetches to avoid duplicate requests on double mount (e.g., StrictMode)
 const servicesPromise = companyWorkspaceService.listServices();
@@ -72,6 +77,7 @@ type SchedulePageState = BasePageState & {
   services?: CompanyServiceModel[];
   employees?: EmployeeModel[];
   inventoryItems?: InventoryItem[];
+  settings?: ScheduleWorkspaceSettings;
   categories?:
     | ScheduleCategory[]
     | null;
@@ -116,6 +122,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
     const categories = this.state.categories;
     const nextSchedules = this.state.nextSchedules;
     const statuses = this.state.statuses;
+    const settings = this.state.settings ?? DEFAULT_SCHEDULE_SETTINGS;
 
     function Wrapper(): React.ReactElement {
       const api = useScheduleApi();
@@ -495,6 +502,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
                 }))
               : null
           }
+          settings={settings}
           statusCounts={statusCounts}
           selectedStatusIds={selectedStatusIds}
           onToggleStatus={(id: string, checked: boolean) =>
@@ -514,6 +522,14 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       try {
         const wsVal = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
         const workspaceId = (wsVal?.workspaceId ?? wsVal?.id) as string | undefined;
+        const settingsBundle = workspaceId
+          ? await getScheduleSettings(workspaceId)
+          : {
+              workspaceId: "__defaults__",
+              settings: DEFAULT_SCHEDULE_SETTINGS,
+              source: "defaults" as const,
+              updatedAt: undefined,
+            };
         const services = await servicesPromise;
         const employees = await employeesPromise;
         let inventoryItems: InventoryItem[] = [];
@@ -537,9 +553,22 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // also fetch statuses for schedule updates
           try {
             const sts = await statusesPromise;
-            this.setSafeState({ services, employees, inventoryItems, categories: appCats ?? null, statuses: sts ?? null });
+            this.setSafeState({
+              services,
+              employees,
+              inventoryItems,
+              settings: settingsBundle.settings,
+              categories: appCats ?? null,
+              statuses: sts ?? null,
+            });
           } catch (e) {
-            this.setSafeState({ services, employees, inventoryItems, categories: appCats ?? null });
+            this.setSafeState({
+              services,
+              employees,
+              inventoryItems,
+              settings: settingsBundle.settings,
+              categories: appCats ?? null,
+            });
           }
           try {
             const nextPromise =
@@ -556,9 +585,20 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           // attempt to fetch statuses even when appCats import fails
           try {
             const sts = await statusesPromise;
-            this.setSafeState({ services, employees, inventoryItems, statuses: sts ?? null });
+            this.setSafeState({
+              services,
+              employees,
+              inventoryItems,
+              settings: settingsBundle.settings,
+              statuses: sts ?? null,
+            });
           } catch (err) {
-            this.setSafeState({ services, employees, inventoryItems });
+            this.setSafeState({
+              services,
+              employees,
+              inventoryItems,
+              settings: settingsBundle.settings,
+            });
           }
           try {
             const nextPromise =

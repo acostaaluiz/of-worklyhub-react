@@ -1,6 +1,7 @@
 import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import type { HttpQuery } from "@core/http/interfaces/http-client.interface";
+import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
 
 export type CreateSchedulePayload = {
   start: string; // ISO
@@ -76,6 +77,13 @@ export type NextScheduleItem = ScheduleServiceItem & {
 };
 
 export type NextSchedulesResponse = { data: NextScheduleItem[] };
+export type ScheduleSettingsBundleApi = {
+  workspaceId: string;
+  settings: ScheduleWorkspaceSettings;
+  source: "database" | "defaults";
+  updatedAt?: string;
+};
+export type ScheduleSettingsResponseApi = { data: ScheduleSettingsBundleApi };
 export type ListSchedulesQuery = {
   from?: string;
   to?: string;
@@ -162,6 +170,44 @@ export class SchedulesApi extends BaseHttpService {
   async getStatuses(): Promise<ScheduleStatus[]> {
     const res = await this.get<ScheduleStatusesResponse>('/schedule/internal/statuses');
     return res?.data ?? [];
+  }
+
+  async getWorkspaceSettings(
+    workspaceId: string
+  ): Promise<ScheduleSettingsBundleApi> {
+    const res = await this.get<ScheduleSettingsResponseApi>(
+      "/schedule/internal/settings",
+      { workspaceId },
+      { "x-workspace-id": workspaceId }
+    );
+    return res.data;
+  }
+
+  async upsertWorkspaceSettings(
+    workspaceId: string,
+    settings: Partial<ScheduleWorkspaceSettings>,
+    updatedBy?: string | null
+  ): Promise<ScheduleSettingsBundleApi> {
+    const res = await this.put<
+      ScheduleSettingsResponseApi,
+      {
+        workspaceId: string;
+        settings: Partial<ScheduleWorkspaceSettings>;
+        updatedBy?: string | null;
+      }
+    >(
+      "/schedule/internal/settings",
+      {
+        workspaceId,
+        settings,
+        updatedBy: updatedBy ?? null,
+      },
+      {
+        "Content-Type": "application/json",
+        "x-workspace-id": workspaceId,
+      }
+    );
+    return res.data;
   }
 }
 

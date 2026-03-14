@@ -18,6 +18,27 @@ describe("AuthManager", () => {
     expect(manager.getRefreshToken()).toBeNull();
   });
 
+  it("notifies registered listeners on signOut", () => {
+    const manager = new AuthManager();
+    const listener = jest.fn();
+    manager.onSignOut(listener);
+
+    manager.signOut();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows removing signOut listeners", () => {
+    const manager = new AuthManager();
+    const listener = jest.fn();
+    const dispose = manager.onSignOut(listener);
+    dispose();
+
+    manager.signOut();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   it("refreshes using the configured handler", async () => {
     const refreshHandler = jest.fn().mockResolvedValue({
       accessToken: "new-access-token",
