@@ -1,5 +1,8 @@
 import React from "react";
 import { Modal, message } from "antd";
+import { CloseOutlined } from "@ant-design/icons";
+import styled from "styled-components";
+import { i18n as appI18n } from "@core/i18n";
 
 import { BasePage } from "@shared/base/base.page";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
@@ -46,6 +49,31 @@ type Filters = {
 
 const PAGE_SIZE = 24;
 
+const WorkOrderEditorModal = styled(Modal)`
+  .ant-modal-content {
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+    box-shadow: var(--shadow-elevated);
+    background:
+      radial-gradient(
+        circle at 12% 0%,
+        color-mix(in srgb, var(--color-primary) 12%, transparent),
+        transparent 44%
+      ),
+      radial-gradient(
+        circle at 88% 100%,
+        color-mix(in srgb, var(--color-secondary) 10%, transparent),
+        transparent 48%
+      ),
+      linear-gradient(
+        150deg,
+        color-mix(in srgb, var(--color-surface-2) 82%, transparent),
+        var(--color-surface-elevated)
+      );
+    overflow: hidden;
+  }
+`;
+
 function buildFilters(
   filters: Filters,
   pagination: { limit: number; offset: number }
@@ -63,7 +91,7 @@ function buildFilters(
 }
 
 function WorkOrdersPageContent(): React.ReactElement {
-  const peopleService = React.useMemo(() => new PeopleService(), []);
+        const peopleService = React.useMemo(() => new PeopleService(), []);
   const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
     const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
     return (ws?.workspaceId ?? ws?.id) as string | undefined;
@@ -76,6 +104,7 @@ function WorkOrdersPageContent(): React.ReactElement {
   const [inventoryItems, setInventoryItems] = React.useState<InventoryItem[]>([]);
   const [filters, setFilters] = React.useState<Filters>({});
   const [selected, setSelected] = React.useState<WorkOrder | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = React.useState(false);
   const [listLoading, setListLoading] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [pagination, setPagination] = React.useState<WorkOrderListPagination>({
@@ -150,7 +179,7 @@ function WorkOrdersPageContent(): React.ReactElement {
       const sorted = data.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       setStatuses(sorted);
     } catch (err) {
-      message.error("Failed to load work order statuses.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k001"));
     }
   }, [workspaceId]);
 
@@ -164,7 +193,7 @@ function WorkOrdersPageContent(): React.ReactElement {
       const data = await listWorkOrderOverview(workspaceId, { dueSoonHours: 24, windowDays: 30 });
       setOverview(data);
     } catch (err) {
-      message.error("Failed to load work order overview.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k002"));
     }
   }, [workspaceId]);
 
@@ -235,7 +264,7 @@ function WorkOrdersPageContent(): React.ReactElement {
         setOrders(page.data ?? []);
         setPagination(page.pagination);
       } catch (err) {
-        message.error("Failed to load work orders.");
+        message.error(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k003"));
       } finally {
         if (mode === "append") setLoadingMore(false);
         else setListLoading(false);
@@ -298,7 +327,7 @@ function WorkOrdersPageContent(): React.ReactElement {
           updatedBy: (payload as UpdateWorkOrderInput).updatedBy ?? currentUserUid ?? undefined,
         });
         setSelected(updated ?? null);
-        message.success("Work order updated");
+        message.success(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k004"));
       } else {
         const created = await createWorkOrder(workspaceId, {
           ...(payload as CreateWorkOrderInput),
@@ -307,7 +336,7 @@ function WorkOrdersPageContent(): React.ReactElement {
           requesterUserUid: (payload as CreateWorkOrderInput).requesterUserUid ?? undefined,
         });
         setSelected(created ?? null);
-        message.success("Work order created");
+        message.success(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k005"));
       }
 
       await Promise.all([
@@ -316,31 +345,52 @@ function WorkOrdersPageContent(): React.ReactElement {
         refreshInventoryItems(),
       ]);
     } catch (err) {
-      message.error("Failed to save work order.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k006"));
     } finally {
       setSaving(false);
     }
   };
 
+  const handleOpenCreateModal = React.useCallback(() => {
+    setSelected(null);
+    setIsEditorOpen(true);
+  }, []);
+
+  const handleOpenEditModal = React.useCallback((order: WorkOrder) => {
+    setSelected(order);
+    setIsEditorOpen(true);
+  }, []);
+
+  const handleCloseEditorModal = React.useCallback(() => {
+    setIsEditorOpen(false);
+  }, []);
+
+  const handleClearEditorForm = React.useCallback(() => {
+    setSelected(null);
+  }, []);
+
   const handleDelete = (order: WorkOrder) => {
     if (!workspaceId) return;
 
     Modal.confirm({
-      title: `Delete work order "${order.title}"?`,
-      okText: "Delete",
+      title: appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k007", { title: order.title }),
+      okText: appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k008"),
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
           await deleteWorkOrder(workspaceId, order.id);
-          if (selected?.id === order.id) setSelected(null);
+          if (selected?.id === order.id) {
+            setSelected(null);
+            setIsEditorOpen(false);
+          }
           await Promise.all([
             fetchOrders({ mode: "replace", offset: 0 }),
             fetchOverview(),
             refreshInventoryItems(),
           ]);
-          message.success("Work order deleted");
+          message.success(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k009"));
         } catch (err) {
-          message.error("Failed to delete work order.");
+          message.error(appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k010"));
         }
       },
     });
@@ -372,27 +422,69 @@ function WorkOrdersPageContent(): React.ReactElement {
             }}
             onResetFilters={handleResetFilters}
             onLoadMore={fetchMoreOrders}
-            onSelect={(order) => setSelected(order)}
-            onCreate={() => setSelected(null)}
+            onSelect={handleOpenEditModal}
+            onCreate={handleOpenCreateModal}
             onDelete={handleDelete}
             onRefresh={() => fetchOrders({ mode: "replace", offset: 0 })}
           />
         }
-        editor={
-          <WorkOrderForm
-            workspaceId={workspaceId}
-            currentUserUid={currentUserUid}
-            currentUserName={currentUserName}
-            employees={employees}
-            services={services}
-            inventoryItems={inventoryItems}
-            statuses={statuses}
-            initial={selected ?? undefined}
-            loading={saving}
-            onSubmit={handleSubmit}
-            onDelete={handleDelete}
-            onCancel={() => setSelected(null)}
-          />
+        editorModal={
+          <WorkOrderEditorModal
+            open={isEditorOpen}
+            onCancel={handleCloseEditorModal}
+            footer={null}
+            centered
+            destroyOnClose
+            width={1100}
+            title={(
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                }}
+              >
+                {appI18n.t("legacyInline.work_order.presentation_pages_work_orders_work_orders_page.k011")}
+              </span>
+            )}
+            closeIcon={<CloseOutlined style={{ fontSize: 16, color: "var(--color-text-muted)" }} />}
+            styles={{
+              header: {
+                marginBottom: 0,
+                borderBottom: "1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-divider))",
+                background: "transparent",
+                paddingTop: "10px",
+                paddingBottom: "8px",
+              },
+              body: {
+                paddingTop: "var(--space-3)",
+                paddingLeft: "var(--space-4)",
+                paddingRight: "var(--space-4)",
+                paddingBottom: "var(--space-4)",
+                height: "min(68vh, 720px)",
+              },
+            }}
+            data-cy="work-order-editor-modal"
+          >
+            <div style={{ height: "100%" }}>
+              <WorkOrderForm
+                workspaceId={workspaceId}
+                currentUserUid={currentUserUid}
+                currentUserName={currentUserName}
+                employees={employees}
+                services={services}
+                inventoryItems={inventoryItems}
+                statuses={statuses}
+                initial={selected ?? undefined}
+                loading={saving}
+                onSubmit={handleSubmit}
+                onDelete={handleDelete}
+                onCancel={handleClearEditorForm}
+              />
+            </div>
+          </WorkOrderEditorModal>
         }
       />
     </div>
@@ -401,7 +493,7 @@ function WorkOrdersPageContent(): React.ReactElement {
 
 export class WorkOrdersPage extends BasePage {
   protected override options = {
-    title: "Work orders | WorklyHub",
+    title: `${appI18n.t("workOrder.pageTitles.workOrders")} | WorklyHub`,
     requiresAuth: true,
   };
 

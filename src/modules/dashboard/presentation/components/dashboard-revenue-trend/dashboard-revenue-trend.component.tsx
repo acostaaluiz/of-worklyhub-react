@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { LineChart } from "lucide-react";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 
 import type { DashboardSeriesPointModel } from "../../../interfaces/dashboard-series.model";
 import {
@@ -44,11 +45,11 @@ function CustomTooltip({
     <TooltipCard>
       <div className="label">{label}</div>
       <div className="row">
-        <span>Revenue</span>
+        <span>{appI18n.t("dashboard.revenueTrend.tooltip.revenue")}</span>
         <span className="value">{formatMoney(item.revenue)}</span>
       </div>
       <div className="row">
-        <span>Profit</span>
+        <span>{appI18n.t("dashboard.revenueTrend.tooltip.profit")}</span>
         <span className="value">{formatMoney(item.profit)}</span>
       </div>
     </TooltipCard>
@@ -66,8 +67,8 @@ export function DashboardRevenueTrend(props: Props) {
     <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Business pulse</div>
-          <div className="subtitle">Revenue and profit trend for management context</div>
+          <div className="title">{appI18n.t("dashboard.revenueTrend.title")}</div>
+          <div className="subtitle">{appI18n.t("dashboard.revenueTrend.subtitle")}</div>
         </div>
         <div className="header-icon" aria-hidden="true">
           <LineChart size={18} />
@@ -80,7 +81,7 @@ export function DashboardRevenueTrend(props: Props) {
         ) : !hasSeries || !hasMeaningfulData ? (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description="No financial movement found in this period."
+            description={appI18n.t("dashboard.revenueTrend.empty")}
           />
         ) : (
           <ChartWrap>

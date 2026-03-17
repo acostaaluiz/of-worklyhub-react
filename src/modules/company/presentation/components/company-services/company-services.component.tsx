@@ -1,12 +1,15 @@
 import React from "react";
-import { List, Card, Typography, Button, Drawer } from "antd";
+import { Button, Card, Drawer, List, Typography } from "antd";
+
+import { i18n as appI18n } from "@core/i18n";
 import { formatMoneyFromCents } from "@core/utils/mask";
+import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
+
 import { CartBar } from "./cart-bar.component";
-import { ServiceSelector } from "./service-selector.component";
 import { ServicesGrid } from "./company-services.component.styles";
+import { ServiceSelector } from "./service-selector.component";
 
 type Props = BaseProps & {
   services?: ServiceModel[];
@@ -21,29 +24,31 @@ type State = {
 export class CompanyServices extends BaseComponent<Props, State> {
   public override state: State = { isLoading: false, open: false, cart: {} };
 
-  private handleAdd = (s: ServiceModel) => {
-    this.setState(({ cart }) => ({ cart: { ...cart, [s.id]: (cart[s.id] ?? 0) + 1 } }));
+  private handleAdd = (service: ServiceModel) => {
+    this.setState(({ cart }) => ({
+      cart: { ...cart, [service.id]: (cart[service.id] ?? 0) + 1 },
+    }));
   };
 
   private handleOpen = () => this.setState({ open: true });
 
   private handleSelectorAdd = (items: { service: ServiceModel; qty: number }[]) => {
     const next: Record<string, number> = { ...this.state.cart };
-    items.forEach((it) => {
-      next[it.service.id] = (next[it.service.id] ?? 0) + it.qty;
+    items.forEach((item) => {
+      next[item.service.id] = (next[item.service.id] ?? 0) + item.qty;
     });
     this.setState({ cart: next, open: false });
   };
 
   private get cartCount() {
-    return Object.values(this.state.cart).reduce((a, b) => a + b, 0);
+    return Object.values(this.state.cart).reduce((acc, qty) => acc + qty, 0);
   }
 
   private get cartTotal() {
     const services = this.props.services ?? [];
     return Object.entries(this.state.cart).reduce((acc, [id, qty]) => {
-      const svc = services.find((s) => s.id === id);
-      return acc + ((svc?.priceCents ?? 0) * qty);
+      const service = services.find((item) => item.id === id);
+      return acc + (service?.priceCents ?? 0) * qty;
     }, 0);
   }
 
@@ -53,27 +58,36 @@ export class CompanyServices extends BaseComponent<Props, State> {
 
     return (
       <div>
-        <Typography.Title level={4}>Serviços</Typography.Title>
+        <Typography.Title level={4}>{appI18n.t("company.profile.services.title")}</Typography.Title>
 
         <ServicesGrid>
           <List
             grid={{ gutter: 12, column: 2 }}
             dataSource={services}
-            renderItem={(s) => (
+            renderItem={(service) => (
               <List.Item>
                 <Card className="surface" bordered={false}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <Typography.Title level={5} style={{ margin: 0 }}>{s.title}</Typography.Title>
-                      <Typography.Text type="secondary">{s.description}</Typography.Text>
+                      <Typography.Title level={5} style={{ margin: 0 }}>
+                        {service.title}
+                      </Typography.Title>
+                      <Typography.Text type="secondary">{service.description}</Typography.Text>
                     </div>
 
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontWeight: 700 }}>
-                        {typeof s.priceCents === "number" ? formatMoneyFromCents(s.priceCents) : s.priceFormatted}
+                        {typeof service.priceCents === "number"
+                          ? formatMoneyFromCents(service.priceCents)
+                          : service.priceFormatted}
                       </div>
-                      <Button type="default" size="small" style={{ marginTop: 8 }} onClick={() => this.handleAdd(s)}>
-                        Adicionar
+                      <Button
+                        type="default"
+                        size="small"
+                        style={{ marginTop: 8 }}
+                        onClick={() => this.handleAdd(service)}
+                      >
+                        {appI18n.t("company.profile.services.add")}
                       </Button>
                     </div>
                   </div>
@@ -83,8 +97,17 @@ export class CompanyServices extends BaseComponent<Props, State> {
           />
         </ServicesGrid>
 
-        <Drawer width={720} open={this.state.open} onClose={() => this.setState({ open: false })} title="Ajustar seleção">
-          <ServiceSelector services={services} onCancel={() => this.setState({ open: false })} onAdd={this.handleSelectorAdd} />
+        <Drawer
+          width={720}
+          open={this.state.open}
+          onClose={() => this.setState({ open: false })}
+          title={appI18n.t("company.profile.services.adjustSelection")}
+        >
+          <ServiceSelector
+            services={services}
+            onCancel={() => this.setState({ open: false })}
+            onAdd={this.handleSelectorAdd}
+          />
         </Drawer>
 
         <CartBar count={this.cartCount} totalCents={this.cartTotal} onOpen={this.handleOpen} />

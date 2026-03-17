@@ -1,7 +1,9 @@
 import React from "react";
 import { message } from "antd";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import { companyService } from "@modules/company/services/company.service";
 import GrowthAutopilotTemplate from "@modules/growth/presentation/templates/autopilot/autopilot.template";
@@ -54,6 +56,8 @@ function normalizeTab(value: string | null): GrowthTabKey {
 }
 
 function GrowthAutopilotPageContent(): React.ReactElement {
+  const { t } = useTranslation();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() =>
     resolveWorkspaceIdFromValue(companyService.getWorkspaceValue())
@@ -114,11 +118,11 @@ function GrowthAutopilotPageContent(): React.ReactElement {
         return response.playbooks.find((item) => item.enabled)?.id;
       });
     } catch (_err) {
-      message.error("Failed to load growth autopilot.");
+      message.error(t("growth.autopilot.messages.failedLoad"));
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, search, status]);
+  }, [workspaceId, search, status, t]);
 
   React.useEffect(() => {
     void loadDashboard();
@@ -147,7 +151,7 @@ function GrowthAutopilotPageContent(): React.ReactElement {
 
   const handleSavePlaybooks = async () => {
     if (!workspaceId) {
-      message.error("Workspace is required.");
+      message.error(t("growth.autopilot.messages.workspaceRequired"));
       return;
     }
 
@@ -160,9 +164,9 @@ function GrowthAutopilotPageContent(): React.ReactElement {
         if (current && saved.some((item) => item.id === current && item.enabled)) return current;
         return saved.find((item) => item.enabled)?.id;
       });
-      message.success("Playbooks saved.");
+      message.success(t("growth.autopilot.messages.playbooksSaved"));
     } catch (_err) {
-      message.error("Failed to save playbooks.");
+      message.error(t("growth.autopilot.messages.failedSavePlaybooks"));
     } finally {
       setSavingPlaybooks(false);
     }
@@ -170,12 +174,12 @@ function GrowthAutopilotPageContent(): React.ReactElement {
 
   const handleDispatch = async () => {
     if (!workspaceId) {
-      message.error("Workspace is required.");
+      message.error(t("growth.autopilot.messages.workspaceRequired"));
       return;
     }
 
     if (selectedOpportunityIds.length <= 0) {
-      message.warning("Select at least one opportunity.");
+      message.warning(t("growth.autopilot.messages.selectOpportunity"));
       return;
     }
 
@@ -188,13 +192,13 @@ function GrowthAutopilotPageContent(): React.ReactElement {
       );
       message.success(
         response.source === "backend"
-          ? `${response.dispatchedCount} opportunity(ies) dispatched.`
-          : `${response.dispatchedCount} opportunity(ies) queued in fallback mode.`
+          ? t("growth.autopilot.messages.dispatchSuccess", { count: response.dispatchedCount })
+          : t("growth.autopilot.messages.dispatchFallback", { count: response.dispatchedCount })
       );
       setSelectedOpportunityIds([]);
       await loadDashboard();
     } catch (_err) {
-      message.error("Failed to dispatch opportunities.");
+      message.error(t("growth.autopilot.messages.failedDispatch"));
     } finally {
       setDispatching(false);
     }
@@ -231,7 +235,7 @@ function GrowthAutopilotPageContent(): React.ReactElement {
 
 export class GrowthAutopilotPage extends BasePage {
   protected override options = {
-    title: "Growth autopilot | WorklyHub",
+    title: `${appI18n.t("growth.pageTitles.autopilot")} | WorklyHub`,
     requiresAuth: true,
   };
 

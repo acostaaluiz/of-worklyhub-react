@@ -1,5 +1,6 @@
 import { Skeleton } from "antd";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import {
   CalendarClock,
   CheckCircle2,
@@ -23,6 +24,19 @@ type Props = {
   kpis: DashboardKpiModel[];
   loading?: boolean;
 };
+
+function translateKpiLabel(kpi: DashboardKpiModel, t: (key: string) => string): string {
+  const byId: Record<string, string> = {
+    appointments: t("dashboard.kpis.labels.appointments"),
+    "work-orders-open": t("dashboard.kpis.labels.workOrdersOpen"),
+    "active-workers": t("dashboard.kpis.labels.activeWorkers"),
+    "completion-rate": t("dashboard.kpis.labels.completionRate"),
+    revenue: t("dashboard.kpis.labels.revenue"),
+    profit: t("dashboard.kpis.labels.profit"),
+    orders: t("dashboard.kpis.labels.orders"),
+  };
+  return byId[kpi.id] ?? kpi.label;
+}
 
 function renderValue(kpi: DashboardKpiModel): string {
   if (kpi.format === "number") return formatNumberCompact(kpi.value);
@@ -51,6 +65,7 @@ function renderIcon(kpiId: string): ReactNode {
 }
 
 export function DashboardKpiRow(props: Props) {
+  const { t } = useTranslation();
   const { kpis, loading } = props;
 
   return (
@@ -58,16 +73,16 @@ export function DashboardKpiRow(props: Props) {
       {(kpis.length
         ? kpis
         : [
-            { id: "appointments", label: "Appointments today", value: 0, format: "number" as const },
-            { id: "work-orders-open", label: "Open work orders", value: 0, format: "number" as const },
-            { id: "active-workers", label: "Active workers", value: 0, format: "number" as const },
-            { id: "completion-rate", label: "Completion rate", value: 0, format: "percent" as const },
+            { id: "appointments", label: t("dashboard.kpis.labels.appointments"), value: 0, format: "number" as const },
+            { id: "work-orders-open", label: t("dashboard.kpis.labels.workOrdersOpen"), value: 0, format: "number" as const },
+            { id: "active-workers", label: t("dashboard.kpis.labels.activeWorkers"), value: 0, format: "number" as const },
+            { id: "completion-rate", label: t("dashboard.kpis.labels.completionRate"), value: 0, format: "percent" as const },
           ]
       ).map((kpi) => (
         <Span3 key={kpi.id}>
           <KpiCard className="surface">
             <KpiTop>
-              <div className="label">{kpi.label}</div>
+              <div className="label">{translateKpiLabel(kpi, t)}</div>
               <div className="icon">{renderIcon(kpi.id)}</div>
             </KpiTop>
 
@@ -85,7 +100,7 @@ export function DashboardKpiRow(props: Props) {
               ) : (
                 <span className="delta">-</span>
               )}
-              <span>vs previous period</span>
+              <span>{t("dashboard.kpis.meta.vsPreviousPeriod")}</span>
             </KpiMeta>
           </KpiCard>
         </Span3>

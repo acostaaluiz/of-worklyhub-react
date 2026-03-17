@@ -1,5 +1,5 @@
 locals {
-  artifact_registry_location = var.artifact_registry_location != "" ? var.artifact_registry_location : var.region
+  artifact_registry_location    = var.artifact_registry_location != "" ? var.artifact_registry_location : var.region
   runtime_service_account_email = var.runtime_service_account_email != null ? var.runtime_service_account_email : google_service_account.runtime[0].email
   base_labels = {
     app         = var.application_name

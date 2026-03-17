@@ -3,6 +3,7 @@ import { BehaviorSubject } from "rxjs";
 import { parseSessionIdentity } from "@core/auth/session-security";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
 import { httpClient } from "@core/http/client.instance";
+import { getCurrentAppLanguage } from "@core/i18n";
 import {
   UsersOverviewApi,
   type UserOverviewModule,
@@ -17,6 +18,7 @@ export type UserOverview = {
 
 type CachedOverview = {
   user?: string | null;
+  language?: string | null;
   overview: UserOverview;
 };
 
@@ -67,23 +69,53 @@ function getCurrentSessionEmail(): string | null {
 }
 
 export class UsersOverviewService {
-  private subject = new BehaviorSubject<UserOverview>(this.loadFromStorage());
+  private subject: BehaviorSubject<UserOverview>;
   private api = new UsersOverviewApi(httpClient);
   private pending: Promise<UserOverview> | null = null;
+  private cachedLanguage: string | null = null;
 
-  private loadFromStorage(): UserOverview {
+  constructor() {
+    const cached = this.loadFromStorage();
+    this.cachedLanguage = cached.language;
+    this.subject = new BehaviorSubject<UserOverview>(cached.overview);
+  }
+
+  private loadFromStorage(): { overview: UserOverview; language: string | null } {
     try {
       const raw = localStorageProvider.get(OVERVIEW_KEY);
-      if (!raw) return null;
+      if (!raw) return { overview: null, language: null };
       const parsed = JSON.parse(raw) as CachedOverview;
       const sessionEmail = getCurrentSessionEmail();
+      const currentLanguage = getCurrentAppLanguage();
       if (parsed?.user && sessionEmail && parsed.user !== sessionEmail)
-        return null;
+        return { overview: null, language: null };
+
+      if (!parsed?.language) {
+        return { overview: null, language: null };
+      }
+
+      if (parsed?.language && parsed.language !== currentLanguage) {
+        return { overview: null, language: null };
+      }
+
       const cached = parsed?.overview ?? null;
-      if (cached?.modules && cached.modules.length === 0) return null;
-      return cached;
+      if (cached?.modules && cached.modules.length === 0) {
+        return { overview: null, language: null };
+      }
+
+      return {
+        overview: cached,
+        language: parsed.language,
+      };
     } catch {
-      return null;
+      return { overview: null, language: null };
+    }
+  }
+
+  private ensureLanguageConsistency() {
+    const currentLanguage = getCurrentAppLanguage();
+    if (this.cachedLanguage && this.cachedLanguage !== currentLanguage) {
+      this.clear();
     }
   }
 
@@ -92,6 +124,7 @@ export class UsersOverviewService {
   }
 
   getOverviewValue(): UserOverview {
+    this.ensureLanguageConsistency();
     return this.subject.getValue();
   }
 
@@ -104,9 +137,12 @@ export class UsersOverviewService {
   }
 
   async fetchOverview(force = false): Promise<UserOverview> {
+    this.ensureLanguageConsistency();
+    const currentLanguage = getCurrentAppLanguage();
+
     if (!force) {
       const existing = this.getOverviewValue();
-      if (existing != null) return existing;
+      if (existing != null && this.cachedLanguage === currentLanguage) return existing;
     }
 
     if (this.pending) return this.pending;
@@ -122,10 +158,11 @@ export class UsersOverviewService {
         modules,
       };
 
+      this.cachedLanguage = currentLanguage;
       this.subject.next(overview);
       try {
         const user = getCurrentSessionEmail();
-        const cache: CachedOverview = { user, overview };
+        const cache: CachedOverview = { user, language: currentLanguage, overview };
         localStorageProvider.set(OVERVIEW_KEY, JSON.stringify(cache));
       } catch {
         // ignore cache errors
@@ -147,6 +184,7 @@ export class UsersOverviewService {
     } catch {
       // ignore
     }
+    this.cachedLanguage = null;
     this.subject.next(null);
   }
 }

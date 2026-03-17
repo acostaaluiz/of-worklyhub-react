@@ -1,8 +1,11 @@
 import React from "react";
 import { Button, Segmented, Space, Typography } from "antd";
 import { Check, Sparkles } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 import { formatMoney } from "@core/utils/currency";
 import { BaseComponent } from "@shared/base/base.component";
+import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
+import type { BillingPlan } from "@modules/billing/services/billing-api";
 
 import {
   HeaderRow,
@@ -32,31 +35,30 @@ type Plan = {
   features: string[];
 };
 
-import type { BillingPlan } from "@modules/billing/services/billing-api";
-import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
-
-const PLAN_FEATURES_BY_SLUG: Record<string, string[]> = {
+const PLAN_FEATURE_KEYS_BY_SLUG = {
   starter: [
-    "Core modules: Clients, Schedule, Services",
-    "Company profile and dashboard",
-    "Billing and plan management",
-    "Email support",
+    "billing.planSelector.features.starter.coreModules",
+    "billing.planSelector.features.starter.profileDashboard",
+    "billing.planSelector.features.starter.billingPlans",
+    "billing.planSelector.features.starter.emailSupport",
   ],
   standard: [
-    "Everything in Starter",
-    "People, Inventory and Work Order modules",
-    "Finance module and team operations",
-    "Priority support",
+    "billing.planSelector.features.standard.everythingStarter",
+    "billing.planSelector.features.standard.peopleInventoryWorkOrder",
+    "billing.planSelector.features.standard.financeOperations",
+    "billing.planSelector.features.standard.prioritySupport",
   ],
   premium: [
-    "Full module access",
-    "Includes SLA and Growth modules",
-    "Dedicated success",
-    "Onboarding",
+    "billing.planSelector.features.premium.fullAccess",
+    "billing.planSelector.features.premium.slaGrowth",
+    "billing.planSelector.features.premium.dedicatedSuccess",
+    "billing.planSelector.features.premium.onboarding",
   ],
 };
 
-const PLAN_SLUG_BY_DB_ID: Record<number, keyof typeof PLAN_FEATURES_BY_SLUG> = {
+type KnownPlanSlug = keyof typeof PLAN_FEATURE_KEYS_BY_SLUG;
+
+const PLAN_SLUG_BY_DB_ID: Record<number, KnownPlanSlug> = {
   1: "starter",
   2: "standard",
   3: "premium",
@@ -68,66 +70,68 @@ export class PlanSelector extends BaseComponent<
 > {
   public override state = { isLoading: false, error: undefined, interval: "monthly" as BillingInterval, selectedPlanId: undefined };
 
-  private plans: Plan[] = [
-    {
-      id: "starter",
-      name: "Starter",
-      description: "For solo professionals getting started.",
-      monthlyPriceCents: 2900,
-      yearlyPriceCents: 29900,
-      currency: "USD",
-      cta: "Choose Starter",
-      features: [
-        "Core modules: Clients, Schedule, Services",
-        "Company profile and dashboard",
-        "Billing and plan management",
-        "Email support",
-      ],
-    },
-    {
-      id: "standard",
-      name: "Standard",
-      description: "Best value for small teams.",
-      monthlyPriceCents: 5900,
-      yearlyPriceCents: 59900,
-      currency: "USD",
-      highlight: true,
-      cta: "Choose Standard",
-      features: [
-        "Everything in Starter",
-        "People, Inventory and Work Order modules",
-        "Finance module and team operations",
-        "Priority support",
-      ],
-    },
-    {
-      id: "premium",
-      name: "Premium",
-      description: "For growing businesses and multiple locations.",
-      monthlyPriceCents: 9900,
-      yearlyPriceCents: 99900,
-      currency: "USD",
-      cta: "Choose Premium",
-      features: [
-        "Full module access",
-        "Includes SLA and Growth modules",
-        "Dedicated success",
-        "Onboarding",
-      ],
-    },
-  ];
+  private getFallbackFeaturesBySlug(): Record<KnownPlanSlug, string[]> {
+    return {
+      starter: PLAN_FEATURE_KEYS_BY_SLUG.starter.map((key) => appI18n.t(key)),
+      standard: PLAN_FEATURE_KEYS_BY_SLUG.standard.map((key) => appI18n.t(key)),
+      premium: PLAN_FEATURE_KEYS_BY_SLUG.premium.map((key) => appI18n.t(key)),
+    };
+  }
+
+  private getDefaultPlans(): Plan[] {
+    return [
+      {
+        id: "starter",
+        name: appI18n.t("billing.planSelector.fallbackPlans.starter.name"),
+        description: appI18n.t("billing.planSelector.fallbackPlans.starter.description"),
+        monthlyPriceCents: 2900,
+        yearlyPriceCents: 29900,
+        currency: "USD",
+        cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", {
+          planName: appI18n.t("billing.planSelector.fallbackPlans.starter.name"),
+        }),
+        features: this.getFallbackFeaturesBySlug().starter,
+      },
+      {
+        id: "standard",
+        name: appI18n.t("billing.planSelector.fallbackPlans.standard.name"),
+        description: appI18n.t("billing.planSelector.fallbackPlans.standard.description"),
+        monthlyPriceCents: 5900,
+        yearlyPriceCents: 59900,
+        currency: "USD",
+        highlight: true,
+        cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", {
+          planName: appI18n.t("billing.planSelector.fallbackPlans.standard.name"),
+        }),
+        features: this.getFallbackFeaturesBySlug().standard,
+      },
+      {
+        id: "premium",
+        name: appI18n.t("billing.planSelector.fallbackPlans.premium.name"),
+        description: appI18n.t("billing.planSelector.fallbackPlans.premium.description"),
+        monthlyPriceCents: 9900,
+        yearlyPriceCents: 99900,
+        currency: "USD",
+        cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", {
+          planName: appI18n.t("billing.planSelector.fallbackPlans.premium.name"),
+        }),
+        features: this.getFallbackFeaturesBySlug().premium,
+      },
+    ];
+  }
 
   private mapExternalPlans(plans?: BillingPlan[]): Plan[] | undefined {
     if (!plans || plans.length === 0) return undefined;
+    const fallbackFeaturesBySlug = this.getFallbackFeaturesBySlug();
 
     const resolveFeatures = (plan: BillingPlan): string[] => {
       const idKey = String(plan.id ?? "").trim().toLowerCase();
       const nameKey = String(plan.name ?? "").trim().toLowerCase();
       const slugByDbId = PLAN_SLUG_BY_DB_ID[Number(plan.dbId)];
-      const slugById = (PLAN_FEATURES_BY_SLUG[idKey] ? idKey : undefined) as keyof typeof PLAN_FEATURES_BY_SLUG | undefined;
-      const slugByName = (PLAN_FEATURES_BY_SLUG[nameKey] ? nameKey : undefined) as keyof typeof PLAN_FEATURES_BY_SLUG | undefined;
+      const slugById = (PLAN_FEATURE_KEYS_BY_SLUG[idKey as KnownPlanSlug] ? idKey : undefined) as KnownPlanSlug | undefined;
+      const slugByName = (PLAN_FEATURE_KEYS_BY_SLUG[nameKey as KnownPlanSlug] ? nameKey : undefined) as KnownPlanSlug | undefined;
       const resolvedSlug = slugByDbId ?? slugById ?? slugByName;
-      if (resolvedSlug) return PLAN_FEATURES_BY_SLUG[resolvedSlug];
+      if (resolvedSlug) return fallbackFeaturesBySlug[resolvedSlug];
       return plan.features ?? [];
     };
 
@@ -139,7 +143,7 @@ export class PlanSelector extends BaseComponent<
       yearlyPriceCents: p.priceCents.yearly,
       currency: p.currency,
       highlight: !!(p.recommended ?? (p as DataMap).highlight),
-      cta: `Choose ${p.name}`,
+      cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", { planName: p.name }),
       features: resolveFeatures(p),
     }));
   }
@@ -148,11 +152,8 @@ export class PlanSelector extends BaseComponent<
     return formatMoney(value, currency ? { currency } : undefined);
   }
 
-  private discountLabel = "Save 15%";
-
   private handleSelectPlan = (planId: string) => {
     this.setState({ selectedPlanId: planId });
-    console.log("Selected plan:", planId, "interval:", this.state.interval);
     this.props.onSelectPlan?.(planId, this.state.interval);
   };
 
@@ -161,8 +162,9 @@ export class PlanSelector extends BaseComponent<
     const recommendedChanged = prevProps.recommendedPlanId !== this.props.recommendedPlanId;
     if (!plansChanged && !recommendedChanged) return;
 
+    const defaultPlans = this.getDefaultPlans();
     const external = this.mapExternalPlans(this.props.plans);
-    const renderList = external && external.length > 0 ? external : this.plans;
+    const renderList = external && external.length > 0 ? external : defaultPlans;
 
     // prefer recommendedPlanId when provided
     const recId = this.props.recommendedPlanId;
@@ -178,15 +180,16 @@ export class PlanSelector extends BaseComponent<
       const highlighted = external.find((p) => !!p.highlight) ?? external[0];
       if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
     } else {
-      const highlighted = this.plans.find((p) => !!p.highlight) ?? this.plans[0];
+      const highlighted = defaultPlans.find((p) => !!p.highlight) ?? defaultPlans[0];
       if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
     }
   }
 
   override componentDidMount(): void {
     super.componentDidMount();
+    const defaultPlans = this.getDefaultPlans();
     const external = this.mapExternalPlans(this.props.plans);
-    const renderList = external && external.length > 0 ? external : this.plans;
+    const renderList = external && external.length > 0 ? external : defaultPlans;
 
     // if page provided a recommended id, prefer it
     const recId = this.props.recommendedPlanId;
@@ -202,16 +205,17 @@ export class PlanSelector extends BaseComponent<
       const highlighted = external.find((p) => !!p.highlight) ?? external[0];
       if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
     } else {
-      const highlighted = this.plans.find((p) => !!p.highlight) ?? this.plans[0];
+      const highlighted = defaultPlans.find((p) => !!p.highlight) ?? defaultPlans[0];
       if (highlighted && this.state.selectedPlanId !== highlighted.id) this.setState({ selectedPlanId: highlighted.id });
     }
   }
 
   protected override renderView(): React.ReactNode {
     const { interval } = this.state;
+    const defaultPlans = this.getDefaultPlans();
 
     const external = this.mapExternalPlans(this.props.plans);
-    const renderPlans = external && external.length > 0 ? external : this.plans;
+    const renderPlans = external && external.length > 0 ? external : defaultPlans;
 
     const selectedId = this.props.recommendedPlanId ?? this.state.selectedPlanId;
 
@@ -220,9 +224,9 @@ export class PlanSelector extends BaseComponent<
         <HeaderRow>
           <div>
             <Typography.Title level={3} style={{ margin: 0 }}>
-              Choose your plan
+              {appI18n.t("billing.planSelector.headerTitle")}
             </Typography.Title>
-            <Typography.Text type="secondary">Start simple. Upgrade anytime.</Typography.Text>
+            <Typography.Text type="secondary">{appI18n.t("billing.planSelector.headerSubtitle")}</Typography.Text>
           </div>
 
           <ToggleWrap>
@@ -230,12 +234,12 @@ export class PlanSelector extends BaseComponent<
               value={interval}
               onChange={(v) => this.setState({ interval: v as BillingInterval })}
               options={[
-                { label: "Monthly", value: "monthly" },
-                { label: "Yearly", value: "yearly" },
+                { label: appI18n.t("billing.planSelector.interval.monthly"), value: "monthly" },
+                { label: appI18n.t("billing.planSelector.interval.yearly"), value: "yearly" },
               ]}
             />
             {interval === "yearly" ? (
-              <PlanMeta>{this.discountLabel}</PlanMeta>
+              <PlanMeta>{appI18n.t("billing.planSelector.discountLabel")}</PlanMeta>
             ) : (
               <PlanMeta>&nbsp;</PlanMeta>
             )}
@@ -253,7 +257,7 @@ export class PlanSelector extends BaseComponent<
                   {isSelected ? (
                     <RecommendedBadge>
                       <Sparkles size={14} />
-                      Recommended
+                      {appI18n.t("billing.planSelector.recommended")}
                     </RecommendedBadge>
                   ) : null}
 
@@ -267,7 +271,9 @@ export class PlanSelector extends BaseComponent<
                     <Typography.Title level={2} style={{ margin: 0 }}>
                       {this.formatPrice(price, plan.currency)}
                     </Typography.Title>
-                    <Typography.Text type="secondary">/{interval === "monthly" ? "month" : "year"}</Typography.Text>
+                    <Typography.Text type="secondary">
+                      /{interval === "monthly" ? appI18n.t("billing.planSelector.per.month") : appI18n.t("billing.planSelector.per.year")}
+                    </Typography.Text>
                   </PriceRow>
 
                   <FeatureList>
@@ -287,7 +293,7 @@ export class PlanSelector extends BaseComponent<
                     </Button>
 
                     <Typography.Text type="secondary" style={{ textAlign: "center" }}>
-                      You can change plans later.
+                      {appI18n.t("billing.planSelector.canChangeLater")}
                     </Typography.Text>
                   </Space>
                 </CardFooter>

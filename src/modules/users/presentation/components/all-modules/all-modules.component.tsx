@@ -2,6 +2,7 @@ import React from "react";
 import { MotionConfig } from "framer-motion";
 import { BookOpenCheck, Compass, LayoutGrid } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { navigateTo } from "@core/navigation/navigation.service";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -73,9 +74,9 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
     if (!items || items.length === 0) {
       return (
         <EmptyState className="surface" data-cy="all-modules-empty-state">
-          <EmptyTitle>No modules available</EmptyTitle>
+          <EmptyTitle>{appI18n.t("allModules.empty.title")}</EmptyTitle>
           <EmptyText>
-            There are no services available to show yet.
+            {appI18n.t("allModules.empty.description")}
           </EmptyText>
         </EmptyState>
       );
@@ -113,21 +114,21 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
 
                 <HeroTitleBlock>
                   <HeroTitle level={3}>
-                    {title ?? "All modules"}
+                    {title ?? appI18n.t("allModules.hero.title")}
                   </HeroTitle>
                   <HeroText>
                     {description ??
                       (planTitle
-                        ? `Current plan: ${planTitle}`
-                        : "Explore and launch every service available in WorklyHub.")}
+                        ? appI18n.t("allModules.hero.descriptionWithPlan", { planTitle })
+                        : appI18n.t("allModules.hero.description"))}
                   </HeroText>
                 </HeroTitleBlock>
               </HeroIdentity>
 
               <HeroStats>
-                <HeroTag color="geekblue">{items.length} modules</HeroTag>
-                <HeroTag color="cyan">{enabledModules} available now</HeroTag>
-                <HeroTag color="gold">discovery mode</HeroTag>
+                <HeroTag color="geekblue">{appI18n.t("allModules.hero.stats.totalModules", { count: items.length })}</HeroTag>
+                <HeroTag color="cyan">{appI18n.t("allModules.hero.stats.availableNow", { count: enabledModules })}</HeroTag>
+                <HeroTag color="gold">{appI18n.t("allModules.hero.stats.discoveryMode")}</HeroTag>
               </HeroStats>
             </HeroMainRow>
 
@@ -138,14 +139,14 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
                 onClick={() => navigateTo("/tutorials")}
                 data-cy="all-modules-guided-tour-button"
               >
-                Guided tour
+                {appI18n.t("allModules.hero.actions.guidedTour")}
               </HeroPrimaryButton>
               <HeroGhostButton
                 icon={<Compass size={16} />}
                 onClick={() => this.openFirstAvailable(items)}
                 data-cy="all-modules-start-exploring-button"
               >
-                Start exploring
+                {appI18n.t("allModules.hero.actions.startExploring")}
               </HeroGhostButton>
             </HeroActions>
           </ShowcaseHero>
@@ -195,7 +196,7 @@ export class AllModulesComponent extends BaseComponent<Props, State> {
 
                   <ModuleFooter>
                     <ModuleTag color={index < 3 ? "gold" : "blue"}>
-                      {index < 3 ? "Recommended" : "Module"}
+                      {index < 3 ? appI18n.t("allModules.cardTags.recommended") : appI18n.t("allModules.cardTags.module")}
                     </ModuleTag>
                   </ModuleFooter>
                 </ModuleCard>

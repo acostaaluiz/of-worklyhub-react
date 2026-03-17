@@ -1,5 +1,6 @@
 import { Skeleton, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 import { formatDateTime, formatMoney } from "@core/utils/mask";
 
 import type { DashboardSaleItemModel } from "../../../interfaces/dashboard-sale-item.model";
@@ -13,29 +14,30 @@ type Props = {
   loading?: boolean;
 };
 
-const statusLabel: Record<string, string> = {
-  paid: "Paid",
-  pending: "Pending",
-  refunded: "Refunded",
-};
-
 export function DashboardRecentSales(props: Props) {
+  const { t } = useTranslation();
   const { items, loading } = props;
+
+  const statusLabel: Record<string, string> = {
+    paid: t("dashboard.common.statuses.paid"),
+    pending: t("dashboard.common.statuses.pending"),
+    refunded: t("dashboard.common.statuses.refunded"),
+  };
 
   const columns: ColumnsType<DashboardSaleItemModel> = [
     {
-      title: "Client",
+      title: t("dashboard.recentSales.columns.client"),
       dataIndex: "clientName",
       key: "clientName",
       render: (v: string) => <Typography.Text strong>{v}</Typography.Text>,
     },
     {
-      title: "Service",
+      title: t("dashboard.recentSales.columns.service"),
       dataIndex: "serviceName",
       key: "serviceName",
     },
     {
-      title: "Date",
+      title: t("dashboard.recentSales.columns.date"),
       dataIndex: "dateTime",
       key: "dateTime",
       width: 170,
@@ -44,14 +46,14 @@ export function DashboardRecentSales(props: Props) {
       ),
     },
     {
-      title: "Amount",
+      title: t("dashboard.recentSales.columns.amount"),
       dataIndex: "amount",
       key: "amount",
       align: "right",
       render: (v: number) => formatMoney(v),
     },
     {
-      title: "Status",
+      title: t("dashboard.recentSales.columns.status"),
       dataIndex: "status",
       key: "status",
       width: 120,
@@ -68,8 +70,8 @@ export function DashboardRecentSales(props: Props) {
     <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Recent sales</div>
-          <div className="subtitle">Latest transactions</div>
+          <div className="title">{t("dashboard.recentSales.title")}</div>
+          <div className="subtitle">{t("dashboard.recentSales.subtitle")}</div>
         </div>
       </WidgetHeader>
 

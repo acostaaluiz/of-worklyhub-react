@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { applicationService } from "@core/application/application.service";
+import { i18n as appI18n } from "@core/i18n";
 import { formatAppDateTime } from "@core/utils/date-time";
 import { companyService } from "@modules/company/services/company.service";
 import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
@@ -144,7 +145,7 @@ function toFormValues(settings: ScheduleWorkspaceSettings): SettingsFormValues {
 }
 
 function ScheduleSettingsPageContent(): React.ReactElement {
-  const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
+        const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
     const workspace = companyService.getWorkspaceValue() as
       | { workspaceId?: string; id?: string }
       | null;
@@ -221,7 +222,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
       const bundle = await getScheduleSettings(workspaceId);
       applySettings(bundle);
     } catch {
-      message.error("Failed to load schedule settings.");
+      message.error(appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k001"));
     } finally {
       setLoading(false);
     }
@@ -237,7 +238,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
 
   const handleSubmit = async (values: SettingsFormValues) => {
     if (!workspaceId) {
-      message.error("Workspace is required.");
+      message.error(appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k002"));
       return;
     }
 
@@ -247,9 +248,9 @@ function ScheduleSettingsPageContent(): React.ReactElement {
       const normalized = normalizeSettings(values);
       const bundle = await upsertScheduleSettings(workspaceId, normalized, updatedBy);
       applySettings(bundle);
-      message.success("Schedule settings saved.");
+      message.success(appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k003"));
     } catch {
-      message.error("Failed to save schedule settings.");
+      message.error(appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k004"));
     } finally {
       setSaving(false);
     }
@@ -261,13 +262,15 @@ function ScheduleSettingsPageContent(): React.ReactElement {
         <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: 16 }}>
           <SettingsPageHeader
             icon={<Settings2 size={20} />}
-            title="Schedule settings"
-            description="Configure booking defaults and validation rules by workspace."
+            title={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k005")}
+            description={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k006")}
             meta={
               <SettingsSourceTags
                 source={source}
                 updatedAt={updatedAt}
                 formatUpdatedAt={(value) => formatAppDateTime(value, "--")}
+                updatedPrefix={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k007")}
+                emptyLabel={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k008")}
               />
             }
           />
@@ -277,7 +280,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
               showIcon
               type="info"
               style={{ marginBottom: 16 }}
-              message="These settings are applied to new appointments and event edits."
+              message={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k009")}
             />
 
             <Form<SettingsFormValues>
@@ -291,11 +294,11 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                 items={[
                   {
                     key: "booking",
-                    label: <IconLabel icon={<Calendar size={14} />} text="Booking defaults" />,
+                    label: <IconLabel icon={<Calendar size={14} />} text={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k010")} />,
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Default values for new appointments
+                          {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k011")}
                         </Typography.Title>
                         <Space
                           size={16}
@@ -303,7 +306,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                         >
                           <Form.Item
                             name="defaultDurationMinutes"
-                            label="Default duration (minutes)"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k012")}
                             style={{ minWidth: 220 }}
                           >
                             <InputNumber min={15} max={240} step={5} style={{ width: "100%" }} />
@@ -311,26 +314,26 @@ function ScheduleSettingsPageContent(): React.ReactElement {
 
                           <Form.Item
                             name="defaultDayPart"
-                            label="Preferred day part"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k013")}
                             style={{ minWidth: 220 }}
                           >
                             <Select
                               options={[
-                                { value: "morning", label: "Morning" },
-                                { value: "afternoon", label: "Afternoon" },
-                                { value: "evening", label: "Evening" },
+                                { value: "morning", label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k014") },
+                                { value: "afternoon", label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k015") },
+                                { value: "evening", label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k016") },
                               ]}
                             />
                           </Form.Item>
 
                           <Form.Item
                             name="defaultCategoryId"
-                            label="Default category"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k017")}
                             style={{ minWidth: 280, flex: 1 }}
                           >
                             <Select
                               allowClear
-                              placeholder="Optional"
+                              placeholder={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k018")}
                               options={categories.map((category) => ({
                                 value: category.id,
                                 label: category.label,
@@ -343,11 +346,11 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                   },
                   {
                     key: "validation",
-                    label: <IconLabel icon={<ClipboardCheck size={14} />} text="Validation" />,
+                    label: <IconLabel icon={<ClipboardCheck size={14} />} text={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k019")} />,
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Required fields and constraints
+                          {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k020")}
                         </Typography.Title>
                         <Space
                           size={16}
@@ -356,7 +359,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="requireDescription"
                             valuePropName="checked"
-                            label="Require description"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k021")}
                           >
                             <Switch />
                           </Form.Item>
@@ -364,7 +367,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="requireService"
                             valuePropName="checked"
-                            label="Require at least one service"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k022")}
                           >
                             <Switch />
                           </Form.Item>
@@ -372,7 +375,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="requireEmployee"
                             valuePropName="checked"
-                            label="Require assigned employee"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k023")}
                           >
                             <Switch />
                           </Form.Item>
@@ -380,7 +383,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="enableInventoryTracking"
                             valuePropName="checked"
-                            label="Enable inventory lines in events"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k024")}
                           >
                             <Switch />
                           </Form.Item>
@@ -390,11 +393,11 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                   },
                   {
                     key: "automation",
-                    label: <IconLabel icon={<Users size={14} />} text="Automation" />,
+                    label: <IconLabel icon={<Users size={14} />} text={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k025")} />,
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Assisted assignment
+                          {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k026")}
                         </Typography.Title>
                         <Space
                           size={16}
@@ -403,7 +406,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="autoSelectFirstService"
                             valuePropName="checked"
-                            label="Auto-select first service"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k027")}
                           >
                             <Switch />
                           </Form.Item>
@@ -411,7 +414,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="autoSelectFirstEmployee"
                             valuePropName="checked"
-                            label="Auto-select first employee"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k028")}
                           >
                             <Switch />
                           </Form.Item>
@@ -422,7 +425,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           style={{ marginTop: 8 }}
                           message={
                             <span>
-                              Auto-selection applies only when creating a new event.
+                              {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k029")}
                             </span>
                           }
                         />
@@ -434,13 +437,13 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                     label: (
                       <IconLabel
                         icon={<ClipboardCheck size={14} />}
-                        text="Customer policy"
+                        text={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k030")}
                       />
                     ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Confirmation, reminder and no-show policy
+                          {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k031")}
                         </Typography.Title>
                         <Space
                           size={16}
@@ -448,18 +451,18 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                         >
                           <Form.Item
                             name="confirmationPolicy"
-                            label="Confirmation policy"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k032")}
                             style={{ minWidth: 280 }}
                           >
                             <Select
                               options={[
                                 {
                                   value: "required",
-                                  label: "Require confirmation (default pending)",
+                                  label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k033"),
                                 },
                                 {
                                   value: "optional",
-                                  label: "Optional confirmation (default confirmed)",
+                                  label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k034"),
                                 },
                               ]}
                             />
@@ -468,7 +471,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           <Form.Item
                             name="reminderEnabled"
                             valuePropName="checked"
-                            label="Enable automated reminder"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k035")}
                           >
                             <Switch />
                           </Form.Item>
@@ -477,7 +480,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                             {({ getFieldValue }) => (
                               <Form.Item
                                 name="reminderLeadMinutes"
-                                label="Reminder lead time (minutes)"
+                                label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k036")}
                                 style={{ minWidth: 260 }}
                               >
                                 <InputNumber
@@ -498,14 +501,14 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                         >
                           <Form.Item
                             name="noShowPolicy"
-                            label="No-show policy"
+                            label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k037")}
                             style={{ minWidth: 280 }}
                           >
                             <Select
                               options={[
-                                { value: "none", label: "No automatic action" },
-                                { value: "flag", label: "Flag event as no-show" },
-                                { value: "charge", label: "Charge no-show fee" },
+                                { value: "none", label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k038") },
+                                { value: "flag", label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k039") },
+                                { value: "charge", label: appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k040") },
                               ]}
                             />
                           </Form.Item>
@@ -514,7 +517,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                             {({ getFieldValue }) => (
                               <Form.Item
                                 name="noShowFeePercent"
-                                label="No-show fee (%)"
+                                label={appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k041")}
                                 style={{ minWidth: 220 }}
                               >
                                 <InputNumber
@@ -534,8 +537,8 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                           style={{ marginTop: 8 }}
                           message={
                             <span>
-                              Charging no-show creates financial entries when the event
-                              status is set to <strong>No Show</strong>.
+                              {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k042")}
+                              <strong>{appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k043")}</strong>.
                             </span>
                           }
                         />
@@ -552,10 +555,10 @@ function ScheduleSettingsPageContent(): React.ReactElement {
                   disabled={saving}
                   icon={<RotateCcw size={15} />}
                 >
-                  Restore defaults
+                  {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k044")}
                 </Button>
                 <Button type="primary" htmlType="submit" loading={saving} icon={<Save size={16} />}>
-                  Save settings
+                  {appI18n.t("legacyInline.schedule.presentation_pages_settings_settings_page.k045")}
                 </Button>
               </Space>
             </Form>
@@ -568,7 +571,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
 
 export class ScheduleSettingsPage extends BasePage {
   protected override options = {
-    title: "Schedule settings | WorklyHub",
+    title: `${appI18n.t("schedule.pageTitles.settings")} | WorklyHub`,
     requiresAuth: true,
   };
 

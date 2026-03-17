@@ -1,6 +1,7 @@
 import React from "react";
 import { Typography } from "antd";
 import { ClipboardList } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 
 import { BaseTemplate } from "@shared/base/base.template";
 import {
@@ -19,16 +20,25 @@ type Props = {
   description?: string;
   actions?: React.ReactNode;
   list: React.ReactNode;
-  editor: React.ReactNode;
+  editor?: React.ReactNode;
+  editorModal?: React.ReactNode;
 };
 
 export function WorkOrdersTemplate({
-  title = "Work orders",
-  description = "Plan, execute, and monitor work orders from one place.",
+  title,
+  description,
   actions,
   list,
   editor,
+  editorModal,
 }: Props) {
+  const resolvedTitle =
+    title ??
+    appI18n.t("legacyInline.work_order.presentation_templates_work_orders_work_orders_template.title");
+  const resolvedDescription =
+    description ??
+    appI18n.t("legacyInline.work_order.presentation_templates_work_orders_work_orders_template.description");
+
   return (
     <BaseTemplate
       content={
@@ -40,19 +50,20 @@ export function WorkOrdersTemplate({
               </TemplateIcon>
               <TemplateTitleCopy>
                 <Typography.Title level={2} style={{ margin: 0 }}>
-                  {title}
+                  {resolvedTitle}
                 </Typography.Title>
-                <Typography.Text type="secondary">{description}</Typography.Text>
+                <Typography.Text type="secondary">{resolvedDescription}</Typography.Text>
               </TemplateTitleCopy>
             </TemplateTitleBlock>
 
             {actions ? <div>{actions}</div> : null}
           </TemplateTitleRow>
 
-          <Shell>
+          <Shell $hasEditor={Boolean(editor)}>
             <ListCard>{list}</ListCard>
-            <EditorCard>{editor}</EditorCard>
+            {editor ? <EditorCard>{editor}</EditorCard> : null}
           </Shell>
+          {editorModal ?? null}
         </PageStack>
       }
     />

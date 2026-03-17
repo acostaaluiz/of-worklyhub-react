@@ -4,6 +4,7 @@ import type {
   ApplicationCategoryItem,
   ApplicationIndustryItem,
 } from "@core/application/application-api";
+import { i18n as appI18n } from "@core/i18n";
 import { applicationService } from "@core/application/application.service";
 import { navigateTo } from "@core/navigation/navigation.service";
 import { unmaskPhone } from "@core/utils/mask";
@@ -75,7 +76,7 @@ function normalizeWorkspaceServices(values: CompanyIntroductionValues): NonNulla
 
 export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionState> {
   protected override options = {
-    title: "Company setup | WorklyHub",
+    title: `${appI18n.t("company.pageTitles.introduction")} | WorklyHub`,
     requiresAuth: true,
   };
 
@@ -189,13 +190,13 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
       this.setSafeState({
         responseModal: {
           open: true,
-          title: "Setup complete",
-          description: "Initial setup finished. You will be redirected to Home.",
+          title: appI18n.t("company.introduction.response.setupComplete.title"),
+          description: appI18n.t("company.introduction.response.setupComplete.description"),
         },
       });
     } catch (error) {
       console.error("create workspace failed", error);
-      message.error("Failed to create workspace");
+      message.error(appI18n.t("company.introduction.messages.createWorkspaceFailed"));
     } finally {
       loadingService.hide();
     }

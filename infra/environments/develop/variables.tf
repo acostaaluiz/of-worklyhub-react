@@ -3,6 +3,12 @@ variable "project_id" {
   type        = string
 }
 
+variable "google_credentials_file" {
+  description = "Path to GCP service account JSON used by Terraform. Keep empty to use ADC."
+  type        = string
+  default     = ""
+}
+
 variable "region" {
   description = "GCP region."
   type        = string

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Sparkles } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import { ServicesFinanceList } from "@modules/finance/presentation/components/services-finance-list/services-finance-list.component";
 import { FinanceEntryForm } from "@modules/finance/presentation/components/finance-entry-form/finance-entry-form.component";
@@ -35,7 +36,7 @@ export function ServicesFinanceTemplate({
   onSelectService,
   onSaved,
 }: Props): ReactNode {
-  return (
+        return (
     <BaseTemplate
       content={
         <TemplateShell>
@@ -45,9 +46,9 @@ export function ServicesFinanceTemplate({
                 <Sparkles size={20} />
               </HeaderIcon>
               <HeaderCopy>
-                <HeaderTitle>Services and suggestions</HeaderTitle>
+                <HeaderTitle>{appI18n.t("legacyInline.finance.presentation_templates_services_finance_services_finance_template.k001")}</HeaderTitle>
                 <HeaderSubtitle>
-                  Service pricing suggestions based on your recent finance history.
+                  {appI18n.t("legacyInline.finance.presentation_templates_services_finance_services_finance_template.k002")}
                 </HeaderSubtitle>
               </HeaderCopy>
             </HeaderMain>
@@ -61,7 +62,7 @@ export function ServicesFinanceTemplate({
 
             <SidePanel>
               <SidePanelInner>
-                <h3 style={{ marginTop: 0 }}>Add entry</h3>
+                <h3 style={{ marginTop: 0 }}>{appI18n.t("legacyInline.finance.presentation_templates_services_finance_services_finance_template.k003")}</h3>
                 <FinanceEntryForm
                   initial={
                     selectedService

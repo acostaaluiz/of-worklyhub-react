@@ -1,10 +1,12 @@
 import React from "react";
+
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import { FinanceLandingTemplate } from "@modules/finance/presentation/templates/landing/landing.template";
 
 export class FinanceLandingPage extends BasePage {
   protected override options = {
-    title: "Finance overview | WorklyHub",
+    title: `${appI18n.t("finance.pageTitles.landing")} | WorklyHub`,
     requiresAuth: true,
   };
 

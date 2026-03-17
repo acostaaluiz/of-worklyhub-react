@@ -70,6 +70,15 @@ export class AutocompleteInput extends BaseComponent<Props, State> {
     this.debounceTimer = window.setTimeout(() => void this.runSearch(value), 180);
   };
 
+  private handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key !== "Escape") return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.setSafeState({ open: false });
+    event.currentTarget.blur();
+  };
+
   private async runSearch(value: string): Promise<void> {
     const currentRequest = ++this.requestId;
     this.setLoading(true);
@@ -128,6 +137,7 @@ export class AutocompleteInput extends BaseComponent<Props, State> {
         onSelect={this.handleSelect}
         onFocus={this.handleFocus}
         onBlur={this.handleBlur}
+        onInputKeyDown={this.handleInputKeyDown}
         open={shouldOpen}
         listHeight={this.maxVisible() * 64}
         popupMatchSelectWidth

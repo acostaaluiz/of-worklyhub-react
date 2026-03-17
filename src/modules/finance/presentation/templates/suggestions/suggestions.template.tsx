@@ -8,6 +8,7 @@ import {
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import { ServicesFinanceList } from "@modules/finance/presentation/components/services-finance-list/services-finance-list.component";
 import { FinanceKpis } from "@modules/finance/presentation/components/finance-kpis/finance-kpis.component";
@@ -34,7 +35,7 @@ import {
 } from "./suggestions.template.styles";
 
 export function SuggestionsTemplate() {
-  const navigate = useNavigate();
+        const navigate = useNavigate();
 
   return (
     <BaseTemplate
@@ -48,18 +49,18 @@ export function SuggestionsTemplate() {
                 </HeroTitleIcon>
                 <HeroText>
                   <Typography.Title level={2} style={{ margin: 0 }}>
-                    Price suggestions
+                    {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k001")}
                   </Typography.Title>
                   <Typography.Text type="secondary">
-                    Improve service pricing with guidance from recent finance performance.
+                    {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k002")}
                   </Typography.Text>
                 </HeroText>
               </HeroTitleWrap>
 
               <HeroStats>
-                <Tag icon={<Sparkles size={12} />}>Smart hints</Tag>
-                <Tag icon={<TrendingUp size={12} />}>Margin focused</Tag>
-                <Tag icon={<ReceiptText size={12} />}>Service based</Tag>
+                <Tag icon={<Sparkles size={12} />}>{appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k003")}</Tag>
+                <Tag icon={<TrendingUp size={12} />}>{appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k004")}</Tag>
+                <Tag icon={<ReceiptText size={12} />}>{appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k005")}</Tag>
               </HeroStats>
             </HeroTop>
           </HeroCard>
@@ -73,11 +74,11 @@ export function SuggestionsTemplate() {
                       <TrendingUp size={14} />
                     </SectionIcon>
                     <Typography.Title level={5} style={{ margin: 0 }}>
-                      Finance snapshot
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k006")}
                     </Typography.Title>
                   </SectionTitleRow>
                   <Typography.Text type="secondary">
-                    Quick view of income, expense, profit, and margin before applying suggestions.
+                    {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k007")}
                   </Typography.Text>
                 </CardHeader>
                 <KpiCardBody>
@@ -92,11 +93,11 @@ export function SuggestionsTemplate() {
                       <ClipboardList size={14} />
                     </SectionIcon>
                     <Typography.Title level={5} style={{ margin: 0 }}>
-                      Suggested services
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k008")}
                     </Typography.Title>
                   </SectionTitleRow>
                   <Typography.Text type="secondary">
-                    Review each service recommendation and apply it as a finance entry when needed.
+                    {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k009")}
                   </Typography.Text>
                 </CardHeader>
                 <CardBody>
@@ -113,11 +114,11 @@ export function SuggestionsTemplate() {
                       <Lightbulb size={14} />
                     </SectionIcon>
                     <Typography.Title level={5} style={{ margin: 0 }}>
-                      How to use
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k010")}
                     </Typography.Title>
                   </SectionTitleRow>
                   <Typography.Text type="secondary">
-                    Apply these suggestions to reduce pricing gaps and improve profitability.
+                    {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k011")}
                   </Typography.Text>
                 </CardHeader>
                 <CardBody>
@@ -126,19 +127,19 @@ export function SuggestionsTemplate() {
                       <GuideBullet>
                         <Sparkles size={11} />
                       </GuideBullet>
-                      Compare current versus suggested value for each service.
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k012")}
                     </GuideItem>
                     <GuideItem>
                       <GuideBullet>
                         <TrendingUp size={11} />
                       </GuideBullet>
-                      Prioritize high-volume services where margin changes have bigger impact.
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k013")}
                     </GuideItem>
                     <GuideItem>
                       <GuideBullet>
                         <ReceiptText size={11} />
                       </GuideBullet>
-                      Register adjustments in finance entries to keep reports aligned.
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k014")}
                     </GuideItem>
                   </GuideList>
                 </CardBody>
@@ -151,7 +152,7 @@ export function SuggestionsTemplate() {
                       <ArrowRight size={14} />
                     </SectionIcon>
                     <Typography.Title level={5} style={{ margin: 0 }}>
-                      Quick actions
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k015")}
                     </Typography.Title>
                   </SectionTitleRow>
                 </CardHeader>
@@ -162,14 +163,14 @@ export function SuggestionsTemplate() {
                       icon={<ArrowRight size={14} />}
                       onClick={() => navigate("/finance/services")}
                     >
-                      Open services performance
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k016")}
                     </Button>
                     <Button
                       type="default"
                       icon={<ArrowRight size={14} />}
                       onClick={() => navigate("/finance/entries")}
                     >
-                      Open finance entries
+                      {appI18n.t("legacyInline.finance.presentation_templates_suggestions_suggestions_template.k017")}
                     </Button>
                   </Space>
                 </CardBody>

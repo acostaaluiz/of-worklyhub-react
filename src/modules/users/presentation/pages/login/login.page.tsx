@@ -1,4 +1,5 @@
 import React from "react";
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import { LoginTemplate } from "../../templates/login/login.template";
 import { usersAuthService } from "@modules/users/services/auth.service";
@@ -11,7 +12,7 @@ type LoginValues = { email: string; password: string };
 
 export class LoginPage extends BasePage {
   protected override options = {
-    title: "Login | WorklyHub",
+    title: `${appI18n.t("users.pageTitles.login")} | WorklyHub`,
     requiresAuth: false,
   };
 
@@ -33,27 +34,27 @@ export class LoginPage extends BasePage {
 
               if (code) {
                 if (code.includes("wrong-password") || code.includes("INVALID_PASSWORD") || code.includes("invalid-password")) {
-                  message.error("Email or password incorrect");
+                  message.error(appI18n.t("users.auth.login.feedback.invalidCredentials"));
                   return;
                 }
                 if (code.includes("user-not-found") || code.includes("no-user")) {
-                  message.error("User not found");
+                  message.error(appI18n.t("users.auth.login.feedback.userNotFound"));
                   return;
                 }
                 if (code.includes("too-many-requests")) {
-                  message.error("Too many attempts. Try again later.");
+                  message.error(appI18n.t("users.auth.login.feedback.tooManyAttempts"));
                   return;
                 }
               }
 
               if (err instanceof AppError) {
                 if (err.statusCode === 401) {
-                  message.error("Authentication failed — please login again");
+                  message.error(appI18n.t("users.auth.login.feedback.unauthorized"));
                   return;
                 }
               }
 
-              message.error("Authentication failed");
+              message.error(appI18n.t("users.auth.login.feedback.genericError"));
             }
           },
           { setLoading: false }
@@ -74,3 +75,4 @@ export class LoginPage extends BasePage {
 }
 
 export default LoginPage;
+

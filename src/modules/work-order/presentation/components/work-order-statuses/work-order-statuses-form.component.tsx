@@ -1,5 +1,6 @@
 import { Button, Form, Input, InputNumber, Switch } from "antd";
 
+import { i18n as appI18n } from "@core/i18n";
 import type { CreateWorkOrderStatusInput } from "@modules/work-order/interfaces/work-order.model";
 
 type Props = {
@@ -8,7 +9,7 @@ type Props = {
 };
 
 export function WorkOrderStatusForm({ loading, onSubmit }: Props) {
-  const [form] = Form.useForm<CreateWorkOrderStatusInput>();
+        const [form] = Form.useForm<CreateWorkOrderStatusInput>();
 
   const handleFinish = (values: CreateWorkOrderStatusInput) => {
     onSubmit(values);
@@ -17,7 +18,7 @@ export function WorkOrderStatusForm({ loading, onSubmit }: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ fontWeight: 600, fontSize: 16 }}>Create status</div>
+      <div style={{ fontWeight: 600, fontSize: 16 }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k001")}</div>
 
       <Form
         form={form}
@@ -28,31 +29,31 @@ export function WorkOrderStatusForm({ loading, onSubmit }: Props) {
       >
         <Form.Item
           name="code"
-          label="Code"
-          rules={[{ required: true, message: "Status code is required" }]}
+          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k002")}
+          rules={[{ required: true, message: appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k003") }]}
         >
-          <Input placeholder="e.g. opened" data-cy="work-order-status-code-input" />
+          <Input placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k004")} data-cy="work-order-status-code-input" />
         </Form.Item>
 
         <Form.Item
           name="label"
-          label="Label"
-          rules={[{ required: true, message: "Status label is required" }]}
+          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k005")}
+          rules={[{ required: true, message: appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k006") }]}
         >
-          <Input placeholder="e.g. Opened" data-cy="work-order-status-label-input" />
+          <Input placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k007")} data-cy="work-order-status-label-input" />
         </Form.Item>
 
-        <Form.Item name="isTerminal" label="Terminal" valuePropName="checked">
+        <Form.Item name="isTerminal" label={appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k008")} valuePropName="checked">
           <Switch data-cy="work-order-status-terminal-switch" />
         </Form.Item>
 
-        <Form.Item name="sortOrder" label="Sort order">
+        <Form.Item name="sortOrder" label={appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k009")}>
           <InputNumber min={0} style={{ width: "100%" }} data-cy="work-order-status-order-input" />
         </Form.Item>
 
         <Form.Item>
           <Button type="primary" htmlType="submit" loading={loading} data-cy="work-order-status-save-button">
-            Create status
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_form_component.k010")}
           </Button>
         </Form.Item>
       </Form>

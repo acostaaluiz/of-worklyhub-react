@@ -30,6 +30,7 @@ import type {
 } from "@modules/work-order/interfaces/work-order.model";
 import { formatMoneyFromCents } from "@core/utils/mask";
 import { formatAppDateTime } from "@core/utils/date-time";
+import { i18n as appI18n } from "@core/i18n";
 import {
   FiltersRow,
   InsightAction,
@@ -129,6 +130,17 @@ export function WorkOrderList({
   onDelete,
   onRefresh,
 }: Props) {
+        const priorityLabel = React.useCallback(
+    (priority: WorkOrderPriority) => {
+      if (priority === "low") return appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k001");
+      if (priority === "medium") return appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k002");
+      if (priority === "high") return appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k003");
+      if (priority === "urgent") return appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k004");
+      return priority;
+    },
+    []
+  );
+
   const isMobileViewport =
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 768px)").matches;
@@ -187,7 +199,7 @@ export function WorkOrderList({
       title: (
         <Space size={6}>
           <FileTextOutlined />
-          Title
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k005")}
         </Space>
       ),
       dataIndex: "title",
@@ -211,7 +223,7 @@ export function WorkOrderList({
       title: (
         <Space size={6}>
           <InfoCircleOutlined />
-          Status
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k006")}
         </Space>
       ),
       dataIndex: "status",
@@ -233,7 +245,7 @@ export function WorkOrderList({
         title: (
           <Space size={6}>
             <FlagOutlined />
-            Priority
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k007")}
           </Space>
         ),
         dataIndex: "priority",
@@ -241,7 +253,7 @@ export function WorkOrderList({
         width: 90,
         render: (priority: WorkOrderPriority) => (
           <Tag color={priorityColors[priority] ?? "default"}>
-            {priority}
+            {priorityLabel(priority)}
           </Tag>
         ),
       },
@@ -249,7 +261,7 @@ export function WorkOrderList({
         title: (
           <Space size={6}>
             <CalendarOutlined />
-            Due
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k008")}
           </Space>
         ),
         dataIndex: "dueAt",
@@ -265,7 +277,7 @@ export function WorkOrderList({
         title: (
           <Space size={6}>
             <DollarCircleOutlined />
-            Total
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k009")}
           </Space>
         ),
         dataIndex: "totalEstimatedCents",
@@ -278,40 +290,41 @@ export function WorkOrderList({
         title: (
           <Space size={6}>
             <ToolOutlined />
-            Actions
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k010")}
           </Space>
         ),
         key: "actions",
-        width: 110,
+        width: 160,
+        className: "work-order-actions-col",
         render: (_, record) => (
           <Space>
             <Button size="small" icon={<EditOutlined />} onClick={() => onSelect(record)}>
-              Edit
+              {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k011")}
             </Button>
             <Popconfirm
-              title="Delete work order?"
-              okText="Delete"
+              title={appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k012")}
+              okText={appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k013")}
               okButtonProps={{ danger: true }}
               onConfirm={() => onDelete(record)}
             >
               <Button size="small" danger icon={<DeleteOutlined />}>
-                Delete
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k014")}
               </Button>
             </Popconfirm>
           </Space>
         ),
       },
     ];
-  }, [isMobileViewport, onDelete, onSelect]);
+  }, [isMobileViewport, onDelete, onSelect, priorityLabel]);
 
   const workOrdersContent = (
     <WorkOrdersPane data-cy="work-order-list-pane">
       <PaneToolbar>
         <PaneHeader>
-          <PaneTitle>Work orders</PaneTitle>
+          <PaneTitle>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k015")}</PaneTitle>
           <PaneActions>
             <Button icon={<ReloadOutlined />} onClick={onRefresh}>
-              Refresh
+              {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k016")}
             </Button>
             <Button
               type="primary"
@@ -319,14 +332,14 @@ export function WorkOrderList({
               onClick={onCreate}
               data-cy="work-order-new-button"
             >
-              New work order
+              {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k017")}
             </Button>
           </PaneActions>
         </PaneHeader>
 
         <FiltersRow>
           <Input
-            placeholder="Search"
+            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k018")}
             value={filters.search}
             allowClear
             onChange={(e) => onChangeFilters({ search: e.target.value })}
@@ -334,21 +347,21 @@ export function WorkOrderList({
             style={{ width: isMobileViewport ? "100%" : 200 }}
           />
           <Select
-            placeholder="Risk"
+            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k019")}
             value={filters.riskLevel || undefined}
             allowClear
             style={{ width: isMobileViewport ? "100%" : 190 }}
             options={[
-              { value: "overdue", label: "Overdue" },
-              { value: "due_soon", label: "Due soon (24h)" },
-              { value: "checklist_at_risk", label: "Checklist at risk" },
-              { value: "high_priority", label: "High priority open" },
-              { value: "unscheduled", label: "Unscheduled" },
+              { value: "overdue", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k020") },
+              { value: "due_soon", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k021") },
+              { value: "checklist_at_risk", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k022") },
+              { value: "high_priority", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k023") },
+              { value: "unscheduled", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k024") },
             ]}
             onChange={(value) => onChangeFilters({ riskLevel: value as WorkOrderRiskLevel })}
           />
           <Select
-            placeholder="Status"
+            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k025")}
             value={filters.statusId || undefined}
             allowClear
             style={{ width: isMobileViewport ? "100%" : 180 }}
@@ -356,15 +369,15 @@ export function WorkOrderList({
             onChange={(value) => onChangeFilters({ statusId: value })}
           />
           <Select
-            placeholder="Priority"
+            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k026")}
             value={filters.priority || undefined}
             allowClear
             style={{ width: isMobileViewport ? "100%" : 140 }}
             options={[
-              { value: "low", label: "Low" },
-              { value: "medium", label: "Medium" },
-              { value: "high", label: "High" },
-              { value: "urgent", label: "Urgent" },
+              { value: "low", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k027") },
+              { value: "medium", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k028") },
+              { value: "high", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k029") },
+              { value: "urgent", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k030") },
             ]}
             onChange={(value) => onChangeFilters({ priority: value as WorkOrderPriority })}
           />
@@ -386,14 +399,14 @@ export function WorkOrderList({
             onClick={onApplyFilters}
             style={isMobileViewport ? { flex: "1 1 calc(50% - 4px)" } : undefined}
           >
-            Apply
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k031")}
           </Button>
           <Button
             icon={<UndoOutlined />}
             onClick={onResetFilters}
             style={isMobileViewport ? { flex: "1 1 calc(50% - 4px)" } : undefined}
           >
-            Reset
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k032")}
           </Button>
         </FiltersRow>
       </PaneToolbar>
@@ -406,7 +419,7 @@ export function WorkOrderList({
           rowKey={(record) => record.id}
           pagination={false}
           size={isMobileViewport ? "small" : "middle"}
-          scroll={{ y: isMobileViewport ? 320 : 340, x: isMobileViewport ? undefined : 720 }}
+          scroll={{ y: isMobileViewport ? 320 : 340, x: isMobileViewport ? undefined : 840 }}
           onRow={(record) => ({
             onClick: () => onSelect(record),
             style:
@@ -419,12 +432,12 @@ export function WorkOrderList({
           {loadingMore ? (
             <>
               <Spin size="small" />
-              <span>Loading more work orders...</span>
+              <span>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k033")}</span>
             </>
           ) : hasMore ? (
-            <span>Scroll down to load more.</span>
+            <span>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k034")}</span>
           ) : (
-            <span>End of results.</span>
+            <span>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k035")}</span>
           )}
         </TableFooterState>
       </TableWrap>
@@ -434,44 +447,46 @@ export function WorkOrderList({
   const operationsOverviewContent = overview ? (
     <OverviewCard>
       <OverviewHeader>
-        <OverviewTitle>Operations overview</OverviewTitle>
-        <OverviewUpdated>Updated {formatAppDateTime(overview.generatedAt, "--")}</OverviewUpdated>
+        <OverviewTitle>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k036")}</OverviewTitle>
+        <OverviewUpdated>
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k037")} {formatAppDateTime(overview.generatedAt, "--")}
+        </OverviewUpdated>
       </OverviewHeader>
 
       <OverviewTags>
-        <Tag color="geekblue">Open: {overview.totals.active}</Tag>
-        <Tag color="green">Completed: {overview.totals.terminal}</Tag>
+        <Tag color="geekblue">{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k038")}: {overview.totals.active}</Tag>
+        <Tag color="green">{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k039")}: {overview.totals.terminal}</Tag>
         <Tag color={overview.totals.overdue > 0 ? "red" : "default"}>
-          Overdue: {overview.totals.overdue}
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k040")}: {overview.totals.overdue}
         </Tag>
         <Tag color={overview.totals.dueSoon > 0 ? "orange" : "default"}>
-          Due soon: {overview.totals.dueSoon}
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k041")}: {overview.totals.dueSoon}
         </Tag>
         <Tag color={overview.totals.highPriorityOpen > 0 ? "volcano" : "default"}>
-          High priority open: {overview.totals.highPriorityOpen}
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k042")}: {overview.totals.highPriorityOpen}
         </Tag>
         <Tag color={overview.totals.unscheduled > 0 ? "gold" : "default"}>
-          Unscheduled: {overview.totals.unscheduled}
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k043")}: {overview.totals.unscheduled}
         </Tag>
         <Tag color={overview.totals.checklistAtRisk > 0 ? "red" : "default"}>
-          Checklist at risk: {overview.totals.checklistAtRisk}
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k044")}: {overview.totals.checklistAtRisk}
         </Tag>
-        <Tag>Completion: {overview.performance.completionRate.toFixed(1)}%</Tag>
-        <Tag>Avg resolution: {overview.performance.avgResolutionHours.toFixed(1)}h</Tag>
+        <Tag>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k045")}: {overview.performance.completionRate.toFixed(1)}%</Tag>
+        <Tag>{appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k046")}: {overview.performance.avgResolutionHours.toFixed(1)}h</Tag>
       </OverviewTags>
 
       <OverviewActions>
         <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("overdue")}>
-          View overdue
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k047")}
         </Button>
         <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("due_soon")}>
-          View due soon
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k048")}
         </Button>
         <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("checklist_at_risk")}>
-          Checklist at risk
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k049")}
         </Button>
         <Button size="small" icon={<EyeOutlined />} onClick={() => applyRiskFilter("high_priority")}>
-          High priority
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k050")}
         </Button>
       </OverviewActions>
 
@@ -492,7 +507,7 @@ export function WorkOrderList({
     </OverviewCard>
   ) : (
     <OverviewEmpty>
-      Operations overview is loading or unavailable for this workspace.
+      {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k051")}
     </OverviewEmpty>
   );
 
@@ -510,7 +525,7 @@ export function WorkOrderList({
             label: (
               <Space size={6}>
                 <AppstoreOutlined />
-                Work orders
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k052")}
               </Space>
             ),
             children: workOrdersContent,
@@ -520,7 +535,7 @@ export function WorkOrderList({
             label: (
               <Space size={6}>
                 <BarChartOutlined />
-                Operations overview
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_list_work_order_list_component.k053")}
               </Space>
             ),
             children: operationsOverviewContent,

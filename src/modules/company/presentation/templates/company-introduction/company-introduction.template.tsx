@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { BarChart3, BriefcaseBusiness, Building2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import { maskPhone } from "@core/utils/mask";
@@ -46,6 +47,8 @@ type Props = {
 };
 
 export function CompanyIntroductionTemplate({ onFinish, categories, industries, initialValues: initialValuesProp, responseModal }: Props): ReactElement {
+  const { t } = useTranslation();
+
   const steps = [
     personalInfoStep(),
     companyInfoStep(),
@@ -82,9 +85,9 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
         <>
           <TemplateShell>
             <HeaderRow>
-              <TemplateTitle>Company setup</TemplateTitle>
+              <TemplateTitle>{t("company.introduction.template.header.title")}</TemplateTitle>
               <TemplateSubtitle>
-                Configure your workspace foundation in a few guided steps.
+                {t("company.introduction.template.header.subtitle")}
               </TemplateSubtitle>
 
               <HeaderHighlights>
@@ -93,8 +96,8 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
                     <Building2 size={14} />
                   </HeaderHighlightIcon>
                   <div>
-                    <HeaderHighlightLabel>Identity</HeaderHighlightLabel>
-                    <HeaderHighlightValue>Workspace ownership and profile</HeaderHighlightValue>
+                    <HeaderHighlightLabel>{t("company.introduction.template.highlights.identity.label")}</HeaderHighlightLabel>
+                    <HeaderHighlightValue>{t("company.introduction.template.highlights.identity.value")}</HeaderHighlightValue>
                   </div>
                 </HeaderHighlightCard>
 
@@ -103,8 +106,8 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
                     <BriefcaseBusiness size={14} />
                   </HeaderHighlightIcon>
                   <div>
-                    <HeaderHighlightLabel>Catalog</HeaderHighlightLabel>
-                    <HeaderHighlightValue>Primary service and launch offers</HeaderHighlightValue>
+                    <HeaderHighlightLabel>{t("company.introduction.template.highlights.catalog.label")}</HeaderHighlightLabel>
+                    <HeaderHighlightValue>{t("company.introduction.template.highlights.catalog.value")}</HeaderHighlightValue>
                   </div>
                 </HeaderHighlightCard>
 
@@ -113,8 +116,8 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
                     <BarChart3 size={14} />
                   </HeaderHighlightIcon>
                   <div>
-                    <HeaderHighlightLabel>Activation</HeaderHighlightLabel>
-                    <HeaderHighlightValue>Improve readiness signals in Home</HeaderHighlightValue>
+                    <HeaderHighlightLabel>{t("company.introduction.template.highlights.activation.label")}</HeaderHighlightLabel>
+                    <HeaderHighlightValue>{t("company.introduction.template.highlights.activation.value")}</HeaderHighlightValue>
                   </div>
                 </HeaderHighlightCard>
               </HeaderHighlights>
@@ -122,8 +125,8 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
 
             <div className="wizard-wrap" data-cy="company-setup-wizard">
               <FormStepWizard<CompanyIntroductionValues>
-                title="Setup"
-                subtitle="Complete these steps to publish your workspace baseline."
+                title={t("company.introduction.template.wizard.title")}
+                subtitle={t("company.introduction.template.wizard.subtitle")}
                 steps={steps}
                 initialValues={initialValues}
                 onFinish={onFinish ?? (() => {})}

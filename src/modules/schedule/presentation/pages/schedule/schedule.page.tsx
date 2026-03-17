@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
+import { i18n as appI18n } from "@core/i18n";
 import {
   useScheduleApi,
   getNextSchedulesForWorkspace,
@@ -103,7 +104,7 @@ type ScheduleEventLike = ScheduleEvent & {
 
 export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
   protected override options = {
-    title: "Schedule | WorklyHub",
+    title: `${appI18n.t("schedule.pageTitles.schedule")} | WorklyHub`,
     requiresAuth: true,
   };
 

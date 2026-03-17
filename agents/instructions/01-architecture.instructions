@@ -70,6 +70,9 @@ Tema e UI
 - CSS variables em `src/shared/styles/theme/app-theme.scss`.
 - Tokens em `src/shared/styles/theme/tokens.scss`.
 - `AppThemeProvider` configura Ant Design tokens conforme tema atual.
+- Internacionalizacao da UI usa `react-i18next` com bootstrap em `src/core/i18n`.
+- Idiomas suportados no momento: `en-US` e `pt-BR`.
+- Preferencia de idioma deve ser persistida e nunca hardcoded em componentes.
 
 Importacao e aliases
 - Use sempre os aliases do `tsconfig.app.json`:
@@ -81,3 +84,4 @@ Guardrails (nao negociar)
 - Nao criar regra de negocio dentro de `shared`.
 - Nao duplicar modelos: reutilize os `interfaces` do modulo dono.
 - Nao ativar plano na selecao de card; ativacao acontece somente apos pagamento aprovado.
+- Nao adicionar texto novo de UI hardcoded sem cobertura i18n para `en-US` e `pt-BR`.

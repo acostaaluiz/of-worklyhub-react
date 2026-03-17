@@ -1,6 +1,7 @@
 import { Typography } from "antd";
 import { Calendar as CalendarIcon } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import type { WorkOrder, WorkOrderStatus } from "@modules/work-order/interfaces/work-order.model";
 import { WorkOrderCalendar } from "@modules/work-order/presentation/components/work-order-calendar/work-order-calendar.component";
@@ -27,7 +28,7 @@ export function WorkOrderCalendarTemplate({
   loading,
   onRangeChange,
 }: Props) {
-  return (
+        return (
     <BaseTemplate
       content={
         <PageStack>
@@ -38,10 +39,10 @@ export function WorkOrderCalendarTemplate({
               </TemplateIcon>
               <TemplateTitleCopy>
                 <Typography.Title level={2} style={{ margin: 0 }}>
-                  Work orders calendar
+                  {appI18n.t("legacyInline.work_order.presentation_templates_calendar_work_order_calendar_template.k001")}
                 </Typography.Title>
                 <Typography.Text type="secondary">
-                  Visualize scheduled and due work orders on a timeline.
+                  {appI18n.t("legacyInline.work_order.presentation_templates_calendar_work_order_calendar_template.k002")}
                 </Typography.Text>
               </TemplateTitleCopy>
             </TemplateTitleBlock>

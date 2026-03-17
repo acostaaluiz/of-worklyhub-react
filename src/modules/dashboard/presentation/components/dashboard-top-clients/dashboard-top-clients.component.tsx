@@ -1,5 +1,6 @@
 import { Skeleton, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { useTranslation } from "react-i18next";
 import { formatMoney } from "@core/utils/mask";
 
 import type { DashboardClientRankModel } from "../../../interfaces/dashboard-client-rank.model";
@@ -14,11 +15,12 @@ type Props = {
 };
 
 export function DashboardTopClients(props: Props) {
+  const { t } = useTranslation();
   const { items, loading } = props;
 
   const columns: ColumnsType<DashboardClientRankModel> = [
     {
-      title: "Client",
+      title: t("dashboard.topClients.columns.client"),
       dataIndex: "clientName",
       key: "clientName",
       ellipsis: true,
@@ -29,7 +31,7 @@ export function DashboardTopClients(props: Props) {
       ),
     },
     {
-      title: "Spent",
+      title: t("dashboard.topClients.columns.spent"),
       dataIndex: "totalSpent",
       key: "totalSpent",
       align: "right",
@@ -37,14 +39,14 @@ export function DashboardTopClients(props: Props) {
       render: (v: number) => formatMoney(v),
     },
     {
-      title: "Orders",
+      title: t("dashboard.topClients.columns.orders"),
       dataIndex: "ordersCount",
       key: "ordersCount",
       align: "right",
       width: 110,
     },
     {
-      title: "Avg",
+      title: t("dashboard.topClients.columns.avg"),
       dataIndex: "avgTicket",
       key: "avgTicket",
       align: "right",
@@ -57,8 +59,8 @@ export function DashboardTopClients(props: Props) {
     <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Top clients</div>
-          <div className="subtitle">Who buys the most</div>
+          <div className="title">{t("dashboard.topClients.title")}</div>
+          <div className="subtitle">{t("dashboard.topClients.subtitle")}</div>
         </div>
       </WidgetHeader>
 

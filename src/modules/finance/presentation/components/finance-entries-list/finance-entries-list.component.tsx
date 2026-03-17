@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, Button, Typography, message, Skeleton } from "antd";
 import { formatDate, formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
 import type { FinanceEntryListItem } from "@modules/finance/interfaces/finance-entry.model";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@modules/finance/utils/finance-value-status";
 
 export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
-  const api = useFinanceApi();
+        const api = useFinanceApi();
   const [items, setItems] = useState<FinanceEntryListItem[]>([]);
   const [page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -78,7 +79,7 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
                       style={{ display: "block", fontSize: 16 }}
                       data-cy={`finance-entry-description-${it.id}`}
                     >
-                      {stripCodeFromDescription(it.description) ?? "Entry"}
+                      {stripCodeFromDescription(it.description) ?? appI18n.t("legacyInline.finance.presentation_components_finance_entries_list_finance_entries_list_component.k001")}
                     </Typography.Text>
                     <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{formatDate(it.date)}</div>
                   </div>
@@ -102,7 +103,14 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
                     })()}
 
                     <div style={{ marginTop: 8 }}>
-                      <Button size="small" type="primary" shape="round" onClick={() => message.info("Entry info")}>Info</Button>
+                      <Button
+                        size="small"
+                        type="primary"
+                        shape="round"
+                        onClick={() => message.info(appI18n.t("legacyInline.finance.presentation_components_finance_entries_list_finance_entries_list_component.k002"))}
+                      >
+                        {appI18n.t("legacyInline.finance.presentation_components_finance_entries_list_finance_entries_list_component.k003")}
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -112,15 +120,15 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
 
       <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8 }}>
         {page > 0 && (
-          <Button onClick={() => setPage(page - 1)}>VOLTAR</Button>
+          <Button onClick={() => setPage(page - 1)}>{appI18n.t("legacyInline.finance.presentation_components_finance_entries_list_finance_entries_list_component.k004")}</Button>
         )}
 
         {page !== 0 && (
-          <Button onClick={() => setPage(0)}>INÍCIO</Button>
+          <Button onClick={() => setPage(0)}>{appI18n.t("legacyInline.finance.presentation_components_finance_entries_list_finance_entries_list_component.k005")}</Button>
         )}
 
         {page < totalPages - 1 && (
-          <Button type="primary" onClick={() => setPage(page + 1)}>VER MAIS</Button>
+          <Button type="primary" onClick={() => setPage(page + 1)}>{appI18n.t("legacyInline.finance.presentation_components_finance_entries_list_finance_entries_list_component.k006")}</Button>
         )}
       </div>
     </div>

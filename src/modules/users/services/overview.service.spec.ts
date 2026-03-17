@@ -10,7 +10,12 @@ jest.mock("./overview-api", () => ({
   UsersOverviewApi: jest.fn(),
 }));
 
+jest.mock("@core/i18n", () => ({
+  getCurrentAppLanguage: jest.fn(() => "pt-BR"),
+}));
+
 import { localStorageProvider } from "@core/storage/local-storage.provider";
+import { getCurrentAppLanguage } from "@core/i18n";
 import { UsersOverviewApi } from "./overview-api";
 import { UsersOverviewService } from "./overview.service";
 
@@ -43,11 +48,13 @@ function deferred<T>() {
 
 describe("UsersOverviewService", () => {
   const mockedStorage = jest.mocked(localStorageProvider);
+  const mockedGetCurrentAppLanguage = jest.mocked(getCurrentAppLanguage);
   const overviewApiCtor = jest.mocked(UsersOverviewApi);
   let apiMock: OverviewApiMock;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetCurrentAppLanguage.mockReturnValue("pt-BR");
     apiMock = createApiMock();
     overviewApiCtor.mockImplementation(() => apiMock as unknown as UsersOverviewApi);
     mockedStorage.get.mockReturnValue(null);
@@ -58,6 +65,7 @@ describe("UsersOverviewService", () => {
       if (key === "users.overview") {
         return JSON.stringify({
           user: "another@worklyhub.com",
+          language: "pt-BR",
           overview: {
             profile: { email: "another@worklyhub.com" },
             modules: [{ uid: "finance", name: "Finance" }],
@@ -80,6 +88,7 @@ describe("UsersOverviewService", () => {
       if (key === "users.overview") {
         return JSON.stringify({
           user: "owner@worklyhub.com",
+          language: "pt-BR",
           overview: {
             profile: { email: "owner@worklyhub.com", name: "Owner" },
             modules: [{ uid: "clients", name: "Clients" }],
@@ -106,6 +115,7 @@ describe("UsersOverviewService", () => {
       if (key === "users.overview") {
         return JSON.stringify({
           user: "owner@worklyhub.com",
+          language: "pt-BR",
           overview: {
             profile: { email: "owner@worklyhub.com", name: "Owner" },
             modules: [],
@@ -140,8 +150,50 @@ describe("UsersOverviewService", () => {
     });
     expect(mockedStorage.set).toHaveBeenCalledWith(
       "users.overview",
-      expect.stringContaining('"owner@worklyhub.com"')
+      expect.stringContaining('"language":"pt-BR"')
     );
+  });
+
+  it("ignores cached overview when cached language differs from current app language", () => {
+    mockedStorage.get.mockImplementation((key: string) => {
+      if (key === "users.overview") {
+        return JSON.stringify({
+          user: "owner@worklyhub.com",
+          language: "en-US",
+          overview: {
+            profile: { email: "owner@worklyhub.com", name: "Owner" },
+            modules: [{ uid: "clients", name: "Clients" }],
+          },
+        });
+      }
+      if (key === "auth.session") {
+        return JSON.stringify({ email: "owner@worklyhub.com" });
+      }
+      return null;
+    });
+
+    const service = new UsersOverviewService();
+
+    expect(service.getOverviewValue()).toBeNull();
+  });
+
+  it("clears in-memory overview when app language changes and refetches with fresh language", async () => {
+    const service = new UsersOverviewService();
+    await service.fetchOverview(true);
+
+    mockedGetCurrentAppLanguage.mockReturnValue("en-US");
+    apiMock.getOverview.mockResolvedValueOnce({
+      profile: {
+        email: "owner@worklyhub.com",
+        full_name: "Dr. Maria Rita",
+      },
+      modules: [{ uid: "finance", name: "Finance" }],
+    });
+
+    const refreshed = await service.fetchOverview();
+
+    expect(refreshed?.modules).toEqual([{ uid: "finance", name: "Finance" }]);
+    expect(mockedStorage.remove).toHaveBeenCalledWith("users.overview");
   });
 
   it("supports wrapped data payload and defaults modules when response modules are invalid", async () => {

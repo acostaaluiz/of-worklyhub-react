@@ -1,10 +1,12 @@
 import React from "react";
-import { Tabs, Avatar, Button, Form, Input, Radio, InputNumber, Select, Tooltip } from "antd";
-import { AppstoreOutlined, BankOutlined, FileTextOutlined, IdcardOutlined, MailOutlined, PhoneOutlined, ShopOutlined, TagsOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { Tabs, Avatar, Button, Form, Input, Radio, InputNumber, Select, Tooltip, Progress, Table, Tag } from "antd";
+import { AppstoreOutlined, BankOutlined, FileTextOutlined, HistoryOutlined, IdcardOutlined, MailOutlined, PhoneOutlined, RobotOutlined, ShopOutlined, TagsOutlined, TeamOutlined, ThunderboltOutlined, UserOutlined } from "@ant-design/icons";
 import styled, { keyframes } from "styled-components";
+import { useTranslation } from "react-i18next";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import { maskPhone } from "@core/utils/mask";
 import { BaseTemplate } from "@shared/base/base.template";
+import type { AiTokenLedgerEntryModel, AiTokenSummaryModel } from "@modules/users/interfaces/ai-token.model";
 
 const { TabPane } = Tabs;
 
@@ -18,26 +20,24 @@ const ProfileShell = styled.div`
 `;
 
 const CardBase = styled.div`
-  background: var(--color-glass-surface);
+  background-color: var(--color-surface-elevated);
+  background-image: none;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 `;
 
 const MainCard = styled(CardBase)`
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  isolation: isolate;
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  background:
-    radial-gradient(circle at 14% 12%, rgba(30, 112, 255, 0.16), transparent 45%),
-    radial-gradient(circle at 86% 88%, rgba(0, 214, 160, 0.14), transparent 48%),
-    var(--color-glass-surface);
+  background-color: var(--color-surface-elevated);
+  background-image: none;
 
   @media (max-width: 768px) {
     padding: var(--space-3);
@@ -263,14 +263,25 @@ const ProfileTabs = styled(Tabs)`
   }
 
   .ant-tabs-content-holder {
+    flex: 1;
     min-height: 0;
-    overflow: auto;
-    padding-right: 4px;
+    overflow: hidden;
+    background-color: var(--color-surface-elevated);
+    background-image: none;
   }
 
   .ant-tabs-content,
   .ant-tabs-tabpane {
+    height: 100%;
     min-height: 0;
+    background-color: var(--color-surface-elevated);
+    background-image: none;
+  }
+
+  .ant-tabs-tabpane {
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 2px;
   }
 
   .ant-form-item {
@@ -304,11 +315,16 @@ export type ProfileTemplateProps = {
   company?: CompanyModel;
   categories?: ApplicationCategoryItem[];
   industries?: ApplicationIndustryItem[];
-  defaultTab?: "personal" | "company";
+  defaultTab?: "personal" | "company" | "ai-tokens";
+  aiTokensSummary?: AiTokenSummaryModel;
+  aiTokensLedger?: AiTokenLedgerEntryModel[];
+  aiTokensTotal?: number;
+  isAiTokensLoading?: boolean;
   isAvatarLoading?: boolean;
   isWallpaperLoading?: boolean;
   isSavingPersonal?: boolean;
   isSavingCompany?: boolean;
+  onRefreshAiTokens?: () => void;
   onOpenAvatar: () => void;
   onOpenWallpaper?: () => void;
   onSavePersonal: (values: PersonalModel) => void;
@@ -316,14 +332,14 @@ export type ProfileTemplateProps = {
 };
 
 const FormStackStyle: React.CSSProperties = { display: "flex", flexDirection: "column", gap: "var(--space-2)" };
-const fallbackIndustryOptions: { value: string; label: string }[] = [
-  { value: "health", label: "Health" },
-  { value: "finance", label: "Finance" },
-  { value: "retail", label: "Retail" },
-  { value: "education", label: "Education" },
-  { value: "services", label: "Services" },
-  { value: "other", label: "Other" },
-];
+const fallbackIndustryOptionValues = [
+  "health",
+  "finance",
+  "retail",
+  "education",
+  "services",
+  "other",
+] as const;
 
 const CompanyGrid = styled.div`
   display: grid;
@@ -366,10 +382,14 @@ const PersonalGrid = styled.div`
 
 const ProfileHighlights = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 760px) {
     grid-template-columns: 1fr;
   }
 `;
@@ -420,6 +440,10 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   categories,
   industries,
   defaultTab,
+  aiTokensSummary,
+  aiTokensLedger,
+  aiTokensTotal,
+  isAiTokensLoading,
   isAvatarLoading,
   isWallpaperLoading,
   onOpenAvatar,
@@ -428,9 +452,21 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
   onSaveCompany,
   isSavingPersonal,
   isSavingCompany,
+  onRefreshAiTokens,
 }) => {
+  const { t } = useTranslation();
   const [personalForm] = Form.useForm();
   const [companyForm] = Form.useForm();
+
+  const fallbackIndustryOptions = React.useMemo(
+    () =>
+      fallbackIndustryOptionValues.map((value) => ({
+        value,
+        label: t(`users.profile.company.fields.industryFallback.${value}`),
+      })),
+    [t]
+  );
+
   const serviceOptions = React.useMemo(() => {
     const base = (categories ?? []).map((c) => ({ value: c.uid, label: c.name }));
     const current = company?.primaryService;
@@ -449,7 +485,65 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
       return [{ value: current, label: current }, ...base];
     }
     return base;
-  }, [industries, company?.industry]);
+  }, [industries, company?.industry, fallbackIndustryOptions]);
+
+  const aiTokenColumns = React.useMemo(() => ([
+    {
+      title: t("users.profile.aiTokens.table.columns.when"),
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 180,
+      render: (value: string) => {
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return "-";
+        return d.toLocaleString();
+      },
+    },
+    {
+      title: t("users.profile.aiTokens.table.columns.module"),
+      dataIndex: "sourceModule",
+      key: "sourceModule",
+      width: 120,
+      render: (value: string) => <Tag>{value}</Tag>,
+    },
+    {
+      title: t("users.profile.aiTokens.table.columns.feature"),
+      dataIndex: "sourceFeature",
+      key: "sourceFeature",
+      width: 240,
+      ellipsis: true,
+    },
+    {
+      title: t("users.profile.aiTokens.table.columns.type"),
+      dataIndex: "entryType",
+      key: "entryType",
+      width: 110,
+      render: (value: string) => (
+        <Tag color={value === "debit" ? "red" : value === "credit" ? "green" : "gold"}>
+          {t(`users.profile.aiTokens.table.entryType.${value}`, { defaultValue: value })}
+        </Tag>
+      ),
+    },
+    {
+      title: t("users.profile.aiTokens.table.columns.tokens"),
+      dataIndex: "amountTokens",
+      key: "amountTokens",
+      width: 110,
+      render: (value: number, row: AiTokenLedgerEntryModel) => (
+        <span style={{ fontWeight: 600, color: row.entryType === "debit" ? "var(--color-error)" : "var(--color-success)" }}>
+          {row.entryType === "debit" ? "-" : "+"}
+          {value}
+        </span>
+      ),
+    },
+    {
+      title: t("users.profile.aiTokens.table.columns.balanceAfter"),
+      dataIndex: "balanceAfterTokens",
+      key: "balanceAfterTokens",
+      width: 140,
+      render: (value: number) => <span style={{ fontWeight: 600 }}>{value}</span>,
+    },
+  ]), [t]);
 
   React.useEffect(() => {
     // schedule update after render to avoid "not connected to DataMap Form" warning
@@ -480,8 +574,8 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
       <MainCard data-cy="users-profile-main-card">
         <MainHeader>
           <div>
-            <MainTitle>Profile settings</MainTitle>
-            <MainSubtitle>Update your personal and company information.</MainSubtitle>
+            <MainTitle>{t("users.profile.header.title")}</MainTitle>
+            <MainSubtitle>{t("users.profile.header.subtitle")}</MainSubtitle>
           </div>
         </MainHeader>
 
@@ -508,11 +602,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
 
             <HeroActions>
               <PlanBadge>
-                <PlanName>{personal?.planName ?? "No plan"}</PlanName>
+                <PlanName>{personal?.planName ?? t("users.profile.common.noPlan")}</PlanName>
                 {personal?.planPrice ? <PlanPrice>{personal.planPrice}</PlanPrice> : null}
               </PlanBadge>
               <ActionButton type="default" onClick={onOpenAvatar} data-cy="users-profile-change-photo-button">
-                Change photo
+                {t("users.profile.actions.changePhoto")}
               </ActionButton>
             </HeroActions>
           </HeroContent>
@@ -522,30 +616,42 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
           <HighlightCard>
             <HighlightIcon><TagsOutlined /></HighlightIcon>
             <HighlightMeta>
-              <HighlightLabel>Plan</HighlightLabel>
-              <HighlightValue>{personal?.planName ?? "No plan"}</HighlightValue>
+              <HighlightLabel>{t("users.profile.highlights.plan")}</HighlightLabel>
+              <HighlightValue>{personal?.planName ?? t("users.profile.common.noPlan")}</HighlightValue>
             </HighlightMeta>
           </HighlightCard>
 
           <HighlightCard>
             <HighlightIcon><IdcardOutlined /></HighlightIcon>
             <HighlightMeta>
-              <HighlightLabel>Account type</HighlightLabel>
-              <HighlightValue>{company?.accountType === "company" ? "Company" : "Individual"}</HighlightValue>
+              <HighlightLabel>{t("users.profile.highlights.accountType")}</HighlightLabel>
+              <HighlightValue>
+                {t(
+                  `users.profile.company.fields.accountType.options.${company?.accountType === "company" ? "company" : "individual"}`
+                )}
+              </HighlightValue>
             </HighlightMeta>
           </HighlightCard>
 
           <HighlightCard>
             <HighlightIcon><TeamOutlined /></HighlightIcon>
             <HighlightMeta>
-              <HighlightLabel>Employees</HighlightLabel>
+              <HighlightLabel>{t("users.profile.highlights.employees")}</HighlightLabel>
               <HighlightValue>{company?.employees ?? 0}</HighlightValue>
+            </HighlightMeta>
+          </HighlightCard>
+
+          <HighlightCard>
+            <HighlightIcon><ThunderboltOutlined /></HighlightIcon>
+            <HighlightMeta>
+              <HighlightLabel>{t("users.profile.highlights.aiTokens")}</HighlightLabel>
+              <HighlightValue>{aiTokensSummary?.totalBalanceTokens ?? 0}</HighlightValue>
             </HighlightMeta>
           </HighlightCard>
         </ProfileHighlights>
 
         <ProfileTabs defaultActiveKey={defaultTab ?? "personal"} data-cy="users-profile-tabs">
-            <TabPane tab={<span data-cy="users-profile-tab-personal">Personal info</span>} key="personal">
+            <TabPane tab={<span data-cy="users-profile-tab-personal">{t("users.profile.tabs.personal")}</span>} key="personal">
               <Form
                 form={personalForm}
                 initialValues={{ ...personal, phone: maskPhone(personal?.phone) }}
@@ -560,19 +666,19 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><UserOutlined /></LabelIcon>
-                        Full name
+                        {t("users.profile.personal.fields.fullName.label")}
                       </FieldLabel>
                     }
-                    rules={[{ required: true, message: "Please enter your full name" }]}
+                    rules={[{ required: true, message: t("users.profile.personal.fields.fullName.required") }]}
                   >
-                    <Input placeholder="Full name" data-cy="users-personal-full-name-input" />
+                    <Input placeholder={t("users.profile.personal.fields.fullName.placeholder")} data-cy="users-personal-full-name-input" />
                   </Form.Item>
                   <Form.Item
                     name="email"
                     label={
                       <FieldLabel>
                         <LabelIcon><MailOutlined /></LabelIcon>
-                        Email
+                        {t("users.profile.personal.fields.email.label")}
                       </FieldLabel>
                     }
                   >
@@ -584,15 +690,15 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><PhoneOutlined /></LabelIcon>
-                        Phone
-                        <Tooltip title="Include country code (e.g. +55 11 99999-9999)">
+                        {t("users.profile.personal.fields.phone.label")}
+                        <Tooltip title={t("users.profile.personal.fields.phone.hint")}>
                           <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
                         </Tooltip>
                       </FieldLabel>
                     }
                   >
                     <Input
-                      placeholder="Phone"
+                      placeholder={t("users.profile.personal.fields.phone.placeholder")}
                       data-cy="users-personal-phone-input"
                       onBlur={(e) => {
                         try {
@@ -607,7 +713,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                 </PersonalGrid>
                 <Form.Item>
                   <FormActions>
-                    <Tooltip title="Save your personal profile changes">
+                    <Tooltip title={t("users.profile.personal.actions.saveTooltip")}>
                       <span>
                         <Button
                           type="primary"
@@ -615,7 +721,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                           loading={isSavingPersonal}
                           data-cy="users-personal-save-button"
                         >
-                          Save personal
+                          {t("users.profile.personal.actions.save")}
                         </Button>
                       </span>
                     </Tooltip>
@@ -624,7 +730,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
               </Form>
             </TabPane>
 
-            <TabPane tab={<span data-cy="users-profile-tab-company">Company info</span>} key="company" forceRender>
+            <TabPane tab={<span data-cy="users-profile-tab-company">{t("users.profile.tabs.company")}</span>} key="company" forceRender>
               <Form
                 form={companyForm}
                 initialValues={company ?? { accountType: "individual" }}
@@ -639,16 +745,16 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><IdcardOutlined /></LabelIcon>
-                        Account type
+                        {t("users.profile.company.fields.accountType.label")}
                       </FieldLabel>
                     }
                   >
                     <Radio.Group data-cy="users-company-account-type-radio-group">
                       <Radio value="individual" data-cy="users-company-account-type-individual-radio">
-                        Individual
+                        {t("users.profile.company.fields.accountType.options.individual")}
                       </Radio>
                       <Radio value="company" data-cy="users-company-account-type-company-radio">
-                        Company
+                        {t("users.profile.company.fields.accountType.options.company")}
                       </Radio>
                     </Radio.Group>
                   </Form.Item>
@@ -658,7 +764,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><TeamOutlined /></LabelIcon>
-                        Employees
+                        {t("users.profile.company.fields.employees.label")}
                       </FieldLabel>
                     }
                   >
@@ -674,14 +780,14 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><BankOutlined /></LabelIcon>
-                        Legal name
-                        <Tooltip title="Official registered company name">
+                        {t("users.profile.company.fields.legalName.label")}
+                        <Tooltip title={t("users.profile.company.fields.legalName.hint")}>
                           <span style={{ marginLeft: 6, cursor: "help", color: "var(--color-text-muted)" }}>?</span>
                         </Tooltip>
                       </FieldLabel>
                     }
                   >
-                    <Input placeholder="Legal name" data-cy="users-company-legal-name-input" />
+                    <Input placeholder={t("users.profile.company.fields.legalName.placeholder")} data-cy="users-company-legal-name-input" />
                   </Form.Item>
 
                   <Form.Item
@@ -689,11 +795,11 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><ShopOutlined /></LabelIcon>
-                        Trade name
+                        {t("users.profile.company.fields.tradeName.label")}
                       </FieldLabel>
                     }
                   >
-                    <Input placeholder="Trade name" data-cy="users-company-trade-name-input" />
+                    <Input placeholder={t("users.profile.company.fields.tradeName.placeholder")} data-cy="users-company-trade-name-input" />
                   </Form.Item>
 
                   <Form.Item
@@ -701,12 +807,12 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><AppstoreOutlined /></LabelIcon>
-                        Primary service
+                        {t("users.profile.company.fields.primaryService.label")}
                       </FieldLabel>
                     }
                   >
                     <Select
-                      placeholder="Select primary service"
+                      placeholder={t("users.profile.company.fields.primaryService.placeholder")}
                       options={serviceOptions}
                       data-cy="users-company-primary-service-select"
                     />
@@ -717,12 +823,12 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><TagsOutlined /></LabelIcon>
-                        Industry
+                        {t("users.profile.company.fields.industry.label")}
                       </FieldLabel>
                     }
                   >
                     <Select
-                      placeholder="Select an industry"
+                      placeholder={t("users.profile.company.fields.industry.placeholder")}
                       options={industryOptions}
                       data-cy="users-company-industry-select"
                     />
@@ -733,7 +839,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     label={
                       <FieldLabel>
                         <LabelIcon><FileTextOutlined /></LabelIcon>
-                        Description
+                        {t("users.profile.company.fields.description.label")}
                       </FieldLabel>
                     }
                     className="span-full"
@@ -744,14 +850,14 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
 
                 <Form.Item>
                   <FormActions>
-                    <Tooltip title="Upload a new company wallpaper">
+                    <Tooltip title={t("users.profile.company.actions.changeWallpaperTooltip")}>
                       <span>
                         <Button type="default" onClick={onOpenWallpaper} data-cy="users-company-change-wallpaper-button">
-                          Change wallpaper
+                          {t("users.profile.company.actions.changeWallpaper")}
                         </Button>
                       </span>
                     </Tooltip>
-                    <Tooltip title="Save your company profile changes">
+                    <Tooltip title={t("users.profile.company.actions.saveTooltip")}>
                       <span>
                         <Button
                           type="primary"
@@ -759,13 +865,123 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                           loading={isSavingCompany}
                           data-cy="users-company-save-button"
                         >
-                          Save company
+                          {t("users.profile.company.actions.save")}
                         </Button>
                       </span>
                     </Tooltip>
                   </FormActions>
                 </Form.Item>
               </Form>
+            </TabPane>
+
+            <TabPane tab={<span data-cy="users-profile-tab-ai-tokens">{t("users.profile.tabs.aiTokens")}</span>} key="ai-tokens">
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    padding: 12,
+                    background: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                        <RobotOutlined />
+                        {t("users.profile.aiTokens.balance.title")}
+                      </div>
+                      <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                        {t("users.profile.aiTokens.balance.subtitle")}
+                      </div>
+                    </div>
+                    <Button onClick={onRefreshAiTokens} loading={isAiTokensLoading}>
+                      {t("users.profile.aiTokens.balance.actions.refresh")}
+                    </Button>
+                  </div>
+
+                  <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+                    <div>
+                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.current")}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.totalBalanceTokens ?? 0}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.monthlyQuota")}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.monthlyAllocationTokens ?? 0}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.topUp")}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.topupBalanceTokens ?? 0}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.nextRefill")}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>
+                        {aiTokensSummary?.nextRefillAt
+                          ? new Date(aiTokensSummary.nextRefillAt).toLocaleString()
+                          : "-"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 10 }}>
+                    <Progress
+                      percent={
+                        aiTokensSummary?.monthlyAllocationTokens
+                          ? Math.min(
+                              100,
+                              Math.round(
+                                ((aiTokensSummary.monthlyBalanceTokens ?? 0) /
+                                  aiTokensSummary.monthlyAllocationTokens) *
+                                  100
+                              )
+                            )
+                          : 0
+                      }
+                      status="active"
+                      size="small"
+                    />
+                    <div style={{ marginTop: 4, fontSize: 12, color: "var(--color-text-muted)" }}>
+                      {t("users.profile.aiTokens.balance.remainingMonthlyQuota", {
+                        count: aiTokensSummary?.monthlyBalanceTokens ?? 0,
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 12px",
+                      borderBottom: "1px solid var(--color-divider)",
+                      background: "color-mix(in srgb, var(--color-surface-2) 72%, transparent)",
+                    }}
+                  >
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                      <HistoryOutlined />
+                      {t("users.profile.aiTokens.statement.title")}
+                    </div>
+                    <Tag>{t("users.profile.aiTokens.statement.totalRecords", { count: aiTokensTotal ?? 0 })}</Tag>
+                  </div>
+
+                  <Table<AiTokenLedgerEntryModel>
+                    rowKey="id"
+                    loading={isAiTokensLoading}
+                    columns={aiTokenColumns}
+                    dataSource={aiTokensLedger ?? []}
+                    pagination={false}
+                    scroll={{ x: 920, y: 320 }}
+                    locale={{ emptyText: t("users.profile.aiTokens.statement.empty") }}
+                  />
+                </div>
+              </div>
             </TabPane>
           </ProfileTabs>
         </MainCard>

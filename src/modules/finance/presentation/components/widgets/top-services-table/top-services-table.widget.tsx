@@ -2,6 +2,7 @@ import { Skeleton, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import styled from "styled-components";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import { getFinanceValueColor } from "../../../../utils/finance-value-status";
 
 import type { FinanceTopServiceRow } from "../../../../interfaces/finance-table.model";
@@ -49,22 +50,22 @@ export function TopServicesTableWidget({
   loading,
   subtitle,
 }: Props) {
-  const columns: ColumnsType<FinanceTopServiceRow> = [
+        const columns: ColumnsType<FinanceTopServiceRow> = [
     {
-      title: "Service",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_top_services_table_top_services_table_widget.k001"),
       dataIndex: "serviceName",
       key: "serviceName",
       ellipsis: true,
     },
     {
-      title: "Orders",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_top_services_table_top_services_table_widget.k002"),
       dataIndex: "orders",
       key: "orders",
       width: 90,
       align: "right",
     },
     {
-      title: "Revenue",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_top_services_table_top_services_table_widget.k003"),
       dataIndex: "revenue",
       key: "revenue",
       width: 130,
@@ -76,7 +77,7 @@ export function TopServicesTableWidget({
       ),
     },
     {
-      title: "Avg Ticket",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_top_services_table_top_services_table_widget.k004"),
       dataIndex: "avgTicket",
       key: "avgTicket",
       width: 120,
@@ -93,12 +94,12 @@ export function TopServicesTableWidget({
     <WidgetCard className={className}>
       <WidgetHeader>
         <div className="titleRow">
-          <div className="title">Top Services</div>
+          <div className="title">{appI18n.t("legacyInline.finance.presentation_components_widgets_top_services_table_top_services_table_widget.k005")}</div>
           <div className="titleIcon">
             <Briefcase size={16} />
           </div>
         </div>
-        <div className="subtitle">{subtitle ?? "Best performing services."}</div>
+        <div className="subtitle">{subtitle ?? appI18n.t("legacyInline.finance.presentation_components_widgets_top_services_table_top_services_table_widget.k006")}</div>
       </WidgetHeader>
 
       <WidgetBody>

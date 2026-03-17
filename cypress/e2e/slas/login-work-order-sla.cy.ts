@@ -624,6 +624,7 @@ describe("SLA module - work order completion integration", () => {
     cy.wait("@listWorkOrdersRequest", { timeout: 30000 });
     cy.wait("@listPeopleWorkersRequest", { timeout: 30000 });
 
+    cy.getBySel("work-order-new-button").click({ force: true });
     cy.getBySel("work-order-form").should("be.visible");
     cy.getBySel("work-order-title-input").type(seed.workOrderTitle);
     cy.getBySel("work-order-description-input").type(

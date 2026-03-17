@@ -1,5 +1,6 @@
 import { Col } from "antd";
 import { AlertTriangle, Bell, ClipboardList } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   MetricCard,
   MetricContent,
@@ -23,6 +24,8 @@ export default function MetricsCards({
   unreadNotifications = 0,
   highPriorityUnreadNotifications = 0,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <MetricsRow gutter={[12, 12]}>
       <Col xs={24} sm={8}>
@@ -32,7 +35,7 @@ export default function MetricsCards({
               <ClipboardList size={18} />
             </MetricIcon>
             <MetricMeta>
-              <MetricLabel>Overdue work orders</MetricLabel>
+              <MetricLabel>{t("home.metrics.overdueWorkOrders")}</MetricLabel>
               <MetricValue>{overdueWorkOrders}</MetricValue>
             </MetricMeta>
           </MetricContent>
@@ -46,7 +49,7 @@ export default function MetricsCards({
               <AlertTriangle size={18} />
             </MetricIcon>
             <MetricMeta>
-              <MetricLabel>Inventory alerts</MetricLabel>
+              <MetricLabel>{t("home.metrics.inventoryAlerts")}</MetricLabel>
               <MetricValue>{inventoryAlerts}</MetricValue>
             </MetricMeta>
           </MetricContent>
@@ -61,9 +64,11 @@ export default function MetricsCards({
             </MetricIcon>
             <MetricMeta>
               <MetricLabel>
-                Unread notifications
+                {t("home.metrics.unreadNotifications")}
                 {highPriorityUnreadNotifications > 0
-                  ? ` (${highPriorityUnreadNotifications} high priority)`
+                  ? t("home.metrics.highPrioritySuffix", {
+                      count: highPriorityUnreadNotifications,
+                    })
                   : ""}
               </MetricLabel>
               <MetricValue>{unreadNotifications}</MetricValue>

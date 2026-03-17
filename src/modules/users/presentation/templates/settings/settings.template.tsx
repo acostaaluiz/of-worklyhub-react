@@ -7,6 +7,7 @@ import {
   DollarOutlined,
   FileDoneOutlined,
   FileTextOutlined,
+  GlobalOutlined,
   InboxOutlined,
   MoonOutlined,
   PoweroffOutlined,
@@ -15,8 +16,10 @@ import {
   ToolOutlined,
   UsergroupAddOutlined,
 } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { themeService } from "@core/config/theme/theme.service";
 import type { ThemeCustomColors, ThemeMode } from "@core/config/theme/theme.interface";
+import { normalizeAppLanguage, setAppLanguage, type AppLanguage } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
 import type {
@@ -50,46 +53,46 @@ import {
 
 type ModuleOption = {
   key: WorkspaceInvoiceModuleKey;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   icon: React.ReactNode;
 };
 
 const MODULE_OPTIONS: ModuleOption[] = [
   {
     key: "work-order",
-    label: "Work order",
-    description: "Allows billing and NF-e issuance from work orders.",
+    labelKey: "users.settings.billing.modules.workOrder.label",
+    descriptionKey: "users.settings.billing.modules.workOrder.description",
     icon: <FileTextOutlined />,
   },
   {
     key: "schedule",
-    label: "Schedule",
-    description: "Allows billing and NF-e issuance from schedule completions.",
+    labelKey: "users.settings.billing.modules.schedule.label",
+    descriptionKey: "users.settings.billing.modules.schedule.description",
     icon: <CalendarOutlined />,
   },
   {
     key: "finance",
-    label: "Finance",
-    description: "Enables fiscal issuance for finance entries.",
+    labelKey: "users.settings.billing.modules.finance.label",
+    descriptionKey: "users.settings.billing.modules.finance.description",
     icon: <DollarOutlined />,
   },
   {
     key: "inventory",
-    label: "Inventory",
-    description: "Reserved for sales that trigger stock reduction.",
+    labelKey: "users.settings.billing.modules.inventory.label",
+    descriptionKey: "users.settings.billing.modules.inventory.description",
     icon: <InboxOutlined />,
   },
   {
     key: "people",
-    label: "People",
-    description: "Reserved for billing based on services delivered by collaborators.",
+    labelKey: "users.settings.billing.modules.people.label",
+    descriptionKey: "users.settings.billing.modules.people.description",
     icon: <TeamOutlined />,
   },
   {
     key: "clients",
-    label: "Clients",
-    description: "Reserved for sales flows initiated in the Clients module.",
+    labelKey: "users.settings.billing.modules.clients.label",
+    descriptionKey: "users.settings.billing.modules.clients.description",
     icon: <UsergroupAddOutlined />,
   },
 ];
@@ -98,8 +101,8 @@ type AppearanceColorKey = keyof ThemeCustomColors;
 
 type AppearanceColorOption = {
   key: AppearanceColorKey;
-  label: string;
-  description: string;
+  labelKey: string;
+  descriptionKey: string;
   cssVariable: string;
   fallbackByMode: Record<ThemeMode, string>;
 };
@@ -109,50 +112,50 @@ const HEX_COLOR_PATTERN = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 const APPEARANCE_COLOR_OPTIONS: AppearanceColorOption[] = [
   {
     key: "background",
-    label: "Background color",
-    description: "Main app backdrop color.",
+    labelKey: "users.settings.appearance.customColors.options.background.label",
+    descriptionKey: "users.settings.appearance.customColors.options.background.description",
     cssVariable: "--color-background",
     fallbackByMode: { light: "#f4f6f9", dark: "#0f1f26" },
   },
   {
     key: "surface",
-    label: "Surface color",
-    description: "Card and panel base color.",
+    labelKey: "users.settings.appearance.customColors.options.surface.label",
+    descriptionKey: "users.settings.appearance.customColors.options.surface.description",
     cssVariable: "--color-surface",
     fallbackByMode: { light: "#ffffff", dark: "#132a33" },
   },
   {
     key: "surfaceAlt",
-    label: "Surface alt color",
-    description: "Secondary panel color and layered surfaces.",
+    labelKey: "users.settings.appearance.customColors.options.surfaceAlt.label",
+    descriptionKey: "users.settings.appearance.customColors.options.surfaceAlt.description",
     cssVariable: "--color-surface-2",
     fallbackByMode: { light: "#eef4ff", dark: "#173642" },
   },
   {
     key: "primary",
-    label: "Primary color",
-    description: "Main actions, highlights and interactive accents.",
+    labelKey: "users.settings.appearance.customColors.options.primary.label",
+    descriptionKey: "users.settings.appearance.customColors.options.primary.description",
     cssVariable: "--color-primary",
     fallbackByMode: { light: "#1e70ff", dark: "#4de6d3" },
   },
   {
     key: "secondary",
-    label: "Secondary color",
-    description: "Secondary accents and supporting highlights.",
+    labelKey: "users.settings.appearance.customColors.options.secondary.label",
+    descriptionKey: "users.settings.appearance.customColors.options.secondary.description",
     cssVariable: "--color-secondary",
     fallbackByMode: { light: "#00d6a0", dark: "#2dd4bf" },
   },
   {
     key: "tertiary",
-    label: "Tertiary color",
-    description: "Complementary accent used in gradients and details.",
+    labelKey: "users.settings.appearance.customColors.options.tertiary.label",
+    descriptionKey: "users.settings.appearance.customColors.options.tertiary.description",
     cssVariable: "--color-tertiary",
     fallbackByMode: { light: "#7a2cff", dark: "#7a2cff" },
   },
   {
     key: "text",
-    label: "Text color",
-    description: "Main text color for headings and body content.",
+    labelKey: "users.settings.appearance.customColors.options.text.label",
+    descriptionKey: "users.settings.appearance.customColors.options.text.description",
     cssVariable: "--color-text",
     fallbackByMode: { light: "#071318", dark: "#e6f1f4" },
   },
@@ -226,40 +229,50 @@ type SettingsTemplateProps = {
   onSaveNfeConfiguration: (configuration: NfeConfigurationWritePayload) => void;
 };
 
-function toSourceLabel(source: "database" | "defaults"): string {
-  if (source === "database") return "Loaded from workspace settings";
-  return "No saved record yet (default values)";
+type TranslateFn = (key: string, options?: Record<string, unknown>) => string;
+
+function toSourceLabel(source: "database" | "defaults", t: TranslateFn): string {
+  if (source === "database") return t("users.settings.meta.sourceLong.database");
+  return t("users.settings.meta.sourceLong.defaults");
 }
 
-function toSourceCompactLabel(source: "database" | "defaults"): string {
-  if (source === "database") return "workspace";
-  return "default";
+function toSourceCompactLabel(source: "database" | "defaults", t: TranslateFn): string {
+  if (source === "database") return t("users.settings.meta.sourceCompact.database");
+  return t("users.settings.meta.sourceCompact.defaults");
 }
 
 function toResolutionLabel(
-  resolution: "workspace" | "workspace-default" | "platform" | "none"
+  resolution: "workspace" | "workspace-default" | "platform" | "none",
+  t: TranslateFn
 ): string {
-  if (resolution === "workspace") return "Workspace-specific fiscal configuration";
+  if (resolution === "workspace")
+    return t("users.settings.meta.resolutionLong.workspace");
   if (resolution === "workspace-default")
-    return "Platform default workspace fiscal configuration";
-  if (resolution === "platform") return "Platform fiscal configuration";
-  return "No fiscal configuration saved";
+    return t("users.settings.meta.resolutionLong.workspaceDefault");
+  if (resolution === "platform") return t("users.settings.meta.resolutionLong.platform");
+  return t("users.settings.meta.resolutionLong.none");
 }
 
 function toResolutionCompactLabel(
-  resolution: "workspace" | "workspace-default" | "platform" | "none"
+  resolution: "workspace" | "workspace-default" | "platform" | "none",
+  t: TranslateFn
 ): string {
-  if (resolution === "workspace") return "workspace";
-  if (resolution === "workspace-default") return "workspace-default";
-  if (resolution === "platform") return "platform";
-  return "not configured";
+  if (resolution === "workspace") return t("users.settings.meta.resolutionCompact.workspace");
+  if (resolution === "workspace-default")
+    return t("users.settings.meta.resolutionCompact.workspaceDefault");
+  if (resolution === "platform") return t("users.settings.meta.resolutionCompact.platform");
+  return t("users.settings.meta.resolutionCompact.none");
 }
 
-function toDateLabel(value?: string): string {
-  if (!value) return "Not updated";
+function toDateLabel(
+  value: string | undefined,
+  locale: AppLanguage,
+  notUpdatedLabel: string
+): string {
+  if (!value) return notUpdatedLabel;
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return value;
-  return dt.toLocaleString("en-US");
+  return dt.toLocaleString(locale);
 }
 
 function toWorkspaceLabel(value?: string): string {
@@ -285,7 +298,11 @@ function readCssColorVariable(variableName: string, fallback: string): string {
   return toColorInputValue(raw, fallback);
 }
 
-function parseJsonObject(label: string, value: DataValue): DataMap | undefined {
+function parseJsonObject(
+  label: string,
+  value: DataValue,
+  t: TranslateFn
+): DataMap | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
@@ -294,19 +311,24 @@ function parseJsonObject(label: string, value: DataValue): DataMap | undefined {
   try {
     parsed = JSON.parse(trimmed);
   } catch {
-    throw new Error(`${label} must be valid JSON.`);
+    throw new Error(
+      t("users.settings.advanced.validation.mustBeValidJson", { label })
+    );
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error(`${label} must be a JSON object.`);
+    throw new Error(
+      t("users.settings.advanced.validation.mustBeJsonObject", { label })
+    );
   }
   return parsed as DataMap;
 }
 
 function parseJsonStringMap(
   label: string,
-  value: DataValue
+  value: DataValue,
+  t: TranslateFn
 ): Record<string, string> | undefined {
-  const parsed = parseJsonObject(label, value);
+  const parsed = parseJsonObject(label, value, t);
   if (!parsed) return undefined;
 
   const mapped: Record<string, string> = {};
@@ -355,8 +377,16 @@ function mapConfigurationToFormValues(
 }
 
 function mapFormValuesToConfiguration(
-  values: NfeConfigurationFormValues
+  values: NfeConfigurationFormValues,
+  t: TranslateFn
 ): NfeConfigurationWritePayload {
+  const headersLabel = t("users.settings.advanced.fields.headers");
+  const payloadTemplateLabel = t("users.settings.advanced.fields.payloadTemplate");
+  const responseMappingLabel = t("users.settings.advanced.fields.responseMapping");
+  const issuerAddressLabel = t("users.settings.advanced.fields.issuerAddress");
+  const defaultsLabel = t("users.settings.advanced.fields.defaults");
+  const metadataLabel = t("users.settings.advanced.fields.metadata");
+
   return {
     environment: values.environment ?? "homologation",
     integration: {
@@ -376,14 +406,16 @@ function mapFormValuesToConfiguration(
             password: values.integration.auth.password,
           }
         : { type: "none" },
-      headers: parseJsonStringMap("Headers", values.integration.headers),
+      headers: parseJsonStringMap(headersLabel, values.integration.headers, t),
       payloadTemplate: parseJsonObject(
-        "Payload template",
-        values.integration.payloadTemplate
+        payloadTemplateLabel,
+        values.integration.payloadTemplate,
+        t
       ),
       responseMapping: parseJsonStringMap(
-        "Response mapping",
-        values.integration.responseMapping
+        responseMappingLabel,
+        values.integration.responseMapping,
+        t
       ),
     },
     issuer: {
@@ -392,10 +424,10 @@ function mapFormValuesToConfiguration(
       stateRegistration: values.issuer.stateRegistration,
       municipalRegistration: values.issuer.municipalRegistration,
       taxRegime: values.issuer.taxRegime,
-      address: parseJsonObject("Issuer address", values.issuer.address),
+      address: parseJsonObject(issuerAddressLabel, values.issuer.address, t),
     },
-    defaults: parseJsonObject("Defaults", values.defaults),
-    metadata: parseJsonObject("Metadata", values.metadata),
+    defaults: parseJsonObject(defaultsLabel, values.defaults, t),
+    metadata: parseJsonObject(metadataLabel, values.metadata, t),
   };
 }
 
@@ -413,6 +445,8 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   onSaveWorkspaceSettings,
   onSaveNfeConfiguration,
 }) => {
+  const { t, i18n } = useTranslation();
+
   const tabLabel = (
     icon: React.ReactNode,
     label: string,
@@ -436,6 +470,9 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   const [customColors, setCustomColors] = React.useState<ThemeCustomColors>(() =>
     themeService.getCustomColors()
   );
+  const [appLanguage, setAppLanguageState] = React.useState<AppLanguage>(() =>
+    normalizeAppLanguage(i18n.resolvedLanguage ?? i18n.language)
+  );
   const authType = Form.useWatch(["integration", "auth", "type"], configurationForm);
 
   React.useEffect(() => {
@@ -454,6 +491,17 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     return unsubscribe;
   }, []);
 
+  React.useEffect(() => {
+    const handleLanguageChanged = (language: string) => {
+      setAppLanguageState(normalizeAppLanguage(language));
+    };
+
+    i18n.on("languageChanged", handleLanguageChanged);
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, [i18n]);
+
   const handleSaveWorkspaceSettings = async () => {
     const values = await settingsForm.validateFields();
     onSaveWorkspaceSettings(values as WorkspaceInvoiceSettings);
@@ -462,7 +510,10 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   const handleSaveNfeConfiguration = async () => {
     try {
       const values = await configurationForm.validateFields();
-      const payload = mapFormValuesToConfiguration(values as NfeConfigurationFormValues);
+      const payload = mapFormValuesToConfiguration(
+        values as NfeConfigurationFormValues,
+        t as TranslateFn
+      );
       onSaveNfeConfiguration(payload);
     } catch (err) {
       if (err instanceof Error) {
@@ -474,7 +525,27 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
   const handleThemeChange = (mode: ThemeMode) => {
     themeService.setPreference(mode);
     setThemePreference(mode);
-    message.success(`Theme updated to ${mode === "dark" ? "Dark" : "Light"}.`);
+    message.success(
+      t("users.settings.appearance.theme.updateSuccess", {
+        mode:
+          mode === "dark"
+            ? t("users.settings.appearance.theme.modes.dark")
+            : t("users.settings.appearance.theme.modes.light"),
+      })
+    );
+  };
+
+  const handleLanguageChange = async (nextLanguage: AppLanguage) => {
+    await setAppLanguage(nextLanguage);
+    setAppLanguageState(nextLanguage);
+    message.success(
+      t("settings.language.changeSuccess", {
+        language:
+          nextLanguage === "pt-BR"
+            ? t("settings.language.portuguese")
+            : t("settings.language.english"),
+      })
+    );
   };
 
   const resolveAppearanceColor = React.useCallback(
@@ -506,7 +577,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
   const handleResetCustomColors = () => {
     themeService.clearCustomColors();
-    message.success("Custom colors removed. Default palette restored.");
+    message.success(t("users.settings.appearance.customColors.resetSuccess"));
   };
 
   const hasCustomColors = React.useMemo(
@@ -520,18 +591,18 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         <CardTitle>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <DollarCircleOutlined />
-            <span>Billing rules by module</span>
+            <span>{t("users.settings.billing.title")}</span>
           </span>
         </CardTitle>
         <CardSubtitle>
-          Enable the modules that can start billing and NF-e issuance.
+          {t("users.settings.billing.subtitle")}
         </CardSubtitle>
         <Alert
           showIcon
           type="info"
           style={{ marginBottom: 8 }}
-          message="Execution-to-billing automation"
-          description="When Work Order or Schedule reaches a final execution status, the backend can automatically create a finance entry. NF-e issuance is optional."
+          message={t("users.settings.billing.automation.title")}
+          description={t("users.settings.billing.automation.description")}
         />
 
         <Form
@@ -547,7 +618,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             label={
               <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <PoweroffOutlined />
-                <span>Workspace billing enabled</span>
+                <span>{t("users.settings.billing.workspaceEnabled")}</span>
               </span>
             }
           >
@@ -561,10 +632,10 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                   <ModuleTitle>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                       {moduleOption.icon}
-                      <span>{moduleOption.label}</span>
+                      <span>{t(moduleOption.labelKey)}</span>
                     </span>
                   </ModuleTitle>
-                  <ModuleDescription>{moduleOption.description}</ModuleDescription>
+                  <ModuleDescription>{t(moduleOption.descriptionKey)}</ModuleDescription>
                 </div>
                 <Form.Item
                   noStyle
@@ -586,7 +657,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               loading={!!isSavingSettings}
               data-cy="settings-billing-save-button"
             >
-              Save rules
+              {t("users.settings.billing.actions.save")}
             </Button>
           </ActionsRow>
         </Form>
@@ -600,37 +671,59 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         <CardTitle>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <FileDoneOutlined />
-            <span>Fiscal issuance connection (NF-e)</span>
+            <span>{t("users.settings.issuance.title")}</span>
           </span>
         </CardTitle>
         <CardSubtitle>
-          Configure workspace fiscal issuer settings for service-sale invoices.
+          {t("users.settings.issuance.subtitle")}
         </CardSubtitle>
 
         <EmissionGrid data-cy="settings-issuance-form">
           <Form.Item
             name="environment"
-            label="Environment"
-            rules={[{ required: true, message: "Select the environment." }]}
+            label={t("users.settings.issuance.fields.environment")}
+            rules={[
+              {
+                required: true,
+                message: t("users.settings.issuance.validation.environmentRequired"),
+              },
+            ]}
           >
             <Select
               data-cy="settings-issuance-environment-select"
               options={[
-                { value: "homologation", label: "Homologation" },
-                { value: "production", label: "Production" },
+                {
+                  value: "homologation",
+                  label: t("users.settings.issuance.options.environment.homologation"),
+                },
+                {
+                  value: "production",
+                  label: t("users.settings.issuance.options.environment.production"),
+                },
               ]}
             />
           </Form.Item>
 
           <Form.Item
             name={["integration", "provider"]}
-            label="Provider"
-            rules={[{ required: true, message: "Provide the provider." }]}
+            label={t("users.settings.issuance.fields.provider")}
+            rules={[
+              {
+                required: true,
+                message: t("users.settings.issuance.validation.providerRequired"),
+              },
+            ]}
           >
-            <Input data-cy="settings-issuance-provider-input" placeholder="govbr" />
+            <Input
+              data-cy="settings-issuance-provider-input"
+              placeholder={t("users.settings.issuance.placeholders.provider")}
+            />
           </Form.Item>
 
-          <Form.Item name={["integration", "method"]} label="HTTP method">
+          <Form.Item
+            name={["integration", "method"]}
+            label={t("users.settings.issuance.fields.httpMethod")}
+          >
             <Select
               data-cy="settings-issuance-method-select"
               options={[
@@ -642,16 +735,28 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
           <Form.Item
             name={["integration", "auth", "type"]}
-            label="Authentication"
+            label={t("users.settings.issuance.fields.authentication")}
             initialValue="none"
           >
             <Select
               data-cy="settings-issuance-auth-type-select"
               options={[
-                { value: "none", label: "No authentication" },
-                { value: "bearer", label: "Bearer token" },
-                { value: "api-key", label: "API key" },
-                { value: "basic", label: "Basic auth" },
+                {
+                  value: "none",
+                  label: t("users.settings.issuance.options.authentication.none"),
+                },
+                {
+                  value: "bearer",
+                  label: t("users.settings.issuance.options.authentication.bearer"),
+                },
+                {
+                  value: "api-key",
+                  label: t("users.settings.issuance.options.authentication.apiKey"),
+                },
+                {
+                  value: "basic",
+                  label: t("users.settings.issuance.options.authentication.basic"),
+                },
               ]}
             />
           </Form.Item>
@@ -659,24 +764,40 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Form.Item
             className="span-two"
             name={["integration", "baseUrl"]}
-            label="Fiscal API base URL"
-            rules={[{ required: true, message: "Provide the base URL." }]}
+            label={t("users.settings.issuance.fields.baseUrl")}
+            rules={[
+              {
+                required: true,
+                message: t("users.settings.issuance.validation.baseUrlRequired"),
+              },
+            ]}
           >
             <Input
               data-cy="settings-issuance-base-url-input"
-              placeholder="https://api.your-provider.com"
+              placeholder={t("users.settings.issuance.placeholders.baseUrl")}
             />
           </Form.Item>
 
           <Form.Item
             name={["integration", "issuePath"]}
-            label="Issue path"
-            rules={[{ required: true, message: "Provide the issue path." }]}
+            label={t("users.settings.issuance.fields.issuePath")}
+            rules={[
+              {
+                required: true,
+                message: t("users.settings.issuance.validation.issuePathRequired"),
+              },
+            ]}
           >
-            <Input data-cy="settings-issuance-issue-path-input" placeholder="/nfe/emit" />
+            <Input
+              data-cy="settings-issuance-issue-path-input"
+              placeholder={t("users.settings.issuance.placeholders.issuePath")}
+            />
           </Form.Item>
 
-          <Form.Item name={["integration", "timeoutMs"]} label="Timeout (ms)">
+          <Form.Item
+            name={["integration", "timeoutMs"]}
+            label={t("users.settings.issuance.fields.timeoutMs")}
+          >
             <InputNumber
               data-cy="settings-issuance-timeout-input"
               min={1000}
@@ -685,7 +806,10 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             />
           </Form.Item>
 
-          <Form.Item name={["integration", "retries"]} label="Retries">
+          <Form.Item
+            name={["integration", "retries"]}
+            label={t("users.settings.issuance.fields.retries")}
+          >
             <InputNumber
               data-cy="settings-issuance-retries-input"
               min={0}
@@ -698,8 +822,13 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <Form.Item
               className="span-two"
               name={["integration", "auth", "token"]}
-              label="Bearer token"
-              rules={[{ required: true, message: "Provide the token." }]}
+              label={t("users.settings.issuance.fields.bearerToken")}
+              rules={[
+                {
+                  required: true,
+                  message: t("users.settings.issuance.validation.tokenRequired"),
+                },
+              ]}
             >
               <Input.Password />
             </Form.Item>
@@ -709,18 +838,28 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <>
               <Form.Item
                 name={["integration", "auth", "headerName"]}
-                label="API key header"
-                rules={[{ required: true, message: "Provide the header." }]}
+                label={t("users.settings.issuance.fields.apiKeyHeader")}
+                rules={[
+                  {
+                    required: true,
+                    message: t("users.settings.issuance.validation.headerRequired"),
+                  },
+                ]}
               >
                 <Input
                   data-cy="settings-issuance-api-key-header-input"
-                  placeholder="x-api-key"
+                  placeholder={t("users.settings.issuance.placeholders.apiKeyHeader")}
                 />
               </Form.Item>
               <Form.Item
                 name={["integration", "auth", "apiKey"]}
-                label="API key"
-                rules={[{ required: true, message: "Provide the API key." }]}
+                label={t("users.settings.issuance.fields.apiKey")}
+                rules={[
+                  {
+                    required: true,
+                    message: t("users.settings.issuance.validation.apiKeyRequired"),
+                  },
+                ]}
               >
                 <Input.Password data-cy="settings-issuance-api-key-input" />
               </Form.Item>
@@ -731,15 +870,25 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             <>
               <Form.Item
                 name={["integration", "auth", "username"]}
-                label="Username"
-                rules={[{ required: true, message: "Provide the username." }]}
+                label={t("users.settings.issuance.fields.username")}
+                rules={[
+                  {
+                    required: true,
+                    message: t("users.settings.issuance.validation.usernameRequired"),
+                  },
+                ]}
               >
                 <Input />
               </Form.Item>
               <Form.Item
                 name={["integration", "auth", "password"]}
-                label="Password"
-                rules={[{ required: true, message: "Provide the password." }]}
+                label={t("users.settings.issuance.fields.password")}
+                rules={[
+                  {
+                    required: true,
+                    message: t("users.settings.issuance.validation.passwordRequired"),
+                  },
+                ]}
               >
                 <Input.Password />
               </Form.Item>
@@ -749,30 +898,46 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Form.Item
             className="span-two"
             name={["issuer", "legalName"]}
-            label="Legal name"
-            rules={[{ required: true, message: "Provide the legal name." }]}
+            label={t("users.settings.issuance.fields.legalName")}
+            rules={[
+              {
+                required: true,
+                message: t("users.settings.issuance.validation.legalNameRequired"),
+              },
+            ]}
           >
             <Input data-cy="settings-issuance-legal-name-input" />
           </Form.Item>
 
           <Form.Item
             name={["issuer", "document"]}
-            label="Issuer document (CNPJ/CPF)"
-            rules={[{ required: true, message: "Provide the document." }]}
+            label={t("users.settings.issuance.fields.issuerDocument")}
+            rules={[
+              {
+                required: true,
+                message: t("users.settings.issuance.validation.documentRequired"),
+              },
+            ]}
           >
             <Input data-cy="settings-issuance-document-input" />
           </Form.Item>
 
-          <Form.Item name={["issuer", "stateRegistration"]} label="State registration">
+          <Form.Item
+            name={["issuer", "stateRegistration"]}
+            label={t("users.settings.issuance.fields.stateRegistration")}
+          >
             <Input />
           </Form.Item>
 
-          <Form.Item name={["issuer", "municipalRegistration"]} label="Municipal registration">
+          <Form.Item
+            name={["issuer", "municipalRegistration"]}
+            label={t("users.settings.issuance.fields.municipalRegistration")}
+          >
             <Input />
           </Form.Item>
 
-          <Form.Item name={["issuer", "taxRegime"]} label="Tax regime">
-            <Input placeholder="simples_nacional, lucro_presumido..." />
+          <Form.Item name={["issuer", "taxRegime"]} label={t("users.settings.issuance.fields.taxRegime")}>
+            <Input placeholder={t("users.settings.issuance.placeholders.taxRegime")} />
           </Form.Item>
         </EmissionGrid>
 
@@ -783,7 +948,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             loading={!!isSavingConfiguration}
             data-cy="settings-issuance-save-button"
           >
-            Save issuance
+            {t("users.settings.issuance.actions.save")}
           </Button>
         </ActionsRow>
       </Card>
@@ -796,65 +961,71 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         <CardTitle>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <ToolOutlined />
-            <span>Advanced parameters</span>
+            <span>{t("users.settings.advanced.title")}</span>
           </span>
         </CardTitle>
         <CardSubtitle>
-          Optional fields for extra headers, templates, and metadata.
+          {t("users.settings.advanced.subtitle")}
         </CardSubtitle>
 
         <AdvancedGrid data-cy="settings-advanced-form">
-          <Form.Item name={["integration", "headers"]} label="Headers (JSON)">
+          <Form.Item
+            name={["integration", "headers"]}
+            label={t("users.settings.advanced.fields.headers")}
+          >
             <Input.TextArea
               data-cy="settings-advanced-headers-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"x-tenant":"worklyhub"}'
+              placeholder={t("users.settings.advanced.placeholders.headers")}
             />
           </Form.Item>
 
           <Form.Item
             name={["integration", "payloadTemplate"]}
-            label="Payload template (JSON)"
+            label={t("users.settings.advanced.fields.payloadTemplate")}
           >
             <Input.TextArea
               data-cy="settings-advanced-payload-template-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"operationNature":"Service provided"}'
+              placeholder={t("users.settings.advanced.placeholders.payloadTemplate")}
             />
           </Form.Item>
 
           <Form.Item
             name={["integration", "responseMapping"]}
-            label="Response mapping (JSON)"
+            label={t("users.settings.advanced.fields.responseMapping")}
           >
             <Input.TextArea
               data-cy="settings-advanced-response-mapping-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"status":"status","accessKey":"access_key"}'
+              placeholder={t("users.settings.advanced.placeholders.responseMapping")}
             />
           </Form.Item>
 
-          <Form.Item name={["issuer", "address"]} label="Issuer address (JSON)">
+          <Form.Item
+            name={["issuer", "address"]}
+            label={t("users.settings.advanced.fields.issuerAddress")}
+          >
             <Input.TextArea
               data-cy="settings-advanced-address-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"street":"Street X","number":"123","city":"Sao Paulo","state":"SP"}'
+              placeholder={t("users.settings.advanced.placeholders.issuerAddress")}
             />
           </Form.Item>
 
-          <Form.Item name={["defaults"]} label="Defaults (JSON)">
+          <Form.Item name={["defaults"]} label={t("users.settings.advanced.fields.defaults")}>
             <Input.TextArea
               data-cy="settings-advanced-defaults-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"serviceCode":"1401"}'
+              placeholder={t("users.settings.advanced.placeholders.defaults")}
             />
           </Form.Item>
 
-          <Form.Item name={["metadata"]} label="Metadata (JSON)">
+          <Form.Item name={["metadata"]} label={t("users.settings.advanced.fields.metadata")}>
             <Input.TextArea
               data-cy="settings-advanced-metadata-input"
               autoSize={{ minRows: 1, maxRows: 2 }}
-              placeholder='{"owner":"workspace"}'
+              placeholder={t("users.settings.advanced.placeholders.metadata")}
             />
           </Form.Item>
         </AdvancedGrid>
@@ -866,7 +1037,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
             loading={!!isSavingConfiguration}
             data-cy="settings-advanced-save-button"
           >
-            Save advanced
+            {t("users.settings.advanced.actions.save")}
           </Button>
         </ActionsRow>
       </Card>
@@ -879,24 +1050,26 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         showIcon
         type="info"
         style={{ marginBottom: 8 }}
-        message="Theme mode"
-        description="The selected mode is applied immediately and saved to your local preferences."
+        message={t("users.settings.appearance.theme.alertTitle")}
+        description={t("users.settings.appearance.theme.alertDescription")}
       />
       <ModuleToggleList>
         <ModuleToggleRow>
           <div>
             <ModuleTitle>
               <SunOutlined style={{ marginRight: 6 }} />
-              Light
+              {t("users.settings.appearance.theme.lightLabel")}
             </ModuleTitle>
-            <ModuleDescription>Bright interface for daytime usage.</ModuleDescription>
+            <ModuleDescription>
+              {t("users.settings.appearance.theme.lightDescription")}
+            </ModuleDescription>
           </div>
           <Button
             type={themePreference === "light" ? "primary" : "default"}
             onClick={() => handleThemeChange("light")}
             data-cy="settings-appearance-use-light-button"
           >
-            Use light
+            {t("users.settings.appearance.theme.useLight")}
           </Button>
         </ModuleToggleRow>
 
@@ -904,23 +1077,30 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <div>
             <ModuleTitle>
               <MoonOutlined style={{ marginRight: 6 }} />
-              Dark
+              {t("users.settings.appearance.theme.darkLabel")}
             </ModuleTitle>
-            <ModuleDescription>Reduced glare in low-light environments.</ModuleDescription>
+            <ModuleDescription>
+              {t("users.settings.appearance.theme.darkDescription")}
+            </ModuleDescription>
           </div>
           <Button
             type={themePreference === "dark" ? "primary" : "default"}
             onClick={() => handleThemeChange("dark")}
             data-cy="settings-appearance-use-dark-button"
           >
-            Use dark
+            {t("users.settings.appearance.theme.useDark")}
           </Button>
         </ModuleToggleRow>
       </ModuleToggleList>
 
       <ActionsRow style={{ gap: 8, flexWrap: "wrap" }}>
         <Button icon={<BgColorsOutlined />} disabled data-cy="settings-appearance-active-mode">
-          Active mode: {themePreference === "dark" ? "Dark" : "Light"}
+          {t("users.settings.appearance.theme.activeMode", {
+            mode:
+              themePreference === "dark"
+                ? t("users.settings.appearance.theme.modes.dark")
+                : t("users.settings.appearance.theme.modes.light"),
+          })}
         </Button>
       </ActionsRow>
     </AppearanceTabContent>
@@ -934,8 +1114,8 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           return (
             <ModuleToggleRow key={option.key}>
               <div>
-                <ModuleTitle>{option.label}</ModuleTitle>
-                <ModuleDescription>{option.description}</ModuleDescription>
+                <ModuleTitle>{t(option.labelKey)}</ModuleTitle>
+                <ModuleDescription>{t(option.descriptionKey)}</ModuleDescription>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <input
@@ -972,12 +1152,46 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           disabled={!hasCustomColors}
           data-cy="settings-appearance-reset-custom-colors-button"
         >
-          Use default palette
+          {t("users.settings.appearance.customColors.reset")}
         </Button>
         <Button disabled data-cy="settings-appearance-custom-status">
-          Custom palette: {hasCustomColors ? "Enabled" : "Disabled"}
+          {t("users.settings.appearance.customColors.status", {
+            state: hasCustomColors
+              ? t("users.settings.appearance.customColors.states.enabled")
+              : t("users.settings.appearance.customColors.states.disabled"),
+          })}
         </Button>
       </ActionsRow>
+    </AppearanceTabContent>
+  );
+
+  const appearanceLanguageContent = (
+    <AppearanceTabContent>
+      <Alert
+        showIcon
+        type="info"
+        style={{ marginBottom: 8 }}
+        message={t("settings.language.title")}
+        description={t("settings.language.description")}
+      />
+      <ModuleToggleList>
+        <ModuleToggleRow>
+          <div>
+            <ModuleTitle>{t("settings.language.selectLabel")}</ModuleTitle>
+            <ModuleDescription>{t("settings.language.description")}</ModuleDescription>
+          </div>
+          <Select
+            value={appLanguage}
+            onChange={(value) => void handleLanguageChange(value as AppLanguage)}
+            style={{ minWidth: 220 }}
+            data-cy="settings-appearance-language-select"
+            options={[
+              { value: "en-US", label: t("settings.language.english") },
+              { value: "pt-BR", label: t("settings.language.portuguese") },
+            ]}
+          />
+        </ModuleToggleRow>
+      </ModuleToggleList>
     </AppearanceTabContent>
   );
 
@@ -987,11 +1201,11 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         <CardTitle>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
             <BgColorsOutlined />
-            <span>Appearance</span>
+            <span>{t("users.settings.appearance.title")}</span>
           </span>
         </CardTitle>
         <CardSubtitle>
-          Switch between light and dark themes and optionally customize key colors.
+          {t("users.settings.appearance.subtitle")}
         </CardSubtitle>
         <AppearanceTabs
           data-cy="settings-appearance-tabs"
@@ -1001,7 +1215,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               key: "theme",
               label: tabLabel(
                 <SunOutlined />,
-                "Theme",
+                t("users.settings.appearance.tabs.theme"),
                 "settings-appearance-tab-theme"
               ),
               children: appearanceThemeContent,
@@ -1010,10 +1224,19 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
               key: "custom-colors",
               label: tabLabel(
                 <BgColorsOutlined />,
-                "Custom colors",
+                t("users.settings.appearance.tabs.customColors"),
                 "settings-appearance-tab-custom-colors"
               ),
               children: appearanceCustomColorsContent,
+            },
+            {
+              key: "language",
+              label: tabLabel(
+                <GlobalOutlined />,
+                t("settings.language.selectLabel"),
+                "settings-appearance-tab-language"
+              ),
+              children: appearanceLanguageContent,
             },
           ]}
         />
@@ -1027,20 +1250,42 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         <SettingsTemplateRoot data-cy="settings-page">
           <SettingsShell>
             <HeroCard>
-              <HeroTitle>Settings</HeroTitle>
+              <HeroTitle>{t("users.settings.hero.title")}</HeroTitle>
               <HeroSubtitle>
-                Centralize workspace billing and NF-e issuance configuration.
+                {t("users.settings.hero.subtitle")}
               </HeroSubtitle>
               <MetaRow>
-                <MetaPill title={workspaceId}>Workspace: {toWorkspaceLabel(workspaceId)}</MetaPill>
-                <MetaPill title={toSourceLabel(settingsSource)}>
-                  Source: {toSourceCompactLabel(settingsSource)}
+                <MetaPill title={workspaceId}>
+                  {t("users.settings.meta.workspace")}: {toWorkspaceLabel(workspaceId)}
                 </MetaPill>
-                <MetaPill title={toResolutionLabel(nfeResolution)}>
-                  NF-e: {toResolutionCompactLabel(nfeResolution)}
+                <MetaPill title={toSourceLabel(settingsSource, t as TranslateFn)}>
+                  {t("users.settings.meta.source")}:
+                  {" "}
+                  {toSourceCompactLabel(settingsSource, t as TranslateFn)}
                 </MetaPill>
-                <MetaPill>Rules updated: {toDateLabel(settingsUpdatedAt)}</MetaPill>
-                <MetaPill>NF-e updated: {toDateLabel(nfeUpdatedAt)}</MetaPill>
+                <MetaPill title={toResolutionLabel(nfeResolution, t as TranslateFn)}>
+                  {t("users.settings.meta.nfe")}:
+                  {" "}
+                  {toResolutionCompactLabel(nfeResolution, t as TranslateFn)}
+                </MetaPill>
+                <MetaPill>
+                  {t("users.settings.meta.rulesUpdated")}:
+                  {" "}
+                  {toDateLabel(
+                    settingsUpdatedAt,
+                    appLanguage,
+                    t("users.settings.meta.notUpdated")
+                  )}
+                </MetaPill>
+                <MetaPill>
+                  {t("users.settings.meta.nfeUpdated")}:
+                  {" "}
+                  {toDateLabel(
+                    nfeUpdatedAt,
+                    appLanguage,
+                    t("users.settings.meta.notUpdated")
+                  )}
+                </MetaPill>
               </MetaRow>
             </HeroCard>
 
@@ -1060,7 +1305,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                       key: "module-rules",
                       label: tabLabel(
                         <DollarCircleOutlined />,
-                        "Billing",
+                        t("users.settings.tabs.billing"),
                         "settings-tab-billing"
                       ),
                       children: moduleTab,
@@ -1069,7 +1314,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                       key: "issuance",
                       label: tabLabel(
                         <FileDoneOutlined />,
-                        "Issuance",
+                        t("users.settings.tabs.issuance"),
                         "settings-tab-issuance"
                       ),
                       children: emissionTab,
@@ -1078,7 +1323,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                       key: "advanced",
                       label: tabLabel(
                         <ToolOutlined />,
-                        "Advanced",
+                        t("users.settings.tabs.advanced"),
                         "settings-tab-advanced"
                       ),
                       children: advancedTab,
@@ -1087,7 +1332,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
                       key: "appearance",
                       label: tabLabel(
                         <BgColorsOutlined />,
-                        "Appearance",
+                        t("users.settings.tabs.appearance"),
                         "settings-tab-appearance"
                       ),
                       children: appearanceTab,

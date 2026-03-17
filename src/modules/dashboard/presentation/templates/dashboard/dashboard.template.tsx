@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Typography } from "antd";
 import { BarChart3 } from "lucide-react";
 import dayjs from "dayjs";
+import { useTranslation } from "react-i18next";
 
 import { BaseTemplate } from "@shared/base/base.template";
 
@@ -31,6 +32,7 @@ import { DashboardServiceBreakdown } from "../../components/dashboard-service-br
 import { DashboardAlerts } from "../../components/dashboard-alerts/dashboard-alerts.component";
 
 export function DashboardTemplate() {
+  const { t } = useTranslation();
   const service = useMemo(() => new DashboardService(), []);
 
   const [view, setView] = useState<DashboardView>("overview");
@@ -56,12 +58,12 @@ export function DashboardTemplate() {
       const res = await service.getDashboard(q);
       setData(res);
     } catch (err) {
-      setError("Unable to load dashboard data for this period.");
+      setError(t("dashboard.template.messages.loadError"));
       setData(null);
     } finally {
       setLoading(false);
     }
-  }, [service]);
+  }, [service, t]);
 
   useEffect(() => {
     load(query);
@@ -93,10 +95,10 @@ export function DashboardTemplate() {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <Typography.Title level={2} style={{ margin: 0 }}>
-                      Dashboard
+                      {t("dashboard.template.header.title")}
                     </Typography.Title>
                     <Typography.Text type="secondary">
-                      Daily operational control and risk signals. Use Finance for deep cashflow analysis.
+                      {t("dashboard.template.header.subtitle")}
                     </Typography.Text>
                   </div>
                 </div>

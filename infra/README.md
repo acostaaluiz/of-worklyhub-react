@@ -52,6 +52,11 @@ Para producao, troque o prefix para `worklyhub/frontend/master`.
 
 ## Comandos
 
+Antes de executar:
+
+- Preencha `google_credentials_file` no `terraform.tfvars` com o caminho da chave JSON de deploy
+  (ou deixe vazio e use ADC com `gcloud auth application-default login`).
+
 ### Develop
 
 ```bash

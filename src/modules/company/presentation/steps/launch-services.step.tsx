@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Form, Input, InputNumber, Select, Tabs, Typography } from "antd";
 import { ListChecks, Tag } from "lucide-react";
 import type { ApplicationCategoryItem } from "@core/application/application-api";
+import { i18n as appI18n } from "@core/i18n";
 import type { WizardStep } from "@shared/ui/components/form-step/form-step.component";
 import { FieldIcon } from "@shared/styles/global";
 import { LaunchServicesGrid } from "./launch-services.step.styles";
@@ -23,7 +24,7 @@ function renderServiceFields(index: number, categoryOptions: Array<{ value: stri
   return (
     <LaunchServicesGrid>
       <Form.Item
-        label="Service name"
+        label={appI18n.t("company.steps.launchServices.fields.serviceName.label")}
         name={["services", index, "name"]}
         rules={[
           ({ getFieldValue }) => ({
@@ -31,7 +32,7 @@ function renderServiceFields(index: number, categoryOptions: Array<{ value: stri
               const current = getFieldValue(["services", index]) as Record<string, DataValue> | undefined;
               const requiresName = index === 0 || hasServiceDetails(current);
               if (requiresName && !String(value ?? "").trim()) {
-                return Promise.reject(new Error("Service name is required."));
+                return Promise.reject(new Error(appI18n.t("company.steps.launchServices.fields.serviceName.required")));
               }
               return Promise.resolve();
             },
@@ -40,7 +41,7 @@ function renderServiceFields(index: number, categoryOptions: Array<{ value: stri
       >
         <Input
           size="large"
-          placeholder="Example: Haircut + beard"
+          placeholder={appI18n.t("company.steps.launchServices.fields.serviceName.placeholder")}
           data-cy={`launch-service-name-input-${index}`}
           prefix={
             <FieldIcon aria-hidden>
@@ -50,50 +51,50 @@ function renderServiceFields(index: number, categoryOptions: Array<{ value: stri
         />
       </Form.Item>
 
-      <Form.Item label="Category (optional)" name={["services", index, "category"]}>
+      <Form.Item label={appI18n.t("company.steps.launchServices.fields.category.label")} name={["services", index, "category"]}>
         <Select
           size="large"
-          placeholder="Select a category"
+          placeholder={appI18n.t("company.steps.launchServices.fields.category.placeholder")}
           options={categoryOptions}
           allowClear
           data-cy={`launch-service-category-select-${index}`}
         />
       </Form.Item>
 
-      <Form.Item label="Description (optional)" name={["services", index, "description"]}>
+      <Form.Item label={appI18n.t("company.steps.launchServices.fields.description.label")} name={["services", index, "description"]}>
         <Input.TextArea
           autoSize={{ minRows: 1, maxRows: 2 }}
-          placeholder="Short service summary..."
+          placeholder={appI18n.t("company.steps.launchServices.fields.description.placeholder")}
           data-cy={`launch-service-description-input-${index}`}
         />
       </Form.Item>
-      <Form.Item label="Duration (minutes)" name={["services", index, "durationMinutes"]}>
+      <Form.Item label={appI18n.t("company.steps.launchServices.fields.duration.label")} name={["services", index, "durationMinutes"]}>
         <InputNumber
           size="large"
           min={5}
           max={600}
           step={5}
-          placeholder="60"
+          placeholder={appI18n.t("company.steps.launchServices.fields.duration.placeholder")}
           style={{ width: "100%" }}
           data-cy={`launch-service-duration-input-${index}`}
         />
       </Form.Item>
-      <Form.Item label="Base price" name={["services", index, "price"]}>
+      <Form.Item label={appI18n.t("company.steps.launchServices.fields.basePrice.label")} name={["services", index, "price"]}>
         <InputNumber
           size="large"
           min={0}
           step={1}
-          placeholder="0"
+          placeholder={appI18n.t("company.steps.launchServices.fields.basePrice.placeholder")}
           style={{ width: "100%" }}
           data-cy={`launch-service-price-input-${index}`}
         />
       </Form.Item>
-      <Form.Item label="Capacity per slot" name={["services", index, "capacity"]}>
+      <Form.Item label={appI18n.t("company.steps.launchServices.fields.capacity.label")} name={["services", index, "capacity"]}>
         <InputNumber
           size="large"
           min={1}
           max={100}
-          placeholder="1"
+          placeholder={appI18n.t("company.steps.launchServices.fields.capacity.placeholder")}
           style={{ width: "100%" }}
           data-cy={`launch-service-capacity-input-${index}`}
         />
@@ -107,14 +108,14 @@ export function launchServicesStep(categories?: ApplicationCategoryItem[]): Wiza
 
   const tabs = TAB_INDICES.map((index) => ({
     key: String(index),
-    label: <span data-cy={`launch-service-tab-${index}`}>{`Service ${index + 1}`}</span>,
+    label: <span data-cy={`launch-service-tab-${index}`}>{appI18n.t("company.steps.launchServices.tabs.service", { index: index + 1 })}</span>,
     children: renderServiceFields(index, categoryOptions),
   }));
 
   const content: ReactNode = (
     <>
       <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
-        Add up to three launch services. Extra services can be managed later in the company module.
+        {appI18n.t("company.steps.launchServices.helper")}
       </Typography.Paragraph>
 
       <Tabs defaultActiveKey="0" items={tabs} />
@@ -123,8 +124,8 @@ export function launchServicesStep(categories?: ApplicationCategoryItem[]): Wiza
 
   return {
     id: "launch-services",
-    title: "Launch services",
-    subtitle: "Initial catalog, pricing and operational estimates.",
+    title: appI18n.t("company.steps.launchServices.title"),
+    subtitle: appI18n.t("company.steps.launchServices.subtitle"),
     icon: <Tag size={16} />,
     content,
     fields: [

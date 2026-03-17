@@ -2,6 +2,7 @@ import { type PropsWithChildren, useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 
 import { companyService } from "@modules/company/services/company.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
@@ -17,6 +18,7 @@ import {
 
 
 export function PrivateFrameLayout({ children }: PropsWithChildren) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const isNotificationsRoute = location.pathname.startsWith("/notifications");
@@ -89,16 +91,16 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
 
   const menuItems: MenuProps["items"] = [
     // Show Company setup only when user does NOT have a workspace yet
-    ...(hasWorkspace ? [] : [{ key: "/company/introduction", label: "Company setup" }]),
-    { key: "/billing/landing", label: "Billing" },
-    { key: "/users", label: "Users" },
+    ...(hasWorkspace ? [] : [{ key: "/company/introduction", label: t("layout.header.menu.companySetup") }]),
+    { key: "/billing/landing", label: t("layout.header.menu.billing") },
+    { key: "/users", label: t("layout.header.menu.users") },
   ];
 
   const userMenuItems: MenuProps["items"] = [
-    { key: "/users", label: "Profile", icon: <UserOutlined /> },
-    { key: "/settings", label: "Settings", icon: <SettingOutlined /> },
+    { key: "/users", label: t("layout.header.userMenu.profile"), icon: <UserOutlined /> },
+    { key: "/settings", label: t("layout.header.userMenu.settings"), icon: <SettingOutlined /> },
     { type: "divider" as const },
-    { key: "logout", label: "Sign out", icon: <LogoutOutlined /> },
+    { key: "logout", label: t("layout.header.userMenu.signOut"), icon: <LogoutOutlined /> },
   ];
 
   const frameClassName = [

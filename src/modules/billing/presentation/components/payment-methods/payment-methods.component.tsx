@@ -1,4 +1,5 @@
 import { Form, Radio, Typography } from "antd";
+import { useTranslation } from "react-i18next";
 
 import { MethodsHint, MethodsWrap } from "./payment-methods.component.styles";
 
@@ -15,6 +16,8 @@ export function PaymentMethods({
   onChange,
   disableHosted = false,
 }: PaymentMethodsProps) {
+  const { t } = useTranslation();
+
   return (
     <MethodsWrap>
       <Radio.Group
@@ -22,15 +25,15 @@ export function PaymentMethods({
         onChange={(e) => onChange?.(e.target.value)}
         style={{ width: "100%" }}
       >
-        <Radio value="card">Card</Radio>
+        <Radio value="card">{t("billing.paymentMethods.card")}</Radio>
         <Radio value="hosted" disabled={disableHosted}>
-          Hosted checkout
+          {t("billing.paymentMethods.hosted")}
         </Radio>
       </Radio.Group>
 
       <MethodsHint>
         <Typography.Text type="secondary">
-          Card keeps the user here; hosted redirects to Mercado Pago.
+          {t("billing.paymentMethods.hint")}
         </Typography.Text>
       </MethodsHint>
     </MethodsWrap>

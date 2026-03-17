@@ -110,6 +110,17 @@ export class FinanceService {
     Array<
       CompanyServiceModel & {
         suggestedCents: number;
+        why?: string;
+        actions?: Array<{
+          id: string;
+          label: string;
+          kind:
+            | "increase-price"
+            | "decrease-price"
+            | "bundle"
+            | "monitor"
+            | "collect-data";
+        }>;
         rationale?: string;
         confidence?: number | null;
         origin?: "rules" | "ai";
@@ -137,7 +148,11 @@ export class FinanceService {
               return {
                 ...service,
                 suggestedCents: suggestion.suggested_price_cents,
-                rationale: suggestion.rationale,
+                why: suggestion.why ?? suggestion.rationale,
+                actions: Array.isArray(suggestion.actions)
+                  ? suggestion.actions
+                  : [],
+                rationale: suggestion.rationale ?? suggestion.why,
                 confidence: suggestion.confidence,
                 origin: suggestion.origin ?? "ai",
               };

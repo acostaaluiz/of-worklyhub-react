@@ -1,6 +1,7 @@
 import { List, Skeleton, Tag } from "antd";
 import styled from "styled-components";
 import { Lightbulb } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 import type { FinanceInsightModel } from "@modules/finance/interfaces/finance-insights.model";
 import {
   WidgetBody,
@@ -67,19 +68,19 @@ export function ActionableInsightsWidget({
   loading,
   subtitle,
 }: Props) {
-  const displayItems = (items ?? []).slice(0, 4);
+        const displayItems = (items ?? []).slice(0, 4);
 
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
         <div className="titleRow">
-          <div className="title">Actionable Insights</div>
+          <div className="title">{appI18n.t("legacyInline.finance.presentation_components_widgets_actionable_insights_actionable_insights_widget.k001")}</div>
           <div className="titleIcon">
             <Lightbulb size={16} />
           </div>
         </div>
         <div className="subtitle">
-          {subtitle ?? "Prioritized recommendations generated from finance data."}
+          {subtitle ?? appI18n.t("legacyInline.finance.presentation_components_widgets_actionable_insights_actionable_insights_widget.k002")}
         </div>
       </WidgetHeader>
 
@@ -90,7 +91,7 @@ export function ActionableInsightsWidget({
           <Wrap>
             <List
               dataSource={displayItems}
-              locale={{ emptyText: "No actionable insights for this period." }}
+              locale={{ emptyText: appI18n.t("legacyInline.finance.presentation_components_widgets_actionable_insights_actionable_insights_widget.k003") }}
               renderItem={(item) => (
                 <List.Item key={item.id}>
                   <div style={{ width: "100%" }}>

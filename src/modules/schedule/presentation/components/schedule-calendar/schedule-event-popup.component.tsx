@@ -2,6 +2,7 @@ import React from "react";
 import { Button, message } from "antd";
 import { Trash2, Edit, User, Clock, Tag } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { loadingService } from "@shared/ui/services/loading.service";
 import { useScheduleApi } from "../../../services/schedule.service";
 import type { ScheduleCategory } from "../../../interfaces/schedule-category.model";
@@ -72,7 +73,7 @@ export const ScheduleEventPopup: React.FC<Props> = ({
   onDeleted,
   loadMonthEventsFromInstance,
 }) => {
-  const api = useScheduleApi();
+        const api = useScheduleApi();
 
   if (!event) return null;
 
@@ -86,14 +87,14 @@ export const ScheduleEventPopup: React.FC<Props> = ({
         } catch (error) {
           void error;
         }
-        message.success("Event deleted");
+        message.success(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_event_popup_component.k001"));
         if (onDeleted) onDeleted();
       } else {
-        message.error("Failed to delete event");
+        message.error(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_event_popup_component.k002"));
       }
     } catch (error) {
       void error;
-      message.error("Failed to delete event");
+      message.error(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_event_popup_component.k003"));
     } finally {
       loadingService.hide();
       onClose();
@@ -273,13 +274,13 @@ export const ScheduleEventPopup: React.FC<Props> = ({
             >
               {consumesText ? (
                 <div>
-                  <strong style={{ color: "var(--color-text)" }}>Consumes:</strong>{" "}
+                  <strong style={{ color: "var(--color-text)" }}>{appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_event_popup_component.k004")}:</strong>{" "}
                   {escapeHtml(consumesText)}
                 </div>
               ) : null}
               {producesText ? (
                 <div>
-                  <strong style={{ color: "var(--color-text)" }}>Produces:</strong>{" "}
+                  <strong style={{ color: "var(--color-text)" }}>{appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_event_popup_component.k005")}:</strong>{" "}
                   {escapeHtml(producesText)}
                 </div>
               ) : null}
@@ -309,7 +310,7 @@ export const ScheduleEventPopup: React.FC<Props> = ({
             }}
             icon={<Edit size={14} />}
           >
-            Edit
+            {appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_event_popup_component.k006")}
           </Button>
         </div>
       </div>

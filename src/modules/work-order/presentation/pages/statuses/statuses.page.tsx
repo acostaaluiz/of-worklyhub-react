@@ -1,6 +1,7 @@
 import React from "react";
 import { message } from "antd";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { companyService } from "@modules/company/services/company.service";
@@ -14,7 +15,7 @@ import WorkOrderStatusesList from "@modules/work-order/presentation/components/w
 import WorkOrderStatusForm from "@modules/work-order/presentation/components/work-order-statuses/work-order-statuses-form.component";
 
 function WorkOrderStatusesPageContent(): React.ReactElement {
-  const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
+        const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
     const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
     return (ws?.workspaceId ?? ws?.id) as string | undefined;
   });
@@ -43,7 +44,7 @@ function WorkOrderStatusesPageContent(): React.ReactElement {
       const sorted = data.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       setStatuses(sorted);
     } catch (err) {
-      message.error("Failed to load statuses.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_statuses_statuses_page.k001"));
     } finally {
       setLoading(false);
     }
@@ -68,9 +69,9 @@ function WorkOrderStatusesPageContent(): React.ReactElement {
     try {
       const created = await createWorkOrderStatus(workspaceId, payload);
       setStatuses((prev) => [created, ...prev].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
-      message.success("Status created");
+      message.success(appI18n.t("legacyInline.work_order.presentation_pages_statuses_statuses_page.k002"));
     } catch (err) {
-      message.error("Failed to create status.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_statuses_statuses_page.k003"));
     } finally {
       setSaving(false);
     }
@@ -92,7 +93,7 @@ function WorkOrderStatusesPageContent(): React.ReactElement {
 
 export class WorkOrderStatusesPage extends BasePage {
   protected override options = {
-    title: "Work order statuses | WorklyHub",
+    title: `${appI18n.t("workOrder.pageTitles.statuses")} | WorklyHub`,
     requiresAuth: true,
   };
 

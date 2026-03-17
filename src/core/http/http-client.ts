@@ -5,6 +5,7 @@ import type { Logger } from "../logger/interfaces/logger.interface";
 import type { HttpClient, HttpRequestConfig, HttpResponse } from "./interfaces/http-client.interface";
 import type { AuthProvider } from "../auth/interfaces/auth-provider.interface";
 import { AppError } from "../errors/app-error";
+import { getCurrentAppLanguage } from "../i18n";
 
 const IS_PRODUCTION =
   ((import.meta as { env?: Record<string, string | undefined> }).env?.MODE ?? "production") ===
@@ -91,6 +92,18 @@ function isNetworkLikeError(error: object | null | undefined): boolean {
   );
 }
 
+function resolveRequestLanguage(headers: Record<string, string>): string {
+  const lowered: Record<string, string> = {};
+  Object.entries(headers).forEach(([key, value]) => {
+    lowered[key.toLowerCase()] = value;
+  });
+
+  const fromHeader = lowered["x-language"] || lowered["accept-language"];
+  return (fromHeader && fromHeader.trim().length > 0)
+    ? fromHeader.trim()
+    : getCurrentAppLanguage();
+}
+
 export interface AxiosHttpClientOptions {
   baseUrl: string;
   defaultTimeoutMs?: number;
@@ -126,11 +139,14 @@ export class AxiosHttpClient implements HttpClient {
     this.axios.interceptors.request.use((cfg) => {
       const headerMap = toHeaderMap(cfg.headers ?? null);
       const correlationId = ensureCorrelationId(headerMap["x-correlation-id"]);
+      const language = resolveRequestLanguage(headerMap);
 
       const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.();
       cfg.headers = AxiosHeaders.from({
         ...headerMap,
         "x-correlation-id": correlationId,
+        "x-language": language,
+        "Accept-Language": language,
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       });
 

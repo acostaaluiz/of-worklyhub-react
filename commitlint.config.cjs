@@ -1,5 +1,8 @@
 /** @type {import('cz-git').UserConfig} */
 const applicationModules = [
+  "all-modules",
+  "core",
+  "shared",
   "billing",
   "clients",
   "company",

@@ -1,6 +1,7 @@
 import { Skeleton } from "antd";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 
 import type { DashboardPaymentStatusModel } from "../../../interfaces/dashboard-payment-status.model";
 import {
@@ -15,17 +16,20 @@ type Props = {
   loading?: boolean;
 };
 
-const statusLabel: Record<string, string> = {
-  paid: "Paid",
-  pending: "Pending",
-  refunded: "Refunded",
-};
-
 const statusColor: Record<string, string> = {
   paid: "var(--color-secondary)",
   pending: "var(--color-tertiary)",
   refunded: "var(--color-text-muted)",
 };
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    paid: appI18n.t("dashboard.common.statuses.paid"),
+    pending: appI18n.t("dashboard.common.statuses.pending"),
+    refunded: appI18n.t("dashboard.common.statuses.refunded"),
+  };
+  return labels[status] ?? status;
+}
 
 type ChartTooltipProps<TPayload> = {
   active?: boolean;
@@ -49,7 +53,7 @@ function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardPaymentSt
       }}
     >
       <div style={{ fontWeight: 800, marginBottom: 6 }}>
-        {statusLabel[item.status] ?? item.status}
+        {statusLabel(item.status)}
       </div>
       <div
         style={{
@@ -64,7 +68,7 @@ function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardPaymentSt
             fontSize: "var(--font-size-sm)",
           }}
         >
-          Amount
+          {appI18n.t("dashboard.paymentStatus.tooltip.amount")}
         </span>
         <span style={{ fontWeight: 800 }}>{formatMoney(item.amount)}</span>
       </div>
@@ -81,7 +85,7 @@ function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardPaymentSt
             fontSize: "var(--font-size-sm)",
           }}
         >
-          Count
+          {appI18n.t("dashboard.paymentStatus.tooltip.count")}
         </span>
         <span style={{ fontWeight: 800 }}>{item.count}</span>
       </div>
@@ -98,8 +102,8 @@ export function DashboardPaymentStatus(props: Props) {
     <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Payment status</div>
-          <div className="subtitle">Paid vs pending vs refunded</div>
+          <div className="title">{appI18n.t("dashboard.paymentStatus.title")}</div>
+          <div className="subtitle">{appI18n.t("dashboard.paymentStatus.subtitle")}</div>
         </div>
       </WidgetHeader>
 
@@ -143,7 +147,7 @@ export function DashboardPaymentStatus(props: Props) {
               }}
             >
               <div style={{ fontWeight: 900, letterSpacing: "-0.01em" }}>
-                Total
+                {appI18n.t("dashboard.paymentStatus.total")}
               </div>
               <div style={{ fontWeight: 900, fontSize: 18 }}>
                 {formatMoney(total)}
@@ -161,7 +165,7 @@ export function DashboardPaymentStatus(props: Props) {
                           statusColor[i.status] ?? "var(--color-primary)",
                       }}
                     />
-                    <span>{statusLabel[i.status] ?? i.status}</span>
+                    <span>{statusLabel(i.status)}</span>
                   </div>
                   <span className="value">{formatMoney(i.amount)}</span>
                 </div>

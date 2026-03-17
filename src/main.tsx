@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import "@shared/styles/global.scss";
+import "@core/i18n";
 
 import App from "./App.tsx";
 import { bootstrapDayjs } from "@app/bootstrap/dayjs.bootstrap";

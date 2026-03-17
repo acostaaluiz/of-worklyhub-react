@@ -42,6 +42,7 @@ import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { InventoryItem } from "@modules/inventory/services/inventory-api";
+import { i18n as appI18n } from "@core/i18n";
 import type { InventoryItemLine } from "../../../interfaces/schedule-event.model";
 import type {
   MonthViewHint,
@@ -206,7 +207,7 @@ type CalendarInstance = Calendar & {
 };
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
-  const api = useScheduleApi();
+        const api = useScheduleApi();
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -1424,26 +1425,26 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       }
 
       if (!id) {
-        message.error("Could not determine event to delete");
+        message.error(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k001"));
         return;
       }
 
       try {
         loadingService.show();
         const ok = await api.removeEvent(id);
-        if (ok) {
-          try {
-            await loadMonthEventsFromInstance();
-          } catch (e) {
-            void e;
-          }
-          message.success("Event deleted");
+          if (ok) {
+            try {
+              await loadMonthEventsFromInstance();
+            } catch (e) {
+              void e;
+            }
+          message.success(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k002"));
         } else {
-          message.error("Failed to delete event");
+          message.error(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k003"));
         }
       } catch (err) {
         // delete event failed
-        message.error("Failed to delete event");
+        message.error(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k004"));
       } finally {
         loadingService.hide();
         setSelectedEvent(null);
@@ -1672,14 +1673,14 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       message.success(
         modalInitialDraft && modalInitialDraft.id
-          ? "Schedule updated"
-          : "Schedule created"
+          ? appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k005")
+          : appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k006")
       );
       setIsModalOpen(false);
       setModalInitialDraft(undefined);
     } catch (err) {
       // create/update schedule failed
-      message.error("Failed to create schedule");
+      message.error(appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k007"));
     } finally {
       loadingService.hide();
     }
@@ -1702,7 +1703,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               <Input
                 value={search}
                 onChange={(ev) => setSearch(ev.target.value)}
-                placeholder="Search events..."
+                placeholder={appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k008")}
                 prefix={<Search size={16} />}
                 style={{ width: 220 }}
               />
@@ -1715,30 +1716,30 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}
               >
                 <Typography.Text strong>
-                  {activeMonthViewHint.title || "High volume in month view"}
+                  {activeMonthViewHint.title || appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k009")}
                 </Typography.Text>
                 <Typography.Text type="secondary">
                   {activeMonthViewHint.message ||
-                    "This month has hidden events in the month grid. Use Week or Day to view all items."}
+                    appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k010")}
                 </Typography.Text>
                 <Typography.Text
                   type="secondary"
                   style={{ fontSize: 12 }}
-                >{`+${activeMonthViewHint.totalHiddenEvents} hidden events across ${activeMonthViewHint.overloadedDays} days`}</Typography.Text>
+                >{`+${activeMonthViewHint.totalHiddenEvents} ${appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k011")} ${activeMonthViewHint.overloadedDays} ${appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k012")}`}</Typography.Text>
               </div>
               <MonthHintActions>
                 <Button size="small" type="primary" onClick={() => setViewMode("week")}>
-                  Go to Week
+                  {appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k013")}
                 </Button>
                 <Button size="small" onClick={() => setViewMode("day")}>
-                  Go to Day
+                  {appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k014")}
                 </Button>
                 <Button
                   size="small"
                   type="text"
                   onClick={() => setDismissedHintMonthKey(currentMonthKey)}
                 >
-                  Dismiss
+                  {appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k015")}
                 </Button>
               </MonthHintActions>
             </MonthHintBanner>
@@ -1748,7 +1749,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
               <Button icon={<ChevronRight size={18} />} onClick={handleNext} />
-              <Button onClick={handleToday}>Today</Button>
+              <Button onClick={handleToday}>{appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k016")}</Button>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
@@ -1773,9 +1774,9 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                     }
                   }}
                   options={[
-                    { label: "Month", value: "month" },
-                    { label: "Week", value: "week" },
-                    { label: "Day", value: "day" },
+                    { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k017"), value: "month" },
+                    { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k018"), value: "week" },
+                    { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k019"), value: "day" },
                   ]}
                 />
               </div>

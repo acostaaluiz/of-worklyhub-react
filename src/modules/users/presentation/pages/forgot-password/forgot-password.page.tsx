@@ -1,5 +1,6 @@
 import React from "react";
 import { message } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 
 import { BasePage } from "@shared/base/base.page";
 import { loadingService } from "@shared/ui/services/loading.service";
@@ -28,7 +29,7 @@ type PageState = {
 
 export class ForgotPasswordPage extends BasePage<{}, PageState> {
   protected override options = {
-    title: "Forgot Password | WorklyHub",
+    title: `${appI18n.t("users.pageTitles.forgotPassword")} | WorklyHub`,
     requiresAuth: false,
   };
 

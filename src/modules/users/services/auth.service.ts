@@ -13,6 +13,7 @@ import { usersService } from "@modules/users/services/user.service";
 import { applicationService } from "@core/application/application.service";
 import { usersOverviewService } from "@modules/users/services/overview.service";
 import { themeService } from "@core/config/theme/theme.service";
+import { usersAiTokensService } from "@modules/users/services/ai-tokens.service";
 
 export type UserSession = UserSessionPayload | null;
 
@@ -52,6 +53,7 @@ export class UsersAuthService {
 
   private clearCachedData(): void {
     localStorageProvider.remove(SESSION_KEY);
+    localStorageProvider.remove(TOKEN_KEY);
     try {
       usersService.clear();
     } catch {
@@ -72,9 +74,39 @@ export class UsersAuthService {
     } catch {
       // ignore
     }
+    try {
+      usersAiTokensService.reset();
+    } catch {
+      // ignore
+    }
+
+    // Defensive cleanup for stale keys from previous app versions or language caches.
+    this.purgeLocalStorageByPrefix([
+      "application.",
+      "company.",
+      "users.overview",
+      "users.aiTokens",
+      "users.aiTokenLedger",
+    ]);
 
     this.session$.next(null);
     themeService.refreshForCurrentUser();
+  }
+
+  private purgeLocalStorageByPrefix(prefixes: string[]): void {
+    if (typeof window === "undefined") return;
+    try {
+      const { localStorage } = window;
+      for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+        const key = localStorage.key(index);
+        if (!key) continue;
+        if (prefixes.some((prefix) => key.startsWith(prefix))) {
+          localStorage.removeItem(key);
+        }
+      }
+    } catch {
+      // ignore storage access errors
+    }
   }
 
   getSession$() {

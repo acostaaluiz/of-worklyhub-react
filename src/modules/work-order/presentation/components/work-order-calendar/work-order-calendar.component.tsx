@@ -15,6 +15,7 @@ import type {
   WorkOrder,
   WorkOrderStatus,
 } from "@modules/work-order/interfaces/work-order.model";
+import { i18n as appI18n } from "@core/i18n";
 import {
   CalendarShell,
   ToolbarRow,
@@ -123,7 +124,7 @@ export function WorkOrderCalendar({
   loading,
   onRangeChange,
 }: Props) {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
+        const wrapRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const instanceRef = useRef<CalendarInstance | null>(null);
 
@@ -146,7 +147,7 @@ export function WorkOrderCalendar({
     const base: CalendarDefinition[] = [
       {
         id: "default",
-        name: "Work orders",
+        name: appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k001"),
         backgroundColor: defaultColor,
         borderColor: defaultColor,
         color: "#ffffff",
@@ -169,6 +170,17 @@ export function WorkOrderCalendar({
 
     return base;
   }, [statuses]);
+
+  const resolvePriorityLabel = useMemo(
+    () => (priority?: WorkOrder["priority"]) => {
+      if (priority === "low") return appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k002");
+      if (priority === "medium") return appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k003");
+      if (priority === "high") return appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k004");
+      if (priority === "urgent") return appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k005");
+      return "--";
+    },
+    []
+  );
 
   const filteredOrders = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -199,7 +211,10 @@ export function WorkOrderCalendar({
         statusColorsById.get(rawStatusId) ||
         defaultColor;
 
-      const detailText = [order.description?.trim(), `Priority: ${order.priority}`]
+      const detailText = [
+        order.description?.trim(),
+        `${appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k006")}: ${resolvePriorityLabel(order.priority)}`,
+      ]
         .filter(Boolean)
         .join(" - ");
 
@@ -223,7 +238,7 @@ export function WorkOrderCalendar({
     });
 
     return out;
-  }, [filteredOrders, statusColorsById]);
+  }, [filteredOrders, statusColorsById, resolvePriorityLabel]);
 
   const refreshHeaderLabel = () => {
     const inst = instanceRef.current;
@@ -346,7 +361,7 @@ export function WorkOrderCalendar({
               </Typography.Title>
               {loading ? (
                 <Typography.Text type="secondary" style={{ marginLeft: 8 }}>
-                  Loading...
+                  {appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k007")}
                 </Typography.Text>
               ) : null}
             </div>
@@ -355,7 +370,7 @@ export function WorkOrderCalendar({
               <Input
                 value={search}
                 onChange={(ev) => setSearch(ev.target.value)}
-                placeholder="Search work orders..."
+                placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k008")}
                 prefix={<Search size={16} />}
                 style={{ width: 220 }}
               />
@@ -366,7 +381,7 @@ export function WorkOrderCalendar({
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
               <Button icon={<ChevronRight size={18} />} onClick={handleNext} />
-              <Button onClick={handleToday}>Today</Button>
+              <Button onClick={handleToday}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k009")}</Button>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
@@ -388,9 +403,9 @@ export function WorkOrderCalendar({
                     }
                   }}
                   options={[
-                    { label: "Month", value: "month" },
-                    { label: "Week", value: "week" },
-                    { label: "Day", value: "day" },
+                    { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k010"), value: "month" },
+                    { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k011"), value: "week" },
+                    { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k012"), value: "day" },
                   ]}
                 />
               </div>
@@ -407,3 +422,4 @@ export function WorkOrderCalendar({
 }
 
 export default WorkOrderCalendar;
+

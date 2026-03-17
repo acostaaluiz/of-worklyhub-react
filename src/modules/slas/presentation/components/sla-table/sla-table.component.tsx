@@ -1,5 +1,6 @@
 import { Empty, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import { i18n as appI18n } from "@core/i18n";
 import { formatDate } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -22,18 +23,18 @@ export class SlaTable extends BaseComponent<Props, State> {
 
     const columns: ColumnsType<SlaRow> = [
       {
-        title: "Date",
+        title: appI18n.t("sla.table.date"),
         dataIndex: "workDate",
         key: "workDate",
         render: (value: string) => this.formatDate(value),
       },
       {
-        title: "Employee",
+        title: appI18n.t("sla.table.employee"),
         dataIndex: "employeeName",
         key: "employeeName",
       },
       {
-        title: "Total hours",
+        title: appI18n.t("sla.table.totalHours"),
         dataIndex: "totalHours",
         key: "totalHours",
         align: "right",
@@ -47,8 +48,12 @@ export class SlaTable extends BaseComponent<Props, State> {
     return (
       <TableWrapper data-cy="sla-table-wrapper">
         <TableMeta>
-          <span data-cy="sla-day-entries">{rows.length} day entries</span>
-          <span data-cy="sla-total-hours">Total: {this.formatHours(totalHours)}</span>
+          <span data-cy="sla-day-entries">
+            {appI18n.t("sla.table.dayEntries", { count: rows.length })}
+          </span>
+          <span data-cy="sla-total-hours">
+            {appI18n.t("sla.table.totalWithValue", { value: this.formatHours(totalHours) })}
+          </span>
         </TableMeta>
 
         <Table
@@ -64,7 +69,7 @@ export class SlaTable extends BaseComponent<Props, State> {
           }}
           locale={{
             emptyText: (
-              <Empty description="No SLA entries for the selected filters." />
+              <Empty description={appI18n.t("sla.table.empty")} />
             ),
           }}
         />

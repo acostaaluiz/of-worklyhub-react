@@ -2,6 +2,7 @@ import React from "react";
 import { Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 
+import { i18n as appI18n } from "@core/i18n";
 import type { WorkOrderStatus } from "@modules/work-order/interfaces/work-order.model";
 
 type Props = {
@@ -10,23 +11,23 @@ type Props = {
 };
 
 export function WorkOrderStatusesList({ statuses, loading }: Props) {
-  const columns = React.useMemo<ColumnsType<WorkOrderStatus>>(
+        const columns = React.useMemo<ColumnsType<WorkOrderStatus>>(
     () => [
-      { title: "Code", dataIndex: "code", key: "code" },
-      { title: "Label", dataIndex: "label", key: "label" },
+      { title: appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k001"), dataIndex: "code", key: "code" },
+      { title: appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k002"), dataIndex: "label", key: "label" },
       {
-        title: "Terminal",
+        title: appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k003"),
         dataIndex: "isTerminal",
         key: "isTerminal",
         width: 120,
         render: (value: boolean) => (
           <Tag color={value ? "green" : "default"}>
-            {value ? "Yes" : "No"}
+            {value ? appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k004") : appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k005")}
           </Tag>
         ),
       },
       {
-        title: "Order",
+        title: appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k006"),
         dataIndex: "sortOrder",
         key: "sortOrder",
         width: 120,
@@ -38,7 +39,7 @@ export function WorkOrderStatusesList({ statuses, loading }: Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, height: "100%" }}>
-      <div style={{ fontWeight: 600, fontSize: 16 }}>Statuses</div>
+      <div style={{ fontWeight: 600, fontSize: 16 }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_statuses_work_order_statuses_list_component.k007")}</div>
       <Table
         columns={columns}
         dataSource={statuses}

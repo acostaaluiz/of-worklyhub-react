@@ -1,5 +1,6 @@
-import { List, Avatar, Rate, Typography } from "antd";
+import { Avatar, List, Rate, Typography } from "antd";
 import styled from "styled-components";
+import { useTranslation } from "react-i18next";
 
 const ReviewsShell = styled.div`
   margin-top: var(--space-6);
@@ -13,26 +14,51 @@ type Review = {
   text?: string;
 };
 
-const MOCK: Review[] = [
-  { id: "r1", author: "João Silva", rating: 5, text: "Ótimo atendimento e preço justo.", avatar: "https://i.pravatar.cc/64?img=3" },
-  { id: "r2", author: "Maria Costa", rating: 4, text: "Profissionais atenciosos.", avatar: "https://i.pravatar.cc/64?img=6" },
-  { id: "r3", author: "Pedro Souza", rating: 5, text: "Ambiente agradável e serviço rápido.", avatar: "https://i.pravatar.cc/64?img=10" },
-];
-
 export function CompanyReviews() {
+  const { t } = useTranslation();
+
+  const mock: Review[] = [
+    {
+      id: "r1",
+      author: t("company.profile.reviews.mock.r1.author"),
+      rating: 5,
+      text: t("company.profile.reviews.mock.r1.text"),
+      avatar: "https://i.pravatar.cc/64?img=3",
+    },
+    {
+      id: "r2",
+      author: t("company.profile.reviews.mock.r2.author"),
+      rating: 4,
+      text: t("company.profile.reviews.mock.r2.text"),
+      avatar: "https://i.pravatar.cc/64?img=6",
+    },
+    {
+      id: "r3",
+      author: t("company.profile.reviews.mock.r3.author"),
+      rating: 5,
+      text: t("company.profile.reviews.mock.r3.text"),
+      avatar: "https://i.pravatar.cc/64?img=10",
+    },
+  ];
+
   return (
     <ReviewsShell>
-      <Typography.Title level={4}>Avaliações</Typography.Title>
+      <Typography.Title level={4}>{t("company.profile.reviews.title")}</Typography.Title>
 
       <List
         itemLayout="horizontal"
-        dataSource={MOCK}
-        renderItem={(r) => (
+        dataSource={mock}
+        renderItem={(review) => (
           <List.Item>
             <List.Item.Meta
-              avatar={<Avatar src={r.avatar} />}
-              title={<div style={{ display: "flex", alignItems: "center", gap: 8 }}><strong>{r.author}</strong><Rate disabled value={r.rating} /></div>}
-              description={<div>{r.text}</div>}
+              avatar={<Avatar src={review.avatar} />}
+              title={
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <strong>{review.author}</strong>
+                  <Rate disabled value={review.rating} />
+                </div>
+              }
+              description={<div>{review.text}</div>}
             />
           </List.Item>
         )}

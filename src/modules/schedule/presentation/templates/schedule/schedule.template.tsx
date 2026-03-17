@@ -1,6 +1,7 @@
 import { Typography } from "antd";
 
 import { BaseTemplate } from "@shared/base/base.template";
+import { i18n as appI18n } from "@core/i18n";
 
 import {
   PageStack,
@@ -58,7 +59,7 @@ type ScheduleTemplateProps = {
 import { Calendar as CalendarIcon } from "lucide-react";
 
 export function ScheduleTemplate(props: ScheduleTemplateProps) {
-  return (
+        return (
     <>
       <BaseTemplate
         content={
@@ -85,11 +86,10 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <Typography.Title level={2} style={{ margin: 0 }}>
-                      My Calendar
+                      {appI18n.t("legacyInline.schedule.presentation_templates_schedule_schedule_template.k001")}
                     </Typography.Title>
                     <Typography.Text type="secondary">
-                      Manage events, categories and your company agenda in one
-                      place.
+                      {appI18n.t("legacyInline.schedule.presentation_templates_schedule_schedule_template.k002")}
                     </Typography.Text>
                   </div>
                 </div>

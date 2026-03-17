@@ -3,6 +3,7 @@ import { BarChart3 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { i18n as appI18n } from "@core/i18n";
 
 import {
   FinanceTemplateShell,
@@ -61,7 +62,7 @@ const emptyResponse = (): FinanceResponseModel => ({
 });
 
 export function FinanceTemplate() {
-  const service = useMemo(() => new FinanceService(), []);
+        const service = useMemo(() => new FinanceService(), []);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedView = searchParams.get("view") as FinanceView | null;
   const initialView: FinanceView =
@@ -165,11 +166,10 @@ export function FinanceTemplate() {
                   </div>
                   <div>
                     <Typography.Title level={2} style={{ margin: 0 }}>
-                      Finance
+                      {appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k001")}
                     </Typography.Title>
                     <Typography.Text type="secondary">
-                      Track revenue, services, and cashflow with the latest finance
-                      dashboard data.
+                      {appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k002")}
                     </Typography.Text>
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export function FinanceTemplate() {
                         className="surface"
                         series={data.revenueSeries}
                         loading={loading}
-                        subtitle="Revenue trend for the selected period."
+                        subtitle={appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k003")}
                       />
                     </GridSpan8>
                     <GridSpan4 style={{ height: OVERVIEW_PANEL_HEIGHT }}>
@@ -211,7 +211,7 @@ export function FinanceTemplate() {
                         className="surface"
                         items={data.insights}
                         loading={loading}
-                        subtitle="Recommendations to improve margin, cashflow and growth."
+                        subtitle={appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k004")}
                       />
                     </GridSpan4>
                   </>
@@ -224,7 +224,7 @@ export function FinanceTemplate() {
                         className="surface"
                         series={data.revenueSeries}
                         loading={loading}
-                        subtitle="Revenue trend, grouped by the selected granularity."
+                        subtitle={appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k005")}
                         heightHint="full"
                       />
                     </GridSpan12>
@@ -238,7 +238,7 @@ export function FinanceTemplate() {
                         className="surface"
                         items={data.topServices}
                         loading={loading}
-                        subtitle="Top services by revenue."
+                        subtitle={appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k006")}
                       />
                     </GridSpan12>
                   </>
@@ -251,7 +251,7 @@ export function FinanceTemplate() {
                         className="surface"
                         items={data.cashflow}
                         loading={loading}
-                        subtitle="All cashflow entries for the selected period."
+                        subtitle={appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k007")}
                         dense={false}
                       />
                     </GridSpan12>
@@ -265,7 +265,7 @@ export function FinanceTemplate() {
                         className="surface"
                         items={data.insights}
                         loading={loading}
-                        subtitle="Prioritized recommendations to improve margin, costs and cashflow."
+                        subtitle={appI18n.t("legacyInline.finance.presentation_templates_finance_finance_template.k008")}
                       />
                     </GridSpan12>
                   </>

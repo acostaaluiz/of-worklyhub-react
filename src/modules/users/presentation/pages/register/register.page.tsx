@@ -1,4 +1,5 @@
 import React from "react";
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import { RegisterTemplate } from "../../templates/register/register.template";
 import { usersAuthService } from "@modules/users/services/auth.service";
@@ -11,7 +12,7 @@ type ResponseModalState = { open: boolean; title: string; description?: string }
 
 export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; responseModal?: ResponseModalState }> {
   protected override options = {
-    title: "Register | WorklyHub",
+    title: `${appI18n.t("users.pageTitles.register")} | WorklyHub`,
     requiresAuth: false,
   };
 
@@ -35,7 +36,7 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
         async () => {
           try {
             await usersAuthService.register(values.name, values.email, values.password);
-            this.setSafeState({ responseModal: { open: true, title: "Account created", description: "Your account was created successfully." } });
+            this.setSafeState({ responseModal: { open: true, title: appI18n.t("users.auth.register.modal.title"), description: appI18n.t("users.auth.register.modal.description") } });
           } catch (err) {
             const errObj = err as DataMap | null;
             const candidate = errObj?.code ?? errObj?.name ?? null;
@@ -43,19 +44,19 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
 
             if (code) {
               if (code.includes("email-already-in-use") || code.includes("EMAIL_EXISTS")) {
-                message.error("Email already in use");
+                message.error(appI18n.t("users.auth.register.feedback.emailInUse"));
                 return;
               }
             }
 
             if (err instanceof AppError) {
               if (err.statusCode === 400) {
-                message.error(err.message || "Invalid data");
+                message.error(err.message || appI18n.t("users.auth.register.feedback.invalidData"));
                 return;
               }
             }
 
-            message.error("Registration failed");
+            message.error(appI18n.t("users.auth.register.feedback.genericError"));
           }
         },
         { setLoading: false }
@@ -90,8 +91,8 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
                 variant: "success",
                 title: response.title,
                 description: response.description,
-                primaryLabel: "Go to Login",
-                secondaryLabel: "Close",
+                primaryLabel: appI18n.t("users.auth.register.modal.goToLogin"),
+                secondaryLabel: appI18n.t("users.auth.register.modal.close"),
                 onClose: this.closeResponse,
                 onPrimary: this.confirmResponse,
               }
@@ -103,3 +104,4 @@ export class RegisterPage extends BasePage<{}, { initialized: boolean; isLoading
 }
 
 export default RegisterPage;
+

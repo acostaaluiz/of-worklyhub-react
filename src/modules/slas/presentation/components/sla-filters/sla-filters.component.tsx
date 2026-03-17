@@ -2,6 +2,7 @@ import { Button, DatePicker, Select } from "antd";
 import type { RangePickerProps } from "antd/es/date-picker";
 import dayjs from "dayjs";
 
+import { i18n as appI18n } from "@core/i18n";
 import { getDateFormat } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -36,11 +37,11 @@ export class SlaFilters extends BaseComponent<Props, State> {
       <FiltersRow data-cy="sla-filters">
         <FiltersGroup>
           <FilterField>
-            <div className="label">Employee</div>
+            <div className="label">{appI18n.t("sla.filters.employee")}</div>
             <Select<string>
               data-cy="sla-employee-select"
               allowClear
-              placeholder="All employees"
+              placeholder={appI18n.t("sla.filters.allEmployees")}
               value={filters.userUid ?? undefined}
               options={employees}
               onChange={this.handleEmployeeChange}
@@ -49,7 +50,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
           </FilterField>
 
           <FilterField>
-            <div className="label">Date range</div>
+            <div className="label">{appI18n.t("sla.filters.dateRange")}</div>
             <DatePicker.RangePicker
               data-cy="sla-date-range-picker"
               value={rangeValue}
@@ -62,7 +63,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
 
         <Actions>
           <Button onClick={this.props.onReset} disabled={!!loading} data-cy="sla-reset-filters-button">
-            Reset
+            {appI18n.t("sla.filters.reset")}
           </Button>
           <Button
             type="primary"
@@ -71,7 +72,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
             disabled={isApplyDisabled}
             data-cy="sla-apply-filters-button"
           >
-            Apply filters
+            {appI18n.t("sla.filters.apply")}
           </Button>
         </Actions>
       </FiltersRow>

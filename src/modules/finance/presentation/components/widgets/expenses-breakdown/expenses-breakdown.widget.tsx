@@ -1,6 +1,7 @@
 import { Skeleton } from "antd";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 
 import {
   ChartWrap,
@@ -34,7 +35,7 @@ const palette = [
 ];
 
 function CustomTooltip({ active, payload }: PieTooltipProps) {
-  if (!active || !payload?.length) return null;
+        if (!active || !payload?.length) return null;
   const p = payload[0]?.payload as Item | undefined;
   if (!p) return null;
   const color = getFinanceValueColor(p.value, { context: "expense" });
@@ -43,7 +44,7 @@ function CustomTooltip({ active, payload }: PieTooltipProps) {
     <TooltipCard>
       <div className="tTitle">{p.category}</div>
       <div className="tRow">
-        <div className="k">Expenses</div>
+        <div className="k">{appI18n.t("legacyInline.finance.presentation_components_widgets_expenses_breakdown_expenses_breakdown_widget.k001")}</div>
         <div className="v" style={{ color }}>{formatMoney(p.value)}</div>
       </div>
     </TooltipCard>
@@ -56,13 +57,13 @@ export function ExpensesBreakdownWidget({
   loading,
   subtitle,
 }: Props) {
-  const data = items ?? [];
+        const data = items ?? [];
 
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
-        <div className="title">Expenses Breakdown</div>
-        <div className="subtitle">{subtitle ?? "Expenses by category."}</div>
+        <div className="title">{appI18n.t("legacyInline.finance.presentation_components_widgets_expenses_breakdown_expenses_breakdown_widget.k002")}</div>
+        <div className="subtitle">{subtitle ?? appI18n.t("legacyInline.finance.presentation_components_widgets_expenses_breakdown_expenses_breakdown_widget.k003")}</div>
       </WidgetHeader>
 
       <WidgetBody>

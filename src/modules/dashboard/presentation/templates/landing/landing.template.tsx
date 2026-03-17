@@ -1,4 +1,5 @@
 import { BarChart3 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -6,11 +7,13 @@ import {
 } from "@shared/ui/components/module-landing/module-landing.component";
 
 export function DashboardLandingTemplate() {
+  const { t } = useTranslation();
+
   const items: ModuleLandingItem[] = [
     {
       id: "overview",
-      title: "Overview",
-      description: "Track KPIs and recent performance.",
+      title: t("dashboard.landing.items.overview.title"),
+      description: t("dashboard.landing.items.overview.description"),
       to: "/dashboard",
       icon: <BarChart3 size={18} />,
     },
@@ -20,9 +23,9 @@ export function DashboardLandingTemplate() {
     <BaseTemplate
       content={
         <ModuleLanding
-          title="Dashboard"
+          title={t("dashboard.landing.title")}
           headerIcon={<BarChart3 size={18} />}
-          description="Explore KPIs, revenue, and operational insights."
+          description={t("dashboard.landing.description")}
           items={items}
         />
       }

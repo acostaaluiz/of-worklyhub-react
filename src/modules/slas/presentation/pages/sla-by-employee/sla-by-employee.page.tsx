@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { Alert } from "antd";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -31,7 +32,7 @@ type WorkspaceRef = { workspaceId?: string; id?: string } | null;
 
 export class SlaByEmployeePage extends BasePage<BaseProps, SlaByEmployeePageState> {
   protected override options = {
-    title: "Employee SLA | WorklyHub",
+    title: `${appI18n.t("sla.pageTitles.report")} | WorklyHub`,
     requiresAuth: true,
   };
 
@@ -77,7 +78,7 @@ export class SlaByEmployeePage extends BasePage<BaseProps, SlaByEmployeePageStat
       <div style={{ padding: "var(--space-4)" }}>
         <Alert
           type="error"
-          message="Unable to load the SLA report"
+          message={appI18n.t("sla.messages.loadErrorTitle")}
           description={description}
           showIcon
         />
@@ -154,7 +155,7 @@ export class SlaByEmployeePage extends BasePage<BaseProps, SlaByEmployeePageStat
     return summary.map((item) => ({
       key: `${item.userUid}-${item.workDate}`,
       userUid: item.userUid,
-      employeeName: nameMap.get(item.userUid) ?? "Unknown employee",
+      employeeName: nameMap.get(item.userUid) ?? appI18n.t("sla.messages.unknownEmployee"),
       workDate: item.workDate,
       totalMinutes: item.totalMinutes,
       totalHours: item.totalHours,
@@ -169,10 +170,10 @@ export class SlaByEmployeePage extends BasePage<BaseProps, SlaByEmployeePageStat
   }
 
   private describeError(error: { message?: string } | string | null | undefined): string {
-    if (!error) return "Please try again or adjust the filters.";
+    if (!error) return appI18n.t("sla.messages.tryAgainAdjustFilters");
     if (typeof error === "string") return error;
     if (error.message) return error.message;
-    return "Please try again or adjust the filters.";
+    return appI18n.t("sla.messages.tryAgainAdjustFilters");
   }
 }
 

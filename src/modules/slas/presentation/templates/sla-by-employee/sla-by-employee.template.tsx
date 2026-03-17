@@ -1,5 +1,6 @@
 import { Typography } from "antd";
 import { Gauge } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { BaseTemplate } from "@shared/base/base.template";
 import type { SlaEmployeeOption, SlaFilters, SlaRow } from "@modules/slas/interfaces/sla-report.model";
@@ -33,6 +34,8 @@ export function SlaByEmployeeTemplate({
   onApplyFilters,
   onResetFilters,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <BaseTemplate
       content={
@@ -58,10 +61,10 @@ export function SlaByEmployeeTemplate({
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <Typography.Title level={2} style={{ margin: 0 }} data-cy="sla-page-title">
-                    Employee SLA
+                    {t("sla.header.title")}
                   </Typography.Title>
                   <Typography.Text type="secondary">
-                    Review completed schedule hours grouped by employee and work date.
+                    {t("sla.header.subtitle")}
                   </Typography.Text>
                 </div>
               </div>
@@ -78,7 +81,7 @@ export function SlaByEmployeeTemplate({
               onReset={onResetFilters}
             />
             <HelperText>
-              SLAs are created when schedules move to completed. Use a date range to keep the report fast.
+              {t("sla.header.helper")}
             </HelperText>
           </FiltersCard>
 

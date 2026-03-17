@@ -12,7 +12,11 @@
   --color-background: #f6f8fb;
   --color-surface: #ffffff;
   --color-surface-2: #f0f4ff;
-  --color-surface-elevated: #ffffff;
+  --color-surface-elevated: color-mix(
+    in srgb,
+    var(--color-surface) 92%,
+    var(--color-surface-2)
+  );
 
   --color-text: #0f172a;
   --color-text-muted: #475569;
@@ -51,7 +55,11 @@
 
   --gradient-app-bg: none;
   --gradient-auth-hero: none;
-  --color-glass-surface: rgba(15, 23, 42, 0.03);
+  --color-glass-surface: color-mix(
+    in srgb,
+    var(--color-surface) 22%,
+    transparent
+  );
 }
 
 :root[data-theme="light"] {
@@ -68,7 +76,11 @@
 
   --color-surface: #ffffff;
   --color-surface-2: #eef4ff;
-  --color-surface-elevated: #ffffff;
+  --color-surface-elevated: color-mix(
+    in srgb,
+    var(--color-surface) 94%,
+    var(--color-surface-2)
+  );
 
   --color-text: #071318;
   --color-text-muted: #334155;
@@ -120,7 +132,11 @@
       var(--color-surface-2) 100%
     );
 
-  --color-glass-surface: rgba(15, 23, 42, 0.03);
+  --color-glass-surface: color-mix(
+    in srgb,
+    var(--color-surface) 22%,
+    transparent
+  );
 
   /* semantic colors (light) */
   --color-success: #059669;
@@ -147,7 +163,11 @@
 
   --color-surface: #132a33;
   --color-surface-2: #173642;
-  --color-surface-elevated: #1b3c4a;
+  --color-surface-elevated: color-mix(
+    in srgb,
+    var(--color-surface) 68%,
+    var(--color-surface-2)
+  );
 
   --color-text: #e6f1f4;
   --color-text-muted: rgba(230, 241, 244, 0.72);
@@ -204,7 +224,11 @@
       var(--color-surface-2) 100%
     );
 
-  --color-glass-surface: rgba(230, 241, 244, 0.05);
+  --color-glass-surface: color-mix(
+    in srgb,
+    var(--color-surface) 24%,
+    transparent
+  );
 
   /* semantic colors (dark) */
   --color-success: #2dd4bf;

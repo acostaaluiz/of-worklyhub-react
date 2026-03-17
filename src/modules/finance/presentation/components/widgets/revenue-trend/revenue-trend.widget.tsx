@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { formatMoney } from "@core/utils/mask";
 import { BarChart3 } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 
 import type { FinanceSeries } from "../../../../interfaces/finance-series.model";
 import {
@@ -35,7 +36,7 @@ type RevenueTooltipProps = {
 };
 
 function CustomTooltip({ active, payload, label }: RevenueTooltipProps) {
-  if (!active || !payload?.length) return null;
+        if (!active || !payload?.length) return null;
   const numeric = Number(payload[0]?.value ?? 0);
   const v = Number.isFinite(numeric) ? numeric : 0;
   const color = getFinanceValueColor(v, { context: "income" });
@@ -46,7 +47,7 @@ function CustomTooltip({ active, payload, label }: RevenueTooltipProps) {
     <TooltipCard>
       <div className="tTitle">{tooltipLabel}</div>
       <div className="tRow">
-        <div className="k">Revenue</div>
+        <div className="k">{appI18n.t("legacyInline.finance.presentation_components_widgets_revenue_trend_revenue_trend_widget.k001")}</div>
         <div className="v" style={{ color }}>{formatMoney(v)}</div>
       </div>
     </TooltipCard>
@@ -60,18 +61,18 @@ export function RevenueTrendWidget({
   subtitle,
   heightHint = "default",
 }: Props) {
-  const data = series.points.map((p) => ({ label: p.label, value: p.value }));
+        const data = series.points.map((p) => ({ label: p.label, value: p.value }));
 
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
         <div className="titleRow">
-          <div className="title">Revenue Trend</div>
+          <div className="title">{appI18n.t("legacyInline.finance.presentation_components_widgets_revenue_trend_revenue_trend_widget.k002")}</div>
           <div className="titleIcon">
             <BarChart3 size={16} />
           </div>
         </div>
-        <div className="subtitle">{subtitle ?? "Revenue over time."}</div>
+        <div className="subtitle">{subtitle ?? appI18n.t("legacyInline.finance.presentation_components_widgets_revenue_trend_revenue_trend_widget.k003")}</div>
       </WidgetHeader>
 
       <WidgetBody>

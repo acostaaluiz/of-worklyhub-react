@@ -1,0 +1,2290 @@
+{
+  "settings": {
+    "language": {
+      "title": "Application language",
+      "description": "Choose the display language used by tutorials and supported interfaces.",
+      "selectLabel": "Language",
+      "english": "English (US)",
+      "portuguese": "Portuguese (Brazil)",
+      "changeSuccess": "Language updated to {{language}}."
+    }
+  },
+  "tutorials": {
+    "heroTitle": "Product tutorials",
+    "heroSubtitle": "Immersive guided tour. Pick a module and navigate with animated story cards.",
+    "totalModulesTag": "{{count}} modules",
+    "totalSlidesTag": "{{count}} total slides",
+    "startFullTour": "Start full tour",
+    "start": "Start",
+    "slidesCount": "{{count}} slides",
+    "tutorialIndexTitle": "Tutorial index",
+    "backToModules": "Back to modules",
+    "nowLearning": "Now learning",
+    "slideProgress": "Slide {{current}} of {{total}}",
+    "focusTitle": "What to focus on",
+    "expectedResultLabel": "Expected result",
+    "previous": "Previous",
+    "next": "Next",
+    "openModule": "Open module"
+  },
+  "allModules": {
+    "pageTitles": {
+      "allModules": "All modules"
+    },
+    "messages": {
+      "failedLoadModules": "Failed to load modules."
+    },
+    "error": {
+      "title": "We could not load the modules",
+      "description": "Please try again in a moment."
+    },
+    "empty": {
+      "title": "No modules available",
+      "description": "There are no services available to show yet."
+    },
+    "hero": {
+      "title": "All modules",
+      "description": "Explore and launch every service available in WorklyHub.",
+      "descriptionWithPlan": "Current plan: {{planTitle}}",
+      "stats": {
+        "totalModules": "{{count}} modules",
+        "availableNow": "{{count}} available now",
+        "discoveryMode": "discovery mode"
+      },
+      "actions": {
+        "guidedTour": "Guided tour",
+        "startExploring": "Start exploring"
+      }
+    },
+    "cardTags": {
+      "recommended": "Recommended",
+      "module": "Module"
+    },
+    "catalog": {
+      "billing": {
+        "title": "Billing",
+        "description": "Plans, subscriptions, and payments"
+      },
+      "clients": {
+        "title": "Clients",
+        "description": "Manage clients"
+      },
+      "company": {
+        "title": "Company",
+        "description": "Company profile and service catalog"
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "description": "Business insights and KPIs"
+      },
+      "finance": {
+        "title": "Finance",
+        "description": "Payments and reports"
+      },
+      "growth": {
+        "title": "Growth",
+        "description": "Retention and reactivation automations"
+      },
+      "inventory": {
+        "title": "Inventory",
+        "description": "Manage stock and supplies"
+      },
+      "people": {
+        "title": "People",
+        "description": "Team members and staff access"
+      },
+      "schedule": {
+        "title": "Schedule",
+        "description": "Manage appointments"
+      },
+      "services": {
+        "title": "Services",
+        "description": "Catalog and pricing"
+      },
+      "sla": {
+        "title": "SLA",
+        "description": "Service-level agreements and targets"
+      },
+      "workOrder": {
+        "title": "Work Order",
+        "description": "Manage work orders and execution lifecycle"
+      }
+    }
+  },
+  "layout": {
+    "header": {
+      "aria": {
+        "openNavigationMenu": "Open navigation menu",
+        "notifications": "Notifications"
+      },
+      "search": {
+        "placeholder": "Search modules"
+      },
+      "actions": {
+        "upgrade": "Upgrade"
+      },
+      "menu": {
+        "companySetup": "Company setup",
+        "billing": "Billing",
+        "users": "Users"
+      },
+      "userMenu": {
+        "profile": "Profile",
+        "settings": "Settings",
+        "signOut": "Sign out"
+      },
+      "mobile": {
+        "menuTitle": "Menu",
+        "notifications": "Notifications"
+      }
+    },
+    "footer": {
+      "links": {
+        "companySetup": "Company setup",
+        "billing": "Billing",
+        "users": "Users",
+        "terms": "Terms",
+        "privacy": "Privacy"
+      },
+      "tagline": "Business management for modern teams.",
+      "copyright": "© {{year}} WorklyHub. All rights reserved.",
+      "developedBy": "Developed by",
+      "ofConsultingAriaLabel": "Open O.F. Consulting website in a new tab"
+    }
+  },
+  "home": {
+    "pageTitles": {
+      "home": "Home"
+    },
+    "messages": {
+      "failedLoadModules": "Failed to load modules."
+    },
+    "quickModules": {
+      "seeAll": {
+        "title": "See all",
+        "subtitle": "View all available modules"
+      }
+    },
+    "hero": {
+      "title": "Welcome",
+      "titleWithName": "Welcome, {{name}}",
+      "description": "Start your day with priority signals and jump into the modules that keep your operation moving.",
+      "actions": {
+        "tutorials": "Tutorials",
+        "editCompany": "Edit company"
+      },
+      "highlights": {
+        "todayLoad": {
+          "label": "Today load",
+          "value": "{{count}} appointments"
+        },
+        "revenuePulse": {
+          "label": "Revenue pulse"
+        },
+        "nextAppointment": {
+          "label": "Next appointment",
+          "empty": "No upcoming appointment"
+        }
+      }
+    },
+    "readiness": {
+      "signals": {
+        "companyNameConfigured": "Company name configured",
+        "companyDescriptionConfigured": "Company description configured",
+        "activePlanDetected": "Active plan detected",
+        "upcomingAppointment": "At least one upcoming appointment"
+      },
+      "tooltip": {
+        "title": "Setup checklist",
+        "progress": "{{completed}}/{{total}} complete",
+        "complete": "All setup signals are complete.",
+        "pending": "{{count}} pending item(s) to reach 100%."
+      }
+    },
+    "sections": {
+      "indicators": {
+        "title": "Indicators",
+        "description": "Watch risks and pending signals without duplicating top-line KPIs."
+      },
+      "companySnapshot": {
+        "title": "Company snapshot",
+        "description": "Quick context before you start executing."
+      },
+      "modules": {
+        "title": "Choose a module to start",
+        "description": "Jump straight into the core workflows of your day."
+      }
+    },
+    "companyCards": {
+      "company": {
+        "label": "Company"
+      },
+      "readiness": {
+        "label": "Setup readiness",
+        "value": "{{percent}}% ready",
+        "meta": "{{configured}}/{{total}} key workspace signals configured"
+      },
+      "plan": {
+        "label": "Plan"
+      }
+    },
+    "metrics": {
+      "overdueWorkOrders": "Overdue work orders",
+      "inventoryAlerts": "Inventory alerts",
+      "unreadNotifications": "Unread notifications",
+      "highPrioritySuffix": " ({{count}} high priority)"
+    }
+  },
+  "users": {
+    "pageTitles": {
+      "login": "Login",
+      "register": "Register",
+      "forgotPassword": "Forgot password",
+      "notifications": "Notifications",
+      "profile": "Profile",
+      "settings": "Settings",
+      "tutorials": "Product tutorials",
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy"
+    },
+    "auth": {
+      "language": {
+        "selectAriaLabel": "Select language"
+      },
+      "common": {
+        "fullName": {
+          "label": "Full name",
+          "required": "Full name is required",
+          "min": "Name must have at least 2 characters",
+          "placeholder": "Enter your full name"
+        },
+        "email": {
+          "label": "Email",
+          "required": "Email is required",
+          "invalid": "Enter a valid email",
+          "placeholder": "you@company.com"
+        },
+        "password": {
+          "label": "Password",
+          "required": "Password is required",
+          "min": "Password must have at least 6 characters"
+        },
+        "continueWith": "or continue with",
+        "googleAriaLabel": "Continue with Google",
+        "facebookAriaLabel": "Continue with Facebook"
+      },
+      "login": {
+        "hero": {
+          "subtitle": "Operations platform",
+          "titleLine1": "Run your business",
+          "titleLine2": "with confidence",
+          "description": "Track services, finance, schedule, and performance in one place.",
+          "tip": "Tip: use the header search to open modules quickly from the all-modules landing."
+        },
+        "form": {
+          "title": "Sign in",
+          "subtitle": "Access your workspace and continue from where you left off.",
+          "passwordPlaceholder": "Enter your password",
+          "forgotPassword": "Forgot password?",
+          "submit": "Login",
+          "notMember": "Not a member?",
+          "registerNow": "Create account"
+        },
+        "feedback": {
+          "invalidCredentials": "Email or password incorrect.",
+          "userNotFound": "User not found.",
+          "tooManyAttempts": "Too many attempts. Try again later.",
+          "unauthorized": "Authentication failed, please login again.",
+          "genericError": "Authentication failed."
+        }
+      },
+      "register": {
+        "hero": {
+          "subtitle": "Create your workspace",
+          "titleLine1": "Start in minutes,",
+          "titleLine2": "scale with control",
+          "description": "Set up your company, team, and first services to launch your operation.",
+          "tip": "Tip: after creating your account, use the header search to find each module and complete setup."
+        },
+        "form": {
+          "title": "Create account",
+          "subtitle": "Start your workspace with guided setup.",
+          "passwordPlaceholder": "Create a password",
+          "confirmPasswordLabel": "Confirm password",
+          "confirmPasswordRequired": "Confirm your password",
+          "confirmPasswordMismatch": "Passwords do not match",
+          "confirmPasswordPlaceholder": "Repeat your password",
+          "acceptTermsError": "You must accept terms and privacy policy.",
+          "acceptTermsPrefix": "I agree to the",
+          "termsLink": "Terms of Service",
+          "and": "and",
+          "privacyLink": "Privacy Policy",
+          "submit": "Register",
+          "alreadyHaveAccount": "Already have an account?",
+          "signIn": "Sign in"
+        },
+        "feedback": {
+          "emailInUse": "Email already in use.",
+          "invalidData": "Invalid data.",
+          "genericError": "Registration failed."
+        },
+        "modal": {
+          "title": "Account created",
+          "description": "Your account was created successfully.",
+          "goToLogin": "Go to login",
+          "close": "Close"
+        }
+      }
+    },
+    "profile": {
+      "header": {
+        "title": "Profile settings",
+        "subtitle": "Update your personal and company information."
+      },
+      "common": {
+        "noPlan": "No plan"
+      },
+      "actions": {
+        "changePhoto": "Change photo"
+      },
+      "plan": {
+        "pricePerMonth": "{{value}}/month"
+      },
+      "highlights": {
+        "plan": "Plan",
+        "accountType": "Account type",
+        "employees": "Employees",
+        "aiTokens": "AI tokens"
+      },
+      "tabs": {
+        "personal": "Personal info",
+        "company": "Company info",
+        "aiTokens": "AI tokens"
+      },
+      "personal": {
+        "fields": {
+          "fullName": {
+            "label": "Full name",
+            "required": "Full name is required",
+            "placeholder": "Enter your full name"
+          },
+          "email": {
+            "label": "Email"
+          },
+          "phone": {
+            "label": "Phone",
+            "hint": "Include area code so clients and team can reach you.",
+            "placeholder": "(11) 91234-5678"
+          }
+        },
+        "actions": {
+          "saveTooltip": "Save personal information",
+          "save": "Save personal"
+        }
+      },
+      "company": {
+        "fields": {
+          "accountType": {
+            "label": "Account type",
+            "options": {
+              "individual": "Individual",
+              "company": "Company"
+            }
+          },
+          "employees": {
+            "label": "Employees"
+          },
+          "legalName": {
+            "label": "Legal name",
+            "hint": "Registered legal entity name.",
+            "placeholder": "Enter legal name"
+          },
+          "tradeName": {
+            "label": "Trade name",
+            "placeholder": "Enter trade name"
+          },
+          "primaryService": {
+            "label": "Primary service",
+            "placeholder": "Select primary service"
+          },
+          "industry": {
+            "label": "Industry",
+            "placeholder": "Select industry"
+          },
+          "industryFallback": {
+            "health": "Health",
+            "finance": "Finance",
+            "retail": "Retail",
+            "education": "Education",
+            "services": "Services",
+            "other": "Other"
+          },
+          "description": {
+            "label": "Description"
+          }
+        },
+        "actions": {
+          "changeWallpaperTooltip": "Change company cover",
+          "changeWallpaper": "Change cover",
+          "saveTooltip": "Save company information",
+          "save": "Save company"
+        }
+      },
+      "aiTokens": {
+        "balance": {
+          "title": "AI token balance",
+          "subtitle": "Track monthly quota, top-ups, and feature usage.",
+          "actions": {
+            "refresh": "Refresh"
+          },
+          "cards": {
+            "current": "Current balance",
+            "monthlyQuota": "Monthly quota",
+            "topUp": "Top-up balance",
+            "nextRefill": "Next refill"
+          },
+          "remainingMonthlyQuota": "{{count}} monthly quota tokens remaining"
+        },
+        "statement": {
+          "title": "Usage statement",
+          "totalRecords": "{{count}} records",
+          "empty": "No usage records yet."
+        },
+        "table": {
+          "columns": {
+            "when": "When",
+            "module": "Module",
+            "feature": "Feature",
+            "type": "Type",
+            "tokens": "Tokens",
+            "balanceAfter": "Balance after"
+          },
+          "entryType": {
+            "debit": "Debit",
+            "credit": "Credit",
+            "adjustment": "Adjustment"
+          }
+        }
+      },
+      "messages": {
+        "uploadPhotoSuccess": "Photo uploaded successfully.",
+        "uploadPhotoError": "Failed to upload photo.",
+        "uploadWallpaperSuccess": "Cover uploaded successfully.",
+        "uploadWallpaperError": "Failed to upload cover.",
+        "savePersonalSuccess": "Personal information saved.",
+        "savePersonalError": "Failed to save personal information.",
+        "saveCompanySuccess": "Company information saved.",
+        "saveCompanyError": "Failed to save company information."
+      },
+      "modals": {
+        "avatar": {
+          "title": "Upload profile photo",
+          "subtitle": "Select or drag an image to update your profile photo."
+        },
+        "wallpaper": {
+          "title": "Upload company cover",
+          "subtitle": "Select or drag an image to update your company cover."
+        }
+      }
+    },
+    "settings": {
+      "hero": {
+        "title": "Settings",
+        "subtitle": "Centralize workspace billing and NF-e issuance configuration."
+      },
+      "meta": {
+        "workspace": "Workspace",
+        "source": "Source",
+        "nfe": "NF-e",
+        "rulesUpdated": "Rules updated",
+        "nfeUpdated": "NF-e updated",
+        "notUpdated": "Not updated",
+        "sourceLong": {
+          "database": "Loaded from workspace settings",
+          "defaults": "No saved record yet (default values)"
+        },
+        "sourceCompact": {
+          "database": "workspace",
+          "defaults": "default"
+        },
+        "resolutionLong": {
+          "workspace": "Workspace-specific fiscal configuration",
+          "workspaceDefault": "Platform default workspace fiscal configuration",
+          "platform": "Platform fiscal configuration",
+          "none": "No fiscal configuration saved"
+        },
+        "resolutionCompact": {
+          "workspace": "workspace",
+          "workspaceDefault": "workspace-default",
+          "platform": "platform",
+          "none": "not configured"
+        }
+      },
+      "tabs": {
+        "billing": "Billing",
+        "issuance": "Issuance",
+        "advanced": "Advanced",
+        "appearance": "Appearance"
+      },
+      "messages": {
+        "loadError": "Unable to load billing settings.",
+        "saveRulesSuccess": "Billing rules updated.",
+        "saveRulesError": "Unable to save billing rules.",
+        "saveNfeSuccess": "NF-e issuance settings updated.",
+        "saveNfeError": "Unable to save NF-e settings."
+      },
+      "billing": {
+        "title": "Billing rules by module",
+        "subtitle": "Enable the modules that can start billing and NF-e issuance.",
+        "automation": {
+          "title": "Execution-to-billing automation",
+          "description": "When Work Order or Schedule reaches a final execution status, the backend can automatically create a finance entry. NF-e issuance is optional."
+        },
+        "workspaceEnabled": "Workspace billing enabled",
+        "modules": {
+          "workOrder": {
+            "label": "Work order",
+            "description": "Allows billing and NF-e issuance from work orders."
+          },
+          "schedule": {
+            "label": "Schedule",
+            "description": "Allows billing and NF-e issuance from schedule completions."
+          },
+          "finance": {
+            "label": "Finance",
+            "description": "Enables fiscal issuance for finance entries."
+          },
+          "inventory": {
+            "label": "Inventory",
+            "description": "Reserved for sales that trigger stock reduction."
+          },
+          "people": {
+            "label": "People",
+            "description": "Reserved for billing based on services delivered by collaborators."
+          },
+          "clients": {
+            "label": "Clients",
+            "description": "Reserved for sales flows initiated in the Clients module."
+          }
+        },
+        "actions": {
+          "save": "Save rules"
+        }
+      },
+      "issuance": {
+        "title": "Fiscal issuance connection (NF-e)",
+        "subtitle": "Configure workspace fiscal issuer settings for service-sale invoices.",
+        "fields": {
+          "environment": "Environment",
+          "provider": "Provider",
+          "httpMethod": "HTTP method",
+          "authentication": "Authentication",
+          "baseUrl": "Fiscal API base URL",
+          "issuePath": "Issue path",
+          "timeoutMs": "Timeout (ms)",
+          "retries": "Retries",
+          "bearerToken": "Bearer token",
+          "apiKeyHeader": "API key header",
+          "apiKey": "API key",
+          "username": "Username",
+          "password": "Password",
+          "legalName": "Legal name",
+          "issuerDocument": "Issuer document (CNPJ/CPF)",
+          "stateRegistration": "State registration",
+          "municipalRegistration": "Municipal registration",
+          "taxRegime": "Tax regime"
+        },
+        "options": {
+          "environment": {
+            "homologation": "Homologation",
+            "production": "Production"
+          },
+          "authentication": {
+            "none": "No authentication",
+            "bearer": "Bearer token",
+            "apiKey": "API key",
+            "basic": "Basic auth"
+          }
+        },
+        "placeholders": {
+          "provider": "govbr",
+          "baseUrl": "https://api.your-provider.com",
+          "issuePath": "/nfe/emit",
+          "apiKeyHeader": "x-api-key",
+          "taxRegime": "simples_nacional, lucro_presumido..."
+        },
+        "validation": {
+          "environmentRequired": "Select the environment.",
+          "providerRequired": "Provide the provider.",
+          "baseUrlRequired": "Provide the base URL.",
+          "issuePathRequired": "Provide the issue path.",
+          "tokenRequired": "Provide the token.",
+          "headerRequired": "Provide the header.",
+          "apiKeyRequired": "Provide the API key.",
+          "usernameRequired": "Provide the username.",
+          "passwordRequired": "Provide the password.",
+          "legalNameRequired": "Provide the legal name.",
+          "documentRequired": "Provide the document."
+        },
+        "actions": {
+          "save": "Save issuance"
+        }
+      },
+      "advanced": {
+        "title": "Advanced parameters",
+        "subtitle": "Optional fields for extra headers, templates, and metadata.",
+        "fields": {
+          "headers": "Headers (JSON)",
+          "payloadTemplate": "Payload template (JSON)",
+          "responseMapping": "Response mapping (JSON)",
+          "issuerAddress": "Issuer address (JSON)",
+          "defaults": "Defaults (JSON)",
+          "metadata": "Metadata (JSON)"
+        },
+        "placeholders": {
+          "headers": "{\"x-tenant\":\"worklyhub\"}",
+          "payloadTemplate": "{\"operationNature\":\"Service provided\"}",
+          "responseMapping": "{\"status\":\"status\",\"accessKey\":\"access_key\"}",
+          "issuerAddress": "{\"street\":\"Street X\",\"number\":\"123\",\"city\":\"Sao Paulo\",\"state\":\"SP\"}",
+          "defaults": "{\"serviceCode\":\"1401\"}",
+          "metadata": "{\"owner\":\"workspace\"}"
+        },
+        "validation": {
+          "mustBeValidJson": "{{label}} must be valid JSON.",
+          "mustBeJsonObject": "{{label}} must be a JSON object."
+        },
+        "actions": {
+          "save": "Save advanced"
+        }
+      },
+      "appearance": {
+        "title": "Appearance",
+        "subtitle": "Switch between light and dark themes and optionally customize key colors.",
+        "tabs": {
+          "theme": "Theme",
+          "customColors": "Custom colors"
+        },
+        "theme": {
+          "alertTitle": "Theme mode",
+          "alertDescription": "The selected mode is applied immediately and saved to your local preferences.",
+          "lightLabel": "Light",
+          "lightDescription": "Bright interface for daytime usage.",
+          "darkLabel": "Dark",
+          "darkDescription": "Reduced glare in low-light environments.",
+          "useLight": "Use light",
+          "useDark": "Use dark",
+          "activeMode": "Active mode: {{mode}}",
+          "modes": {
+            "light": "Light",
+            "dark": "Dark"
+          },
+          "updateSuccess": "Theme updated to {{mode}}."
+        },
+        "customColors": {
+          "reset": "Use default palette",
+          "resetSuccess": "Custom colors removed. Default palette restored.",
+          "status": "Custom palette: {{state}}",
+          "states": {
+            "enabled": "Enabled",
+            "disabled": "Disabled"
+          },
+          "options": {
+            "background": {
+              "label": "Background color",
+              "description": "Main app backdrop color."
+            },
+            "surface": {
+              "label": "Surface color",
+              "description": "Card and panel base color."
+            },
+            "surfaceAlt": {
+              "label": "Surface alt color",
+              "description": "Secondary panel color and layered surfaces."
+            },
+            "primary": {
+              "label": "Primary color",
+              "description": "Main actions, highlights and interactive accents."
+            },
+            "secondary": {
+              "label": "Secondary color",
+              "description": "Secondary accents and supporting highlights."
+            },
+            "tertiary": {
+              "label": "Tertiary color",
+              "description": "Complementary accent used in gradients and details."
+            },
+            "text": {
+              "label": "Text color",
+              "description": "Main text color for headings and body content."
+            }
+          }
+        }
+      }
+    }
+  },
+  "clients": {
+    "pageTitles": {
+      "home": "Clients",
+      "landing": "Clients overview",
+      "serviceDetail": "Service",
+      "customer360": "Client 360"
+    },
+    "landing": {
+      "title": "Clients",
+      "description": "Access the service catalog, schedule, and client relationship history.",
+      "items": {
+        "catalog": {
+          "title": "Services catalog",
+          "description": "Browse available services and providers."
+        },
+        "appointments": {
+          "title": "Schedule",
+          "description": "Manage appointments in the scheduling module."
+        },
+        "client360": {
+          "title": "Client 360",
+          "description": "Single profile with unified schedule, work-order, and finance history.",
+          "meta": "Unified relationship timeline"
+        }
+      }
+    }
+  },
+  "inventory": {
+    "pageTitles": {
+      "home": "Inventory",
+      "landing": "Inventory overview",
+      "settings": "Inventory settings",
+      "categories": "Inventory categories"
+    },
+    "landing": {
+      "title": "Inventory",
+      "description": "Control stock, items, and categories.",
+      "items": {
+        "stock": {
+          "title": "Stock items",
+          "description": "Manage products and inventory levels."
+        },
+        "categories": {
+          "title": "Categories",
+          "description": "Organize items by category."
+        },
+        "settings": {
+          "title": "Settings",
+          "description": "Configure inventory defaults and validation rules."
+        }
+      }
+    }
+  },
+  "people": {
+    "pageTitles": {
+      "home": "People",
+      "landing": "People overview",
+      "settings": "People settings"
+    },
+    "landing": {
+      "title": "People",
+      "description": "Invite, manage, and organize your team.",
+      "items": {
+        "team": {
+          "title": "Team",
+          "description": "Manage staff and roles."
+        },
+        "settings": {
+          "title": "Settings",
+          "description": "Configure defaults, validation rules, and module startup tab."
+        }
+      }
+    }
+  },
+  "company": {
+    "pageTitles": {
+      "landing": "Company overview",
+      "introduction": "Company setup",
+      "profile": "Company profile",
+      "services": "Company services"
+    },
+    "landing": {
+      "title": "Company",
+      "description": "Manage profile, services, and performance settings.",
+      "items": {
+        "setup": {
+          "title": "Company setup",
+          "description": "Configure company details and onboarding."
+        },
+        "profile": {
+          "title": "Profile",
+          "description": "Public company profile and details.",
+          "meta": {
+            "preview": "Preview: {{companyName}}",
+            "viewPublic": "View public profile",
+            "completeSetup": "Complete setup to unlock"
+          }
+        },
+        "services": {
+          "title": "Services",
+          "description": "Manage catalog and pricing."
+        },
+        "slas": {
+          "title": "SLAs",
+          "description": "Review SLA performance by employee."
+        }
+      }
+    },
+    "introduction": {
+      "messages": {
+        "createWorkspaceFailed": "Failed to create workspace."
+      },
+      "response": {
+        "setupComplete": {
+          "title": "Setup complete",
+          "description": "Initial setup finished. You will be redirected to Home."
+        }
+      },
+      "template": {
+        "header": {
+          "title": "Company setup",
+          "subtitle": "Configure your workspace foundation in a few guided steps."
+        },
+        "highlights": {
+          "identity": {
+            "label": "Identity",
+            "value": "Workspace ownership and profile"
+          },
+          "catalog": {
+            "label": "Catalog",
+            "value": "Primary service and launch offers"
+          },
+          "activation": {
+            "label": "Activation",
+            "value": "Improve readiness signals in Home"
+          }
+        },
+        "wizard": {
+          "title": "Setup",
+          "subtitle": "Complete these steps to publish your workspace baseline."
+        }
+      }
+    },
+    "steps": {
+      "personal": {
+        "title": "Owner profile",
+        "subtitle": "Basic account data used for authentication and communication.",
+        "fields": {
+          "fullName": {
+            "label": "Full name",
+            "required": "Full name is required",
+            "placeholder": "Enter your full name"
+          },
+          "email": {
+            "label": "Email",
+            "required": "Email is required",
+            "invalid": "Enter a valid email",
+            "placeholder": "Enter your email"
+          },
+          "phone": {
+            "label": "Phone (optional)",
+            "placeholder": "Enter your phone number"
+          }
+        }
+      },
+      "company": {
+        "title": "Company identity",
+        "subtitle": "Workspace ownership and legal/company naming.",
+        "fields": {
+          "accountType": {
+            "label": "Are you using WorklyHub as an individual or a company?",
+            "required": "Select one option",
+            "individual": "Individual",
+            "company": "Company"
+          },
+          "companyName": {
+            "label": "Company name",
+            "required": "Company name is required",
+            "placeholder": "Enter your company name"
+          },
+          "legalName": {
+            "label": "Legal name (optional)",
+            "placeholder": "Registered legal entity name"
+          },
+          "employees": {
+            "label": "Team size (optional)",
+            "placeholder": "e.g. 10"
+          }
+        }
+      },
+      "servicesInfo": {
+        "title": "Market positioning",
+        "subtitle": "How your workspace should be represented in WorklyHub.",
+        "fields": {
+          "primaryService": {
+            "label": "Primary service",
+            "required": "Primary service is required",
+            "placeholder": "Example: Preventive maintenance"
+          },
+          "primaryServiceCategory": {
+            "label": "Primary service category",
+            "required": "Select a category",
+            "placeholder": "Select primary service"
+          },
+          "industry": {
+            "label": "Industry / area of operation",
+            "required": "Select an industry",
+            "placeholder": "Select an industry"
+          },
+          "description": {
+            "label": "Short description (optional)",
+            "placeholder": "Describe your services in a few words..."
+          }
+        },
+        "fallbackOptions": {
+          "categories": {
+            "beauty": "Beauty",
+            "health": "Health",
+            "maintenance": "Maintenance",
+            "consulting": "Consulting",
+            "education": "Education",
+            "other": "Other"
+          },
+          "industries": {
+            "health": "Health",
+            "finance": "Finance",
+            "retail": "Retail",
+            "education": "Education",
+            "services": "Services",
+            "other": "Other"
+          }
+        }
+      },
+      "launchServices": {
+        "title": "Launch services",
+        "subtitle": "Initial catalog, pricing and operational estimates.",
+        "helper": "Add up to three launch services. Extra services can be managed later in the company module.",
+        "tabs": {
+          "service": "Service {{index}}"
+        },
+        "fields": {
+          "serviceName": {
+            "label": "Service name",
+            "required": "Service name is required.",
+            "placeholder": "Example: Haircut + beard"
+          },
+          "category": {
+            "label": "Category (optional)",
+            "placeholder": "Select a category"
+          },
+          "description": {
+            "label": "Description (optional)",
+            "placeholder": "Short service summary..."
+          },
+          "duration": {
+            "label": "Duration (minutes)",
+            "placeholder": "60"
+          },
+          "basePrice": {
+            "label": "Base price",
+            "placeholder": "0"
+          },
+          "capacity": {
+            "label": "Capacity per slot",
+            "placeholder": "1"
+          }
+        }
+      },
+      "summary": {
+        "title": "Summary",
+        "subtitle": "Confirm details and create your workspace.",
+        "helper": "Review your data before finishing setup.",
+        "emptyServices": "No launch services informed.",
+        "tabs": {
+          "overview": "Overview",
+          "market": "Market",
+          "services": "Services"
+        },
+        "common": {
+          "dash": "-"
+        },
+        "labels": {
+          "fullName": "Full name",
+          "email": "Email",
+          "phone": "Phone",
+          "accountType": "Account type",
+          "companyName": "Company name",
+          "legalName": "Legal name",
+          "employees": "Employees",
+          "primaryService": "Primary service",
+          "serviceCategory": "Service category",
+          "industry": "Industry",
+          "description": "Description",
+          "category": "Category",
+          "duration": "Duration",
+          "basePrice": "Base price",
+          "capacity": "Capacity"
+        },
+        "values": {
+          "price": "$ {{value}}",
+          "service": "Service {{index}}",
+          "durationMinutes": "{{minutes}} min"
+        }
+      }
+    },
+    "profile": {
+      "overview": {
+        "highlightTag": "Featured"
+      },
+      "services": {
+        "title": "Services",
+        "add": "Add",
+        "adjustSelection": "Adjust selection"
+      },
+      "cartBar": {
+        "selectedServices": "{{count}} selected services",
+        "viewSelection": "View selection"
+      },
+      "serviceSelector": {
+        "total": "Total",
+        "cancel": "Cancel",
+        "add": "Add ({{count}})"
+      },
+      "reviews": {
+        "title": "Reviews",
+        "mock": {
+          "r1": {
+            "author": "John Silva",
+            "text": "Great service and fair pricing."
+          },
+          "r2": {
+            "author": "Maria Costa",
+            "text": "Very attentive professionals."
+          },
+          "r3": {
+            "author": "Pedro Souza",
+            "text": "Comfortable environment and fast service."
+          }
+        }
+      }
+    },
+    "admin": {
+      "common": {
+        "dash": "-"
+      },
+      "servicesPage": {
+        "title": "Services you offer"
+      },
+      "messages": {
+        "serviceCreated": "Service created.",
+        "createServiceError": "Failed to create service.",
+        "serviceUpdated": "Service updated.",
+        "updateServiceError": "Failed to update service.",
+        "serviceActivated": "Service activated.",
+        "serviceDeactivated": "Service deactivated.",
+        "toggleServiceError": "Failed to activate/deactivate service."
+      },
+      "form": {
+        "fields": {
+          "title": {
+            "label": "Title",
+            "required": "Title is required."
+          },
+          "description": {
+            "label": "Description"
+          },
+          "duration": {
+            "label": "Duration"
+          },
+          "price": {
+            "label": "Price"
+          },
+          "capacity": {
+            "label": "Capacity"
+          },
+          "active": {
+            "label": "Active"
+          }
+        },
+        "save": "Save"
+      },
+      "list": {
+        "columns": {
+          "title": "Title",
+          "duration": "Duration (min)",
+          "price": "Price",
+          "capacity": "Capacity",
+          "active": "Active",
+          "actions": "Actions"
+        },
+        "active": {
+          "yes": "Yes",
+          "no": "No"
+        },
+        "actions": {
+          "edit": "Edit",
+          "deactivate": "Deactivate",
+          "activate": "Activate"
+        }
+      },
+      "manager": {
+        "newService": "New service",
+        "modal": {
+          "editTitle": "Edit service",
+          "newTitle": "New service"
+        }
+      }
+    }
+  },
+  "dashboard": {
+    "pageTitles": {
+      "landing": "Dashboard overview",
+      "dashboard": "Dashboard"
+    },
+    "landing": {
+      "title": "Dashboard",
+      "description": "Explore KPIs, revenue, and operational insights.",
+      "items": {
+        "overview": {
+          "title": "Overview",
+          "description": "Track KPIs and recent performance."
+        }
+      }
+    },
+    "template": {
+      "header": {
+        "title": "Dashboard",
+        "subtitle": "Daily operational control and risk signals. Use Finance for deep cashflow analysis."
+      },
+      "messages": {
+        "loadError": "Unable to load dashboard data for this period."
+      }
+    },
+    "filters": {
+      "period": "Period",
+      "refresh": "Refresh",
+      "view": {
+        "overview": "Overview",
+        "trend": "Trend",
+        "services": "Services",
+        "alerts": "Alerts"
+      },
+      "groupBy": {
+        "day": "Day",
+        "week": "Week",
+        "month": "Month"
+      }
+    },
+    "kpis": {
+      "labels": {
+        "appointments": "Appointments today",
+        "workOrdersOpen": "Open work orders",
+        "activeWorkers": "Active workers",
+        "completionRate": "Completion rate",
+        "revenue": "Revenue",
+        "profit": "Profit",
+        "orders": "Orders"
+      },
+      "meta": {
+        "vsPreviousPeriod": "vs previous period"
+      }
+    },
+    "revenueTrend": {
+      "title": "Business pulse",
+      "subtitle": "Revenue and profit trend for management context",
+      "empty": "No financial movement found in this period.",
+      "tooltip": {
+        "revenue": "Revenue",
+        "profit": "Profit"
+      }
+    },
+    "serviceBreakdown": {
+      "title": "Top services",
+      "subtitle": "Revenue by service",
+      "tooltip": {
+        "revenue": "Revenue",
+        "count": "Count"
+      }
+    },
+    "alerts": {
+      "title": "Operational alerts",
+      "subtitle": "Prioritized insights for quick action",
+      "empty": "No alerts for this period.",
+      "sources": {
+        "finance": "Finance",
+        "workOrder": "Work order",
+        "schedule": "Schedule",
+        "people": "People"
+      },
+      "priorities": {
+        "high": "HIGH",
+        "medium": "MEDIUM",
+        "low": "LOW"
+      },
+      "tags": {
+        "engine": "Engine: {{engine}}",
+        "confidence": "Confidence: {{confidence}}%"
+      },
+      "labels": {
+        "why": "Why",
+        "action": "Action"
+      }
+    },
+    "topClients": {
+      "title": "Top clients",
+      "subtitle": "Who buys the most",
+      "columns": {
+        "client": "Client",
+        "spent": "Spent",
+        "orders": "Orders",
+        "avg": "Avg"
+      }
+    },
+    "paymentStatus": {
+      "title": "Payment status",
+      "subtitle": "Paid vs pending vs refunded",
+      "total": "Total",
+      "tooltip": {
+        "amount": "Amount",
+        "count": "Count"
+      }
+    },
+    "recentSales": {
+      "title": "Recent sales",
+      "subtitle": "Latest transactions",
+      "columns": {
+        "client": "Client",
+        "service": "Service",
+        "date": "Date",
+        "amount": "Amount",
+        "status": "Status"
+      }
+    },
+    "common": {
+      "statuses": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "refunded": "Refunded"
+      }
+    }
+  },
+  "finance": {
+    "pageTitles": {
+      "landing": "Finance overview",
+      "finance": "Finance",
+      "entries": "Finance entries",
+      "services": "Finance services",
+      "suggestions": "Finance suggestions"
+    }
+  },
+  "schedule": {
+    "pageTitles": {
+      "landing": "Schedule overview",
+      "schedule": "Schedule",
+      "settings": "Schedule settings"
+    }
+  },
+  "workOrder": {
+    "pageTitles": {
+      "landing": "Work orders",
+      "workOrders": "Work orders",
+      "calendar": "Work orders calendar",
+      "statuses": "Work order statuses",
+      "settings": "Work-order settings"
+    }
+  },
+  "billing": {
+    "pageTitles": {
+      "landing": "Billing overview",
+      "plans": "Plans",
+      "checkout": "Checkout"
+    },
+    "landing": {
+      "title": "Billing",
+      "description": "Manage plans, subscriptions, and payments.",
+      "items": {
+        "plans": {
+          "title": "Plans",
+          "description": "Compare subscription plans and upgrades."
+        },
+        "checkout": {
+          "title": "Checkout",
+          "description": "Finalize plan selection and payment.",
+          "meta": "After selecting a plan"
+        }
+      }
+    },
+    "planSelection": {
+      "confirm": {
+        "title": "Confirm plan selection",
+        "description": "Do you really want to select the {{planName}} plan?",
+        "confirmLabel": "Yes",
+        "cancelLabel": "No"
+      },
+      "messages": {
+        "selectedSuccess": "Plan selected. Continue to checkout to activate your subscription."
+      }
+    },
+    "planSelector": {
+      "headerTitle": "Choose your plan",
+      "headerSubtitle": "Start simple. Upgrade anytime.",
+      "interval": {
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      },
+      "discountLabel": "Save 15%",
+      "recommended": "Recommended",
+      "per": {
+        "month": "month",
+        "year": "year"
+      },
+      "canChangeLater": "You can change plans later.",
+      "cta": {
+        "choosePlanNamed": "Choose {{planName}}"
+      },
+      "fallbackPlans": {
+        "starter": {
+          "name": "Starter",
+          "description": "For solo professionals getting started."
+        },
+        "standard": {
+          "name": "Standard",
+          "description": "Best value for small teams."
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "For growing businesses and multiple locations."
+        }
+      },
+      "features": {
+        "starter": {
+          "coreModules": "Core modules: Clients, Schedule, Services",
+          "profileDashboard": "Company profile and dashboard",
+          "billingPlans": "Billing and plan management",
+          "emailSupport": "Email support"
+        },
+        "standard": {
+          "everythingStarter": "Everything in Starter",
+          "peopleInventoryWorkOrder": "People, Inventory and Work Order modules",
+          "financeOperations": "Finance module and team operations",
+          "prioritySupport": "Priority support"
+        },
+        "premium": {
+          "fullAccess": "Full module access",
+          "slaGrowth": "Includes SLA and Growth modules",
+          "dedicatedSuccess": "Dedicated success",
+          "onboarding": "Onboarding"
+        }
+      }
+    },
+    "checkout": {
+      "header": {
+        "title": "Checkout",
+        "subtitle": "Review your plan and finish the payment securely."
+      },
+      "gateway": {
+        "mercadopago": "Mercado Pago",
+        "paypal": "PayPal"
+      },
+      "errorView": {
+        "title": "Checkout unavailable",
+        "alertTitle": "Payment gateway returned an error",
+        "backToPlans": "Back to plans",
+        "tryAgain": "Try again"
+      },
+      "descriptions": {
+        "checkoutErrorWithCode": "Checkout error ({{code}}). Please try again.",
+        "gatewayUnavailable": "Unable to contact the payment gateway right now. Please try again."
+      },
+      "messages": {
+        "selectPlan": "Select a plan before finishing payment.",
+        "providerNotConfigured": "Payment provider is not configured. Please try again later.",
+        "invalidRedirectUrl": "Invalid payment redirect URL. Please contact support.",
+        "redirecting": "Redirecting to the payment provider...",
+        "paymentApproved": "Payment approved!",
+        "paymentPending": "Payment pending confirmation. We will notify you once it is approved.",
+        "checkoutCreated": "Checkout created.",
+        "failedCreateCheckout": "Failed to create checkout."
+      },
+      "form": {
+        "title": "Checkout details",
+        "subtitle": "Payment is completed on the selected gateway page. No card fields are handled here.",
+        "gatewayMessage": "Gateway: {{gateway}}",
+        "gatewayDescription": "You will be redirected to a secure hosted checkout to finish payment.",
+        "temporarilyUnavailable": "Payment temporarily unavailable",
+        "credentialsMissing": "Gateway credentials are not configured yet.",
+        "hostedTag": "Hosted checkout",
+        "contact": "Contact",
+        "fullName": "Full name",
+        "fullNameRequired": "Full name is required",
+        "fullNamePlaceholder": "Enter your full name",
+        "email": "Email",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email",
+        "emailPlaceholder": "Enter your email",
+        "companyOptional": "Company (optional)",
+        "companyPlaceholder": "Company name",
+        "changePlan": "Change plan",
+        "continueGateway": "Continue to gateway"
+      }
+    },
+    "orderSummary": {
+      "title": "Order summary",
+      "subtitle": "Review your plan before confirming.",
+      "cycle": {
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      },
+      "per": {
+        "month": "month",
+        "year": "year"
+      },
+      "savingsLabel": "Save 15%",
+      "total": "Total",
+      "taxes": "Taxes may apply depending on your region.",
+      "changePlan": "Change plan",
+      "mockFeatures": {
+        "users": "Up to 5 users",
+        "clients": "Up to 500 clients",
+        "schedules": "Unlimited schedules",
+        "reports": "Basic reports",
+        "support": "Priority support"
+      }
+    },
+    "paymentMethods": {
+      "card": "Card",
+      "hosted": "Hosted checkout",
+      "hint": "Card keeps the user here; hosted redirects to Mercado Pago."
+    }
+  },
+  "growth": {
+    "pageTitles": {
+      "landing": "Growth",
+      "autopilot": "Growth autopilot"
+    },
+    "landing": {
+      "title": "Growth",
+      "description": "Automate retention and reactivation flows connected to your operation.",
+      "items": {
+        "autopilot": {
+          "title": "Growth autopilot",
+          "description": "Prioritize opportunities and dispatch retention playbooks.",
+          "meta": "Execution board"
+        },
+        "clients360": {
+          "title": "Client 360",
+          "description": "Review profile and timeline before dispatching campaigns.",
+          "meta": "Context view"
+        },
+        "playbooks": {
+          "title": "Playbooks",
+          "description": "Configure channels and cadence for each growth objective.",
+          "meta": "Retention, upsell, recovery"
+        },
+        "attribution": {
+          "title": "Attribution",
+          "description": "Track converted opportunities and recovered revenue.",
+          "meta": "Impact analytics"
+        }
+      }
+    },
+    "autopilot": {
+      "hero": {
+        "title": "Growth Autopilot",
+        "subtitle": "Convert execution signals into retention campaigns and faster revenue recovery.",
+        "opportunitiesCount": "{{count}} opportunities",
+        "playbooksCount": "{{count}} playbooks",
+        "sourceBackend": "backend",
+        "sourceFallback": "fallback"
+      },
+      "tabs": {
+        "opportunities": "Opportunities",
+        "playbooks": "Playbooks",
+        "attribution": "Attribution"
+      },
+      "statusLabels": {
+        "new": "New",
+        "queued": "Queued",
+        "sent": "Sent",
+        "converted": "Converted",
+        "archived": "Archived"
+      },
+      "moduleLabels": {
+        "clients": "Clients",
+        "schedule": "Schedule",
+        "workOrder": "Work order",
+        "finance": "Finance"
+      },
+      "opportunities": {
+        "searchPlaceholder": "Search by client, contact, or opportunity",
+        "statusAll": "All statuses",
+        "dispatchPlaybookPlaceholder": "Dispatch playbook",
+        "refresh": "Refresh",
+        "dispatchCta": "Dispatch ({{count}})",
+        "table": {
+          "client": "Client",
+          "noContactLinked": "No contact linked",
+          "opportunity": "Opportunity",
+          "module": "Module",
+          "expected": "Expected",
+          "status": "Status",
+          "lastInteraction": "Last interaction"
+        },
+        "footerHint": "Opportunities are generated from workflow, scheduling, and billing signals. Dispatching keeps status aligned with automation progress."
+      },
+      "playbooks": {
+        "toolbarHint": "Configure objective, channels, and cadence for automated dispatch.",
+        "previous": "Previous",
+        "next": "Next",
+        "save": "Save playbooks",
+        "indicator": "{{current}} / {{total}}",
+        "goToPlaybook": "Go to playbook {{index}}",
+        "goal": "Goal",
+        "channels": "Channels",
+        "delayHours": "Delay (hours)",
+        "maxTouches": "Max touches",
+        "empty": "No playbooks configured yet.",
+        "goalReactivation": "Reactivation",
+        "goalUpsell": "Upsell",
+        "goalRecovery": "Recovery",
+        "channelWhatsapp": "WhatsApp",
+        "channelEmail": "Email",
+        "channelSms": "SMS"
+      },
+      "attribution": {
+        "dispatched": "Dispatched opportunities",
+        "converted": "Converted opportunities",
+        "recoveredRevenue": "Recovered revenue",
+        "avgHoursToConvert": "Avg hours to convert",
+        "conversionRate": "Conversion rate",
+        "window": "Window: {{start}} to {{end}}",
+        "source": "Source: {{source}}",
+        "sourceBackend": "Backend consolidated",
+        "sourceFallback": "Fallback snapshot",
+        "pipelineMix": "Pipeline status mix",
+        "nextActions": "Next optimization actions",
+        "pipelineFullyDispatched": "Pipeline is fully dispatched for now.",
+        "pipelineHint": "Add new opportunities from the Opportunities tab."
+      },
+      "messages": {
+        "failedLoad": "Failed to load growth autopilot.",
+        "workspaceRequired": "Workspace is required.",
+        "playbooksSaved": "Playbooks saved.",
+        "failedSavePlaybooks": "Failed to save playbooks.",
+        "selectOpportunity": "Select at least one opportunity.",
+        "dispatchSuccess": "{{count}} opportunity(ies) dispatched.",
+        "dispatchFallback": "{{count}} opportunity(ies) queued in fallback mode.",
+        "failedDispatch": "Failed to dispatch opportunities."
+      }
+    }
+  },
+  "sla": {
+    "pageTitles": {
+      "report": "Employee SLA"
+    },
+    "header": {
+      "title": "Employee SLA",
+      "subtitle": "Review completed schedule hours grouped by employee and work date.",
+      "helper": "SLAs are created when schedules move to completed. Use a date range to keep the report fast."
+    },
+    "filters": {
+      "employee": "Employee",
+      "allEmployees": "All employees",
+      "dateRange": "Date range",
+      "reset": "Reset",
+      "apply": "Apply filters"
+    },
+    "table": {
+      "date": "Date",
+      "employee": "Employee",
+      "totalHours": "Total hours",
+      "dayEntries": "{{count}} day entries",
+      "totalWithValue": "Total: {{value}}",
+      "empty": "No SLA entries for the selected filters."
+    },
+    "messages": {
+      "loadErrorTitle": "Unable to load the SLA report",
+      "tryAgainAdjustFilters": "Please try again or adjust the filters.",
+      "unknownEmployee": "Unknown employee"
+    }
+  },
+  "legacyInline": {
+    "finance": {
+      "presentation_components_finance_entries_list_finance_entries_list_component": {
+        "k001": "Entry",
+        "k002": "Entry info",
+        "k003": "Info",
+        "k004": "Back",
+        "k005": "Start",
+        "k006": "See more"
+      },
+      "presentation_components_finance_entry_form_finance_entry_form_component": {
+        "k001": "Entry saved",
+        "k002": "Error saving entry",
+        "k003": "Type",
+        "k004": "Amount",
+        "k005": "Date",
+        "k006": "Description",
+        "k007": "Save"
+      },
+      "presentation_components_finance_filters_finance_filters_component": {
+        "k001": "Overview",
+        "k002": "Insights",
+        "k003": "Revenue",
+        "k004": "Services",
+        "k005": "Expenses",
+        "k006": "Profit",
+        "k007": "Cashflow",
+        "k008": "Period",
+        "k009": "View",
+        "k010": "Group by",
+        "k011": "Day",
+        "k012": "Week",
+        "k013": "Month",
+        "k014": "Day",
+        "k015": "Week",
+        "k016": "Month",
+        "k017": "Refresh"
+      },
+      "presentation_components_finance_kpi_row_finance_kpi_row_component": {
+        "k001": "Revenue",
+        "k002": "Expenses",
+        "k003": "Profit",
+        "k004": "Margin",
+        "k005": "Revenue",
+        "k006": "Expenses",
+        "k007": "Profit",
+        "k008": "Margin",
+        "k009": "vs prev."
+      },
+      "presentation_components_finance_kpis_finance_kpis_component": {
+        "k001": "Income",
+        "k002": "Expense",
+        "k003": "Profit",
+        "k004": "Margin"
+      },
+      "presentation_components_services_finance_list_services_finance_list_component": {
+        "k001": "Current",
+        "k002": "Suggested",
+        "k003": "Confidence",
+        "k004": "Engine",
+        "k005": "Delta",
+        "k006": "Add as entry"
+      },
+      "presentation_components_widgets_actionable_insights_actionable_insights_widget": {
+        "k001": "Actionable Insights",
+        "k002": "Prioritized recommendations generated from finance data.",
+        "k003": "No actionable insights for this period."
+      },
+      "presentation_components_widgets_cashflow_table_cashflow_table_widget": {
+        "k001": "WORK ORDER",
+        "k002": "SCHEDULE",
+        "k003": "MANUAL",
+        "k004": "Date",
+        "k005": "Description",
+        "k006": "Type",
+        "k007": "IN",
+        "k008": "OUT",
+        "k009": "Source",
+        "k010": "Ref",
+        "k011": "Category",
+        "k012": "Amount",
+        "k013": "Status",
+        "k014": "PAID",
+        "k015": "PENDING",
+        "k016": "Cashflow",
+        "k017": "Latest incoming and outgoing records."
+      },
+      "presentation_components_widgets_expenses_breakdown_expenses_breakdown_widget": {
+        "k001": "Expenses",
+        "k002": "Expenses Breakdown",
+        "k003": "Expenses by category."
+      },
+      "presentation_components_widgets_profit_trend_profit_trend_widget": {
+        "k001": "Revenue",
+        "k002": "Expenses",
+        "k003": "Profit",
+        "k004": "Profit Trend",
+        "k005": "Profit computed from revenue minus expenses."
+      },
+      "presentation_components_widgets_revenue_trend_revenue_trend_widget": {
+        "k001": "Revenue",
+        "k002": "Revenue Trend",
+        "k003": "Revenue over time."
+      },
+      "presentation_components_widgets_top_services_table_top_services_table_widget": {
+        "k001": "Service",
+        "k002": "Orders",
+        "k003": "Revenue",
+        "k004": "Avg Ticket",
+        "k005": "Top Services",
+        "k006": "Best performing services."
+      },
+      "presentation_templates_entries_entries_template": {
+        "k001": "Entries",
+        "k002": "Incomes, expenses, and fixed costs from your daily operation.",
+        "k003": "Add new entry"
+      },
+      "presentation_templates_finance_finance_template": {
+        "k001": "Finance",
+        "k002": "Track revenue, services, and cashflow with the latest finance dashboard data.",
+        "k003": "Revenue trend for the selected period.",
+        "k004": "Recommendations to improve margin, cashflow and growth.",
+        "k005": "Revenue trend, grouped by the selected granularity.",
+        "k006": "Top services by revenue.",
+        "k007": "All cashflow entries for the selected period.",
+        "k008": "Prioritized recommendations to improve margin, costs and cashflow."
+      },
+      "presentation_templates_landing_landing_template": {
+        "k001": "Overview",
+        "k002": "Track revenue, profit, and trends.",
+        "k003": "Services performance",
+        "k004": "Analyze revenue per service.",
+        "k005": "Suggestions",
+        "k006": "Discover insights and growth ideas.",
+        "k007": "Actionable insights",
+        "k008": "Open prioritized recommendations from financial data.",
+        "k009": "Entries",
+        "k010": "Register income and expenses.",
+        "k011": "Finance",
+        "k012": "Control cash flow, entries, and performance."
+      },
+      "presentation_templates_services_finance_services_finance_template": {
+        "k001": "Services and suggestions",
+        "k002": "Service pricing suggestions based on your recent finance history.",
+        "k003": "Add entry"
+      },
+      "presentation_templates_suggestions_suggestions_template": {
+        "k001": "Price suggestions",
+        "k002": "Improve service pricing with guidance from recent finance performance.",
+        "k003": "Smart hints",
+        "k004": "Margin focused",
+        "k005": "Service based",
+        "k006": "Finance snapshot",
+        "k007": "Quick view of income, expense, profit, and margin before applying suggestions.",
+        "k008": "Suggested services",
+        "k009": "Review each service recommendation and apply it as a finance entry when needed.",
+        "k010": "How to use",
+        "k011": "Apply these suggestions to reduce pricing gaps and improve profitability.",
+        "k012": "Compare current versus suggested value for each service.",
+        "k013": "Prioritize high-volume services where margin changes have bigger impact.",
+        "k014": "Register adjustments in finance entries to keep reports aligned.",
+        "k015": "Quick actions",
+        "k016": "Open services performance",
+        "k017": "Open finance entries"
+      }
+    },
+    "schedule": {
+      "presentation_components_schedule_calendar_schedule_calendar_component": {
+        "k001": "Could not determine event to delete",
+        "k002": "Event deleted",
+        "k003": "Failed to delete event",
+        "k004": "Failed to delete event",
+        "k005": "Schedule updated",
+        "k006": "Schedule created",
+        "k007": "Failed to create schedule",
+        "k008": "Search events...",
+        "k009": "High volume in month view",
+        "k010": "This month has hidden events in the month grid. Use Week or Day to view all items.",
+        "k011": "hidden events across",
+        "k012": "days",
+        "k013": "Go to Week",
+        "k014": "Go to Day",
+        "k015": "Dismiss",
+        "k016": "Today",
+        "k017": "Month",
+        "k018": "Week",
+        "k019": "Day"
+      },
+      "presentation_components_schedule_calendar_schedule_calendar_factory": {
+        "k001": "Delete",
+        "k002": "Delete",
+        "k003": "Edit",
+        "k004": "Edit"
+      },
+      "presentation_components_schedule_calendar_schedule_event_popup_component": {
+        "k001": "Event deleted",
+        "k002": "Failed to delete event",
+        "k003": "Failed to delete event",
+        "k004": "Consumes",
+        "k005": "Produces",
+        "k006": "Edit"
+      },
+      "presentation_components_schedule_event_modal_schedule_event_modal_component": {
+        "k001": "Description is required by workspace settings.",
+        "k002": "Add at least one service to continue.",
+        "k003": "Assign at least one employee to continue.",
+        "k004": "Select a time",
+        "k005": "Previous week",
+        "k006": "Next week",
+        "k007": "Morning",
+        "k008": "Afternoon",
+        "k009": "Evening",
+        "k010": "Previous times",
+        "k011": "Next times",
+        "k012": "Appointment details",
+        "k013": "Title",
+        "k014": "Category",
+        "k015": "Description (required)",
+        "k016": "Description (optional)",
+        "k017": "Status default: Pending (confirmation required)",
+        "k018": "Status default: Confirmed",
+        "k019": "Reminder",
+        "k020": "min before",
+        "k021": "Reminder disabled",
+        "k022": "No-show fee",
+        "k023": "No-show flagged (no charge)",
+        "k024": "No-show action: none",
+        "k025": "Event status",
+        "k026": "Saving a final execution status triggers automatic financial launch.",
+        "k027": " NF-e trigger is optional and can fail in development when GOV endpoints are unavailable.",
+        "k028": " NF-e trigger is optional and depends on billing configuration.",
+        "k029": "Duration",
+        "k030": "Appointment",
+        "k031": "Category",
+        "k032": "Add service",
+        "k033": "Add employee",
+        "k034": "Add inventory input",
+        "k035": "Add inventory output",
+        "k036": "Consumes",
+        "k037": "Produces",
+        "k038": "Add service",
+        "k039": "Add employee",
+        "k040": "Add inventory input",
+        "k041": "Add inventory output",
+        "k042": "Total",
+        "k043": "min",
+        "k044": "Save edit",
+        "k045": "Continue"
+      },
+      "presentation_components_schedule_sidebar_schedule_sidebar_component": {
+        "k001": "My Calendar",
+        "k002": "Personal, teams",
+        "k003": "New",
+        "k004": "Categories",
+        "k005": "Edit",
+        "k006": "Statuses",
+        "k007": "Next events",
+        "k008": "Untitled",
+        "k009": "minutes",
+        "k010": "Reminder"
+      },
+      "presentation_pages_settings_settings_page": {
+        "k001": "Failed to load schedule settings.",
+        "k002": "Workspace is required.",
+        "k003": "Schedule settings saved.",
+        "k004": "Failed to save schedule settings.",
+        "k005": "Schedule settings",
+        "k006": "Configure booking defaults and validation rules by workspace.",
+        "k007": "Updated",
+        "k008": "Not saved yet",
+        "k009": "These settings are applied to new appointments and event edits.",
+        "k010": "Booking defaults",
+        "k011": "Default values for new appointments",
+        "k012": "Default duration (minutes)",
+        "k013": "Preferred day part",
+        "k014": "Morning",
+        "k015": "Afternoon",
+        "k016": "Evening",
+        "k017": "Default category",
+        "k018": "Optional",
+        "k019": "Validation",
+        "k020": "Required fields and constraints",
+        "k021": "Require description",
+        "k022": "Require at least one service",
+        "k023": "Require assigned employee",
+        "k024": "Enable inventory lines in events",
+        "k025": "Automation",
+        "k026": "Assisted assignment",
+        "k027": "Auto-select first service",
+        "k028": "Auto-select first employee",
+        "k029": "Auto-selection applies only when creating a new event.",
+        "k030": "Customer policy",
+        "k031": "Confirmation, reminder and no-show policy",
+        "k032": "Confirmation policy",
+        "k033": "Require confirmation (default pending)",
+        "k034": "Optional confirmation (default confirmed)",
+        "k035": "Enable automated reminder",
+        "k036": "Reminder lead time (minutes)",
+        "k037": "No-show policy",
+        "k038": "No automatic action",
+        "k039": "Flag event as no-show",
+        "k040": "Charge no-show fee",
+        "k041": "No-show fee (%)",
+        "k042": "Charging no-show creates financial entries when the event status is set to ",
+        "k043": "No Show",
+        "k044": "Restore defaults",
+        "k045": "Save settings"
+      },
+      "presentation_templates_landing_landing_template": {
+        "k001": "Calendar",
+        "k002": "View and organize appointments.",
+        "k003": "Settings",
+        "k004": "Configure booking defaults and operational validation rules.",
+        "k005": "Schedule",
+        "k006": "Manage appointments, availability, and your daily agenda."
+      },
+      "presentation_templates_schedule_schedule_template": {
+        "k001": "My Calendar",
+        "k002": "Manage events, categories and your company agenda in one place."
+      }
+    },
+    "work_order": {
+      "presentation_components_work_order_calendar_work_order_calendar_component": {
+        "k001": "Work orders",
+        "k002": "Low",
+        "k003": "Medium",
+        "k004": "High",
+        "k005": "Urgent",
+        "k006": "Priority",
+        "k007": "Loading...",
+        "k008": "Search work orders...",
+        "k009": "Today",
+        "k010": "Month",
+        "k011": "Week",
+        "k012": "Day"
+      },
+      "presentation_components_work_order_form_work_order_form_component": {
+        "k001": "Finance entry linked",
+        "k002": "Pending financial launch",
+        "k003": "Will launch on completion",
+        "k004": "Execution completion already generated a financial entry.",
+        "k005": "This work order is in a final status and should create finance entry automatically.",
+        "k006": "Finance entry is automatically created when the work order reaches a final execution status.",
+        "k007": "NF-e trigger is optional and in development it may fail when GOV endpoints are unavailable.",
+        "k008": "NF-e trigger is optional and depends on billing configuration.",
+        "k009": "Navigation path is invalid.",
+        "k010": "Attachment URL expired. Refresh activity and try again.",
+        "k011": "Attachment URL is invalid or not allowed.",
+        "k012": "Save the work order before uploading attachments.",
+        "k013": "Metadata JSON is invalid.",
+        "k014": "Failed to load work order activity.",
+        "k015": "Write a comment before posting.",
+        "k016": "Comment added.",
+        "k017": "Failed to add comment.",
+        "k018": "Provide a checklist title.",
+        "k019": "Checklist item added.",
+        "k020": "Failed to add checklist item.",
+        "k021": "Failed to update checklist item.",
+        "k022": "Checklist item updated.",
+        "k023": "Failed to update checklist item.",
+        "k024": "Checklist item removed.",
+        "k025": "Failed to delete checklist item.",
+        "k026": "Attachment removed.",
+        "k027": "Failed to remove attachment.",
+        "k028": "Create the work order to access history, comments, and checklist.",
+        "k029": "Activity",
+        "k030": "Refresh",
+        "k031": "History",
+        "k032": "Loading history...",
+        "k033": "No status history yet.",
+        "k034": "System",
+        "k035": "Comments",
+        "k036": "New comment",
+        "k037": "Write a comment",
+        "k038": "Post comment",
+        "k039": "No comments yet.",
+        "k040": "System",
+        "k041": "Checklist",
+        "k042": "Title",
+        "k043": "Checklist item",
+        "k044": "Sort order",
+        "k045": "Order",
+        "k046": "Add item",
+        "k047": "No checklist items yet.",
+        "k048": "Pending",
+        "k049": "Save",
+        "k050": "Cancel",
+        "k051": "Checklist title",
+        "k052": "Order",
+        "k053": "Edit",
+        "k054": "Delete checklist item?",
+        "k055": "Delete",
+        "k056": "Delete",
+        "k057": "Order",
+        "k058": "Attachments",
+        "k059": "Cancel",
+        "k060": "Files are stored in Firebase and linked to this work order.",
+        "k061": "Save the work order first to enable attachments.",
+        "k062": "Click or drag files to attach",
+        "k063": "Photos and documents up to",
+        "k064": "per file.",
+        "k065": "Uploading",
+        "k066": "files",
+        "k067": "file",
+        "k068": "Attached files",
+        "k069": "No attachments yet.",
+        "k070": "System",
+        "k071": "View",
+        "k072": "Remove attachment?",
+        "k073": "Remove",
+        "k074": "Remove",
+        "k075": "Select or create a workspace to manage work orders.",
+        "k076": "Edit work order",
+        "k077": "New work order",
+        "k078": "Attachments",
+        "k079": "Finance entries",
+        "k080": "Billing settings",
+        "k081": "Clear",
+        "k082": "Delete",
+        "k083": "Entry",
+        "k084": "Review finance queue",
+        "k085": "Finance automation",
+        "k086": "Finance entries",
+        "k087": "Billing settings",
+        "k088": "Details",
+        "k089": "General",
+        "k090": "Title",
+        "k091": "Title",
+        "k092": "Description",
+        "k093": "Description",
+        "k094": "Priority",
+        "k095": "Priority",
+        "k096": "Low",
+        "k097": "Medium",
+        "k098": "High",
+        "k099": "Urgent",
+        "k100": "Status",
+        "k101": "Status",
+        "k102": "Requester",
+        "k103": "Select requester",
+        "k104": "Created by",
+        "k105": "Created by",
+        "k106": "Metadata (JSON)",
+        "k107": "Metadata (JSON)",
+        "k108": "Schedule",
+        "k109": "Scheduled start",
+        "k110": "Scheduled start",
+        "k111": "Scheduled end",
+        "k112": "Scheduled end",
+        "k113": "Due at",
+        "k114": "Due at",
+        "k115": "Estimated duration (min)",
+        "k116": "Estimated duration (min)",
+        "k117": "Actual duration (min)",
+        "k118": "Actual duration (min)",
+        "k119": "Completed at",
+        "k120": "Completed at",
+        "k121": "Team",
+        "k122": "Workers",
+        "k123": "Add worker",
+        "k124": "No workers assigned.",
+        "k125": "Worker",
+        "k126": "Select team member",
+        "k127": "Role",
+        "k128": "Executor",
+        "k129": "Assistant",
+        "k130": "Reviewer",
+        "k131": "Allocated minutes",
+        "k132": "Minutes",
+        "k133": "Action",
+        "k134": "Remove",
+        "k135": "Lines",
+        "k136": "Line type",
+        "k137": "Services",
+        "k138": "Inventory",
+        "k139": "Service lines",
+        "k140": "Add service",
+        "k141": "No service lines.",
+        "k142": "Service",
+        "k143": "Select service",
+        "k144": "Qty",
+        "k145": "Qty",
+        "k146": "Unit price (cents)",
+        "k147": "Unit price",
+        "k148": "Notes",
+        "k149": "Notes",
+        "k150": "Action",
+        "k151": "Remove",
+        "k152": "Inventory lines",
+        "k153": "Add item",
+        "k154": "No inventory items.",
+        "k155": "Inventory item",
+        "k156": "Select inventory item",
+        "k157": "Available",
+        "k158": " - planned/consumed quantity exceeds stock",
+        "k159": "Direction",
+        "k160": "Input",
+        "k161": "Output",
+        "k162": "Planned quantity",
+        "k163": "Planned",
+        "k164": "Consumed quantity",
+        "k165": "Consumed",
+        "k166": "Unit cost (cents)",
+        "k167": "Unit cost (cents)",
+        "k168": "Action",
+        "k169": "Remove",
+        "k170": "Activity",
+        "k171": "Save changes",
+        "k172": "Create work order",
+        "attachmentFileTooLarge": "File \"{{fileName}}\" exceeds {{maxAttachmentSizeMb}} MB.",
+        "attachmentUploaded": "Attachment \"{{fileName}}\" uploaded.",
+        "attachmentUploadFailed": "Failed to upload \"{{fileName}}\"."
+      },
+      "presentation_components_work_order_list_work_order_list_component": {
+        "k001": "Low",
+        "k002": "Medium",
+        "k003": "High",
+        "k004": "Urgent",
+        "k005": "Title",
+        "k006": "Status",
+        "k007": "Priority",
+        "k008": "Due",
+        "k009": "Total",
+        "k010": "Actions",
+        "k011": "Edit",
+        "k012": "Delete work order?",
+        "k013": "Delete",
+        "k014": "Delete",
+        "k015": "Work orders",
+        "k016": "Refresh",
+        "k017": "New work order",
+        "k018": "Search",
+        "k019": "Risk",
+        "k020": "Overdue",
+        "k021": "Due soon (24h)",
+        "k022": "Checklist at risk",
+        "k023": "High priority open",
+        "k024": "Unscheduled",
+        "k025": "Status",
+        "k026": "Priority",
+        "k027": "Low",
+        "k028": "Medium",
+        "k029": "High",
+        "k030": "Urgent",
+        "k031": "Apply",
+        "k032": "Reset",
+        "k033": "Loading more work orders...",
+        "k034": "Scroll down to load more.",
+        "k035": "End of results.",
+        "k036": "Operations overview",
+        "k037": "Updated",
+        "k038": "Open",
+        "k039": "Completed",
+        "k040": "Overdue",
+        "k041": "Due soon",
+        "k042": "High priority open",
+        "k043": "Unscheduled",
+        "k044": "Checklist at risk",
+        "k045": "Completion",
+        "k046": "Avg resolution",
+        "k047": "View overdue",
+        "k048": "View due soon",
+        "k049": "Checklist at risk",
+        "k050": "High priority",
+        "k051": "Operations overview is loading or unavailable for this workspace.",
+        "k052": "Work orders",
+        "k053": "Operations overview"
+      },
+      "presentation_components_work_order_statuses_work_order_statuses_form_component": {
+        "k001": "Create status",
+        "k002": "Code",
+        "k003": "Status code is required",
+        "k004": "e.g. opened",
+        "k005": "Label",
+        "k006": "Status label is required",
+        "k007": "e.g. Opened",
+        "k008": "Terminal",
+        "k009": "Sort order",
+        "k010": "Create status"
+      },
+      "presentation_components_work_order_statuses_work_order_statuses_list_component": {
+        "k001": "Code",
+        "k002": "Label",
+        "k003": "Terminal",
+        "k004": "Yes",
+        "k005": "No",
+        "k006": "Order",
+        "k007": "Statuses"
+      },
+      "presentation_pages_calendar_calendar_page": {
+        "k001": "Failed to load work order statuses.",
+        "k002": "Failed to load work orders for calendar."
+      },
+      "presentation_pages_settings_settings_page": {
+        "k001": "Failed to load work-order settings.",
+        "k002": "Workspace is required.",
+        "k003": "Work-order settings saved.",
+        "k004": "Failed to save work-order settings.",
+        "k005": "Work-order settings",
+        "k006": "Configure default behavior and validation rules per workspace.",
+        "k007": "Updated",
+        "k008": "Not saved yet",
+        "k009": "These settings are workspace-specific and start with default values.",
+        "k010": "Planning",
+        "k011": "Planning defaults",
+        "k012": "Default priority",
+        "k013": "Low",
+        "k014": "Medium",
+        "k015": "High",
+        "k016": "Urgent",
+        "k017": "Default estimated duration (min)",
+        "k018": "Default due in (hours)",
+        "k019": "Due-soon window (hours)",
+        "k020": "Auto-fill due date on creation",
+        "k021": "Workflow",
+        "k022": "Workflow validations",
+        "k023": "Require worker on create",
+        "k024": "Require full checklist to complete",
+        "k025": "Require attachment to complete",
+        "k026": "Attachments",
+        "k027": "Attachment rules",
+        "k028": "Enable attachments",
+        "k029": "Max files per work order",
+        "k030": "Max file size (MB)",
+        "k031": "Allowed MIME types",
+        "k032": "Billing automation",
+        "k033": "Execution to billing flow",
+        "k034": "Final execution statuses can automatically create finance entries. NF-e trigger is optional and depends on billing settings.",
+        "k035": "Configure module billing + NF-e in global settings",
+        "k036": "Open workspace billing settings to enable/disable automation for Work Order and Schedule.",
+        "k037": "Development environment",
+        "k038": "GOV endpoints may be unavailable in dev. Financial launch still works independently of NF-e emission.",
+        "k039": "Open billing settings",
+        "k040": "Restore defaults",
+        "k041": "Save settings"
+      },
+      "presentation_pages_statuses_statuses_page": {
+        "k001": "Failed to load statuses.",
+        "k002": "Status created",
+        "k003": "Failed to create status."
+      },
+      "presentation_pages_work_orders_work_orders_page": {
+        "k001": "Failed to load work order statuses.",
+        "k002": "Failed to load work order overview.",
+        "k003": "Failed to load work orders.",
+        "k004": "Work order updated",
+        "k005": "Work order created",
+        "k006": "Failed to save work order.",
+        "k007": "Delete work order \"{{title}}\"?",
+        "k008": "Delete",
+        "k009": "Work order deleted",
+        "k010": "Failed to delete work order.",
+        "k011": "Work order editor"
+      },
+      "presentation_templates_calendar_work_order_calendar_template": {
+        "k001": "Work orders calendar",
+        "k002": "Visualize scheduled and due work orders on a timeline."
+      },
+      "presentation_templates_landing_landing_template": {
+        "k001": "Work orders",
+        "k002": "Track, prioritize, and dispatch work orders.",
+        "k003": "Execution board",
+        "k004": "Calendar",
+        "k005": "Visualize work orders on a timeline.",
+        "k006": "Timeline view",
+        "k007": "Statuses",
+        "k008": "Configure the workflow stages for work orders.",
+        "k009": "Workflow setup",
+        "k010": "Settings",
+        "k011": "Set module parameters, automation rules, and execution validations by workspace.",
+        "k012": "Module + billing automation",
+        "k013": "Work orders",
+        "k014": "Plan, execute, and close work requests with full visibility."
+      },
+      "presentation_templates_statuses_statuses_template": {
+        "k001": "Work order statuses",
+        "k002": "Configure stages and default workflow for your work orders."
+      },
+      "presentation_templates_work_orders_work_orders_template": {
+        "title": "Work orders",
+        "description": "Plan, execute, and monitor work orders from one place."
+      }
+    }
+  }
+}

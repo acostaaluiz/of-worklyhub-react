@@ -29,5 +29,11 @@ export type AssistantChatResponse = {
     provider?: string;
     model?: string;
     timestamp?: string;
+    ai_error?: string;
+    token?: {
+      required?: number;
+      consumed?: boolean;
+      remaining?: number | null;
+    };
   };
 };

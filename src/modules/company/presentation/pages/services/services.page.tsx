@@ -1,12 +1,13 @@
-import React, { type JSX } from "react";
-import { BaseTemplate } from "@shared/base/base.template";
+import React, { type JSX, useEffect, useState } from "react";
+import { message } from "antd";
+
+import { i18n as appI18n } from "@core/i18n";
+import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import ServiceManagerComponent from "@modules/company/presentation/components/company-services-admin/service-manager.component";
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
-import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
-import { message } from "antd";
-import { loadingService } from "@shared/ui/services/loading.service";
-import { useEffect, useState } from "react";
 import { BasePage } from "@shared/base/base.page";
+import { BaseTemplate } from "@shared/base/base.template";
+import { loadingService } from "@shared/ui/services/loading.service";
 
 function CompanyServicesAdminPageContent(): JSX.Element {
   const [services, setServices] = useState<CompanyServiceModel[]>([]);
@@ -17,8 +18,8 @@ function CompanyServicesAdminPageContent(): JSX.Element {
     try {
       const res = await companyWorkspaceService.listServices();
       setServices(res);
-    } catch (err) {
-      // swallow for now
+    } catch {
+      // ignore for now
     } finally {
       setLoading(false);
     }
@@ -29,50 +30,52 @@ function CompanyServicesAdminPageContent(): JSX.Element {
   }, []);
 
   async function handleCreate(payload: Omit<CompanyServiceModel, "id" | "createdAt">) {
-    console.log(payload);
     setLoading(true);
     loadingService.show();
     try {
       await companyWorkspaceService.createService(payload);
-      message.success("Serviço criado");
+      message.success(appI18n.t("company.admin.messages.serviceCreated"));
       await load();
-    } catch (e) {
-      console.log('error: ', e);
-      message.error("Erro ao criar serviço");
+    } catch (error) {
+      console.error(error);
+      message.error(appI18n.t("company.admin.messages.createServiceError"));
     } finally {
       setLoading(false);
       loadingService.hide();
     }
   }
 
-  async function handleUpdate(_id: string, _patch: Partial<CompanyServiceModel>) {
+  async function handleUpdate(id: string, patch: Partial<CompanyServiceModel>) {
     setLoading(true);
     loadingService.show();
     try {
-      await companyWorkspaceService.updateService(_id, _patch);
-      message.success("Serviço atualizado");
+      await companyWorkspaceService.updateService(id, patch);
+      message.success(appI18n.t("company.admin.messages.serviceUpdated"));
       await load();
-    } catch (e) {
-      console.error(e);
-      message.error("Erro ao atualizar serviço");
+    } catch (error) {
+      console.error(error);
+      message.error(appI18n.t("company.admin.messages.updateServiceError"));
     } finally {
       setLoading(false);
       loadingService.hide();
     }
   }
 
-  async function handleDeactivate(_s: CompanyServiceModel) {
-    const s = _s;
+  async function handleDeactivate(service: CompanyServiceModel) {
     setLoading(true);
     loadingService.show();
     try {
-      const nextActive = !(s.active ?? false);
-      await companyWorkspaceService.updateService(s.id, { active: nextActive });
-      message.success(nextActive ? "Serviço ativado" : "Serviço desativado");
+      const nextActive = !(service.active ?? false);
+      await companyWorkspaceService.updateService(service.id, { active: nextActive });
+      message.success(
+        nextActive
+          ? appI18n.t("company.admin.messages.serviceActivated")
+          : appI18n.t("company.admin.messages.serviceDeactivated")
+      );
       await load();
-    } catch (e) {
-      console.error(e);
-      message.error("Erro ao inativar/ativar serviço");
+    } catch (error) {
+      console.error(error);
+      message.error(appI18n.t("company.admin.messages.toggleServiceError"));
     } finally {
       setLoading(false);
       loadingService.hide();
@@ -82,16 +85,22 @@ function CompanyServicesAdminPageContent(): JSX.Element {
   return (
     <BaseTemplate
       content={
-        <>
-          <div style={{ padding: 16 }}>
-            <h2 style={{ margin: 0 }} data-cy="company-services-page-title">Services you offer</h2>
-            <div style={{ marginTop: 12 }}>
-              <div data-cy="company-services-page">
-                <ServiceManagerComponent services={services} loading={loading} onCreate={handleCreate} onUpdate={handleUpdate} onDeactivate={handleDeactivate} />
-              </div>
+        <div style={{ padding: 16 }}>
+          <h2 style={{ margin: 0 }} data-cy="company-services-page-title">
+            {appI18n.t("company.admin.servicesPage.title")}
+          </h2>
+          <div style={{ marginTop: 12 }}>
+            <div data-cy="company-services-page">
+              <ServiceManagerComponent
+                services={services}
+                loading={loading}
+                onCreate={handleCreate}
+                onUpdate={handleUpdate}
+                onDeactivate={handleDeactivate}
+              />
             </div>
           </div>
-        </>
+        </div>
       }
     />
   );
@@ -99,7 +108,7 @@ function CompanyServicesAdminPageContent(): JSX.Element {
 
 export class CompanyServicesAdminPage extends BasePage {
   protected override options = {
-    title: "Company Services | WorklyHub",
+    title: `${appI18n.t("company.pageTitles.services")} | WorklyHub`,
     requiresAuth: true,
   };
 

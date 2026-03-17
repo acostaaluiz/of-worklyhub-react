@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Briefcase, Box, CheckSquare, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -43,6 +44,8 @@ const getWorkspaceName = (ws: Workspace): string | undefined => {
 };
 
 export function CompanyLandingTemplate() {
+  const { t } = useTranslation();
+
   const [companyId, setCompanyId] = useState<string | null>(() =>
     getWorkspaceId(companyService.getWorkspaceValue())
   );
@@ -62,22 +65,22 @@ export function CompanyLandingTemplate() {
   const profilePath = companyId ? `/company/profile/${companyId}` : undefined;
   const profileMeta = companyId
     ? companyName
-      ? `Preview: ${companyName}`
-      : "View public profile"
-    : "Complete setup to unlock";
+      ? t("company.landing.items.profile.meta.preview", { companyName })
+      : t("company.landing.items.profile.meta.viewPublic")
+    : t("company.landing.items.profile.meta.completeSetup");
 
   const items: ModuleLandingItem[] = [
     {
       id: "setup",
-      title: "Company setup",
-      description: "Configure company details and onboarding.",
+      title: t("company.landing.items.setup.title"),
+      description: t("company.landing.items.setup.description"),
       to: "/company/introduction",
       icon: <Briefcase size={18} />,
     },
     {
       id: "profile",
-      title: "Profile",
-      description: "Public company profile and details.",
+      title: t("company.landing.items.profile.title"),
+      description: t("company.landing.items.profile.description"),
       to: profilePath,
       icon: <User size={18} />,
       meta: profileMeta,
@@ -85,15 +88,15 @@ export function CompanyLandingTemplate() {
     },
     {
       id: "services",
-      title: "Services",
-      description: "Manage catalog and pricing.",
+      title: t("company.landing.items.services.title"),
+      description: t("company.landing.items.services.description"),
       to: "/company/services",
       icon: <Box size={18} />,
     },
     {
       id: "slas",
-      title: "SLAs",
-      description: "Review SLA performance by employee.",
+      title: t("company.landing.items.slas.title"),
+      description: t("company.landing.items.slas.description"),
       to: "/company/slas",
       icon: <CheckSquare size={18} />,
     },
@@ -103,9 +106,9 @@ export function CompanyLandingTemplate() {
     <BaseTemplate
       content={
         <ModuleLanding
-          title="Company"
+          title={t("company.landing.title")}
           headerIcon={<Briefcase size={18} />}
-          description="Manage profile, services, and performance settings."
+          description={t("company.landing.description")}
           items={items}
         />
       }

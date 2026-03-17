@@ -1,5 +1,7 @@
 import { Button } from "antd";
 import styled from "styled-components";
+
+import { i18n as appI18n } from "@core/i18n";
 import { formatMoneyFromCents } from "@core/utils/mask";
 
 const Bar = styled.div`
@@ -12,8 +14,8 @@ const Bar = styled.div`
   align-items: center;
   padding: 12px 16px;
   border-radius: 12px;
-  background: var(--surface-3, rgba(6,22,33,0.8));
-  box-shadow: 0 8px 30px rgba(6,22,33,0.24);
+  background: var(--surface-3, rgba(6, 22, 33, 0.8));
+  box-shadow: 0 8px 30px rgba(6, 22, 33, 0.24);
   z-index: 999;
 `;
 
@@ -27,13 +29,15 @@ export function CartBar({ count, totalCents, onOpen }: Props) {
   return (
     <Bar>
       <div>
-        <div style={{ fontWeight: 700 }}>{count} serviços selecionados</div>
+        <div style={{ fontWeight: 700 }}>
+          {appI18n.t("company.profile.cartBar.selectedServices", { count })}
+        </div>
         <div style={{ color: "var(--color-text-muted)" }}>{formatMoneyFromCents(totalCents)}</div>
       </div>
 
       <div>
         <Button type="primary" onClick={onOpen} disabled={count === 0}>
-          Ver seleção
+          {appI18n.t("company.profile.cartBar.viewSelection")}
         </Button>
       </div>
     </Bar>

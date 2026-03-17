@@ -1,4 +1,5 @@
 import { Calendar, Search, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -6,28 +7,30 @@ import {
 } from "@shared/ui/components/module-landing/module-landing.component";
 
 export function ClientsLandingTemplate() {
+  const { t } = useTranslation();
+
   const items: ModuleLandingItem[] = [
     {
       id: "catalog",
-      title: "Services catalog",
-      description: "Browse available services and providers.",
+      title: t("clients.landing.items.catalog.title"),
+      description: t("clients.landing.items.catalog.description"),
       to: "/clients",
       icon: <Search size={18} />,
     },
     {
       id: "appointments",
-      title: "Schedule",
-      description: "Manage appointments in the scheduling module.",
+      title: t("clients.landing.items.appointments.title"),
+      description: t("clients.landing.items.appointments.description"),
       to: "/schedule",
       icon: <Calendar size={18} />,
     },
     {
       id: "client-360",
-      title: "Client 360",
-      description: "Single profile with unified schedule, work-order, and finance history.",
+      title: t("clients.landing.items.client360.title"),
+      description: t("clients.landing.items.client360.description"),
       to: "/clients/360",
       icon: <Users size={18} />,
-      meta: "Unified relationship timeline",
+      meta: t("clients.landing.items.client360.meta"),
     },
   ];
 
@@ -35,9 +38,9 @@ export function ClientsLandingTemplate() {
     <BaseTemplate
       content={
         <ModuleLanding
-          title="Clients"
+          title={t("clients.landing.title")}
           headerIcon={<Users size={18} />}
-          description="Access the service catalog, schedule, and client relationship history."
+          description={t("clients.landing.description")}
           items={items}
         />
       }

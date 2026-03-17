@@ -2,6 +2,7 @@ import { Skeleton, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import styled from "styled-components";
 import { formatDate, formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import type { FinanceCashflowRow } from "../../../../interfaces/finance-table.model";
 import {
   getFinanceSignedValue,
@@ -54,12 +55,12 @@ export function CashflowTableWidget({
   subtitle,
   dense = true,
 }: Props) {
-  const renderSource = (source?: string) => {
+        const renderSource = (source?: string) => {
     const normalized = (source ?? "manual").toString().toLowerCase();
     const label =
-      normalized === "work-order" ? "WORK ORDER"
-        : normalized === "schedule" ? "SCHEDULE"
-        : normalized === "manual" ? "MANUAL"
+      normalized === "work-order" ? appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k001")
+        : normalized === "schedule" ? appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k002")
+        : normalized === "manual" ? appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k003")
         : normalized.toUpperCase();
     return <Tag>{label}</Tag>;
   };
@@ -74,7 +75,7 @@ export function CashflowTableWidget({
 
   const columns: ColumnsType<FinanceCashflowRow> = [
     {
-      title: "Date",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k004"),
       dataIndex: "date",
       key: "date",
       width: 120,
@@ -82,40 +83,40 @@ export function CashflowTableWidget({
       render: (v) => formatDate(v),
     },
     {
-      title: "Description",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k005"),
       dataIndex: "description",
       key: "description",
       ellipsis: true,
     },
     {
-      title: "Type",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k006"),
       dataIndex: "type",
       key: "type",
       width: 90,
-      render: (v) => <Tag>{v === "in" ? "IN" : "OUT"}</Tag>,
+      render: (v) => <Tag>{v === "in" ? appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k007") : appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k008")}</Tag>,
     },
     {
-      title: "Source",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k009"),
       dataIndex: "source",
       key: "source",
       width: 130,
       render: (v) => renderSource(v),
     },
     {
-      title: "Ref",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k010"),
       key: "ref",
       width: 120,
       render: (_v, row) => renderRef(row),
     },
     {
-      title: "Category",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k011"),
       dataIndex: "category",
       key: "category",
       width: 120,
       ellipsis: true,
     },
     {
-      title: "Amount",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k012"),
       dataIndex: "amount",
       key: "amount",
       width: 120,
@@ -130,11 +131,11 @@ export function CashflowTableWidget({
       },
     },
     {
-      title: "Status",
+      title: appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k013"),
       dataIndex: "status",
       key: "status",
       width: 110,
-      render: (v) => <Tag>{v === "paid" ? "PAID" : "PENDING"}</Tag>,
+      render: (v) => <Tag>{v === "paid" ? appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k014") : appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k015")}</Tag>,
     },
   ];
 
@@ -142,12 +143,12 @@ export function CashflowTableWidget({
     <WidgetCard className={className}>
       <WidgetHeader>
         <div className="titleRow">
-          <div className="title">Cashflow</div>
+          <div className="title">{appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k016")}</div>
           <div className="titleIcon">
             <DollarSign size={16} />
           </div>
         </div>
-        <div className="subtitle">{subtitle ?? "Latest incoming and outgoing records."}</div>
+        <div className="subtitle">{subtitle ?? appI18n.t("legacyInline.finance.presentation_components_widgets_cashflow_table_cashflow_table_widget.k017")}</div>
       </WidgetHeader>
 
       <WidgetBody>

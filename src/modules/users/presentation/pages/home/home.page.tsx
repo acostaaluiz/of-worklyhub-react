@@ -1,4 +1,5 @@
 import React from "react";
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import UsersHomeTemplate from "@modules/users/presentation/templates/home/home.template";
 import { Briefcase, Calendar, Users, DollarSign, Box, LayoutGrid, Sparkles } from "lucide-react";
@@ -17,6 +18,11 @@ import { message } from "antd";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { navigateTo } from "@core/navigation/navigation.service";
 import { ensureGrowthModule } from "@modules/users/presentation/utils/overview-modules";
+import { resolveModulePath } from "@modules/users/presentation/utils/module-navigation";
+import {
+  getLocalizedModuleCopy,
+  resolveModuleCatalogKey,
+} from "@modules/users/presentation/utils/module-localization";
 
 function toDataMap(value: DataValue | null | undefined): DataMap | null {
   if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) {
@@ -49,7 +55,7 @@ export class UsersHomePage extends BasePage<
     };
   }
 > {
-  protected override options = { title: "Home | WorklyHub", requiresAuth: true };
+  protected override options = { title: `${appI18n.t("home.pageTitles.home")} | WorklyHub`, requiresAuth: true };
 
   private profileSub?: Subscription;
 
@@ -193,7 +199,7 @@ export class UsersHomePage extends BasePage<
         }
       } catch (err) {
         console.error("failed to fetch overview", err);
-        message.error("Failed to load modules");
+        message.error(appI18n.t("home.messages.failedLoadModules"));
       }
     }, { setLoading: true });
   }
@@ -236,17 +242,24 @@ export class UsersHomePage extends BasePage<
       }
     };
 
-    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = ensureGrowthModule(apiModules).map((s: UserOverviewModule) => ({
-      id: s.uid,
-      title: s.name,
-      subtitle: s.description,
-      icon: mapIcon(s.icon),
-    }));
+    const services: { id: string; title: string; subtitle?: string; icon?: ReactNode; to?: string }[] = ensureGrowthModule(apiModules).map((s: UserOverviewModule) => {
+      const to = resolveModulePath({ id: s.uid, title: s.name }, undefined);
+      const catalogKey = resolveModuleCatalogKey(s, to);
+      const localized = getLocalizedModuleCopy(s, to);
+
+      return {
+        id: catalogKey ?? s.uid,
+        title: localized.title,
+        subtitle: localized.description,
+        icon: mapIcon(s.icon),
+        to,
+      };
+    });
 
     const preferred = [
-      { id: "schedule", keywords: ["schedule", "calendar"], fallbackIcon: <Calendar /> },
-      { id: "inventory", keywords: ["inventory", "stock"], fallbackIcon: <Box /> },
-      { id: "finance", keywords: ["finance", "payment"], fallbackIcon: <DollarSign /> },
+      { id: "schedule", route: "/schedule/landing", keywords: ["schedule", "calendar", "agenda", "agendamento"], fallbackIcon: <Calendar /> },
+      { id: "inventory", route: "/inventory/landing", keywords: ["inventory", "stock", "estoque", "insumo"], fallbackIcon: <Box /> },
+      { id: "finance", route: "/finance/landing", keywords: ["finance", "payment", "financeiro", "pagamento"], fallbackIcon: <DollarSign /> },
     ];
 
     const selected: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = [];
@@ -254,8 +267,8 @@ export class UsersHomePage extends BasePage<
 
     preferred.forEach((pref) => {
       const found = services.find((s) => {
-        const key = `${s.id ?? ""} ${s.title ?? ""}`.toLowerCase();
-        return key.includes(pref.id) || pref.keywords.some((k) => key.includes(k));
+        const key = normalizeText(`${s.id ?? ""} ${s.title ?? ""} ${s.subtitle ?? ""}`);
+        return s.to === pref.route || key.includes(pref.id) || pref.keywords.some((k) => key.includes(normalizeText(k)));
       });
       if (found) {
         selected.push(found.icon ? found : { ...found, icon: pref.fallbackIcon });
@@ -272,7 +285,12 @@ export class UsersHomePage extends BasePage<
 
     const quickModules: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = [
       ...selected,
-      { id: "all-modules", title: "See all", subtitle: "View all available modules", icon: <LayoutGrid /> },
+      {
+        id: "all-modules",
+        title: appI18n.t("home.quickModules.seeAll.title"),
+        subtitle: appI18n.t("home.quickModules.seeAll.subtitle"),
+        icon: <LayoutGrid />,
+      },
     ];
 
     const ws = companyService.getWorkspaceValue();
@@ -313,3 +331,10 @@ export class UsersHomePage extends BasePage<
 }
 
 export default UsersHomePage;
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import { Card, Button, Modal } from "antd";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
+import { i18n as appI18n } from "@core/i18n";
 import ServiceListComponent from "./service-list.component";
 import ServiceFormComponent from "./service-form.component";
 import { ModalOverrides } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
@@ -36,14 +37,14 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
             }}
             data-cy="company-services-new-button"
           >
-            New service
+            {appI18n.t("company.admin.manager.newService")}
           </Button>
         }
       />
 
       <ModalOverrides>
         <Modal
-          title={editing ? "Edit service" : "New service"}
+          title={editing ? appI18n.t("company.admin.manager.modal.editTitle") : appI18n.t("company.admin.manager.modal.newTitle")}
           open={showForm}
           onCancel={() => setShowForm(false)}
           footer={null}

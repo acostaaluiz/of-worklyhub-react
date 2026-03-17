@@ -1,4 +1,6 @@
 import { Calendar, ClipboardList, ListChecks, Settings2 } from "lucide-react";
+
+import { i18n as appI18n } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -6,37 +8,37 @@ import {
 } from "@shared/ui/components/module-landing/module-landing.component";
 
 export function WorkOrderLandingTemplate() {
-  const items: ModuleLandingItem[] = [
+        const items: ModuleLandingItem[] = [
     {
       id: "work-orders",
-      title: "Work orders",
-      description: "Track, prioritize, and dispatch work orders.",
-      meta: "Execution board",
+      title: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k001"),
+      description: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k002"),
+      meta: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k003"),
       to: "/work-order",
       icon: <ClipboardList size={18} />,
     },
     {
       id: "calendar",
-      title: "Calendar",
-      description: "Visualize work orders on a timeline.",
-      meta: "Timeline view",
+      title: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k004"),
+      description: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k005"),
+      meta: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k006"),
       to: "/work-order/calendar",
       icon: <Calendar size={18} />,
     },
     {
       id: "statuses",
-      title: "Statuses",
-      description: "Configure the workflow stages for work orders.",
-      meta: "Workflow setup",
+      title: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k007"),
+      description: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k008"),
+      meta: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k009"),
       to: "/work-order/statuses",
       icon: <ListChecks size={18} />,
     },
     {
       id: "settings",
-      title: "Settings",
+      title: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k010"),
       description:
-        "Set module parameters, automation rules, and execution validations by workspace.",
-      meta: "Module + billing automation",
+        appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k011"),
+      meta: appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k012"),
       to: "/work-order/settings",
       icon: <Settings2 size={18} />,
     },
@@ -46,9 +48,9 @@ export function WorkOrderLandingTemplate() {
     <BaseTemplate
       content={
         <ModuleLanding
-          title="Work Orders"
+          title={appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k013")}
           headerIcon={<ClipboardList size={18} />}
-          description="Plan, execute, and close work requests with full visibility."
+          description={appI18n.t("legacyInline.work_order.presentation_templates_landing_landing_template.k014")}
           items={items}
           variant="soft-accent"
         />

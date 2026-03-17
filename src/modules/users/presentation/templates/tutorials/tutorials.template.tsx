@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, type Variants, useReducedMotion } from "framer-motion";
 import {
@@ -17,6 +18,14 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
+import { normalizeAppLanguage } from "@core/i18n";
+
+import { tutorialsCatalogEnUS } from "./tutorials.catalog.en";
+import { tutorialsCatalogPtBR } from "./tutorials.catalog.pt-br";
+import type {
+  TutorialModuleId,
+  TutorialSlideContent,
+} from "./tutorials.catalog.types";
 import {
   CatalogCard,
   CatalogCardIcon,
@@ -74,15 +83,10 @@ import {
   TutorialsSurface,
 } from "./tutorials.template.styles";
 
-type TutorialSlide = {
-  title: string;
-  summary: string;
-  bullets: string[];
-  expectedResult: string;
-};
+type TutorialSlide = TutorialSlideContent;
 
 type ModuleTutorial = {
-  id: string;
+  id: TutorialModuleId;
   title: string;
   subtitle: string;
   route: string;
@@ -90,476 +94,32 @@ type ModuleTutorial = {
   slides: TutorialSlide[];
 };
 
-const tutorialsCatalog: ModuleTutorial[] = [
-  {
-    id: "billing",
-    title: "Billing",
-    subtitle: "Plans, subscriptions, and payments",
-    route: "/billing/landing",
-    icon: <CreditCard size={18} />,
-    slides: [
-      {
-        title: "Set your pricing strategy",
-        summary: "Configure plans, renewal logic, and payment rules aligned to your business model.",
-        bullets: [
-          "Define plan tiers and entitlements clearly",
-          "Set billing cycles and grace periods",
-          "Align payment methods to your customer profile",
-        ],
-        expectedResult: "You create a predictable recurring revenue base.",
-      },
-      {
-        title: "Monitor account health",
-        summary: "Track subscription status and payment events before churn happens.",
-        bullets: [
-          "Review active, pending, and overdue subscriptions",
-          "Track failed payments and retry cadence",
-          "Identify at-risk accounts for proactive action",
-        ],
-        expectedResult: "You reduce involuntary churn and revenue leakage.",
-      },
-      {
-        title: "Operate with confidence",
-        summary: "Use billing operations as a stable backbone for all modules.",
-        bullets: [
-          "Keep plan access synchronized with features",
-          "Standardize billing support processes",
-          "Create routines for monthly revenue checkpoints",
-        ],
-        expectedResult: "Your operation scales with fewer revenue surprises.",
-      },
-    ],
-  },
-  {
-    id: "clients",
-    title: "Clients",
-    subtitle: "Manage clients and relationships",
-    route: "/clients/landing",
-    icon: <Users size={18} />,
-    slides: [
-      {
-        title: "Build a clean customer base",
-        summary: "Centralize contact and profile data to support sales and service delivery.",
-        bullets: [
-          "Register complete customer identity data",
-          "Maintain updated communication channels",
-          "Segment customers by profile and value",
-        ],
-        expectedResult: "Your team works from a single source of truth.",
-      },
-      {
-        title: "Improve follow-up quality",
-        summary: "Turn client records into actionable workflows for your team.",
-        bullets: [
-          "Track service history and interactions",
-          "Flag priority customers and open issues",
-          "Set clear next actions per account",
-        ],
-        expectedResult: "You improve retention and reduce response time.",
-      },
-      {
-        title: "Connect clients to operations",
-        summary: "Link customers with schedule, work orders, and finance outputs.",
-        bullets: [
-          "Associate appointments with client records",
-          "Connect work orders to the requesting customer",
-          "Relate billing outcomes to account history",
-        ],
-        expectedResult: "You gain end-to-end customer visibility.",
-      },
-    ],
-  },
-  {
-    id: "company",
-    title: "Company",
-    subtitle: "Profile and business setup",
-    route: "/company/landing",
-    icon: <Briefcase size={18} />,
-    slides: [
-      {
-        title: "Set your business foundation",
-        summary: "Configure company identity and operational baseline once and reuse everywhere.",
-        bullets: [
-          "Keep legal and trade data consistent",
-          "Define core business attributes",
-          "Maintain profile quality for team clarity",
-        ],
-        expectedResult: "Your account starts with consistent structure.",
-      },
-      {
-        title: "Standardize service context",
-        summary: "Use company settings to align service language and scope across teams.",
-        bullets: [
-          "Define your primary service lines",
-          "Set clear positioning for the team",
-          "Document baseline operational assumptions",
-        ],
-        expectedResult: "Your team executes with less ambiguity.",
-      },
-      {
-        title: "Support growth readiness",
-        summary: "Keep profile and setup current as your operation grows.",
-        bullets: [
-          "Review profile changes monthly",
-          "Reflect team and scope expansion quickly",
-          "Use setup data to support better reporting",
-        ],
-        expectedResult: "You avoid operational drift while scaling.",
-      },
-    ],
-  },
-  {
-    id: "dashboard",
-    title: "Dashboard",
-    subtitle: "Business KPIs and insights",
-    route: "/dashboard/landing",
-    icon: <LayoutDashboard size={18} />,
-    slides: [
-      {
-        title: "Get your operational pulse",
-        summary: "Use KPIs to understand performance at a glance.",
-        bullets: [
-          "Track execution, demand, and throughput",
-          "Watch trend shifts over time windows",
-          "Identify risk signals early",
-        ],
-        expectedResult: "You prioritize what needs action now.",
-      },
-      {
-        title: "Drive daily decisions",
-        summary: "Translate numbers into practical priorities for each day.",
-        bullets: [
-          "Review the highest-impact indicators first",
-          "Align team workload using visible bottlenecks",
-          "Create short loops for corrective actions",
-        ],
-        expectedResult: "Your operation reacts faster with better focus.",
-      },
-      {
-        title: "Align leadership and execution",
-        summary: "Use shared KPIs for consistent communication between tactical and strategic levels.",
-        bullets: [
-          "Use the same definitions across teams",
-          "Run recurring KPI review rituals",
-          "Connect module actions back to outcomes",
-        ],
-        expectedResult: "You improve accountability and execution quality.",
-      },
-    ],
-  },
-  {
-    id: "finance",
-    title: "Finance",
-    subtitle: "Payments, cashflow, and reporting",
-    route: "/finance/landing",
-    icon: <DollarSign size={18} />,
-    slides: [
-      {
-        title: "Understand financial reality",
-        summary: "Visualize revenue, expenses, and margin in one place.",
-        bullets: [
-          "Track inflows and outflows consistently",
-          "Compare current period against baseline",
-          "Spot margin pressure drivers quickly",
-        ],
-        expectedResult: "You make financial decisions with confidence.",
-      },
-      {
-        title: "Control cashflow proactively",
-        summary: "Use forecasting and insights to reduce short-term risk.",
-        bullets: [
-          "Monitor due-soon obligations",
-          "Prioritize actions for cash preservation",
-          "Coordinate finance with operations cadence",
-        ],
-        expectedResult: "You reduce cash stress and planning surprises.",
-      },
-      {
-        title: "Close the loop with operations",
-        summary: "Connect financial outcomes with services, clients, and work execution.",
-        bullets: [
-          "Analyze profitability by service mix",
-          "Track cost behavior by execution patterns",
-          "Use insights to refine pricing and process",
-        ],
-        expectedResult: "You improve profitability over time.",
-      },
-    ],
-  },
-  {
-    id: "growth",
-    title: "Growth",
-    subtitle: "Retention, reactivation, and revenue recovery",
-    route: "/growth/landing",
-    icon: <Sparkles size={18} />,
-    slides: [
-      {
-        title: "Prioritize the right opportunities",
-        summary: "Use Growth Autopilot to rank opportunities from schedule, work-order, and finance signals.",
-        bullets: [
-          "Review new and queued opportunities with expected value",
-          "Filter by status and source module before dispatch",
-          "Select priority opportunities in batch for faster action",
-        ],
-        expectedResult: "You focus team effort on the highest commercial impact first.",
-      },
-      {
-        title: "Configure playbooks by objective",
-        summary: "Set goal, channel mix, and cadence once and apply it consistently.",
-        bullets: [
-          "Enable reactivation, upsell, and recovery playbooks",
-          "Set channels (WhatsApp, email, SMS) per objective",
-          "Define delay and max touches to avoid message fatigue",
-        ],
-        expectedResult: "Campaign execution becomes repeatable and less dependent on manual follow-up.",
-      },
-      {
-        title: "Track conversion and recovered revenue",
-        summary: "Use attribution indicators to validate campaign impact over the selected window.",
-        bullets: [
-          "Monitor dispatched vs converted opportunities",
-          "Measure recovered revenue tied to growth actions",
-          "Adjust playbooks based on conversion rate trends",
-        ],
-        expectedResult: "You shorten time from execution to billing and improve cashflow predictability.",
-      },
-    ],
-  },
-  {
-    id: "inventory",
-    title: "Inventory",
-    subtitle: "Stock and supplies control",
-    route: "/inventory/landing",
-    icon: <Box size={18} />,
-    slides: [
-      {
-        title: "Structure your inventory",
-        summary: "Create a clean catalog with stock semantics your team can trust.",
-        bullets: [
-          "Register items with clear identifiers",
-          "Define categories and stock locations",
-          "Keep minimum levels updated",
-        ],
-        expectedResult: "Your stock base becomes reliable.",
-      },
-      {
-        title: "Avoid service interruptions",
-        summary: "Use stock visibility to prevent shortages during execution.",
-        bullets: [
-          "Track planned and consumed quantities",
-          "Monitor critical low-stock items",
-          "Create replenishment routines",
-        ],
-        expectedResult: "You reduce delays caused by missing materials.",
-      },
-      {
-        title: "Link stock to profitability",
-        summary: "Connect inventory usage with finance and work orders.",
-        bullets: [
-          "Understand material cost impact per order",
-          "Reduce waste with usage discipline",
-          "Improve planning using historical consumption",
-        ],
-        expectedResult: "You gain tighter cost control.",
-      },
-    ],
-  },
-  {
-    id: "people",
-    title: "People",
-    subtitle: "Team capacity and availability",
-    route: "/people",
-    icon: <Users size={18} />,
-    slides: [
-      {
-        title: "Set weekly availability",
-        summary: "Define the weekly capacity baseline for each collaborator in one shared flow.",
-        bullets: [
-          "Open People and use the Capacity & availability tab",
-          "Set minutes per weekday for each collaborator",
-          "Save once and keep backend persistence for multi-user visibility",
-        ],
-        expectedResult: "Your team works from a single source of truth for availability.",
-      },
-      {
-        title: "Register availability blocks",
-        summary: "Capture exceptions such as PTO, training, and meetings to prevent unrealistic planning.",
-        bullets: [
-          "Create date and time blocks directly from the capacity panel",
-          "Use blocks to reduce effective daily availability automatically",
-          "Keep updates visible for managers and auditors",
-        ],
-        expectedResult: "Planned load reflects real available hours.",
-      },
-      {
-        title: "Track load and over-allocation",
-        summary: "Review operational indicators and collaborator load before assignment conflicts escalate.",
-        bullets: [
-          "Monitor conflict rate, productive hours, and planned workload",
-          "Compare schedule load and work-order load per collaborator",
-          "Act on over-allocation alerts before dispatching new work",
-        ],
-        expectedResult: "You reduce schedule conflicts and improve productivity planning.",
-      },
-    ],
-  },
-  {
-    id: "sla",
-    title: "SLA",
-    subtitle: "Service-level agreements and targets",
-    route: "/company/slas",
-    icon: <Briefcase size={18} />,
-    slides: [
-      {
-        title: "Define service commitments",
-        summary: "Set target times and standards for predictable service delivery.",
-        bullets: [
-          "Establish realistic response and resolution targets",
-          "Document agreement rules clearly",
-          "Align SLA by service criticality",
-        ],
-        expectedResult: "You set clear expectations with your customers.",
-      },
-      {
-        title: "Monitor compliance in real time",
-        summary: "Track fulfillment status before issues escalate.",
-        bullets: [
-          "Watch due and overdue execution windows",
-          "Identify recurring breach patterns",
-          "Escalate at-risk items early",
-        ],
-        expectedResult: "You reduce missed commitments.",
-      },
-      {
-        title: "Improve operational discipline",
-        summary: "Use SLA results to refine process and planning.",
-        bullets: [
-          "Review breach root causes",
-          "Adjust staffing and prioritization logic",
-          "Continuously calibrate targets to reality",
-        ],
-        expectedResult: "You increase reliability and customer trust.",
-      },
-    ],
-  },
-  {
-    id: "schedule",
-    title: "Schedule",
-    subtitle: "Appointments and calendar planning",
-    route: "/schedule/landing",
-    icon: <Calendar size={18} />,
-    slides: [
-      {
-        title: "Plan your execution window",
-        summary: "Organize activities in calendar format for predictable delivery.",
-        bullets: [
-          "Book appointments with clear timing",
-          "Avoid overlaps and hidden conflicts",
-          "Coordinate resources across days and weeks",
-        ],
-        expectedResult: "Your operation runs with less schedule friction.",
-      },
-      {
-        title: "React to change fast",
-        summary: "Update schedules quickly while preserving team alignment.",
-        bullets: [
-          "Reschedule with impact awareness",
-          "Communicate changes to relevant roles",
-          "Keep the calendar as source of execution truth",
-        ],
-        expectedResult: "You maintain service quality under variability.",
-      },
-      {
-        title: "Connect schedule with delivery",
-        summary: "Bridge planning with work orders, people, and inventory consumption.",
-        bullets: [
-          "Link events to actual execution records",
-          "Track throughput by calendar periods",
-          "Use schedule history to improve forecasting",
-        ],
-        expectedResult: "Planning becomes a strategic advantage.",
-      },
-    ],
-  },
-  {
-    id: "services",
-    title: "Services",
-    subtitle: "Catalog and pricing",
-    route: "/company/landing",
-    icon: <Briefcase size={18} />,
-    slides: [
-      {
-        title: "Build a structured catalog",
-        summary: "Define services with clear scope, pricing, and duration assumptions.",
-        bullets: [
-          "Standardize service naming and categories",
-          "Define price and effort references",
-          "Keep active offerings curated",
-        ],
-        expectedResult: "Your commercial and operational teams stay aligned.",
-      },
-      {
-        title: "Protect margin with consistency",
-        summary: "Use catalog quality to avoid underpricing and scope drift.",
-        bullets: [
-          "Review cost-to-deliver versus pricing regularly",
-          "Document add-ons and optional work clearly",
-          "Update catalog based on real execution data",
-        ],
-        expectedResult: "You improve financial performance per service.",
-      },
-      {
-        title: "Use catalog as decision engine",
-        summary: "Connect services to finance, schedule, and work order modules.",
-        bullets: [
-          "Measure service mix impact on revenue",
-          "Plan capacity based on service demand",
-          "Adjust portfolio to market response",
-        ],
-        expectedResult: "Your service strategy becomes data-driven.",
-      },
-    ],
-  },
-  {
-    id: "work-order",
-    title: "Work order",
-    subtitle: "Execution lifecycle and controls",
-    route: "/work-order/landing",
-    icon: <ClipboardList size={18} />,
-    slides: [
-      {
-        title: "Control execution from start to finish",
-        summary: "Create, assign, and monitor work orders in a single flow.",
-        bullets: [
-          "Track status transitions with clarity",
-          "Assign workers, lines, and deadlines",
-          "Centralize activity history in each order",
-        ],
-        expectedResult: "You gain predictability in daily operations.",
-      },
-      {
-        title: "Reduce operational risk",
-        summary: "Use overview signals to act on overdue and high-priority work early.",
-        bullets: [
-          "Monitor due soon and overdue queues",
-          "Spot checklist and priority risks",
-          "Trigger quick corrective actions",
-        ],
-        expectedResult: "You reduce delays and improve service quality.",
-      },
-      {
-        title: "Connect execution to business outcomes",
-        summary: "Bridge work order data with finance, inventory, and customer experience.",
-        bullets: [
-          "Measure cycle and completion performance",
-          "Track cost and material impact per order",
-          "Improve process using real work evidence",
-        ],
-        expectedResult: "Execution drives measurable business value.",
-      },
-    ],
-  },
-];
+const MODULE_META: Record<TutorialModuleId, { route: string; icon: ReactNode }> = {
+  billing: { route: "/billing/landing", icon: <CreditCard size={18} /> },
+  clients: { route: "/clients/landing", icon: <Users size={18} /> },
+  company: { route: "/company/landing", icon: <Briefcase size={18} /> },
+  dashboard: { route: "/dashboard/landing", icon: <LayoutDashboard size={18} /> },
+  finance: { route: "/finance/landing", icon: <DollarSign size={18} /> },
+  growth: { route: "/growth/landing", icon: <Sparkles size={18} /> },
+  inventory: { route: "/inventory/landing", icon: <Box size={18} /> },
+  people: { route: "/people/landing", icon: <Users size={18} /> },
+  sla: { route: "/company/landing", icon: <Briefcase size={18} /> },
+  schedule: { route: "/schedule/landing", icon: <Calendar size={18} /> },
+  services: { route: "/company/landing", icon: <Briefcase size={18} /> },
+  "work-order": { route: "/work-order/landing", icon: <ClipboardList size={18} /> },
+};
+
+function resolveTutorialsCatalog(language: string): ModuleTutorial[] {
+  const normalizedLanguage = normalizeAppLanguage(language);
+  const localizedCatalog =
+    normalizedLanguage === "pt-BR" ? tutorialsCatalogPtBR : tutorialsCatalogEnUS;
+
+  return localizedCatalog.map((module) => ({
+    ...module,
+    route: MODULE_META[module.id].route,
+    icon: MODULE_META[module.id].icon,
+  }));
+}
 
 function ensureSlideIndex(index: number, slidesTotal: number): number {
   if (slidesTotal <= 0) return 0;
@@ -608,7 +168,11 @@ const slideVariants: Variants = {
 export default function TutorialsTemplate() {
   const navigate = useNavigate();
   const prefersReducedMotion = useReducedMotion();
-  const tutorials = useMemo(() => tutorialsCatalog, []);
+  const { t, i18n } = useTranslation();
+  const tutorials = useMemo(
+    () => resolveTutorialsCatalog(i18n.resolvedLanguage ?? i18n.language),
+    [i18n.language, i18n.resolvedLanguage]
+  );
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [slidesByModule, setSlidesByModule] = useState<Record<string, number>>({});
   const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
@@ -669,8 +233,7 @@ export default function TutorialsTemplate() {
     }
   };
 
-  const isFirstSlide =
-    selectedModuleIndex === 0 && currentSlideIndex === 0;
+  const isFirstSlide = selectedModuleIndex === 0 && currentSlideIndex === 0;
   const isLastSlide =
     !!selectedModule &&
     selectedModuleIndex === tutorials.length - 1 &&
@@ -717,18 +280,19 @@ export default function TutorialsTemplate() {
                 <BookOpen size={20} />
               </HeroIconWrap>
               <HeroTitleBlock>
-                <HeroTitle level={3}>Product tutorials</HeroTitle>
-                <HeroSubtitle>
-                  Immersive guided tour. Pick a module and navigate with animated
-                  story cards.
-                </HeroSubtitle>
+                <HeroTitle level={3}>{t("tutorials.heroTitle")}</HeroTitle>
+                <HeroSubtitle>{t("tutorials.heroSubtitle")}</HeroSubtitle>
               </HeroTitleBlock>
             </HeroIdentity>
 
             <HeroActionRow>
-              <FloatingTag color="geekblue">{tutorials.length} modules</FloatingTag>
+              <FloatingTag color="geekblue">
+                {t("tutorials.totalModulesTag", { count: tutorials.length })}
+              </FloatingTag>
               <FloatingTag color="cyan">
-                {tutorials.reduce((sum, module) => sum + module.slides.length, 0)} total slides
+                {t("tutorials.totalSlidesTag", {
+                  count: tutorials.reduce((sum, module) => sum + module.slides.length, 0),
+                })}
               </FloatingTag>
               <HeroMainButton
                 type="primary"
@@ -737,7 +301,7 @@ export default function TutorialsTemplate() {
                   if (tutorials.length) activateModule(tutorials[0].id, 0, 1);
                 }}
               >
-                Start full tour
+                {t("tutorials.startFullTour")}
               </HeroMainButton>
             </HeroActionRow>
           </HeroTopRow>
@@ -791,7 +355,9 @@ export default function TutorialsTemplate() {
                   </CatalogCardTop>
 
                   <CatalogFooter>
-                    <SlidesPill>{module.slides.length} slides</SlidesPill>
+                    <SlidesPill>
+                      {t("tutorials.slidesCount", { count: module.slides.length })}
+                    </SlidesPill>
                     <CatalogStartButton
                       size="small"
                       type="primary"
@@ -800,7 +366,7 @@ export default function TutorialsTemplate() {
                         activateModule(module.id, 0, 1);
                       }}
                     >
-                        Start
+                      {t("tutorials.start")}
                     </CatalogStartButton>
                   </CatalogFooter>
                 </CatalogCard>
@@ -820,31 +386,27 @@ export default function TutorialsTemplate() {
                 transition={{ duration: prefersReducedMotion ? 0.01 : 0.35 }}
               >
                 <PanelHeader>
-                  <PanelTitle>Tutorial index</PanelTitle>
+                  <PanelTitle>{t("tutorials.tutorialIndexTitle")}</PanelTitle>
                   <GhostButton size="small" onClick={() => setSelectedModuleId(null)}>
-                    Back to modules
+                    {t("tutorials.backToModules")}
                   </GhostButton>
                 </PanelHeader>
                 <IndexGrid>
                   {tutorials.map((module) => {
                     const active = module.id === selectedModule.id;
-                    const targetIndex = tutorials.findIndex(
-                      (item) => item.id === module.id
-                    );
-                    const direction: 1 | -1 =
-                      targetIndex >= selectedModuleIndex ? 1 : -1;
+                    const targetIndex = tutorials.findIndex((item) => item.id === module.id);
+                    const direction: 1 | -1 = targetIndex >= selectedModuleIndex ? 1 : -1;
                     const moduleSlide = ensureSlideIndex(
                       slidesByModule[module.id] ?? 0,
                       module.slides.length
                     );
+
                     return (
                       <IndexButton
                         key={module.id}
                         $active={active}
                         whileHover={
-                          prefersReducedMotion
-                            ? undefined
-                            : { scale: 1.02, y: -1 }
+                          prefersReducedMotion ? undefined : { scale: 1.02, y: -1 }
                         }
                         whileTap={prefersReducedMotion ? undefined : { scale: 0.98 }}
                         onClick={() => activateModule(module.id, moduleSlide, direction)}
@@ -887,12 +449,15 @@ export default function TutorialsTemplate() {
                         {selectedModule.icon}
                       </StageIconWrap>
                       <div>
-                        <StageLabel>Now learning</StageLabel>
+                        <StageLabel>{t("tutorials.nowLearning")}</StageLabel>
                         <StageTitle>{selectedModule.title}</StageTitle>
                       </div>
                     </StageIdentity>
                     <StageProgressTag color="cyan">
-                      Slide {currentSlideIndex + 1} of {selectedModule.slides.length}
+                      {t("tutorials.slideProgress", {
+                        current: currentSlideIndex + 1,
+                        total: selectedModule.slides.length,
+                      })}
                     </StageProgressTag>
                   </StageTop>
 
@@ -925,11 +490,11 @@ export default function TutorialsTemplate() {
                           </div>
 
                           <div>
-                            <FocusTitle>What to focus on</FocusTitle>
+                            <FocusTitle>{t("tutorials.focusTitle")}</FocusTitle>
                             <FocusList>
                               {currentSlide.bullets.map((bullet, index) => (
                                 <FocusItem
-                                  key={bullet}
+                                  key={`${bullet}-${index}`}
                                   initial={{
                                     opacity: 0,
                                     x: prefersReducedMotion ? 0 : -10,
@@ -937,9 +502,7 @@ export default function TutorialsTemplate() {
                                   animate={{ opacity: 1, x: 0 }}
                                   transition={{
                                     duration: prefersReducedMotion ? 0.01 : 0.28,
-                                    delay: prefersReducedMotion
-                                      ? 0
-                                      : 0.08 + index * 0.06,
+                                    delay: prefersReducedMotion ? 0 : 0.08 + index * 0.06,
                                   }}
                                 >
                                   {bullet}
@@ -959,7 +522,7 @@ export default function TutorialsTemplate() {
                               delay: prefersReducedMotion ? 0 : 0.16,
                             }}
                           >
-                            <ResultLabel>Expected result</ResultLabel>
+                            <ResultLabel>{t("tutorials.expectedResultLabel")}</ResultLabel>
                             <ResultValue>{currentSlide.expectedResult}</ResultValue>
                           </ResultBox>
                         </SlideCard>
@@ -969,8 +532,12 @@ export default function TutorialsTemplate() {
 
                   <StageActions>
                     <StageActionButtons>
-                      <GhostButton icon={<ArrowLeft size={16} />} onClick={goToPreviousSlide} disabled={isFirstSlide}>
-                        Previous
+                      <GhostButton
+                        icon={<ArrowLeft size={16} />}
+                        onClick={goToPreviousSlide}
+                        disabled={isFirstSlide}
+                      >
+                        {t("tutorials.previous")}
                       </GhostButton>
                       <PrimaryPillButton
                         type="primary"
@@ -978,11 +545,14 @@ export default function TutorialsTemplate() {
                         onClick={goToNextSlide}
                         disabled={isLastSlide}
                       >
-                        Next
+                        {t("tutorials.next")}
                       </PrimaryPillButton>
                     </StageActionButtons>
-                    <GhostButton icon={<ExternalLink size={16} />} onClick={() => navigate(selectedModule.route)}>
-                      Open module
+                    <GhostButton
+                      icon={<ExternalLink size={16} />}
+                      onClick={() => navigate(selectedModule.route)}
+                    >
+                      {t("tutorials.openModule")}
                     </GhostButton>
                   </StageActions>
                 </StageBody>

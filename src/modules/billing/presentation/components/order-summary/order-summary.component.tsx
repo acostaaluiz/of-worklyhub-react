@@ -1,6 +1,7 @@
 import React from "react";
 import { Divider, Space, Typography, Button } from "antd";
 import { Check } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 import { BaseComponent } from "@shared/base/base.component";
 import { formatMoney } from "@core/utils/currency";
 import { billingService } from "@modules/billing/services/billing.service";
@@ -16,25 +17,26 @@ import {
   Badge,
 } from "./order-summary.component.styles";
 
-const mockPlan = {
-  name: "Standard",
-  cycle: "Yearly",
-  priceCents: 59900,
-  currencySymbol: "$",
-  savingsLabel: "Save 15%",
-  features: [
-    "Up to 5 users",
-    "Up to 500 clients",
-    "Unlimited schedules",
-    "Basic reports",
-    "Priority support",
-  ],
-};
-
 type OrderSummaryState = { isLoading: boolean; error?: DataValue; plan?: BillingPlan | null; interval?: BillingCycle };
 
 export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
   public override state: OrderSummaryState = { isLoading: false, error: undefined, plan: undefined, interval: undefined };
+
+  private getMockPlan() {
+    return {
+      name: appI18n.t("billing.planSelector.fallbackPlans.standard.name"),
+      cycle: appI18n.t("billing.orderSummary.cycle.yearly"),
+      priceCents: 59900,
+      savingsLabel: appI18n.t("billing.orderSummary.savingsLabel"),
+      features: [
+        appI18n.t("billing.orderSummary.mockFeatures.users"),
+        appI18n.t("billing.orderSummary.mockFeatures.clients"),
+        appI18n.t("billing.orderSummary.mockFeatures.schedules"),
+        appI18n.t("billing.orderSummary.mockFeatures.reports"),
+        appI18n.t("billing.orderSummary.mockFeatures.support"),
+      ],
+    };
+  }
 
   componentDidMount(): void {
     this.runAsync(async () => {
@@ -53,6 +55,8 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     }, { setLoading: false, swallowError: true });
   }
   protected override renderView(): React.ReactNode {
+    const mockPlan = this.getMockPlan();
+
     // prefer freshest values from sessionStorage (selection just happened)
     const selectedId = sessionStorage.getItem("billing.selectedPlanId");
     const sessionInterval = (sessionStorage.getItem("billing.selectedPlanInterval") as "monthly" | "yearly") ?? undefined;
@@ -67,16 +71,18 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
           <Space orientation="vertical" size={12} style={{ width: "100%", flex: 1 }}>
             <div>
               <Typography.Title level={4} style={{ margin: 0 }}>
-                Order summary
+                {appI18n.t("billing.orderSummary.title")}
               </Typography.Title>
-              <Typography.Text type="secondary">Review your plan before confirming.</Typography.Text>
+              <Typography.Text type="secondary">{appI18n.t("billing.orderSummary.subtitle")}</Typography.Text>
             </div>
 
             <Divider style={{ margin: "var(--space-4) 0" }} />
 
             <Line>
               <Typography.Text strong>{displayPlan ? displayPlan.name : mockPlan.name}</Typography.Text>
-              <Badge>{displayPlan ? (interval === "yearly" ? "Yearly" : "Monthly") : mockPlan.cycle}</Badge>
+              <Badge>
+                {displayPlan ? (interval === "yearly" ? appI18n.t("billing.orderSummary.cycle.yearly") : appI18n.t("billing.orderSummary.cycle.monthly")) : mockPlan.cycle}
+              </Badge>
             </Line>
 
             <PriceRow>
@@ -85,7 +91,9 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
                   ? formatMoney(interval === "yearly" ? displayPlan.priceCents.yearly : displayPlan.priceCents.monthly, { currency: displayPlan.currency })
                   : formatMoney(mockPlan.priceCents)}
               </Typography.Title>
-              <Typography.Text type="secondary">/ {displayPlan ? (interval === "yearly" ? "year" : "month") : "year"}</Typography.Text>
+              <Typography.Text type="secondary">
+                / {displayPlan ? (interval === "yearly" ? appI18n.t("billing.orderSummary.per.year") : appI18n.t("billing.orderSummary.per.month")) : appI18n.t("billing.orderSummary.per.year")}
+              </Typography.Text>
             </PriceRow>
 
             <Typography.Text type="secondary">{displayPlan ? "" : mockPlan.savingsLabel}</Typography.Text>
@@ -106,7 +114,7 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
             <Divider style={{ margin: "var(--space-4) 0" }} />
 
             <TotalRow>
-              <Typography.Text strong>Total</Typography.Text>
+              <Typography.Text strong>{appI18n.t("billing.orderSummary.total")}</Typography.Text>
               <Typography.Text strong>
                 {displayPlan
                   ? formatMoney(interval === "yearly" ? displayPlan.priceCents.yearly : displayPlan.priceCents.monthly, { currency: displayPlan.currency })
@@ -115,12 +123,12 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
             </TotalRow>
 
             <Typography.Text type="secondary" style={{ fontSize: "var(--font-size-sm)" }}>
-              Taxes may apply depending on your region.
+              {appI18n.t("billing.orderSummary.taxes")}
             </Typography.Text>
 
             <div style={{ marginTop: "auto" }}>
               <Button size="large" block style={{ borderRadius: "var(--radius-sm)" }} onClick={() => navigateTo("/billing/plans")}>
-                Change plan
+                {appI18n.t("billing.orderSummary.changePlan")}
               </Button>
             </div>
           </Space>

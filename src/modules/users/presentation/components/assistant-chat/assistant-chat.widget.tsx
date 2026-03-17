@@ -14,6 +14,7 @@ import type {
 } from "@modules/users/interfaces/assistant-chat.model";
 import { assistantChatService } from "@modules/users/services/assistant-chat.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
+import { usersAiTokensService } from "@modules/users/services/ai-tokens.service";
 import { toSafeAppPath } from "@core/navigation/safe-navigation";
 
 import {
@@ -75,6 +76,9 @@ export function AssistantChatWidget() {
         "Oi! Eu sou o WorklyPilot. Posso te orientar em fluxos do WorklyHub para ganhar produtividade e resultado.",
     },
   ]);
+  const [aiTokensBalance, setAiTokensBalance] = useState<number>(
+    usersAiTokensService.getSummaryValue().totalBalanceTokens ?? 0
+  );
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -103,6 +107,18 @@ export function AssistantChatWidget() {
       .subscribe((session) => setIsAuthenticated(Boolean(session?.uid)));
     return () => sub.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const sub = usersAiTokensService.getSummary$().subscribe((summary) => {
+      setAiTokensBalance(summary.totalBalanceTokens ?? 0);
+    });
+    return () => sub.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    usersAiTokensService.fetchSummary().catch(() => undefined);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -150,6 +166,7 @@ export function AssistantChatWidget() {
           "Nao consegui responder agora. Tente reformular sua duvida.",
         suggestions: response.assistant?.suggestions ?? [],
       });
+      usersAiTokensService.fetchSummary().catch(() => undefined);
     } catch (error) {
       const fallback =
         error instanceof Error && error.message
@@ -161,6 +178,7 @@ export function AssistantChatWidget() {
         content: fallback,
         isError: true,
       });
+      usersAiTokensService.fetchSummary().catch(() => undefined);
     } finally {
       setIsSending(false);
     }
@@ -274,7 +292,9 @@ export function AssistantChatWidget() {
             }}
           />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Tag color="blue">Virtual only</Tag>
+            <Tag color={aiTokensBalance <= 0 ? "red" : aiTokensBalance <= 100 ? "gold" : "blue"}>
+              {`AI tokens: ${aiTokensBalance}`}
+            </Tag>
             <Button
               type="primary"
               icon={<SendHorizontal size={14} />}

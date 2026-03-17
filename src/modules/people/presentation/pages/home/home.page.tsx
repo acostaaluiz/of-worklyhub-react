@@ -1,4 +1,5 @@
 import React from "react";
+import { i18n as appI18n } from "@core/i18n";
 import { Button, Modal, Tabs, message } from "antd";
 import PeopleTemplate from "@modules/people/presentation/templates/people/people.template";
 import EmployeeListComponent from "@modules/people/presentation/components/employee-list/employee-list.component";
@@ -40,7 +41,7 @@ type State = {
 
 export class PeopleHomePage extends BasePage<{}, State> {
   protected override options = {
-    title: "People | WorklyHub",
+    title: `${appI18n.t("people.pageTitles.home")} | WorklyHub`,
     requiresAuth: true,
   };
 

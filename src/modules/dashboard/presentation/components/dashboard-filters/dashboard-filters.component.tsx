@@ -4,6 +4,7 @@ import type { Dayjs } from "dayjs";
 import { RefreshCw } from "lucide-react";
 import { useMemo } from "react";
 import { getDateFormat } from "@core/utils/mask";
+import { useTranslation } from "react-i18next";
 
 import type {
   DashboardQueryModel,
@@ -31,6 +32,7 @@ type Props = {
 };
 
 export function DashboardFilters(props: Props) {
+  const { t } = useTranslation();
   const { value, onChange, loading, view, onViewChange } = props;
   const dateFormat = getDateFormat();
 
@@ -58,7 +60,7 @@ export function DashboardFilters(props: Props) {
   return (
     <FiltersCard className="surface">
       <FiltersLeft>
-        <Typography.Text strong>Period</Typography.Text>
+        <Typography.Text strong>{t("dashboard.filters.period")}</Typography.Text>
         <DatePicker.RangePicker
           value={rangeValue}
           onChange={(dates) => {
@@ -71,10 +73,10 @@ export function DashboardFilters(props: Props) {
           value={view}
           onChange={(v) => onViewChange(v as DashboardView)}
           options={[
-            { label: "Overview", value: "overview" },
-            { label: "Trend", value: "trend" },
-            { label: "Services", value: "services" },
-            { label: "Alerts", value: "alerts" },
+            { label: t("dashboard.filters.view.overview"), value: "overview" },
+            { label: t("dashboard.filters.view.trend"), value: "trend" },
+            { label: t("dashboard.filters.view.services"), value: "services" },
+            { label: t("dashboard.filters.view.alerts"), value: "alerts" },
           ]}
         />
       </FiltersLeft>
@@ -84,9 +86,9 @@ export function DashboardFilters(props: Props) {
           value={value.groupBy}
           onChange={(v) => setGroupBy(v as DashboardGroupBy)}
           options={[
-            { label: "Day", value: "day" },
-            { label: "Week", value: "week" },
-            { label: "Month", value: "month" },
+            { label: t("dashboard.filters.groupBy.day"), value: "day" },
+            { label: t("dashboard.filters.groupBy.week"), value: "week" },
+            { label: t("dashboard.filters.groupBy.month"), value: "month" },
           ]}
         />
         <Button
@@ -94,7 +96,7 @@ export function DashboardFilters(props: Props) {
           onClick={handleRefresh}
           loading={loading}
         >
-          Refresh
+          {t("dashboard.filters.refresh")}
         </Button>
       </FiltersRight>
     </FiltersCard>

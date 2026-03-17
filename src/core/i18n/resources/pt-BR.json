@@ -1,0 +1,2290 @@
+{
+  "settings": {
+    "language": {
+      "title": "Idioma da aplicacao",
+      "description": "Escolha o idioma de exibicao usado nos tutoriais e nas interfaces suportadas.",
+      "selectLabel": "Idioma",
+      "english": "Ingles (EUA)",
+      "portuguese": "Portugues (Brasil)",
+      "changeSuccess": "Idioma atualizado para {{language}}."
+    }
+  },
+  "tutorials": {
+    "heroTitle": "Tutoriais do produto",
+    "heroSubtitle": "Tour guiado imersivo. Escolha um modulo e navegue com cards de historia animados.",
+    "totalModulesTag": "{{count}} modulos",
+    "totalSlidesTag": "{{count}} slides no total",
+    "startFullTour": "Iniciar tour completo",
+    "start": "Iniciar",
+    "slidesCount": "{{count}} slides",
+    "tutorialIndexTitle": "Indice de tutoriais",
+    "backToModules": "Voltar para modulos",
+    "nowLearning": "Aprendendo agora",
+    "slideProgress": "Slide {{current}} de {{total}}",
+    "focusTitle": "No que focar",
+    "expectedResultLabel": "Resultado esperado",
+    "previous": "Anterior",
+    "next": "Proximo",
+    "openModule": "Abrir modulo"
+  },
+  "allModules": {
+    "pageTitles": {
+      "allModules": "Todos os modulos"
+    },
+    "messages": {
+      "failedLoadModules": "Falha ao carregar modulos."
+    },
+    "error": {
+      "title": "Nao foi possivel carregar os modulos",
+      "description": "Tente novamente em alguns instantes."
+    },
+    "empty": {
+      "title": "Nenhum modulo disponivel",
+      "description": "Ainda nao ha servicos disponiveis para exibir."
+    },
+    "hero": {
+      "title": "Todos os modulos",
+      "description": "Explore e inicie cada servico disponivel no WorklyHub.",
+      "descriptionWithPlan": "Plano atual: {{planTitle}}",
+      "stats": {
+        "totalModules": "{{count}} modulos",
+        "availableNow": "{{count}} disponiveis agora",
+        "discoveryMode": "modo descoberta"
+      },
+      "actions": {
+        "guidedTour": "Tour guiado",
+        "startExploring": "Comecar exploracao"
+      }
+    },
+    "cardTags": {
+      "recommended": "Recomendado",
+      "module": "Modulo"
+    },
+    "catalog": {
+      "billing": {
+        "title": "Faturamento",
+        "description": "Planos, assinaturas e pagamentos"
+      },
+      "clients": {
+        "title": "Clientes",
+        "description": "Gerenciar clientes"
+      },
+      "company": {
+        "title": "Empresa",
+        "description": "Perfil da empresa e catalogo de servicos"
+      },
+      "dashboard": {
+        "title": "Dashboard",
+        "description": "Insights do negocio e KPIs"
+      },
+      "finance": {
+        "title": "Financeiro",
+        "description": "Pagamentos e relatorios"
+      },
+      "growth": {
+        "title": "Growth",
+        "description": "Automacoes de retencao e reativacao"
+      },
+      "inventory": {
+        "title": "Estoque",
+        "description": "Gerenciar estoque e insumos"
+      },
+      "people": {
+        "title": "Pessoas",
+        "description": "Membros da equipe e acessos"
+      },
+      "schedule": {
+        "title": "Agenda",
+        "description": "Gerenciar agendamentos"
+      },
+      "services": {
+        "title": "Servicos",
+        "description": "Catalogo e precificacao"
+      },
+      "sla": {
+        "title": "SLA",
+        "description": "Acordos de nivel de servico e metas"
+      },
+      "workOrder": {
+        "title": "Ordem de servico",
+        "description": "Gerenciar ordens e ciclo de execucao"
+      }
+    }
+  },
+  "layout": {
+    "header": {
+      "aria": {
+        "openNavigationMenu": "Abrir menu de navegacao",
+        "notifications": "Notificacoes"
+      },
+      "search": {
+        "placeholder": "Buscar modulos"
+      },
+      "actions": {
+        "upgrade": "Fazer upgrade"
+      },
+      "menu": {
+        "companySetup": "Setup da empresa",
+        "billing": "Faturamento",
+        "users": "Usuarios"
+      },
+      "userMenu": {
+        "profile": "Perfil",
+        "settings": "Configuracoes",
+        "signOut": "Sair"
+      },
+      "mobile": {
+        "menuTitle": "Menu",
+        "notifications": "Notificacoes"
+      }
+    },
+    "footer": {
+      "links": {
+        "companySetup": "Setup da empresa",
+        "billing": "Faturamento",
+        "users": "Usuarios",
+        "terms": "Termos",
+        "privacy": "Privacidade"
+      },
+      "tagline": "Gestao empresarial para equipes modernas.",
+      "copyright": "© {{year}} WorklyHub. Todos os direitos reservados.",
+      "developedBy": "Desenvolvido por",
+      "ofConsultingAriaLabel": "Abrir site da O.F. Consulting em uma nova aba"
+    }
+  },
+  "home": {
+    "pageTitles": {
+      "home": "Home"
+    },
+    "messages": {
+      "failedLoadModules": "Falha ao carregar modulos."
+    },
+    "quickModules": {
+      "seeAll": {
+        "title": "Ver todos",
+        "subtitle": "Visualizar todos os modulos disponiveis"
+      }
+    },
+    "hero": {
+      "title": "Bem-vindo",
+      "titleWithName": "Bem-vindo, {{name}}",
+      "description": "Comece seu dia com sinais prioritarios e acesse os modulos que mantem sua operacao em movimento.",
+      "actions": {
+        "tutorials": "Tutoriais",
+        "editCompany": "Editar empresa"
+      },
+      "highlights": {
+        "todayLoad": {
+          "label": "Carga de hoje",
+          "value": "{{count}} agendamentos"
+        },
+        "revenuePulse": {
+          "label": "Pulso de receita"
+        },
+        "nextAppointment": {
+          "label": "Proximo agendamento",
+          "empty": "Sem proximo agendamento"
+        }
+      }
+    },
+    "readiness": {
+      "signals": {
+        "companyNameConfigured": "Nome da empresa configurado",
+        "companyDescriptionConfigured": "Descricao da empresa configurada",
+        "activePlanDetected": "Plano ativo detectado",
+        "upcomingAppointment": "Pelo menos um agendamento futuro"
+      },
+      "tooltip": {
+        "title": "Checklist de setup",
+        "progress": "{{completed}}/{{total}} concluido",
+        "complete": "Todos os sinais de setup estao completos.",
+        "pending": "{{count}} item(ns) pendente(s) para chegar a 100%."
+      }
+    },
+    "sections": {
+      "indicators": {
+        "title": "Indicadores",
+        "description": "Acompanhe riscos e sinais pendentes sem duplicar KPIs de topo."
+      },
+      "companySnapshot": {
+        "title": "Resumo da empresa",
+        "description": "Contexto rapido antes de iniciar a execucao."
+      },
+      "modules": {
+        "title": "Escolha um modulo para iniciar",
+        "description": "Acesse diretamente os fluxos principais do seu dia."
+      }
+    },
+    "companyCards": {
+      "company": {
+        "label": "Empresa"
+      },
+      "readiness": {
+        "label": "Prontidao de setup",
+        "value": "{{percent}}% pronto",
+        "meta": "{{configured}}/{{total}} sinais-chave do workspace configurados"
+      },
+      "plan": {
+        "label": "Plano"
+      }
+    },
+    "metrics": {
+      "overdueWorkOrders": "Ordens de servico em atraso",
+      "inventoryAlerts": "Alertas de estoque",
+      "unreadNotifications": "Notificacoes nao lidas",
+      "highPrioritySuffix": " ({{count}} alta prioridade)"
+    }
+  },
+  "users": {
+    "pageTitles": {
+      "login": "Entrar",
+      "register": "Cadastro",
+      "forgotPassword": "Esqueci minha senha",
+      "notifications": "Notificacoes",
+      "profile": "Perfil",
+      "settings": "Configuracoes",
+      "tutorials": "Tutoriais do produto",
+      "terms": "Termos de servico",
+      "privacy": "Politica de privacidade"
+    },
+    "auth": {
+      "language": {
+        "selectAriaLabel": "Selecionar idioma"
+      },
+      "common": {
+        "fullName": {
+          "label": "Nome completo",
+          "required": "Nome completo e obrigatorio",
+          "min": "Nome deve ter pelo menos 2 caracteres",
+          "placeholder": "Digite seu nome completo"
+        },
+        "email": {
+          "label": "Email",
+          "required": "Email e obrigatorio",
+          "invalid": "Digite um email valido",
+          "placeholder": "voce@empresa.com"
+        },
+        "password": {
+          "label": "Senha",
+          "required": "Senha e obrigatoria",
+          "min": "Senha deve ter pelo menos 6 caracteres"
+        },
+        "continueWith": "ou continue com",
+        "googleAriaLabel": "Continuar com Google",
+        "facebookAriaLabel": "Continuar com Facebook"
+      },
+      "login": {
+        "hero": {
+          "subtitle": "Plataforma de operacoes",
+          "titleLine1": "Gerencie sua empresa",
+          "titleLine2": "com confianca",
+          "description": "Controle servicos, financeiro, agenda e performance em um unico lugar.",
+          "tip": "Dica: use a busca do cabecalho para abrir modulos rapidamente pela tela de todos os modulos."
+        },
+        "form": {
+          "title": "Entrar",
+          "subtitle": "Acesse seu workspace e continue de onde parou.",
+          "passwordPlaceholder": "Digite sua senha",
+          "forgotPassword": "Esqueceu a senha?",
+          "submit": "Entrar",
+          "notMember": "Nao tem conta?",
+          "registerNow": "Criar conta"
+        },
+        "feedback": {
+          "invalidCredentials": "Email ou senha incorretos.",
+          "userNotFound": "Usuario nao encontrado.",
+          "tooManyAttempts": "Muitas tentativas. Tente novamente mais tarde.",
+          "unauthorized": "Falha na autenticacao, faca login novamente.",
+          "genericError": "Falha na autenticacao."
+        }
+      },
+      "register": {
+        "hero": {
+          "subtitle": "Crie seu workspace",
+          "titleLine1": "Comece em minutos,",
+          "titleLine2": "escale com controle",
+          "description": "Configure empresa, equipe e primeiros servicos para lancar sua operacao.",
+          "tip": "Dica: apos criar sua conta, use a busca do cabecalho para localizar cada modulo e concluir o setup."
+        },
+        "form": {
+          "title": "Criar conta",
+          "subtitle": "Inicie seu workspace com setup guiado.",
+          "passwordPlaceholder": "Crie uma senha",
+          "confirmPasswordLabel": "Confirmar senha",
+          "confirmPasswordRequired": "Confirme sua senha",
+          "confirmPasswordMismatch": "As senhas nao conferem",
+          "confirmPasswordPlaceholder": "Repita sua senha",
+          "acceptTermsError": "Voce precisa aceitar os termos e a politica de privacidade.",
+          "acceptTermsPrefix": "Eu concordo com os",
+          "termsLink": "Termos de servico",
+          "and": "e",
+          "privacyLink": "Politica de privacidade",
+          "submit": "Cadastrar",
+          "alreadyHaveAccount": "Ja possui conta?",
+          "signIn": "Entrar"
+        },
+        "feedback": {
+          "emailInUse": "Email ja esta em uso.",
+          "invalidData": "Dados invalidos.",
+          "genericError": "Falha no cadastro."
+        },
+        "modal": {
+          "title": "Conta criada",
+          "description": "Sua conta foi criada com sucesso.",
+          "goToLogin": "Ir para login",
+          "close": "Fechar"
+        }
+      }
+    },
+    "profile": {
+      "header": {
+        "title": "Configuracoes de perfil",
+        "subtitle": "Atualize suas informacoes pessoais e da empresa."
+      },
+      "common": {
+        "noPlan": "Sem plano"
+      },
+      "actions": {
+        "changePhoto": "Alterar foto"
+      },
+      "plan": {
+        "pricePerMonth": "{{value}}/mes"
+      },
+      "highlights": {
+        "plan": "Plano",
+        "accountType": "Tipo de conta",
+        "employees": "Colaboradores",
+        "aiTokens": "Tokens IA"
+      },
+      "tabs": {
+        "personal": "Info pessoal",
+        "company": "Info empresa",
+        "aiTokens": "Tokens IA"
+      },
+      "personal": {
+        "fields": {
+          "fullName": {
+            "label": "Nome completo",
+            "required": "Nome completo e obrigatorio",
+            "placeholder": "Digite seu nome completo"
+          },
+          "email": {
+            "label": "Email"
+          },
+          "phone": {
+            "label": "Telefone",
+            "hint": "Inclua DDD para facilitar contato com clientes e equipe.",
+            "placeholder": "(11) 91234-5678"
+          }
+        },
+        "actions": {
+          "saveTooltip": "Salvar informacoes pessoais",
+          "save": "Salvar pessoal"
+        }
+      },
+      "company": {
+        "fields": {
+          "accountType": {
+            "label": "Tipo de conta",
+            "options": {
+              "individual": "Pessoa fisica",
+              "company": "Empresa"
+            }
+          },
+          "employees": {
+            "label": "Colaboradores"
+          },
+          "legalName": {
+            "label": "Razao social",
+            "hint": "Nome legal registrado da empresa.",
+            "placeholder": "Informe a razao social"
+          },
+          "tradeName": {
+            "label": "Nome fantasia",
+            "placeholder": "Informe o nome fantasia"
+          },
+          "primaryService": {
+            "label": "Servico principal",
+            "placeholder": "Selecione o servico principal"
+          },
+          "industry": {
+            "label": "Industria",
+            "placeholder": "Selecione a industria"
+          },
+          "industryFallback": {
+            "health": "Saude",
+            "finance": "Financeiro",
+            "retail": "Varejo",
+            "education": "Educacao",
+            "services": "Servicos",
+            "other": "Outro"
+          },
+          "description": {
+            "label": "Descricao"
+          }
+        },
+        "actions": {
+          "changeWallpaperTooltip": "Alterar capa da empresa",
+          "changeWallpaper": "Alterar capa",
+          "saveTooltip": "Salvar informacoes da empresa",
+          "save": "Salvar empresa"
+        }
+      },
+      "aiTokens": {
+        "balance": {
+          "title": "Saldo de tokens IA",
+          "subtitle": "Acompanhe franquia mensal, recargas e consumo por recurso.",
+          "actions": {
+            "refresh": "Atualizar"
+          },
+          "cards": {
+            "current": "Saldo atual",
+            "monthlyQuota": "Franquia mensal",
+            "topUp": "Recarga avulsa",
+            "nextRefill": "Proxima recarga"
+          },
+          "remainingMonthlyQuota": "{{count}} tokens restantes da franquia mensal"
+        },
+        "statement": {
+          "title": "Extrato de consumo",
+          "totalRecords": "{{count}} registros",
+          "empty": "Nenhum consumo registrado."
+        },
+        "table": {
+          "columns": {
+            "when": "Quando",
+            "module": "Modulo",
+            "feature": "Funcionalidade",
+            "type": "Tipo",
+            "tokens": "Tokens",
+            "balanceAfter": "Saldo apos"
+          },
+          "entryType": {
+            "debit": "Debito",
+            "credit": "Credito",
+            "adjustment": "Ajuste"
+          }
+        }
+      },
+      "messages": {
+        "uploadPhotoSuccess": "Foto enviada com sucesso.",
+        "uploadPhotoError": "Falha ao enviar foto.",
+        "uploadWallpaperSuccess": "Capa enviada com sucesso.",
+        "uploadWallpaperError": "Falha ao enviar capa.",
+        "savePersonalSuccess": "Informacoes pessoais salvas.",
+        "savePersonalError": "Falha ao salvar informacoes pessoais.",
+        "saveCompanySuccess": "Informacoes da empresa salvas.",
+        "saveCompanyError": "Falha ao salvar informacoes da empresa."
+      },
+      "modals": {
+        "avatar": {
+          "title": "Enviar foto de perfil",
+          "subtitle": "Selecione ou arraste uma imagem para atualizar sua foto."
+        },
+        "wallpaper": {
+          "title": "Enviar capa da empresa",
+          "subtitle": "Selecione ou arraste uma imagem para atualizar a capa."
+        }
+      }
+    },
+    "settings": {
+      "hero": {
+        "title": "Configuracoes",
+        "subtitle": "Centralize configuracoes de faturamento do workspace e emissao de NF-e."
+      },
+      "meta": {
+        "workspace": "Workspace",
+        "source": "Fonte",
+        "nfe": "NF-e",
+        "rulesUpdated": "Regras atualizadas",
+        "nfeUpdated": "NF-e atualizada",
+        "notUpdated": "Nao atualizado",
+        "sourceLong": {
+          "database": "Carregado das configuracoes do workspace",
+          "defaults": "Sem registro salvo ainda (valores padrao)"
+        },
+        "sourceCompact": {
+          "database": "workspace",
+          "defaults": "padrao"
+        },
+        "resolutionLong": {
+          "workspace": "Configuracao fiscal especifica do workspace",
+          "workspaceDefault": "Configuracao fiscal padrao de workspace da plataforma",
+          "platform": "Configuracao fiscal da plataforma",
+          "none": "Nenhuma configuracao fiscal salva"
+        },
+        "resolutionCompact": {
+          "workspace": "workspace",
+          "workspaceDefault": "workspace-default",
+          "platform": "platform",
+          "none": "nao configurado"
+        }
+      },
+      "tabs": {
+        "billing": "Faturamento",
+        "issuance": "Emissao",
+        "advanced": "Avancado",
+        "appearance": "Aparencia"
+      },
+      "messages": {
+        "loadError": "Nao foi possivel carregar as configuracoes de faturamento.",
+        "saveRulesSuccess": "Regras de faturamento atualizadas.",
+        "saveRulesError": "Nao foi possivel salvar as regras de faturamento.",
+        "saveNfeSuccess": "Configuracoes de emissao de NF-e atualizadas.",
+        "saveNfeError": "Nao foi possivel salvar as configuracoes de NF-e."
+      },
+      "billing": {
+        "title": "Regras de faturamento por modulo",
+        "subtitle": "Habilite os modulos que podem iniciar faturamento e emissao de NF-e.",
+        "automation": {
+          "title": "Automacao execucao-para-faturamento",
+          "description": "Quando Work Order ou Agenda atinge um status final de execucao, o backend pode criar automaticamente um lancamento financeiro. A emissao de NF-e e opcional."
+        },
+        "workspaceEnabled": "Faturamento do workspace habilitado",
+        "modules": {
+          "workOrder": {
+            "label": "Ordem de servico",
+            "description": "Permite faturamento e emissao de NF-e a partir de ordens de servico."
+          },
+          "schedule": {
+            "label": "Agenda",
+            "description": "Permite faturamento e emissao de NF-e a partir de conclusoes da agenda."
+          },
+          "finance": {
+            "label": "Financeiro",
+            "description": "Habilita emissao fiscal para lancamentos financeiros."
+          },
+          "inventory": {
+            "label": "Estoque",
+            "description": "Reservado para vendas que disparam reducao de estoque."
+          },
+          "people": {
+            "label": "Pessoas",
+            "description": "Reservado para faturamento com base em servicos entregues por colaboradores."
+          },
+          "clients": {
+            "label": "Clientes",
+            "description": "Reservado para fluxos de venda iniciados no modulo Clientes."
+          }
+        },
+        "actions": {
+          "save": "Salvar regras"
+        }
+      },
+      "issuance": {
+        "title": "Conexao de emissao fiscal (NF-e)",
+        "subtitle": "Configure os dados do emissor fiscal do workspace para notas de venda de servico.",
+        "fields": {
+          "environment": "Ambiente",
+          "provider": "Provedor",
+          "httpMethod": "Metodo HTTP",
+          "authentication": "Autenticacao",
+          "baseUrl": "URL base da API fiscal",
+          "issuePath": "Rota de emissao",
+          "timeoutMs": "Timeout (ms)",
+          "retries": "Tentativas",
+          "bearerToken": "Token bearer",
+          "apiKeyHeader": "Cabecalho da API key",
+          "apiKey": "API key",
+          "username": "Usuario",
+          "password": "Senha",
+          "legalName": "Razao social",
+          "issuerDocument": "Documento do emissor (CNPJ/CPF)",
+          "stateRegistration": "Inscricao estadual",
+          "municipalRegistration": "Inscricao municipal",
+          "taxRegime": "Regime tributario"
+        },
+        "options": {
+          "environment": {
+            "homologation": "Homologacao",
+            "production": "Producao"
+          },
+          "authentication": {
+            "none": "Sem autenticacao",
+            "bearer": "Token bearer",
+            "apiKey": "API key",
+            "basic": "Autenticacao basica"
+          }
+        },
+        "placeholders": {
+          "provider": "govbr",
+          "baseUrl": "https://api.seu-provedor.com",
+          "issuePath": "/nfe/emitir",
+          "apiKeyHeader": "x-api-key",
+          "taxRegime": "simples_nacional, lucro_presumido..."
+        },
+        "validation": {
+          "environmentRequired": "Selecione o ambiente.",
+          "providerRequired": "Informe o provedor.",
+          "baseUrlRequired": "Informe a URL base.",
+          "issuePathRequired": "Informe a rota de emissao.",
+          "tokenRequired": "Informe o token.",
+          "headerRequired": "Informe o cabecalho.",
+          "apiKeyRequired": "Informe a API key.",
+          "usernameRequired": "Informe o usuario.",
+          "passwordRequired": "Informe a senha.",
+          "legalNameRequired": "Informe a razao social.",
+          "documentRequired": "Informe o documento."
+        },
+        "actions": {
+          "save": "Salvar emissao"
+        }
+      },
+      "advanced": {
+        "title": "Parametros avancados",
+        "subtitle": "Campos opcionais para cabecalhos extras, templates e metadados.",
+        "fields": {
+          "headers": "Cabecalhos (JSON)",
+          "payloadTemplate": "Template de payload (JSON)",
+          "responseMapping": "Mapeamento de resposta (JSON)",
+          "issuerAddress": "Endereco do emissor (JSON)",
+          "defaults": "Padroes (JSON)",
+          "metadata": "Metadados (JSON)"
+        },
+        "placeholders": {
+          "headers": "{\"x-tenant\":\"worklyhub\"}",
+          "payloadTemplate": "{\"naturezaOperacao\":\"Servico prestado\"}",
+          "responseMapping": "{\"status\":\"status\",\"accessKey\":\"access_key\"}",
+          "issuerAddress": "{\"street\":\"Rua X\",\"number\":\"123\",\"city\":\"Sao Paulo\",\"state\":\"SP\"}",
+          "defaults": "{\"serviceCode\":\"1401\"}",
+          "metadata": "{\"owner\":\"workspace\"}"
+        },
+        "validation": {
+          "mustBeValidJson": "{{label}} deve ser um JSON valido.",
+          "mustBeJsonObject": "{{label}} deve ser um objeto JSON."
+        },
+        "actions": {
+          "save": "Salvar avancado"
+        }
+      },
+      "appearance": {
+        "title": "Aparencia",
+        "subtitle": "Alterne entre tema claro e escuro e personalize cores principais opcionalmente.",
+        "tabs": {
+          "theme": "Tema",
+          "customColors": "Cores personalizadas"
+        },
+        "theme": {
+          "alertTitle": "Modo de tema",
+          "alertDescription": "O modo selecionado e aplicado imediatamente e salvo nas suas preferencias locais.",
+          "lightLabel": "Claro",
+          "lightDescription": "Interface mais iluminada para uso durante o dia.",
+          "darkLabel": "Escuro",
+          "darkDescription": "Menos brilho em ambientes com pouca luz.",
+          "useLight": "Usar claro",
+          "useDark": "Usar escuro",
+          "activeMode": "Modo ativo: {{mode}}",
+          "modes": {
+            "light": "Claro",
+            "dark": "Escuro"
+          },
+          "updateSuccess": "Tema atualizado para {{mode}}."
+        },
+        "customColors": {
+          "reset": "Usar paleta padrao",
+          "resetSuccess": "Cores personalizadas removidas. Paleta padrao restaurada.",
+          "status": "Paleta personalizada: {{state}}",
+          "states": {
+            "enabled": "Ativada",
+            "disabled": "Desativada"
+          },
+          "options": {
+            "background": {
+              "label": "Cor de fundo",
+              "description": "Cor principal de fundo da aplicacao."
+            },
+            "surface": {
+              "label": "Cor de superficie",
+              "description": "Cor base de cards e paineis."
+            },
+            "surfaceAlt": {
+              "label": "Cor de superficie alternativa",
+              "description": "Cor secundaria para paineis e camadas de superficie."
+            },
+            "primary": {
+              "label": "Cor primaria",
+              "description": "Acoes principais, destaques e acentos interativos."
+            },
+            "secondary": {
+              "label": "Cor secundaria",
+              "description": "Acentos secundarios e destaques de apoio."
+            },
+            "tertiary": {
+              "label": "Cor terciaria",
+              "description": "Acento complementar usado em gradientes e detalhes."
+            },
+            "text": {
+              "label": "Cor do texto",
+              "description": "Cor principal para titulos e conteudo."
+            }
+          }
+        }
+      }
+    }
+  },
+  "clients": {
+    "pageTitles": {
+      "home": "Clientes",
+      "landing": "Visao geral de clientes",
+      "serviceDetail": "Servico",
+      "customer360": "Cliente 360"
+    },
+    "landing": {
+      "title": "Clientes",
+      "description": "Acesse catalogo de servicos, agenda e historico de relacionamento com clientes.",
+      "items": {
+        "catalog": {
+          "title": "Catalogo de servicos",
+          "description": "Navegue por servicos e prestadores disponiveis."
+        },
+        "appointments": {
+          "title": "Agenda",
+          "description": "Gerencie agendamentos no modulo de agenda."
+        },
+        "client360": {
+          "title": "Cliente 360",
+          "description": "Perfil unico com historico unificado de agenda, ordem de servico e financeiro.",
+          "meta": "Linha do tempo unificada do relacionamento"
+        }
+      }
+    }
+  },
+  "inventory": {
+    "pageTitles": {
+      "home": "Estoque",
+      "landing": "Visao geral de estoque",
+      "settings": "Configuracoes de estoque",
+      "categories": "Categorias de estoque"
+    },
+    "landing": {
+      "title": "Estoque",
+      "description": "Controle estoque, itens e categorias.",
+      "items": {
+        "stock": {
+          "title": "Itens de estoque",
+          "description": "Gerencie produtos e niveis de estoque."
+        },
+        "categories": {
+          "title": "Categorias",
+          "description": "Organize itens por categoria."
+        },
+        "settings": {
+          "title": "Configuracoes",
+          "description": "Configure padroes e regras de validacao do estoque."
+        }
+      }
+    }
+  },
+  "people": {
+    "pageTitles": {
+      "home": "Pessoas",
+      "landing": "Visao geral de pessoas",
+      "settings": "Configuracoes de pessoas"
+    },
+    "landing": {
+      "title": "Pessoas",
+      "description": "Convide, gerencie e organize sua equipe.",
+      "items": {
+        "team": {
+          "title": "Equipe",
+          "description": "Gerencie colaboradores e papeis."
+        },
+        "settings": {
+          "title": "Configuracoes",
+          "description": "Configure padroes, regras de validacao e aba inicial do modulo."
+        }
+      }
+    }
+  },
+  "company": {
+    "pageTitles": {
+      "landing": "Visao geral da empresa",
+      "introduction": "Setup da empresa",
+      "profile": "Perfil da empresa",
+      "services": "Servicos da empresa"
+    },
+    "landing": {
+      "title": "Empresa",
+      "description": "Gerencie perfil, servicos e configuracoes de performance.",
+      "items": {
+        "setup": {
+          "title": "Setup da empresa",
+          "description": "Configure dados da empresa e onboarding."
+        },
+        "profile": {
+          "title": "Perfil",
+          "description": "Perfil publico da empresa e detalhes.",
+          "meta": {
+            "preview": "Previa: {{companyName}}",
+            "viewPublic": "Ver perfil publico",
+            "completeSetup": "Conclua o setup para desbloquear"
+          }
+        },
+        "services": {
+          "title": "Servicos",
+          "description": "Gerencie catalogo e precificacao."
+        },
+        "slas": {
+          "title": "SLAs",
+          "description": "Revise performance de SLA por colaborador."
+        }
+      }
+    },
+    "introduction": {
+      "messages": {
+        "createWorkspaceFailed": "Falha ao criar workspace."
+      },
+      "response": {
+        "setupComplete": {
+          "title": "Setup concluido",
+          "description": "Setup inicial finalizado. Voce sera redirecionado para Home."
+        }
+      },
+      "template": {
+        "header": {
+          "title": "Setup da empresa",
+          "subtitle": "Configure a base do seu workspace em alguns passos guiados."
+        },
+        "highlights": {
+          "identity": {
+            "label": "Identidade",
+            "value": "Responsavel do workspace e perfil"
+          },
+          "catalog": {
+            "label": "Catalogo",
+            "value": "Servico principal e ofertas de lancamento"
+          },
+          "activation": {
+            "label": "Ativacao",
+            "value": "Melhore sinais de prontidao na Home"
+          }
+        },
+        "wizard": {
+          "title": "Setup",
+          "subtitle": "Complete estes passos para publicar a base do workspace."
+        }
+      }
+    },
+    "steps": {
+      "personal": {
+        "title": "Perfil do responsavel",
+        "subtitle": "Dados basicos da conta para autenticacao e comunicacao.",
+        "fields": {
+          "fullName": {
+            "label": "Nome completo",
+            "required": "Nome completo e obrigatorio",
+            "placeholder": "Digite seu nome completo"
+          },
+          "email": {
+            "label": "Email",
+            "required": "Email e obrigatorio",
+            "invalid": "Digite um email valido",
+            "placeholder": "Digite seu email"
+          },
+          "phone": {
+            "label": "Telefone (opcional)",
+            "placeholder": "Digite seu telefone"
+          }
+        }
+      },
+      "company": {
+        "title": "Identidade da empresa",
+        "subtitle": "Responsabilidade do workspace e nomenclatura legal/comercial.",
+        "fields": {
+          "accountType": {
+            "label": "Voce usa o WorklyHub como pessoa fisica ou empresa?",
+            "required": "Selecione uma opcao",
+            "individual": "Pessoa fisica",
+            "company": "Empresa"
+          },
+          "companyName": {
+            "label": "Nome da empresa",
+            "required": "Nome da empresa e obrigatorio",
+            "placeholder": "Digite o nome da empresa"
+          },
+          "legalName": {
+            "label": "Razao social (opcional)",
+            "placeholder": "Nome legal registrado"
+          },
+          "employees": {
+            "label": "Tamanho da equipe (opcional)",
+            "placeholder": "ex.: 10"
+          }
+        }
+      },
+      "servicesInfo": {
+        "title": "Posicionamento de mercado",
+        "subtitle": "Como seu workspace deve ser representado no WorklyHub.",
+        "fields": {
+          "primaryService": {
+            "label": "Servico principal",
+            "required": "Servico principal e obrigatorio",
+            "placeholder": "Exemplo: Manutencao preventiva"
+          },
+          "primaryServiceCategory": {
+            "label": "Categoria do servico principal",
+            "required": "Selecione uma categoria",
+            "placeholder": "Selecione o servico principal"
+          },
+          "industry": {
+            "label": "Industria / area de atuacao",
+            "required": "Selecione uma industria",
+            "placeholder": "Selecione uma industria"
+          },
+          "description": {
+            "label": "Descricao curta (opcional)",
+            "placeholder": "Descreva seus servicos em poucas palavras..."
+          }
+        },
+        "fallbackOptions": {
+          "categories": {
+            "beauty": "Beleza",
+            "health": "Saude",
+            "maintenance": "Manutencao",
+            "consulting": "Consultoria",
+            "education": "Educacao",
+            "other": "Outro"
+          },
+          "industries": {
+            "health": "Saude",
+            "finance": "Financeiro",
+            "retail": "Varejo",
+            "education": "Educacao",
+            "services": "Servicos",
+            "other": "Outro"
+          }
+        }
+      },
+      "launchServices": {
+        "title": "Servicos de lancamento",
+        "subtitle": "Catalogo inicial, precos e estimativas operacionais.",
+        "helper": "Adicione ate tres servicos de lancamento. Servicos extras podem ser gerenciados depois no modulo de empresa.",
+        "tabs": {
+          "service": "Servico {{index}}"
+        },
+        "fields": {
+          "serviceName": {
+            "label": "Nome do servico",
+            "required": "Nome do servico e obrigatorio.",
+            "placeholder": "Exemplo: Corte + barba"
+          },
+          "category": {
+            "label": "Categoria (opcional)",
+            "placeholder": "Selecione uma categoria"
+          },
+          "description": {
+            "label": "Descricao (opcional)",
+            "placeholder": "Resumo curto do servico..."
+          },
+          "duration": {
+            "label": "Duracao (minutos)",
+            "placeholder": "60"
+          },
+          "basePrice": {
+            "label": "Preco base",
+            "placeholder": "0"
+          },
+          "capacity": {
+            "label": "Capacidade por slot",
+            "placeholder": "1"
+          }
+        }
+      },
+      "summary": {
+        "title": "Resumo",
+        "subtitle": "Confirme os dados e crie seu workspace.",
+        "helper": "Revise seus dados antes de concluir o setup.",
+        "emptyServices": "Nenhum servico de lancamento informado.",
+        "tabs": {
+          "overview": "Visao geral",
+          "market": "Mercado",
+          "services": "Servicos"
+        },
+        "common": {
+          "dash": "-"
+        },
+        "labels": {
+          "fullName": "Nome completo",
+          "email": "Email",
+          "phone": "Telefone",
+          "accountType": "Tipo de conta",
+          "companyName": "Nome da empresa",
+          "legalName": "Razao social",
+          "employees": "Colaboradores",
+          "primaryService": "Servico principal",
+          "serviceCategory": "Categoria do servico",
+          "industry": "Industria",
+          "description": "Descricao",
+          "category": "Categoria",
+          "duration": "Duracao",
+          "basePrice": "Preco base",
+          "capacity": "Capacidade"
+        },
+        "values": {
+          "price": "R$ {{value}}",
+          "service": "Servico {{index}}",
+          "durationMinutes": "{{minutes}} min"
+        }
+      }
+    },
+    "profile": {
+      "overview": {
+        "highlightTag": "Destaque"
+      },
+      "services": {
+        "title": "Servicos",
+        "add": "Adicionar",
+        "adjustSelection": "Ajustar selecao"
+      },
+      "cartBar": {
+        "selectedServices": "{{count}} servicos selecionados",
+        "viewSelection": "Ver selecao"
+      },
+      "serviceSelector": {
+        "total": "Total",
+        "cancel": "Cancelar",
+        "add": "Adicionar ({{count}})"
+      },
+      "reviews": {
+        "title": "Avaliacoes",
+        "mock": {
+          "r1": {
+            "author": "Joao Silva",
+            "text": "Otimo atendimento e preco justo."
+          },
+          "r2": {
+            "author": "Maria Costa",
+            "text": "Profissionais atenciosos."
+          },
+          "r3": {
+            "author": "Pedro Souza",
+            "text": "Ambiente agradavel e servico rapido."
+          }
+        }
+      }
+    },
+    "admin": {
+      "common": {
+        "dash": "-"
+      },
+      "servicesPage": {
+        "title": "Servicos que voce oferece"
+      },
+      "messages": {
+        "serviceCreated": "Servico criado.",
+        "createServiceError": "Falha ao criar servico.",
+        "serviceUpdated": "Servico atualizado.",
+        "updateServiceError": "Falha ao atualizar servico.",
+        "serviceActivated": "Servico ativado.",
+        "serviceDeactivated": "Servico desativado.",
+        "toggleServiceError": "Falha ao ativar/desativar servico."
+      },
+      "form": {
+        "fields": {
+          "title": {
+            "label": "Titulo",
+            "required": "Titulo e obrigatorio."
+          },
+          "description": {
+            "label": "Descricao"
+          },
+          "duration": {
+            "label": "Duracao"
+          },
+          "price": {
+            "label": "Preco"
+          },
+          "capacity": {
+            "label": "Capacidade"
+          },
+          "active": {
+            "label": "Ativo"
+          }
+        },
+        "save": "Salvar"
+      },
+      "list": {
+        "columns": {
+          "title": "Titulo",
+          "duration": "Duracao (min)",
+          "price": "Preco",
+          "capacity": "Capacidade",
+          "active": "Ativo",
+          "actions": "Acoes"
+        },
+        "active": {
+          "yes": "Sim",
+          "no": "Nao"
+        },
+        "actions": {
+          "edit": "Editar",
+          "deactivate": "Desativar",
+          "activate": "Ativar"
+        }
+      },
+      "manager": {
+        "newService": "Novo servico",
+        "modal": {
+          "editTitle": "Editar servico",
+          "newTitle": "Novo servico"
+        }
+      }
+    }
+  },
+  "dashboard": {
+    "pageTitles": {
+      "landing": "Visao geral de dashboard",
+      "dashboard": "Dashboard"
+    },
+    "landing": {
+      "title": "Dashboard",
+      "description": "Explore KPIs, receita e insights operacionais.",
+      "items": {
+        "overview": {
+          "title": "Visao geral",
+          "description": "Acompanhe KPIs e desempenho recente."
+        }
+      }
+    },
+    "template": {
+      "header": {
+        "title": "Dashboard",
+        "subtitle": "Controle operacional diario e sinais de risco. Use Finance para analise profunda de fluxo de caixa."
+      },
+      "messages": {
+        "loadError": "Nao foi possivel carregar dados do dashboard para este periodo."
+      }
+    },
+    "filters": {
+      "period": "Periodo",
+      "refresh": "Atualizar",
+      "view": {
+        "overview": "Visao geral",
+        "trend": "Tendencia",
+        "services": "Servicos",
+        "alerts": "Alertas"
+      },
+      "groupBy": {
+        "day": "Dia",
+        "week": "Semana",
+        "month": "Mes"
+      }
+    },
+    "kpis": {
+      "labels": {
+        "appointments": "Agendamentos de hoje",
+        "workOrdersOpen": "Ordens de servico abertas",
+        "activeWorkers": "Colaboradores ativos",
+        "completionRate": "Taxa de conclusao",
+        "revenue": "Receita",
+        "profit": "Lucro",
+        "orders": "Pedidos"
+      },
+      "meta": {
+        "vsPreviousPeriod": "vs periodo anterior"
+      }
+    },
+    "revenueTrend": {
+      "title": "Pulso do negocio",
+      "subtitle": "Tendencia de receita e lucro para contexto de gestao",
+      "empty": "Nenhuma movimentacao financeira encontrada neste periodo.",
+      "tooltip": {
+        "revenue": "Receita",
+        "profit": "Lucro"
+      }
+    },
+    "serviceBreakdown": {
+      "title": "Top servicos",
+      "subtitle": "Receita por servico",
+      "tooltip": {
+        "revenue": "Receita",
+        "count": "Quantidade"
+      }
+    },
+    "alerts": {
+      "title": "Alertas operacionais",
+      "subtitle": "Insights priorizados para acao rapida",
+      "empty": "Sem alertas para este periodo.",
+      "sources": {
+        "finance": "Financeiro",
+        "workOrder": "Ordem de servico",
+        "schedule": "Agenda",
+        "people": "Pessoas"
+      },
+      "priorities": {
+        "high": "ALTA",
+        "medium": "MEDIA",
+        "low": "BAIXA"
+      },
+      "tags": {
+        "engine": "Engine: {{engine}}",
+        "confidence": "Confianca: {{confidence}}%"
+      },
+      "labels": {
+        "why": "Motivo",
+        "action": "Acao"
+      }
+    },
+    "topClients": {
+      "title": "Top clientes",
+      "subtitle": "Quem mais compra",
+      "columns": {
+        "client": "Cliente",
+        "spent": "Gasto",
+        "orders": "Pedidos",
+        "avg": "Medio"
+      }
+    },
+    "paymentStatus": {
+      "title": "Status de pagamento",
+      "subtitle": "Pago vs pendente vs reembolsado",
+      "total": "Total",
+      "tooltip": {
+        "amount": "Valor",
+        "count": "Quantidade"
+      }
+    },
+    "recentSales": {
+      "title": "Vendas recentes",
+      "subtitle": "Ultimas transacoes",
+      "columns": {
+        "client": "Cliente",
+        "service": "Servico",
+        "date": "Data",
+        "amount": "Valor",
+        "status": "Status"
+      }
+    },
+    "common": {
+      "statuses": {
+        "paid": "Pago",
+        "pending": "Pendente",
+        "refunded": "Reembolsado"
+      }
+    }
+  },
+  "finance": {
+    "pageTitles": {
+      "landing": "Visao geral financeira",
+      "finance": "Financeiro",
+      "entries": "Financeiro - Lancamentos",
+      "services": "Financeiro - Servicos",
+      "suggestions": "Financeiro - Sugestoes"
+    }
+  },
+  "schedule": {
+    "pageTitles": {
+      "landing": "Visao geral de agenda",
+      "schedule": "Agenda",
+      "settings": "Configuracoes de agenda"
+    }
+  },
+  "workOrder": {
+    "pageTitles": {
+      "landing": "Ordens de servico",
+      "workOrders": "Ordens de servico",
+      "calendar": "Calendario de ordens de servico",
+      "statuses": "Status da ordem de servico",
+      "settings": "Configuracoes de ordem de servico"
+    }
+  },
+  "billing": {
+    "pageTitles": {
+      "landing": "Visao geral de billing",
+      "plans": "Planos",
+      "checkout": "Checkout"
+    },
+    "landing": {
+      "title": "Billing",
+      "description": "Gerencie planos, assinaturas e pagamentos.",
+      "items": {
+        "plans": {
+          "title": "Planos",
+          "description": "Compare planos de assinatura e upgrades."
+        },
+        "checkout": {
+          "title": "Checkout",
+          "description": "Finalize a selecao do plano e o pagamento.",
+          "meta": "Apos selecionar um plano"
+        }
+      }
+    },
+    "planSelection": {
+      "confirm": {
+        "title": "Confirmar selecao de plano",
+        "description": "Deseja realmente selecionar o plano {{planName}}?",
+        "confirmLabel": "Sim",
+        "cancelLabel": "Nao"
+      },
+      "messages": {
+        "selectedSuccess": "Plano selecionado. Continue para o checkout para ativar sua assinatura."
+      }
+    },
+    "planSelector": {
+      "headerTitle": "Escolha seu plano",
+      "headerSubtitle": "Comece simples. Evolua quando quiser.",
+      "interval": {
+        "monthly": "Mensal",
+        "yearly": "Anual"
+      },
+      "discountLabel": "Economize 15%",
+      "recommended": "Recomendado",
+      "per": {
+        "month": "mes",
+        "year": "ano"
+      },
+      "canChangeLater": "Voce pode alterar os planos depois.",
+      "cta": {
+        "choosePlanNamed": "Escolher {{planName}}"
+      },
+      "fallbackPlans": {
+        "starter": {
+          "name": "Starter",
+          "description": "Para profissionais solo que estao comecando."
+        },
+        "standard": {
+          "name": "Standard",
+          "description": "Melhor custo-beneficio para times pequenos."
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "Para negocios em crescimento e multiplas unidades."
+        }
+      },
+      "features": {
+        "starter": {
+          "coreModules": "Modulos base: Clientes, Agenda e Servicos",
+          "profileDashboard": "Perfil da empresa e dashboard",
+          "billingPlans": "Billing e gerenciamento de planos",
+          "emailSupport": "Suporte por email"
+        },
+        "standard": {
+          "everythingStarter": "Tudo do Starter",
+          "peopleInventoryWorkOrder": "Modulos People, Inventory e Work Order",
+          "financeOperations": "Modulo Finance e operacao de equipe",
+          "prioritySupport": "Suporte prioritario"
+        },
+        "premium": {
+          "fullAccess": "Acesso completo aos modulos",
+          "slaGrowth": "Inclui modulos SLA e Growth",
+          "dedicatedSuccess": "Sucesso dedicado",
+          "onboarding": "Onboarding"
+        }
+      }
+    },
+    "checkout": {
+      "header": {
+        "title": "Checkout",
+        "subtitle": "Revise seu plano e finalize o pagamento com seguranca."
+      },
+      "gateway": {
+        "mercadopago": "Mercado Pago",
+        "paypal": "PayPal"
+      },
+      "errorView": {
+        "title": "Checkout indisponivel",
+        "alertTitle": "O gateway de pagamento retornou um erro",
+        "backToPlans": "Voltar para planos",
+        "tryAgain": "Tentar novamente"
+      },
+      "descriptions": {
+        "checkoutErrorWithCode": "Erro de checkout ({{code}}). Tente novamente.",
+        "gatewayUnavailable": "Nao foi possivel contatar o gateway de pagamento agora. Tente novamente."
+      },
+      "messages": {
+        "selectPlan": "Selecione um plano antes de finalizar o pagamento.",
+        "providerNotConfigured": "Provedor de pagamento nao configurado. Tente novamente mais tarde.",
+        "invalidRedirectUrl": "URL de redirecionamento de pagamento invalida. Contate o suporte.",
+        "redirecting": "Redirecionando para o provedor de pagamento...",
+        "paymentApproved": "Pagamento aprovado!",
+        "paymentPending": "Pagamento pendente de confirmacao. Avisaremos assim que for aprovado.",
+        "checkoutCreated": "Checkout criado.",
+        "failedCreateCheckout": "Falha ao criar checkout."
+      },
+      "form": {
+        "title": "Detalhes do checkout",
+        "subtitle": "O pagamento e finalizado na pagina do gateway selecionado. Nenhum campo de cartao e tratado aqui.",
+        "gatewayMessage": "Gateway: {{gateway}}",
+        "gatewayDescription": "Voce sera redirecionado para um checkout hospedado seguro para concluir o pagamento.",
+        "temporarilyUnavailable": "Pagamento temporariamente indisponivel",
+        "credentialsMissing": "As credenciais do gateway ainda nao estao configuradas.",
+        "hostedTag": "Checkout hospedado",
+        "contact": "Contato",
+        "fullName": "Nome completo",
+        "fullNameRequired": "Nome completo e obrigatorio",
+        "fullNamePlaceholder": "Digite seu nome completo",
+        "email": "Email",
+        "emailRequired": "Email e obrigatorio",
+        "emailInvalid": "Digite um email valido",
+        "emailPlaceholder": "Digite seu email",
+        "companyOptional": "Empresa (opcional)",
+        "companyPlaceholder": "Nome da empresa",
+        "changePlan": "Alterar plano",
+        "continueGateway": "Continuar para gateway"
+      }
+    },
+    "orderSummary": {
+      "title": "Resumo do pedido",
+      "subtitle": "Revise seu plano antes de confirmar.",
+      "cycle": {
+        "monthly": "Mensal",
+        "yearly": "Anual"
+      },
+      "per": {
+        "month": "mes",
+        "year": "ano"
+      },
+      "savingsLabel": "Economize 15%",
+      "total": "Total",
+      "taxes": "Impostos podem ser aplicados dependendo da sua regiao.",
+      "changePlan": "Alterar plano",
+      "mockFeatures": {
+        "users": "Ate 5 usuarios",
+        "clients": "Ate 500 clientes",
+        "schedules": "Agendamentos ilimitados",
+        "reports": "Relatorios basicos",
+        "support": "Suporte prioritario"
+      }
+    },
+    "paymentMethods": {
+      "card": "Cartao",
+      "hosted": "Checkout hospedado",
+      "hint": "Cartao mantem o usuario aqui; checkout hospedado redireciona para o Mercado Pago."
+    }
+  },
+  "growth": {
+    "pageTitles": {
+      "landing": "Crescimento",
+      "autopilot": "Autopiloto de crescimento"
+    },
+    "landing": {
+      "title": "Crescimento",
+      "description": "Automatize fluxos de retencao e reativacao conectados a sua operacao.",
+      "items": {
+        "autopilot": {
+          "title": "Autopiloto de crescimento",
+          "description": "Priorize oportunidades e dispare playbooks de retencao.",
+          "meta": "Painel de execucao"
+        },
+        "clients360": {
+          "title": "Cliente 360",
+          "description": "Revise perfil e historico antes de disparar campanhas.",
+          "meta": "Visao de contexto"
+        },
+        "playbooks": {
+          "title": "Playbooks",
+          "description": "Configure canais e cadencia para cada objetivo de crescimento.",
+          "meta": "Retencao, upsell, recuperacao"
+        },
+        "attribution": {
+          "title": "Atribuicao",
+          "description": "Acompanhe oportunidades convertidas e receita recuperada.",
+          "meta": "Analise de impacto"
+        }
+      }
+    },
+    "autopilot": {
+      "hero": {
+        "title": "Autopiloto de crescimento",
+        "subtitle": "Converta sinais de execucao em campanhas de retencao e recuperacao de receita mais rapida.",
+        "opportunitiesCount": "{{count}} oportunidades",
+        "playbooksCount": "{{count}} playbooks",
+        "sourceBackend": "backend",
+        "sourceFallback": "fallback"
+      },
+      "tabs": {
+        "opportunities": "Oportunidades",
+        "playbooks": "Playbooks",
+        "attribution": "Atribuicao"
+      },
+      "statusLabels": {
+        "new": "Novo",
+        "queued": "Em fila",
+        "sent": "Enviado",
+        "converted": "Convertido",
+        "archived": "Arquivado"
+      },
+      "moduleLabels": {
+        "clients": "Clientes",
+        "schedule": "Agenda",
+        "workOrder": "Ordem de servico",
+        "finance": "Financeiro"
+      },
+      "opportunities": {
+        "searchPlaceholder": "Buscar por cliente, contato ou oportunidade",
+        "statusAll": "Todos os status",
+        "dispatchPlaybookPlaceholder": "Playbook de disparo",
+        "refresh": "Atualizar",
+        "dispatchCta": "Disparar ({{count}})",
+        "table": {
+          "client": "Cliente",
+          "noContactLinked": "Sem contato vinculado",
+          "opportunity": "Oportunidade",
+          "module": "Modulo",
+          "expected": "Previsto",
+          "status": "Status",
+          "lastInteraction": "Ultima interacao"
+        },
+        "footerHint": "As oportunidades sao geradas por sinais de workflow, agenda e faturamento. O disparo mantem o status alinhado com o progresso da automacao."
+      },
+      "playbooks": {
+        "toolbarHint": "Configure objetivo, canais e cadencia para disparo automatizado.",
+        "previous": "Anterior",
+        "next": "Proximo",
+        "save": "Salvar playbooks",
+        "indicator": "{{current}} / {{total}}",
+        "goToPlaybook": "Ir para playbook {{index}}",
+        "goal": "Objetivo",
+        "channels": "Canais",
+        "delayHours": "Atraso (horas)",
+        "maxTouches": "Maximo de toques",
+        "empty": "Nenhum playbook configurado ainda.",
+        "goalReactivation": "Reativacao",
+        "goalUpsell": "Upsell",
+        "goalRecovery": "Recuperacao",
+        "channelWhatsapp": "WhatsApp",
+        "channelEmail": "Email",
+        "channelSms": "SMS"
+      },
+      "attribution": {
+        "dispatched": "Oportunidades disparadas",
+        "converted": "Oportunidades convertidas",
+        "recoveredRevenue": "Receita recuperada",
+        "avgHoursToConvert": "Media de horas para converter",
+        "conversionRate": "Taxa de conversao",
+        "window": "Janela: {{start}} ate {{end}}",
+        "source": "Origem: {{source}}",
+        "sourceBackend": "Consolidado pelo backend",
+        "sourceFallback": "Snapshot fallback",
+        "pipelineMix": "Mix de status do pipeline",
+        "nextActions": "Proximas acoes de otimizacao",
+        "pipelineFullyDispatched": "O pipeline esta totalmente disparado por enquanto.",
+        "pipelineHint": "Adicione novas oportunidades pela aba Oportunidades."
+      },
+      "messages": {
+        "failedLoad": "Falha ao carregar o autopiloto de crescimento.",
+        "workspaceRequired": "Workspace e obrigatorio.",
+        "playbooksSaved": "Playbooks salvos.",
+        "failedSavePlaybooks": "Falha ao salvar playbooks.",
+        "selectOpportunity": "Selecione pelo menos uma oportunidade.",
+        "dispatchSuccess": "{{count}} oportunidade(s) disparada(s).",
+        "dispatchFallback": "{{count}} oportunidade(s) enfileirada(s) em modo fallback.",
+        "failedDispatch": "Falha ao disparar oportunidades."
+      }
+    }
+  },
+  "sla": {
+    "pageTitles": {
+      "report": "SLA por colaborador"
+    },
+    "header": {
+      "title": "SLA por colaborador",
+      "subtitle": "Revise horas concluidas de agenda agrupadas por colaborador e data de trabalho.",
+      "helper": "SLAs sao criados quando agendamentos mudam para concluido. Use um intervalo de datas para manter o relatorio rapido."
+    },
+    "filters": {
+      "employee": "Colaborador",
+      "allEmployees": "Todos os colaboradores",
+      "dateRange": "Intervalo de datas",
+      "reset": "Limpar",
+      "apply": "Aplicar filtros"
+    },
+    "table": {
+      "date": "Data",
+      "employee": "Colaborador",
+      "totalHours": "Total de horas",
+      "dayEntries": "{{count}} registros diarios",
+      "totalWithValue": "Total: {{value}}",
+      "empty": "Sem registros de SLA para os filtros selecionados."
+    },
+    "messages": {
+      "loadErrorTitle": "Nao foi possivel carregar o relatorio de SLA",
+      "tryAgainAdjustFilters": "Tente novamente ou ajuste os filtros.",
+      "unknownEmployee": "Colaborador desconhecido"
+    }
+  },
+  "legacyInline": {
+    "finance": {
+      "presentation_components_finance_entries_list_finance_entries_list_component": {
+        "k001": "Lancamento",
+        "k002": "Informacoes do lancamento",
+        "k003": "Info",
+        "k004": "Voltar",
+        "k005": "Inicio",
+        "k006": "Ver mais"
+      },
+      "presentation_components_finance_entry_form_finance_entry_form_component": {
+        "k001": "Lancamento salvo",
+        "k002": "Erro ao salvar lancamento",
+        "k003": "Tipo",
+        "k004": "Valor",
+        "k005": "Data",
+        "k006": "Descricao",
+        "k007": "Salvar"
+      },
+      "presentation_components_finance_filters_finance_filters_component": {
+        "k001": "Visao geral",
+        "k002": "Insights",
+        "k003": "Receita",
+        "k004": "Servicos",
+        "k005": "Despesas",
+        "k006": "Lucro",
+        "k007": "Fluxo de caixa",
+        "k008": "Periodo",
+        "k009": "Visao",
+        "k010": "Agrupar por",
+        "k011": "Dia",
+        "k012": "Semana",
+        "k013": "Mes",
+        "k014": "Dia",
+        "k015": "Semana",
+        "k016": "Mes",
+        "k017": "Atualizar"
+      },
+      "presentation_components_finance_kpi_row_finance_kpi_row_component": {
+        "k001": "Receita",
+        "k002": "Despesas",
+        "k003": "Lucro",
+        "k004": "Margem",
+        "k005": "Receita",
+        "k006": "Despesas",
+        "k007": "Lucro",
+        "k008": "Margem",
+        "k009": "vs ant."
+      },
+      "presentation_components_finance_kpis_finance_kpis_component": {
+        "k001": "Receita",
+        "k002": "Despesa",
+        "k003": "Lucro",
+        "k004": "Margem"
+      },
+      "presentation_components_services_finance_list_services_finance_list_component": {
+        "k001": "Atual",
+        "k002": "Sugerido",
+        "k003": "Confianca",
+        "k004": "Motor",
+        "k005": "Variacao",
+        "k006": "Adicionar como lancamento"
+      },
+      "presentation_components_widgets_actionable_insights_actionable_insights_widget": {
+        "k001": "Insights acionaveis",
+        "k002": "Recomendacoes priorizadas geradas a partir de dados financeiros.",
+        "k003": "Sem insights acionaveis para este periodo."
+      },
+      "presentation_components_widgets_cashflow_table_cashflow_table_widget": {
+        "k001": "ORDEM DE SERVICO",
+        "k002": "AGENDA",
+        "k003": "MANUAL",
+        "k004": "Data",
+        "k005": "Descricao",
+        "k006": "Tipo",
+        "k007": "ENTRADA",
+        "k008": "SAIDA",
+        "k009": "Origem",
+        "k010": "Ref",
+        "k011": "Categoria",
+        "k012": "Valor",
+        "k013": "Status",
+        "k014": "PAGO",
+        "k015": "PENDENTE",
+        "k016": "Fluxo de caixa",
+        "k017": "Ultimos registros de entrada e saida."
+      },
+      "presentation_components_widgets_expenses_breakdown_expenses_breakdown_widget": {
+        "k001": "Despesas",
+        "k002": "Distribuicao de despesas",
+        "k003": "Despesas por categoria."
+      },
+      "presentation_components_widgets_profit_trend_profit_trend_widget": {
+        "k001": "Receita",
+        "k002": "Despesas",
+        "k003": "Lucro",
+        "k004": "Tendencia de lucro",
+        "k005": "Lucro calculado a partir de receita menos despesas."
+      },
+      "presentation_components_widgets_revenue_trend_revenue_trend_widget": {
+        "k001": "Receita",
+        "k002": "Tendencia de receita",
+        "k003": "Receita ao longo do tempo."
+      },
+      "presentation_components_widgets_top_services_table_top_services_table_widget": {
+        "k001": "Servico",
+        "k002": "Ordens",
+        "k003": "Receita",
+        "k004": "Ticket medio",
+        "k005": "Top servicos",
+        "k006": "Servicos com melhor desempenho."
+      },
+      "presentation_templates_entries_entries_template": {
+        "k001": "Lancamentos",
+        "k002": "Receitas, despesas e custos fixos da operacao diaria.",
+        "k003": "Adicionar novo lancamento"
+      },
+      "presentation_templates_finance_finance_template": {
+        "k001": "Financeiro",
+        "k002": "Acompanhe receita, servicos e fluxo de caixa com os dados mais recentes do painel financeiro.",
+        "k003": "Tendencia de receita para o periodo selecionado.",
+        "k004": "Recomendacoes para melhorar margem, fluxo de caixa e crescimento.",
+        "k005": "Tendencia de receita, agrupada pela granularidade selecionada.",
+        "k006": "Servicos com maior receita.",
+        "k007": "Todos os registros de fluxo de caixa no periodo selecionado.",
+        "k008": "Recomendacoes priorizadas para melhorar margem, custos e fluxo de caixa."
+      },
+      "presentation_templates_landing_landing_template": {
+        "k001": "Visao geral",
+        "k002": "Acompanhe receita, lucro e tendencias.",
+        "k003": "Desempenho de servicos",
+        "k004": "Analise receita por servico.",
+        "k005": "Sugestoes",
+        "k006": "Descubra insights e ideias de crescimento.",
+        "k007": "Insights acionaveis",
+        "k008": "Abra recomendacoes priorizadas com base em dados financeiros.",
+        "k009": "Lancamentos",
+        "k010": "Registre receitas e despesas.",
+        "k011": "Financeiro",
+        "k012": "Controle fluxo de caixa, lancamentos e desempenho."
+      },
+      "presentation_templates_services_finance_services_finance_template": {
+        "k001": "Servicos e sugestoes",
+        "k002": "Sugestoes de precificacao de servicos com base no seu historico financeiro recente.",
+        "k003": "Adicionar lancamento"
+      },
+      "presentation_templates_suggestions_suggestions_template": {
+        "k001": "Sugestoes de preco",
+        "k002": "Melhore a precificacao dos servicos com base no desempenho financeiro recente.",
+        "k003": "Dicas inteligentes",
+        "k004": "Foco em margem",
+        "k005": "Baseado em servicos",
+        "k006": "Resumo financeiro",
+        "k007": "Visao rapida de receita, despesa, lucro e margem antes de aplicar sugestoes.",
+        "k008": "Servicos sugeridos",
+        "k009": "Revise cada recomendacao de servico e aplique como lancamento financeiro quando necessario.",
+        "k010": "Como usar",
+        "k011": "Aplique essas sugestoes para reduzir lacunas de precificacao e melhorar a rentabilidade.",
+        "k012": "Compare o valor atual com o sugerido para cada servico.",
+        "k013": "Priorize servicos de alto volume, onde mudancas de margem geram maior impacto.",
+        "k014": "Registre ajustes nos lancamentos financeiros para manter os relatarios alinhados.",
+        "k015": "Acoes rapidas",
+        "k016": "Abrir desempenho de servicos",
+        "k017": "Abrir lancamentos financeiros"
+      }
+    },
+    "schedule": {
+      "presentation_components_schedule_calendar_schedule_calendar_component": {
+        "k001": "Nao foi possivel identificar o evento para exclusao",
+        "k002": "Evento excluido",
+        "k003": "Falha ao excluir evento",
+        "k004": "Falha ao excluir evento",
+        "k005": "Agendamento atualizado",
+        "k006": "Agendamento criado",
+        "k007": "Falha ao criar agendamento",
+        "k008": "Buscar eventos...",
+        "k009": "Alto volume na visualizacao mensal",
+        "k010": "Este mes possui eventos ocultos na grade mensal. Use Semana ou Dia para visualizar todos os itens.",
+        "k011": "eventos ocultos em",
+        "k012": "dias",
+        "k013": "Ir para Semana",
+        "k014": "Ir para Dia",
+        "k015": "Dispensar",
+        "k016": "Hoje",
+        "k017": "Mes",
+        "k018": "Semana",
+        "k019": "Dia"
+      },
+      "presentation_components_schedule_calendar_schedule_calendar_factory": {
+        "k001": "Excluir",
+        "k002": "Excluir",
+        "k003": "Editar",
+        "k004": "Editar"
+      },
+      "presentation_components_schedule_calendar_schedule_event_popup_component": {
+        "k001": "Evento excluido",
+        "k002": "Falha ao excluir evento",
+        "k003": "Falha ao excluir evento",
+        "k004": "Consome",
+        "k005": "Produz",
+        "k006": "Editar"
+      },
+      "presentation_components_schedule_event_modal_schedule_event_modal_component": {
+        "k001": "A descricao e obrigatoria pelas configuracoes do workspace.",
+        "k002": "Adicione pelo menos um servico para continuar.",
+        "k003": "Atribua pelo menos um colaborador para continuar.",
+        "k004": "Selecione um horario",
+        "k005": "Semana anterior",
+        "k006": "Proxima semana",
+        "k007": "Manha",
+        "k008": "Tarde",
+        "k009": "Noite",
+        "k010": "Horarios anteriores",
+        "k011": "Proximos horarios",
+        "k012": "Detalhes do agendamento",
+        "k013": "Titulo",
+        "k014": "Categoria",
+        "k015": "Descricao (obrigatoria)",
+        "k016": "Descricao (opcional)",
+        "k017": "Status padrao: Pendente (confirmacao obrigatoria)",
+        "k018": "Status padrao: Confirmado",
+        "k019": "Lembrete",
+        "k020": "min antes",
+        "k021": "Lembrete desabilitado",
+        "k022": "Taxa de no-show",
+        "k023": "No-show marcado (sem cobranca)",
+        "k024": "Acao de no-show: nenhuma",
+        "k025": "Status do evento",
+        "k026": "Salvar um status final de execucao aciona o lancamento financeiro automatico.",
+        "k027": " O disparo de NF-e e opcional e pode falhar em desenvolvimento quando os endpoints do governo estiverem indisponiveis.",
+        "k028": " O disparo de NF-e e opcional e depende da configuracao de faturamento.",
+        "k029": "Duracao",
+        "k030": "Compromisso",
+        "k031": "Categoria",
+        "k032": "Adicionar servico",
+        "k033": "Adicionar colaborador",
+        "k034": "Adicionar insumo de estoque",
+        "k035": "Adicionar saida de estoque",
+        "k036": "Consome",
+        "k037": "Produz",
+        "k038": "Adicionar servico",
+        "k039": "Adicionar colaborador",
+        "k040": "Adicionar insumo de estoque",
+        "k041": "Adicionar saida de estoque",
+        "k042": "Total",
+        "k043": "min",
+        "k044": "Salvar edicao",
+        "k045": "Continuar"
+      },
+      "presentation_components_schedule_sidebar_schedule_sidebar_component": {
+        "k001": "Minha agenda",
+        "k002": "Pessoal, equipes",
+        "k003": "Novo",
+        "k004": "Categorias",
+        "k005": "Editar",
+        "k006": "Status",
+        "k007": "Proximos eventos",
+        "k008": "Sem titulo",
+        "k009": "minutos",
+        "k010": "Lembrete"
+      },
+      "presentation_pages_settings_settings_page": {
+        "k001": "Falha ao carregar configuracoes de agenda.",
+        "k002": "Workspace e obrigatorio.",
+        "k003": "Configuracoes de agenda salvas.",
+        "k004": "Falha ao salvar configuracoes de agenda.",
+        "k005": "Configuracoes de agenda",
+        "k006": "Configure padroes de agendamento e regras de validacao por workspace.",
+        "k007": "Atualizado",
+        "k008": "Ainda nao salvo",
+        "k009": "Essas configuracoes sao aplicadas em novos agendamentos e edicoes de eventos.",
+        "k010": "Padroes de agendamento",
+        "k011": "Valores padrao para novos agendamentos",
+        "k012": "Duracao padrao (minutos)",
+        "k013": "Periodo preferencial",
+        "k014": "Manha",
+        "k015": "Tarde",
+        "k016": "Noite",
+        "k017": "Categoria padrao",
+        "k018": "Opcional",
+        "k019": "Validacao",
+        "k020": "Campos obrigatorios e restricoes",
+        "k021": "Exigir descricao",
+        "k022": "Exigir pelo menos um servico",
+        "k023": "Exigir colaborador atribuido",
+        "k024": "Habilitar linhas de estoque nos eventos",
+        "k025": "Automacao",
+        "k026": "Atribuicao assistida",
+        "k027": "Selecionar automaticamente o primeiro servico",
+        "k028": "Selecionar automaticamente o primeiro colaborador",
+        "k029": "A selecao automatica so e aplicada na criacao de novos eventos.",
+        "k030": "Politica do cliente",
+        "k031": "Politica de confirmacao, lembrete e no-show",
+        "k032": "Politica de confirmacao",
+        "k033": "Exigir confirmacao (padrao pendente)",
+        "k034": "Confirmacao opcional (padrao confirmado)",
+        "k035": "Habilitar lembrete automatico",
+        "k036": "Antecedencia do lembrete (minutos)",
+        "k037": "Politica de no-show",
+        "k038": "Sem acao automatica",
+        "k039": "Marcar evento como no-show",
+        "k040": "Cobrar taxa de no-show",
+        "k041": "Taxa de no-show (%)",
+        "k042": "Cobrar no-show cria lancamentos financeiros quando o status do evento e definido como ",
+        "k043": "No Show",
+        "k044": "Restaurar padroes",
+        "k045": "Salvar configuracoes"
+      },
+      "presentation_templates_landing_landing_template": {
+        "k001": "Calendario",
+        "k002": "Visualize e organize compromissos.",
+        "k003": "Configuracoes",
+        "k004": "Configure padroes de agendamento e regras de validacao operacional.",
+        "k005": "Agenda",
+        "k006": "Gerencie compromissos, disponibilidade e sua agenda diaria."
+      },
+      "presentation_templates_schedule_schedule_template": {
+        "k001": "Minha agenda",
+        "k002": "Gerencie eventos, categorias e a agenda da sua empresa em um unico lugar."
+      }
+    },
+    "work_order": {
+      "presentation_components_work_order_calendar_work_order_calendar_component": {
+        "k001": "Ordens de servico",
+        "k002": "Baixa",
+        "k003": "Media",
+        "k004": "Alta",
+        "k005": "Urgente",
+        "k006": "Prioridade",
+        "k007": "Carregando...",
+        "k008": "Buscar ordens de servico...",
+        "k009": "Hoje",
+        "k010": "Mes",
+        "k011": "Semana",
+        "k012": "Dia"
+      },
+      "presentation_components_work_order_form_work_order_form_component": {
+        "k001": "Lancamento financeiro vinculado",
+        "k002": "Lancamento financeiro pendente",
+        "k003": "Lancara na conclusao",
+        "k004": "A conclusao da execucao ja gerou um lancamento financeiro.",
+        "k005": "Esta ordem esta em status final e deve gerar um lancamento financeiro automaticamente.",
+        "k006": "O lancamento financeiro e criado automaticamente quando a ordem atinge um status final de execucao.",
+        "k007": "O disparo de NF-e e opcional e, em desenvolvimento, pode falhar quando os endpoints do GOV estiverem indisponiveis.",
+        "k008": "O disparo de NF-e e opcional e depende da configuracao de faturamento.",
+        "k009": "O caminho de navegacao e invalido.",
+        "k010": "A URL do anexo expirou. Atualize a atividade e tente novamente.",
+        "k011": "A URL do anexo e invalida ou nao permitida.",
+        "k012": "Salve a ordem antes de enviar anexos.",
+        "k013": "O JSON de metadados e invalido.",
+        "k014": "Falha ao carregar atividade da ordem de servico.",
+        "k015": "Escreva um comentario antes de publicar.",
+        "k016": "Comentario adicionado.",
+        "k017": "Falha ao adicionar comentario.",
+        "k018": "Informe um titulo para o checklist.",
+        "k019": "Item do checklist adicionado.",
+        "k020": "Falha ao adicionar item do checklist.",
+        "k021": "Falha ao atualizar item do checklist.",
+        "k022": "Item do checklist atualizado.",
+        "k023": "Falha ao atualizar item do checklist.",
+        "k024": "Item do checklist removido.",
+        "k025": "Falha ao remover item do checklist.",
+        "k026": "Anexo removido.",
+        "k027": "Falha ao remover anexo.",
+        "k028": "Crie a ordem de servico para acessar historico, comentarios e checklist.",
+        "k029": "Atividade",
+        "k030": "Atualizar",
+        "k031": "Historico",
+        "k032": "Carregando historico...",
+        "k033": "Sem historico de status.",
+        "k034": "Sistema",
+        "k035": "Comentarios",
+        "k036": "Novo comentario",
+        "k037": "Escreva um comentario",
+        "k038": "Publicar comentario",
+        "k039": "Nenhum comentario ainda.",
+        "k040": "Sistema",
+        "k041": "Checklist",
+        "k042": "Titulo",
+        "k043": "Item do checklist",
+        "k044": "Ordem",
+        "k045": "Ordem",
+        "k046": "Adicionar item",
+        "k047": "Nenhum item de checklist ainda.",
+        "k048": "Pendente",
+        "k049": "Salvar",
+        "k050": "Cancelar",
+        "k051": "Titulo do checklist",
+        "k052": "Ordem",
+        "k053": "Editar",
+        "k054": "Excluir item do checklist?",
+        "k055": "Excluir",
+        "k056": "Excluir",
+        "k057": "Ordem",
+        "k058": "Anexos",
+        "k059": "Cancelar",
+        "k060": "Os arquivos sao armazenados no Firebase e vinculados a esta ordem.",
+        "k061": "Salve a ordem primeiro para habilitar anexos.",
+        "k062": "Clique ou arraste arquivos para anexar",
+        "k063": "Fotos e documentos de ate",
+        "k064": "por arquivo.",
+        "k065": "Enviando",
+        "k066": "arquivos",
+        "k067": "arquivo",
+        "k068": "Arquivos anexados",
+        "k069": "Nenhum anexo ainda.",
+        "k070": "Sistema",
+        "k071": "Visualizar",
+        "k072": "Remover anexo?",
+        "k073": "Remover",
+        "k074": "Remover",
+        "k075": "Selecione ou crie um workspace para gerenciar ordens de servico.",
+        "k076": "Editar ordem de servico",
+        "k077": "Nova ordem de servico",
+        "k078": "Anexos",
+        "k079": "Lancamentos financeiros",
+        "k080": "Configuracoes de faturamento",
+        "k081": "Limpar",
+        "k082": "Excluir",
+        "k083": "Lancamento",
+        "k084": "Revisar fila financeira",
+        "k085": "Automacao financeira",
+        "k086": "Lancamentos financeiros",
+        "k087": "Configuracoes de faturamento",
+        "k088": "Detalhes",
+        "k089": "Geral",
+        "k090": "Titulo",
+        "k091": "Titulo",
+        "k092": "Descricao",
+        "k093": "Descricao",
+        "k094": "Prioridade",
+        "k095": "Prioridade",
+        "k096": "Baixa",
+        "k097": "Media",
+        "k098": "Alta",
+        "k099": "Urgente",
+        "k100": "Status",
+        "k101": "Status",
+        "k102": "Solicitante",
+        "k103": "Selecionar solicitante",
+        "k104": "Criado por",
+        "k105": "Criado por",
+        "k106": "Metadados (JSON)",
+        "k107": "Metadados (JSON)",
+        "k108": "Agenda",
+        "k109": "Inicio agendado",
+        "k110": "Inicio agendado",
+        "k111": "Fim agendado",
+        "k112": "Fim agendado",
+        "k113": "Vence em",
+        "k114": "Vence em",
+        "k115": "Duracao estimada (min)",
+        "k116": "Duracao estimada (min)",
+        "k117": "Duracao real (min)",
+        "k118": "Duracao real (min)",
+        "k119": "Concluido em",
+        "k120": "Concluido em",
+        "k121": "Equipe",
+        "k122": "Responsaveis",
+        "k123": "Adicionar responsavel",
+        "k124": "Nenhum responsavel atribuido.",
+        "k125": "Responsavel",
+        "k126": "Selecionar colaborador",
+        "k127": "Papel",
+        "k128": "Executor",
+        "k129": "Assistente",
+        "k130": "Revisor",
+        "k131": "Minutos alocados",
+        "k132": "Minutos",
+        "k133": "Acao",
+        "k134": "Remover",
+        "k135": "Linhas",
+        "k136": "Tipo de linha",
+        "k137": "Servicos",
+        "k138": "Estoque",
+        "k139": "Linhas de servico",
+        "k140": "Adicionar servico",
+        "k141": "Sem linhas de servico.",
+        "k142": "Servico",
+        "k143": "Selecionar servico",
+        "k144": "Qtd",
+        "k145": "Qtd",
+        "k146": "Preco unitario (centavos)",
+        "k147": "Preco unitario",
+        "k148": "Observacoes",
+        "k149": "Observacoes",
+        "k150": "Acao",
+        "k151": "Remover",
+        "k152": "Linhas de estoque",
+        "k153": "Adicionar item",
+        "k154": "Sem itens de estoque.",
+        "k155": "Item de estoque",
+        "k156": "Selecionar item de estoque",
+        "k157": "Disponivel",
+        "k158": " - quantidade planejada/consumida excede o estoque",
+        "k159": "Direcao",
+        "k160": "Entrada",
+        "k161": "Saida",
+        "k162": "Quantidade planejada",
+        "k163": "Planejado",
+        "k164": "Quantidade consumida",
+        "k165": "Consumido",
+        "k166": "Custo unitario (centavos)",
+        "k167": "Custo unitario (centavos)",
+        "k168": "Acao",
+        "k169": "Remover",
+        "k170": "Atividade",
+        "k171": "Salvar alteracoes",
+        "k172": "Criar ordem de servico",
+        "attachmentFileTooLarge": "O arquivo \"{{fileName}}\" excede {{maxAttachmentSizeMb}} MB.",
+        "attachmentUploaded": "Anexo \"{{fileName}}\" enviado.",
+        "attachmentUploadFailed": "Falha ao enviar \"{{fileName}}\"."
+      },
+      "presentation_components_work_order_list_work_order_list_component": {
+        "k001": "Baixa",
+        "k002": "Media",
+        "k003": "Alta",
+        "k004": "Urgente",
+        "k005": "Titulo",
+        "k006": "Status",
+        "k007": "Prioridade",
+        "k008": "Prazo",
+        "k009": "Total",
+        "k010": "Acoes",
+        "k011": "Editar",
+        "k012": "Excluir ordem de servico?",
+        "k013": "Excluir",
+        "k014": "Excluir",
+        "k015": "Ordens de servico",
+        "k016": "Atualizar",
+        "k017": "Nova ordem de servico",
+        "k018": "Buscar",
+        "k019": "Risco",
+        "k020": "Atrasadas",
+        "k021": "Vence em breve (24h)",
+        "k022": "Checklist em risco",
+        "k023": "Alta prioridade em aberto",
+        "k024": "Nao agendadas",
+        "k025": "Status",
+        "k026": "Prioridade",
+        "k027": "Baixa",
+        "k028": "Media",
+        "k029": "Alta",
+        "k030": "Urgente",
+        "k031": "Aplicar",
+        "k032": "Limpar",
+        "k033": "Carregando mais ordens de servico...",
+        "k034": "Role para carregar mais.",
+        "k035": "Fim dos resultados.",
+        "k036": "Visao operacional",
+        "k037": "Atualizado",
+        "k038": "Abertas",
+        "k039": "Concluidas",
+        "k040": "Atrasadas",
+        "k041": "Vence em breve",
+        "k042": "Alta prioridade em aberto",
+        "k043": "Nao agendadas",
+        "k044": "Checklist em risco",
+        "k045": "Conclusao",
+        "k046": "Resolucao media",
+        "k047": "Ver atrasadas",
+        "k048": "Ver vencimento proximo",
+        "k049": "Checklist em risco",
+        "k050": "Alta prioridade",
+        "k051": "A visao operacional esta carregando ou indisponivel para este workspace.",
+        "k052": "Ordens de servico",
+        "k053": "Visao operacional"
+      },
+      "presentation_components_work_order_statuses_work_order_statuses_form_component": {
+        "k001": "Criar status",
+        "k002": "Codigo",
+        "k003": "Codigo do status e obrigatorio",
+        "k004": "ex.: aberto",
+        "k005": "Nome",
+        "k006": "Nome do status e obrigatorio",
+        "k007": "ex.: Aberto",
+        "k008": "Final",
+        "k009": "Ordem de classificacao",
+        "k010": "Criar status"
+      },
+      "presentation_components_work_order_statuses_work_order_statuses_list_component": {
+        "k001": "Codigo",
+        "k002": "Nome",
+        "k003": "Final",
+        "k004": "Sim",
+        "k005": "Nao",
+        "k006": "Ordem",
+        "k007": "Status"
+      },
+      "presentation_pages_calendar_calendar_page": {
+        "k001": "Falha ao carregar status das ordens de servico.",
+        "k002": "Falha ao carregar ordens de servico para o calendario."
+      },
+      "presentation_pages_settings_settings_page": {
+        "k001": "Falha ao carregar configuracoes de ordem de servico.",
+        "k002": "Workspace e obrigatorio.",
+        "k003": "Configuracoes da ordem de servico salvas.",
+        "k004": "Falha ao salvar configuracoes da ordem de servico.",
+        "k005": "Configuracoes de ordem de servico",
+        "k006": "Configure comportamento padrao e regras de validacao por workspace.",
+        "k007": "Atualizado",
+        "k008": "Ainda nao salvo",
+        "k009": "Essas configuracoes sao especificas do workspace e iniciam com valores padrao.",
+        "k010": "Planejamento",
+        "k011": "Padroes de planejamento",
+        "k012": "Prioridade padrao",
+        "k013": "Baixa",
+        "k014": "Media",
+        "k015": "Alta",
+        "k016": "Urgente",
+        "k017": "Duracao estimada padrao (min)",
+        "k018": "Prazo padrao em (horas)",
+        "k019": "Janela de vencimento proximo (horas)",
+        "k020": "Preencher prazo automaticamente na criacao",
+        "k021": "Fluxo",
+        "k022": "Validacoes de fluxo",
+        "k023": "Exigir responsavel na criacao",
+        "k024": "Exigir checklist completo para concluir",
+        "k025": "Exigir anexo para concluir",
+        "k026": "Anexos",
+        "k027": "Regras de anexos",
+        "k028": "Habilitar anexos",
+        "k029": "Maximo de arquivos por ordem",
+        "k030": "Tamanho maximo do arquivo (MB)",
+        "k031": "Tipos MIME permitidos",
+        "k032": "Automacao de faturamento",
+        "k033": "Fluxo de execucao para faturamento",
+        "k034": "Status finais de execucao podem criar lancamentos financeiros automaticamente. O disparo de NF-e e opcional e depende das configuracoes de faturamento.",
+        "k035": "Configure faturamento do modulo + NF-e nas configuracoes globais",
+        "k036": "Abra as configuracoes de faturamento do workspace para habilitar/desabilitar automacao de Work Order e Agenda.",
+        "k037": "Ambiente de desenvolvimento",
+        "k038": "Endpoints do GOV podem estar indisponiveis em desenvolvimento. O lancamento financeiro continua funcionando de forma independente da emissao de NF-e.",
+        "k039": "Abrir configuracoes de faturamento",
+        "k040": "Restaurar padroes",
+        "k041": "Salvar configuracoes"
+      },
+      "presentation_pages_statuses_statuses_page": {
+        "k001": "Falha ao carregar status.",
+        "k002": "Status criado",
+        "k003": "Falha ao criar status."
+      },
+      "presentation_pages_work_orders_work_orders_page": {
+        "k001": "Falha ao carregar status das ordens de servico.",
+        "k002": "Falha ao carregar visao geral de ordens de servico.",
+        "k003": "Falha ao carregar ordens de servico.",
+        "k004": "Ordem de servico atualizada",
+        "k005": "Ordem de servico criada",
+        "k006": "Falha ao salvar ordem de servico.",
+        "k007": "Excluir ordem de servico \"{{title}}\"?",
+        "k008": "Excluir",
+        "k009": "Ordem de servico excluida",
+        "k010": "Falha ao excluir ordem de servico.",
+        "k011": "Editor de ordem de servico"
+      },
+      "presentation_templates_calendar_work_order_calendar_template": {
+        "k001": "Calendario de ordens de servico",
+        "k002": "Visualize ordens de servico agendadas e com prazo em uma linha do tempo."
+      },
+      "presentation_templates_landing_landing_template": {
+        "k001": "Ordens de servico",
+        "k002": "Acompanhe, priorize e execute ordens de servico.",
+        "k003": "Painel de execucao",
+        "k004": "Calendario",
+        "k005": "Visualize ordens de servico em uma linha do tempo.",
+        "k006": "Visao em linha do tempo",
+        "k007": "Status",
+        "k008": "Configure as etapas de fluxo das ordens de servico.",
+        "k009": "Configuracao de fluxo",
+        "k010": "Configuracoes",
+        "k011": "Defina parametros do modulo, regras de automacao e validacoes de execucao por workspace.",
+        "k012": "Modulo + automacao de faturamento",
+        "k013": "Ordens de servico",
+        "k014": "Planeje, execute e conclua solicitacoes de servico com visibilidade total."
+      },
+      "presentation_templates_statuses_statuses_template": {
+        "k001": "Status da ordem de servico",
+        "k002": "Configure etapas e fluxo padrao para suas ordens de servico."
+      },
+      "presentation_templates_work_orders_work_orders_template": {
+        "title": "Ordens de servico",
+        "description": "Planeje, execute e monitore ordens de servico em um unico lugar."
+      }
+    }
+  }
+}

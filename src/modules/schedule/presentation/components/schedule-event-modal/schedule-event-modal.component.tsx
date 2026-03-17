@@ -16,6 +16,7 @@ import {
   BadgeDollarSign,
 } from "lucide-react";
 import { formatMoneyFromCents } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import { BaseComponent } from "@shared/base/base.component";
 import DurationTimeSelector from "@shared/ui/components/duration-time-selector/duration-time-selector.component";
 import SelectCardModal from "@shared/ui/components/select-card-modal/select-card-modal.component";
@@ -386,15 +387,21 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
     if (!this.selectedStart || !this.selectedEnd || !this.state.categoryId) return;
 
     if (this.modalSettings.requireDescription && this.state.description.trim().length === 0) {
-      message.info("Description is required by workspace settings.");
+      message.info(
+        appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k001")
+      );
       return;
     }
     if (this.modalSettings.requireService && this.state.selectedServiceIds.length === 0) {
-      message.info("Add at least one service to continue.");
+      message.info(
+        appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k002")
+      );
       return;
     }
     if (this.modalSettings.requireEmployee && this.state.selectedEmployeeIds.length === 0) {
-      message.info("Assign at least one employee to continue.");
+      message.info(
+        appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k003")
+      );
       return;
     }
 
@@ -418,12 +425,14 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
   };
 
   private get whenLabel() {
-    if (!this.selectedStart || !this.selectedEnd) return "Select a time";
+    if (!this.selectedStart || !this.selectedEnd) {
+      return appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k004");
+    }
     return `${this.selectedStart.format("ddd, MMM D")} · ${this.selectedStart.format("HH:mm")} - ${this.selectedEnd.format("HH:mm")}`;
   }
 
   private get categoryLabel() {
-    return this.props.categories.find((c) => c.id === this.state.categoryId)?.label ?? "—";
+    return this.props.categories.find((c) => c.id === this.state.categoryId)?.label ?? "-";
   }
 
   protected renderView(): React.ReactNode {
@@ -447,7 +456,6 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
     // available services / employees are accessed directly from props where needed
 
-
     return (
       <ModalOverrides>
         <Modal
@@ -470,7 +478,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               <DateStrip>
                 <RoundIconButton
                   onClick={() => this.setSafeState({ weekAnchor: this.state.weekAnchor.subtract(7, "day") })}
-                  aria-label="Previous week"
+                  aria-label={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k005")}
                 >
                   <ChevronLeft size={18} />
                 </RoundIconButton>
@@ -495,7 +503,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
                 <RoundIconButton
                   onClick={() => this.setSafeState({ weekAnchor: this.state.weekAnchor.add(7, "day") })}
-                  aria-label="Next week"
+                  aria-label={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k006")}
                 >
                   <ChevronRight size={18} />
                 </RoundIconButton>
@@ -510,9 +518,9 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   value={this.state.dayPart}
                   onChange={(v) => this.setSafeState({ dayPart: v as DayPart, slotPage: 0, selectedTime: undefined })}
                   options={[
-                    { label: "Morning", value: "morning" },
-                    { label: "Afternoon", value: "afternoon" },
-                    { label: "Evening", value: "evening" },
+                    { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k007"), value: "morning" },
+                    { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k008"), value: "afternoon" },
+                    { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k009"), value: "evening" },
                   ]}
                 />
               </TimeTabsRow>
@@ -521,7 +529,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                 <RoundIconButton
                   onClick={() => this.setSafeState({ slotPage: Math.max(0, this.state.slotPage - 1) })}
                   disabled={this.state.slotPage === 0}
-                  aria-label="Previous times"
+                  aria-label={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k010")}
                 >
                   <ChevronLeft size={18} />
                 </RoundIconButton>
@@ -543,7 +551,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                 <RoundIconButton
                   onClick={() => this.setSafeState({ slotPage: Math.min(this.maxSlotPage, this.state.slotPage + 1) })}
                   disabled={this.state.slotPage === this.maxSlotPage}
-                  aria-label="Next times"
+                  aria-label={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k011")}
                 >
                   <ChevronRight size={18} />
                 </RoundIconButton>
@@ -553,7 +561,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
             <Separator />
 
             <Section>
-              <Label>Appointment details</Label>
+              <Label>{appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k012")}</Label>
 
               <FormStack>
                 <FieldRow3>
@@ -561,7 +569,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                     size="large"
                     value={this.state.title}
                     onChange={(e) => this.setSafeState({ title: e.target.value })}
-                    placeholder="Title"
+                    placeholder={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k013")}
                     prefix={<ClipboardList size={16} />}
                   />
 
@@ -569,7 +577,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                     size="large"
                     value={this.state.categoryId || undefined}
                     onChange={(v) => this.setSafeState({ categoryId: v })}
-                    placeholder="Category"
+                    placeholder={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k014")}
                     options={this.props.categories.map((c) => ({ value: c.id, label: c.label }))}
                   />
                 </FieldRow3>
@@ -579,8 +587,8 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   onChange={(e) => this.setSafeState({ description: e.target.value })}
                   placeholder={
                     this.modalSettings.requireDescription
-                      ? "Description (required)"
-                      : "Description (optional)"
+                      ? appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k015")
+                      : appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k016")
                   }
                   rows={3}
                 />
@@ -588,20 +596,22 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <Tag color="blue">
                     {this.modalSettings.confirmationPolicy === "required"
-                      ? "Status default: Pending (confirmation required)"
-                      : "Status default: Confirmed"}
+                      ? appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k017")
+                      : appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k018")}
                   </Tag>
                   {this.modalSettings.reminderEnabled ? (
-                    <Tag>{`Reminder: ${this.modalSettings.reminderLeadMinutes} min before`}</Tag>
+                    <Tag>{`${appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k019")}: ${this.modalSettings.reminderLeadMinutes} ${appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k020")}`}</Tag>
                   ) : (
-                    <Tag>Reminder disabled</Tag>
+                    <Tag>{appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k021")}</Tag>
                   )}
                   {this.modalSettings.noShowPolicy === "charge" ? (
-                    <Tag color="orange">{`No-show fee: ${this.modalSettings.noShowFeePercent}%`}</Tag>
+                    <Tag color="orange">{`${appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k022")}: ${this.modalSettings.noShowFeePercent}%`}</Tag>
                   ) : this.modalSettings.noShowPolicy === "flag" ? (
-                    <Tag color="gold">No-show flagged (no charge)</Tag>
+                    <Tag color="gold">
+                      {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k023")}
+                    </Tag>
                   ) : (
-                    <Tag>No-show action: none</Tag>
+                    <Tag>{appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k024")}</Tag>
                   )}
                 </div>
 
@@ -612,7 +622,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                       <Label>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                           <CheckCircle2 size={16} />
-                          Event status
+                          {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k025")}
                         </span>
                       </Label>
                       <div style={{ height: 6 }} />
@@ -648,10 +658,10 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                         >
                           <BadgeDollarSign size={14} style={{ marginTop: 2 }} />
                           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                            Saving a final execution status triggers automatic financial launch.
+                            {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k026")}
                             {IS_DEV_ENV
-                              ? " NF-e trigger is optional and can fail in development when GOV endpoints are unavailable."
-                              : " NF-e trigger is optional and depends on billing configuration."}
+                              ? appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k027")
+                              : appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k028")}
                           </Typography.Text>
                         </div>
                       ) : null}
@@ -662,7 +672,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                     <Label>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                         <Clock3 size={16} />
-                        Duration
+                        {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k029")}
                       </span>
                     </Label>
                     <div style={{ height: 6 }} />
@@ -681,9 +691,13 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                 <FieldRow>
                   <SlotCard>
                     <SlotLeft>
-                      <div className="title">{this.state.title.trim() || "Appointment"}</div>
+                      <div className="title">
+                        {this.state.title.trim() || appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k030")}
+                      </div>
                       <div className="meta">{this.whenLabel}</div>
-                      <div className="meta">Category: {this.categoryLabel}</div>
+                      <div className="meta">
+                        {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k031")}: {this.categoryLabel}
+                      </div>
                     </SlotLeft>
 
                     <SlotRight />
@@ -692,21 +706,21 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                   <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <Button onClick={() => this.setSafeState({ selectModalOpen: "services" })} icon={<BriefcaseBusiness size={14} />}>
-                        Add service
+                        {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k032")}
                       </Button>
 
                       <Button onClick={() => this.setSafeState({ selectModalOpen: "employees" })} icon={<UserRoundPlus size={14} />}>
-                        Add employee
+                        {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k033")}
                       </Button>
 
                       {this.modalSettings.enableInventoryTracking ? (
                         <>
                           <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-in" })} icon={<PackageMinus size={14} />}>
-                            Add inventory input
+                            {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k034")}
                           </Button>
 
                           <Button onClick={() => this.setSafeState({ selectModalOpen: "inventory-out" })} icon={<PackagePlus size={14} />}>
-                            Add inventory output
+                            {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k035")}
                           </Button>
                         </>
                       ) : null}
@@ -748,7 +762,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                             const next = (this.state.selectedInventoryInputs ?? []).filter((l) => l.itemId !== line.itemId);
                             this.setSafeState({ selectedInventoryInputs: next });
                           }}>
-                            Consumes: {label}
+                            {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k036")}: {label}
                           </Tag>
                         );
                       })}
@@ -760,7 +774,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
                             const next = (this.state.selectedInventoryOutputs ?? []).filter((l) => l.itemId !== line.itemId);
                             this.setSafeState({ selectedInventoryOutputs: next });
                           }}>
-                            Produces: {label}
+                            {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k037")}: {label}
                           </Tag>
                         );
                       })}
@@ -773,7 +787,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
             {/* selection modals */}
             <SelectCardModal
               open={this.state.selectModalOpen === "services"}
-              title="Add service"
+              title={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k038")}
               items={(this.props.availableServices ?? []).map((s) => ({ id: s.id, title: s.title, subtitle: s.description, right: s.priceCents ? formatMoneyFromCents(s.priceCents ?? 0) : undefined }))}
               multiple={true}
               initialSelected={this.state.selectedServiceIds}
@@ -788,7 +802,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
             <SelectCardModal
               open={this.state.selectModalOpen === "employees"}
-              title="Add employee"
+              title={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k039")}
               items={(this.props.availableEmployees ?? []).map((e) => ({ id: e.id, title: `${e.firstName} ${e.lastName}`, subtitle: e.role ?? undefined }))}
               multiple={true}
               initialSelected={this.state.selectedEmployeeIds}
@@ -803,7 +817,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               <>
                 <SelectCardModal
                   open={this.state.selectModalOpen === "inventory-in"}
-                  title="Add inventory input"
+                  title={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k040")}
                   items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
                   multiple={true}
                   initialSelected={(this.state.selectedInventoryInputs ?? []).map((l) => l.itemId)}
@@ -816,7 +830,7 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
 
                 <SelectCardModal
                   open={this.state.selectModalOpen === "inventory-out"}
-                  title="Add inventory output"
+                  title={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k041")}
                   items={(this.props.availableInventoryItems ?? []).map((p) => ({ id: p.id, title: p.name, subtitle: p.sku ?? undefined }))}
                   multiple={true}
                   initialSelected={(this.state.selectedInventoryOutputs ?? []).map((l) => l.itemId)}
@@ -833,15 +847,17 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               <div />
 
               <FooterTotal>
-                <div className="label">Total</div>
+                <div className="label">{appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k042")}</div>
                 <div className="value">{formatMoneyFromCents(this.state.priceCents ?? 0)}</div>
-                <div className="sub">{this.state.durationMinutes} min</div>
+                <div className="sub">{this.state.durationMinutes} {appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k043")}</div>
               </FooterTotal>
             </FooterBar>
 
             <ContinueWrap>
               <Button type="primary" size="large" block disabled={!this.canConfirm} onClick={this.handleConfirm}>
-                {(this.props.initialDraft && this.props.initialDraft.id) ? 'Save edit' : 'Continue'}
+                {(this.props.initialDraft && this.props.initialDraft.id)
+                  ? appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k044")
+                  : appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k045")}
               </Button>
             </ContinueWrap>
           </ModalBody>

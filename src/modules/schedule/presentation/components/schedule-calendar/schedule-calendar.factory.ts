@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import type { EventObject } from "@toast-ui/calendar";
+import { i18n as appI18n } from "@core/i18n";
 
 type PopupWorker = {
   email?: string;
@@ -162,7 +163,7 @@ export const buildCalendarTemplates = () => ({
         "var(--color-surface)";
       const start = model.start ? dayjs(model.start) : null;
       const end = model.end ? dayjs(model.end) : null;
-      const timeRange = start && end ? `${start.format("HH:mm")} — ${end.format("HH:mm")}` : "";
+      const timeRange = start && end ? `${start.format("HH:mm")} - ${end.format("HH:mm")}` : "";
       const body = model.body || (model.raw && model.raw.description) || "";
       const workers = (model.raw && model.raw.workers) || null;
       const workersText = Array.isArray(workers) && workers.length > 0
@@ -193,7 +194,7 @@ export const buildCalendarTemplates = () => ({
             <div style="display:flex;gap:10px;align-items:center;font-size:12px;color:var(--toastui-calendar-text-muted);">
               <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;overflow:hidden;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex:0 0 14px;color:currentColor;"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zM12 14c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z" fill="currentColor"/></svg>
-                <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${workersText ? workersText : '—'}</div>
+                <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${workersText ? workersText : "-"}</div>
               </div>
               <div style="display:flex;align-items:center;gap:6px;flex:0 0 auto;">
                 <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--toastui-calendar-text-muted);">
@@ -205,8 +206,8 @@ export const buildCalendarTemplates = () => ({
           </div>
 
           <div class="tui-custom-popup-footer" style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
-            <button class="ant-btn ant-btn-default ant-btn-sm tui-custom-popup-delete" title="Delete">Delete</button>
-            <button class="ant-btn ant-btn-primary ant-btn-sm tui-custom-popup-edit" title="Edit">Edit</button>
+            <button class="ant-btn ant-btn-default ant-btn-sm tui-custom-popup-delete" title="${appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_factory.k001")}">${appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_factory.k002")}</button>
+            <button class="ant-btn ant-btn-primary ant-btn-sm tui-custom-popup-edit" title="${appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_factory.k003")}">${appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_factory.k004")}</button>
           </div>
         </div>`;
     } catch (err) {

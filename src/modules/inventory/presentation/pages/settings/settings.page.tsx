@@ -1,4 +1,5 @@
 import React from "react";
+import { i18n as appI18n } from "@core/i18n";
 import {
   Alert,
   Button,
@@ -356,7 +357,7 @@ function InventorySettingsPageContent(): React.ReactElement {
 
 export class InventorySettingsPage extends BasePage {
   protected override options = {
-    title: "Inventory settings | WorklyHub",
+    title: `${appI18n.t("inventory.pageTitles.settings")} | WorklyHub`,
     requiresAuth: true,
   };
 

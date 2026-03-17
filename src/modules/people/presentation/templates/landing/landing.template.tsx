@@ -1,4 +1,5 @@
 import { Settings2, Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -6,18 +7,20 @@ import {
 } from "@shared/ui/components/module-landing/module-landing.component";
 
 export function PeopleLandingTemplate() {
+  const { t } = useTranslation();
+
   const items: ModuleLandingItem[] = [
     {
       id: "team",
-      title: "Team",
-      description: "Manage staff and roles.",
+      title: t("people.landing.items.team.title"),
+      description: t("people.landing.items.team.description"),
       to: "/people",
       icon: <Users size={18} />,
     },
     {
       id: "settings",
-      title: "Settings",
-      description: "Configure defaults, validation rules, and module startup tab.",
+      title: t("people.landing.items.settings.title"),
+      description: t("people.landing.items.settings.description"),
       to: "/people/settings",
       icon: <Settings2 size={18} />,
     },
@@ -27,9 +30,9 @@ export function PeopleLandingTemplate() {
     <BaseTemplate
       content={
         <ModuleLanding
-          title="People"
+          title={t("people.landing.title")}
           headerIcon={<Users size={18} />}
-          description="Invite, manage, and organize your team."
+          description={t("people.landing.description")}
           items={items}
         />
       }

@@ -13,6 +13,9 @@ Passo a passo (obrigatorio)
 7) Se for um novo modulo:
    - Criar `presentation/stacks/<modulo>.stack.tsx`.
    - Registrar no `src/app/router/stacks/private.stack.ts`.
+8) Para qualquer texto novo de interface:
+   - Implementar i18n com suporte minimo em `en-US` e `pt-BR`.
+   - Evitar string hardcoded em pages/templates/components.
 
 Regras de integracao
 - Use `httpClient` e classes `*Api` para chamadas remotas.
@@ -25,6 +28,7 @@ Checklist antes de entregar
 - `npm run lint` passou.
 - `npm run depcruise` passou.
 - Nenhuma dependencia cruzada proibida.
+- Textos novos cobertos por i18n (`en-US`/`pt-BR`) e sem regressao de idioma.
 
 Pontos de atencao
 - Quando a feature afeta mais de um modulo, documente a integracao.

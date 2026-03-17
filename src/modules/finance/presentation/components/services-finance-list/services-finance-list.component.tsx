@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { List, Card, Button, Tag, Typography } from "antd";
 import { PlusCircle, ReceiptText, Sparkles } from "lucide-react";
 import { formatMoneyFromCents } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import { FinanceService } from "@modules/finance/services/finance.service";
 import { getFinanceValueColor } from "@modules/finance/utils/finance-value-status";
@@ -13,12 +14,23 @@ type Props = {
 type SuggestedServiceItem = CompanyServiceModel & {
   suggestedCents: number;
   confidence?: number | null;
+  why?: string;
+  actions?: Array<{
+    id: string;
+    label: string;
+    kind:
+      | "increase-price"
+      | "decrease-price"
+      | "bundle"
+      | "monitor"
+      | "collect-data";
+  }>;
   rationale?: string;
   origin?: "rules" | "ai";
 };
 
 export function ServicesFinanceList({ onSelect }: Props) {
-  const svc = React.useMemo(() => new FinanceService(), []);
+        const svc = React.useMemo(() => new FinanceService(), []);
   const [items, setItems] = useState<SuggestedServiceItem[]>([]);
 
   useEffect(() => {
@@ -78,7 +90,7 @@ export function ServicesFinanceList({ onSelect }: Props) {
 
                 <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <Tag>
-                    Current: {formatMoneyFromCents(it.priceCents ?? 0)}
+                    {appI18n.t("legacyInline.finance.presentation_components_services_finance_list_services_finance_list_component.k001")}: {formatMoneyFromCents(it.priceCents ?? 0)}
                   </Tag>
                   <Tag
                     color="green"
@@ -89,12 +101,12 @@ export function ServicesFinanceList({ onSelect }: Props) {
                       }),
                     }}
                   >
-                    Suggested: {formatMoneyFromCents(it.suggestedCents ?? 0)}
+                    {appI18n.t("legacyInline.finance.presentation_components_services_finance_list_services_finance_list_component.k002")}: {formatMoneyFromCents(it.suggestedCents ?? 0)}
                   </Tag>
                   {typeof it.confidence === "number" ? (
-                    <Tag>{`Confidence: ${(it.confidence * 100).toFixed(0)}%`}</Tag>
+                    <Tag>{`${appI18n.t("legacyInline.finance.presentation_components_services_finance_list_services_finance_list_component.k003")}: ${(it.confidence * 100).toFixed(0)}%`}</Tag>
                   ) : null}
-                  {it.origin ? <Tag>{`Engine: ${it.origin.toUpperCase()}`}</Tag> : null}
+                  {it.origin ? <Tag>{`${appI18n.t("legacyInline.finance.presentation_components_services_finance_list_services_finance_list_component.k004")}: ${it.origin.toUpperCase()}`}</Tag> : null}
                 </div>
 
                 <div style={{ marginTop: 8 }}>
@@ -106,12 +118,21 @@ export function ServicesFinanceList({ onSelect }: Props) {
                       }),
                     }}
                   >
-                    Delta: {formatMoneyFromCents((it.suggestedCents ?? 0) - (it.priceCents ?? 0))}
+                    {appI18n.t("legacyInline.finance.presentation_components_services_finance_list_services_finance_list_component.k005")}: {formatMoneyFromCents((it.suggestedCents ?? 0) - (it.priceCents ?? 0))}
                   </div>
-                  {it.rationale ? (
+                  {(it.why ?? it.rationale) ? (
                     <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                      {it.rationale}
+                      {it.why ?? it.rationale}
                     </Typography.Text>
+                  ) : null}
+                  {Array.isArray(it.actions) && it.actions.length > 0 ? (
+                    <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {it.actions.slice(0, 2).map((action) => (
+                        <Tag key={action.id} color="blue">
+                          {action.label}
+                        </Tag>
+                      ))}
+                    </div>
                   ) : null}
                 </div>
               </div>
@@ -122,7 +143,7 @@ export function ServicesFinanceList({ onSelect }: Props) {
                   icon={<PlusCircle size={14} />}
                   onClick={() => onSelect?.(it, it.suggestedCents)}
                 >
-                  Add as expense
+                  {appI18n.t("legacyInline.finance.presentation_components_services_finance_list_services_finance_list_component.k006")}
                 </Button>
               </div>
             </div>

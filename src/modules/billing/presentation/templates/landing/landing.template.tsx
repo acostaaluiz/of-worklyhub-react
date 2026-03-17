@@ -1,4 +1,5 @@
 import { CreditCard, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   ModuleLanding,
@@ -6,21 +7,23 @@ import {
 } from "@shared/ui/components/module-landing/module-landing.component";
 
 export function BillingLandingTemplate() {
+  const { t } = useTranslation();
+
   const items: ModuleLandingItem[] = [
     {
       id: "plans",
-      title: "Plans",
-      description: "Compare subscription plans and upgrades.",
+      title: t("billing.landing.items.plans.title"),
+      description: t("billing.landing.items.plans.description"),
       to: "/billing/plans",
       icon: <Sparkles size={18} />,
     },
     {
       id: "checkout",
-      title: "Checkout",
-      description: "Finalize plan selection and payment.",
+      title: t("billing.landing.items.checkout.title"),
+      description: t("billing.landing.items.checkout.description"),
       to: "/billing/checkout",
       icon: <CreditCard size={18} />,
-      meta: "After selecting a plan",
+      meta: t("billing.landing.items.checkout.meta"),
     },
   ];
 
@@ -28,9 +31,9 @@ export function BillingLandingTemplate() {
     <BaseTemplate
       content={
         <ModuleLanding
-          title="Billing"
+          title={t("billing.landing.title")}
           headerIcon={<CreditCard size={18} />}
-          description="Manage plans, subscriptions, and payments."
+          description={t("billing.landing.description")}
           items={items}
         />
       }

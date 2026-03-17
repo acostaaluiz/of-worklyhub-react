@@ -3,6 +3,7 @@ import { Button, Checkbox } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { Plus, Tag, CheckSquare } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 
 import { useScheduleApi } from "../../../services/schedule.service";
 
@@ -53,7 +54,7 @@ type ScheduleSidebarProps = {
 };
 
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
-  const api = useScheduleApi();
+        const api = useScheduleApi();
   // deterministic color from id to avoid duplicates when no explicit color provided
   const colorFromId = (id: string, idx: number) => {
     let h = 0;
@@ -205,8 +206,8 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     <div>
       <SidebarHeaderRow>
         <SidebarTitle>
-          <div className="title">My Calendar</div>
-          <div className="subtitle">Personal, teams</div>
+          <div className="title">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k001")}</div>
+          <div className="subtitle">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k002")}</div>
         </SidebarTitle>
 
         <Button
@@ -214,7 +215,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
           icon={<Plus size={16} />}
           onClick={() => setIsCreateOpen(true)}
         >
-          New
+          {appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k003")}
         </Button>
       </SidebarHeaderRow>
 
@@ -222,8 +223,8 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
       <Block>
         <BlockHeader>
-          <div className="label"><Tag size={14} style={{ marginRight: 8 }} />Categories</div>
-          <Button size="small">Edit</Button>
+          <div className="label"><Tag size={14} style={{ marginRight: 8 }} />{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k004")}</div>
+          <Button size="small">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k005")}</Button>
         </BlockHeader>
 
         <List>
@@ -251,7 +252,7 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
       <Block>
         <BlockHeader>
-          <div className="label"><CheckSquare size={14} style={{ marginRight: 8 }} />Statuses</div>
+          <div className="label"><CheckSquare size={14} style={{ marginRight: 8 }} />{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k006")}</div>
         </BlockHeader>
 
         <List>
@@ -281,19 +282,19 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
       {nextSchedules && nextSchedules.length > 0 ? (
         <NextBlock>
           <BlockHeader>
-            <div className="label">Next events</div>
+            <div className="label">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k007")}</div>
           </BlockHeader>
           <List>
             {nextSchedules.map((n) => (
               <NextCard key={n.id}>
                 <div className="time">{dayjs(n.start).format("HH:mm")}</div>
-                <div className="title">{n.title ?? "Untitled"}</div>
+                <div className="title">{n.title ?? appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k008")}</div>
                 <div className="meta">
-                  {n.startsIn ?? `${n.startsInMinutes} minutes`}
+                  {n.startsIn ?? `${n.startsInMinutes} ${appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k009")}`}
                 </div>
                 {props.settings?.reminderEnabled ? (
                   <div className="meta">
-                    {`Reminder: ${dayjs(n.start)
+                    {`${appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k010")}: ${dayjs(n.start)
                       .subtract(props.settings.reminderLeadMinutes, "minute")
                       .format("HH:mm")}`}
                   </div>

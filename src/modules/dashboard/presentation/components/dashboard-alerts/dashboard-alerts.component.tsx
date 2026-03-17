@@ -1,18 +1,12 @@
 import { List, Skeleton, Tag, Typography } from "antd";
 import { Siren } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { DashboardAlertModel } from "@modules/dashboard/interfaces/dashboard-alert.model";
 import { WidgetBody, WidgetCard, WidgetHeader } from "./dashboard-alerts.component.styles";
 
 type Props = {
   items: DashboardAlertModel[];
   loading?: boolean;
-};
-
-const sourceLabel: Record<DashboardAlertModel["source"], string> = {
-  finance: "Finance",
-  "work-order": "Work Order",
-  schedule: "Schedule",
-  people: "People",
 };
 
 const priorityColor: Record<DashboardAlertModel["priority"], string> = {
@@ -22,14 +16,28 @@ const priorityColor: Record<DashboardAlertModel["priority"], string> = {
 };
 
 export function DashboardAlerts(props: Props) {
+  const { t } = useTranslation();
   const { items, loading } = props;
+
+  const sourceLabel: Record<DashboardAlertModel["source"], string> = {
+    finance: t("dashboard.alerts.sources.finance"),
+    "work-order": t("dashboard.alerts.sources.workOrder"),
+    schedule: t("dashboard.alerts.sources.schedule"),
+    people: t("dashboard.alerts.sources.people"),
+  };
+
+  const priorityLabel: Record<DashboardAlertModel["priority"], string> = {
+    high: t("dashboard.alerts.priorities.high"),
+    medium: t("dashboard.alerts.priorities.medium"),
+    low: t("dashboard.alerts.priorities.low"),
+  };
 
   return (
     <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Operational alerts</div>
-          <div className="subtitle">Prioritized insights for quick action</div>
+          <div className="title">{t("dashboard.alerts.title")}</div>
+          <div className="subtitle">{t("dashboard.alerts.subtitle")}</div>
         </div>
         <div className="header-icon" aria-hidden="true">
           <Siren size={18} />
@@ -42,7 +50,7 @@ export function DashboardAlerts(props: Props) {
         <WidgetBody>
           <List
             dataSource={items}
-            locale={{ emptyText: "No alerts for this period." }}
+            locale={{ emptyText: t("dashboard.alerts.empty") }}
             style={{ padding: "var(--space-2) var(--space-4) var(--space-4)" }}
             renderItem={(item) => (
               <List.Item style={{ alignItems: "flex-start" }}>
@@ -59,10 +67,10 @@ export function DashboardAlerts(props: Props) {
                     <Typography.Text strong>{item.title}</Typography.Text>
                     <div style={{ display: "flex", gap: 8 }}>
                       <Tag>{sourceLabel[item.source]}</Tag>
-                      <Tag color={priorityColor[item.priority]}>{item.priority.toUpperCase()}</Tag>
-                      {item.engineUsed ? <Tag>{`Engine: ${item.engineUsed.toUpperCase()}`}</Tag> : null}
+                      <Tag color={priorityColor[item.priority]}>{priorityLabel[item.priority]}</Tag>
+                      {item.engineUsed ? <Tag>{t("dashboard.alerts.tags.engine", { engine: item.engineUsed.toUpperCase() })}</Tag> : null}
                       {typeof item.confidence === "number" ? (
-                        <Tag>{`Confidence: ${(item.confidence * 100).toFixed(0)}%`}</Tag>
+                        <Tag>{t("dashboard.alerts.tags.confidence", { confidence: (item.confidence * 100).toFixed(0) })}</Tag>
                       ) : null}
                     </div>
                   </div>
@@ -72,11 +80,11 @@ export function DashboardAlerts(props: Props) {
                   </Typography.Paragraph>
                   {item.rationale ? (
                     <Typography.Text type="secondary" style={{ display: "block", marginBottom: 6 }}>
-                      Why: {item.rationale}
+                      {t("dashboard.alerts.labels.why")}: {item.rationale}
                     </Typography.Text>
                   ) : null}
                   <Typography.Text type="secondary">
-                    Action: {item.suggestedAction}
+                    {t("dashboard.alerts.labels.action")}: {item.suggestedAction}
                   </Typography.Text>
                 </div>
               </List.Item>

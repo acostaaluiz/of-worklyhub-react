@@ -47,7 +47,20 @@ export type FinancePricingSuggestionApi = {
   delta_cents: number;
   expected_impact: "increase-margin" | "protect-demand" | "neutral";
   confidence: number;
-  rationale: string;
+  why: string;
+  actions: Array<{
+    id: string;
+    label: string;
+    kind:
+      | "increase-price"
+      | "decrease-price"
+      | "bundle"
+      | "monitor"
+      | "collect-data";
+  }>;
+  historical_orders?: number;
+  data_quality?: "low" | "medium" | "high";
+  rationale?: string;
   evidence?: DataMap;
   origin?: "rules" | "ai";
 };
@@ -65,6 +78,12 @@ export type FinancePricingSuggestionsResponseApi = {
     unchanged: number;
     with_history: number;
     without_history: number;
+    high_confidence?: number;
+    low_confidence?: number;
+    low_data_quality?: number;
+    actionable?: number;
+    mean_absolute_delta_cents?: number;
+    estimated_margin_uplift_cents?: number;
   };
   suggestions: FinancePricingSuggestionApi[];
   meta?: {
@@ -74,6 +93,7 @@ export type FinancePricingSuggestionsResponseApi = {
     provider?: string | null;
     model?: string | null;
     ai_error?: string | null;
+    copilot_version?: string | null;
   };
   generated_at?: string;
 };

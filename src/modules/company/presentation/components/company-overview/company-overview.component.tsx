@@ -1,4 +1,5 @@
 import { Typography, Tag, Space } from "antd";
+import { useTranslation } from "react-i18next";
 import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
 import {
   OverviewShell,
@@ -13,6 +14,8 @@ type Props = {
 };
 
 export function CompanyOverview({ profile }: Props) {
+  const { t } = useTranslation();
+
   return (
     <OverviewShell className="surface">
       <HeroImage style={{ backgroundImage: `url(${profile.wallpaperUrl ?? profile.imageUrl})` }} />
@@ -31,7 +34,7 @@ export function CompanyOverview({ profile }: Props) {
         <div>
           <Space direction="vertical" align="end">
             <div>
-              <Tag color="gold">Destaque</Tag>
+              <Tag color="gold">{t("company.profile.overview.highlightTag")}</Tag>
             </div>
             <AvatarWrap>{/* eventualmente avatar/logo */}</AvatarWrap>
           </Space>

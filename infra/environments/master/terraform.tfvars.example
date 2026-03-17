@@ -1,5 +1,6 @@
-project_id = "my-worklyhub-prod-project"
-region     = "us-central1"
+project_id              = "worklyhub"
+region                  = "us-central1"
+google_credentials_file = "C:/replace/with/your/terraform-sa.json"
 
 artifact_registry_repository_id = "worklyhub-frontend-prod"
 cloud_run_service_name          = "worklyhub-frontend-prod"

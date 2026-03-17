@@ -1,5 +1,6 @@
 import React from "react";
 import { message } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 import { isAppError } from "@core/errors/is-app-error";
 import {
   invoiceSettingsService,
@@ -56,7 +57,7 @@ type State = {
 };
 
 export class SettingsPage extends BasePage<{}, State> {
-  protected override options = { title: "Settings | WorklyHub", requiresAuth: true };
+  protected override options = { title: `${appI18n.t("users.pageTitles.settings")} | WorklyHub`, requiresAuth: true };
 
   public state: State = {
     isLoading: false,
@@ -91,7 +92,7 @@ export class SettingsPage extends BasePage<{}, State> {
       message.error(
         isAppError(err)
           ? err.message
-          : "Unable to load billing settings."
+          : appI18n.t("users.settings.messages.loadError")
       );
     } finally {
       this.setSafeState({ isLoading: false });
@@ -110,13 +111,13 @@ export class SettingsPage extends BasePage<{}, State> {
         settingsSource: "database",
         settingsUpdatedAt: response.updatedAt,
       });
-      message.success("Billing rules updated.");
+      message.success(appI18n.t("users.settings.messages.saveRulesSuccess"));
     } catch (err) {
       console.error("settings.saveWorkspaceSettings", err);
       message.error(
         isAppError(err)
           ? err.message
-          : "Unable to save billing rules."
+          : appI18n.t("users.settings.messages.saveRulesError")
       );
     } finally {
       this.setSafeState({ isSavingSettings: false });
@@ -136,13 +137,13 @@ export class SettingsPage extends BasePage<{}, State> {
         nfeResolution: "workspace",
         nfeUpdatedAt: response.updatedAt,
       });
-      message.success("NF-e issuance settings updated.");
+      message.success(appI18n.t("users.settings.messages.saveNfeSuccess"));
     } catch (err) {
       console.error("settings.saveNfeConfiguration", err);
       message.error(
         isAppError(err)
           ? err.message
-          : "Unable to save NF-e settings."
+          : appI18n.t("users.settings.messages.saveNfeError")
       );
     } finally {
       this.setSafeState({ isSavingConfiguration: false });

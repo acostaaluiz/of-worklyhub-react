@@ -19,6 +19,7 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,

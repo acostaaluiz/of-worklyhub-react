@@ -2,6 +2,7 @@ import React from "react";
 import { BasePage } from "@shared/base/base.page";
 import { PlanSelectionTemplate } from "../../templates/plan-selection/plan-selection.template";
 import { ConfirmationModal } from "@shared/ui/components/confirmation-modal/confirmation-modal.component";
+import { i18n as appI18n } from "@core/i18n";
 import { usersService } from "@modules/users/services/user.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { message } from "antd";
@@ -11,7 +12,7 @@ import type { BillingPlan } from "@modules/billing/services/billing-api";
 
 export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
   protected override options = {
-    title: "Plans | WorklyHub",
+    title: `${appI18n.t("billing.pageTitles.plans")} | WorklyHub`,
     requiresAuth: true,
   };
 
@@ -104,10 +105,10 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
 
         <ConfirmationModal
           open={!!this.state.confirmOpen}
-          title={this.state.pendingPlanName ? `Confirm plan selection` : "Confirm"}
-          description={this.state.pendingPlanName ? `Do you really want to select the ${this.state.pendingPlanName} plan?` : undefined}
-          confirmLabel="Yes"
-          cancelLabel="No"
+          title={appI18n.t("billing.planSelection.confirm.title")}
+          description={this.state.pendingPlanName ? appI18n.t("billing.planSelection.confirm.description", { planName: this.state.pendingPlanName }) : undefined}
+          confirmLabel={appI18n.t("billing.planSelection.confirm.confirmLabel")}
+          cancelLabel={appI18n.t("billing.planSelection.confirm.cancelLabel")}
           onClose={this.handleCloseConfirm}
           onConfirm={this.handleConfirmSelect}
         />
@@ -154,7 +155,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
     }
 
     this.setSafeState({ confirmOpen: false, pendingPlanId: undefined, pendingPlanName: undefined });
-    message.success("Plan selected. Continue to checkout to activate your subscription.");
+    message.success(appI18n.t("billing.planSelection.messages.selectedSuccess"));
     try {
       navigateTo("/billing/checkout");
     } catch {

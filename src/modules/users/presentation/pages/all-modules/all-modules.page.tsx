@@ -1,6 +1,7 @@
 import React from "react";
 import type { ReactNode } from "react";
 import { message } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 import {
   Briefcase,
   Calendar,
@@ -21,6 +22,7 @@ import type { ModuleLandingItem } from "@shared/ui/components/module-landing/mod
 import AllModulesTemplate from "@modules/users/presentation/templates/all-modules/all-modules.template";
 import { resolveModulePath } from "@modules/users/presentation/utils/module-navigation";
 import { ensureGrowthModule } from "@modules/users/presentation/utils/overview-modules";
+import { getLocalizedModuleCopy } from "@modules/users/presentation/utils/module-localization";
 
 type State = {
   isLoading: boolean;
@@ -31,7 +33,7 @@ type State = {
 };
 
 export class AllModulesPage extends BasePage<{}, State> {
-  protected override options = { title: "All modules | WorklyHub", requiresAuth: true };
+  protected override options = { title: `${appI18n.t("allModules.pageTitles.allModules")} | WorklyHub`, requiresAuth: true };
 
   public state: State = {
     isLoading: false,
@@ -56,7 +58,7 @@ export class AllModulesPage extends BasePage<{}, State> {
       });
     } catch (err) {
       console.error("failed to fetch overview", err);
-      message.error("Failed to load modules");
+      message.error(appI18n.t("allModules.messages.failedLoadModules"));
       throw err;
     }
   }
@@ -73,9 +75,9 @@ export class AllModulesPage extends BasePage<{}, State> {
     return (
       <div className="container" style={{ padding: "var(--space-6)" }}>
         <div className="surface" style={{ padding: "var(--space-6)", borderRadius: "var(--radius-lg)" }}>
-          <h3 style={{ margin: 0 }}>We could not load the modules</h3>
+          <h3 style={{ margin: 0 }}>{appI18n.t("allModules.error.title")}</h3>
           <p className="text-muted" style={{ marginTop: "var(--space-2)" }}>
-            Please try again in a moment.
+            {appI18n.t("allModules.error.description")}
           </p>
         </div>
       </div>
@@ -117,16 +119,19 @@ export class AllModulesPage extends BasePage<{}, State> {
     };
 
     const itemsFromApi: ModuleLandingItem[] = ensureGrowthModule(apiModules).map((service) => {
+      const to = resolveModulePath({ id: service.uid, title: service.name }, undefined);
+      const localized = getLocalizedModuleCopy(service, to);
+
       const item: ModuleLandingItem = {
         id: service.uid,
-        title: service.name,
-        description: service.description,
+        title: localized.title,
+        description: localized.description,
         icon: mapIcon(service.icon),
       };
 
       return {
         ...item,
-        to: resolveModulePath({ id: item.id, title: item.title }, undefined),
+        to,
       };
     });
 

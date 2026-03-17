@@ -95,13 +95,9 @@ import {
   toSafeAppPath,
   toSafeExternalUrl,
 } from "@core/navigation/safe-navigation";
+import { i18n as appI18n } from "@core/i18n";
 
-const priorityOptions: Array<{ value: WorkOrderPriority; label: string }> = [
-  { value: "low", label: "Low" },
-  { value: "medium", label: "Medium" },
-  { value: "high", label: "High" },
-  { value: "urgent", label: "Urgent" },
-];
+const priorityValues: WorkOrderPriority[] = ["low", "medium", "high", "urgent"];
 
 const attachmentAccept =
   "image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx,.zip,.rar";
@@ -264,7 +260,7 @@ export function WorkOrderForm({
   onDelete,
   onCancel,
 }: Props) {
-  const isMobileViewport =
+        const isMobileViewport =
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 768px)").matches;
 
@@ -275,6 +271,7 @@ export function WorkOrderForm({
     if (initial?.metadata) return JSON.stringify(initial.metadata, null, 2);
     return "{}";
   });
+  const [activeTabKey, setActiveTabKey] = React.useState("general");
   const [lineMode, setLineMode] = React.useState<"services" | "inventory">("services");
   const [history, setHistory] = React.useState<WorkOrderStatusHistoryEntry[]>([]);
   const [comments, setComments] = React.useState<WorkOrderComment[]>([]);
@@ -321,26 +318,26 @@ export function WorkOrderForm({
   const automationTag = hasFinanceEntry
     ? {
         color: "success" as const,
-        label: "Finance entry linked",
+        label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k001"),
       }
     : expectedAutomation
       ? {
           color: "warning" as const,
-          label: "Pending financial launch",
+          label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k002"),
         }
       : {
           color: "processing" as const,
-          label: "Will launch on completion",
+          label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k003"),
         };
   const automationSummary = hasFinanceEntry
-    ? "Execution completion already generated a financial entry."
+    ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k004")
     : expectedAutomation
-      ? "This work order is in a final status and should create finance entry automatically."
-      : "Finance entry is automatically created when the work order reaches a final execution status.";
+      ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k005")
+      : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k006");
   const isDevEnvironment = import.meta.env.MODE !== "production";
   const automationNfeNote = isDevEnvironment
-    ? "NF-e trigger is optional and in development it may fail when GOV endpoints are unavailable."
-    : "NF-e trigger is optional and depends on billing configuration.";
+    ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k007")
+    : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k008");
   const trustedAttachmentHosts = React.useMemo(
     () =>
       resolveTrustedExternalHosts({
@@ -354,7 +351,7 @@ export function WorkOrderForm({
     if (typeof window === "undefined") return;
     const safePath = toSafeAppPath(path);
     if (!safePath) {
-      message.error("Navigation path is invalid.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k009"));
       return;
     }
     window.location.assign(safePath);
@@ -362,7 +359,7 @@ export function WorkOrderForm({
 
   const openAttachmentPreview = React.useCallback((attachment: WorkOrderAttachment) => {
     if (!attachment.downloadUrl) {
-      message.info("Attachment URL expired. Refresh activity and try again.");
+      message.info(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k010"));
       return;
     }
     const rawUrl = attachment.downloadUrl.trim();
@@ -375,7 +372,7 @@ export function WorkOrderForm({
       allowedHostSuffixes: DEFAULT_ATTACHMENT_HOST_SUFFIXES,
     });
     if (!safeDownloadUrl) {
-      message.error("Attachment URL is invalid or not allowed.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k011"));
       return;
     }
     window.open(safeDownloadUrl, "_blank", "noopener,noreferrer");
@@ -385,11 +382,16 @@ export function WorkOrderForm({
     async (file) => {
       const fileSizeMb = file.size / (1024 * 1024);
       if (fileSizeMb > maxAttachmentSizeMb) {
-        message.error(`File "${file.name}" exceeds ${maxAttachmentSizeMb} MB.`);
+        message.error(
+          appI18n.t(
+            "legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.attachmentFileTooLarge",
+            { fileName: file.name, maxAttachmentSizeMb }
+          )
+        );
         return Upload.LIST_IGNORE;
       }
       if (!workspaceId || !workOrderId) {
-        message.info("Save the work order before uploading attachments.");
+        message.info(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k012"));
         return Upload.LIST_IGNORE;
       }
 
@@ -427,9 +429,19 @@ export function WorkOrderForm({
 
         const updated = await listWorkOrderAttachments(workspaceId, workOrderId);
         setAttachments(updated ?? []);
-        message.success(`Attachment "${file.name}" uploaded.`);
+        message.success(
+          appI18n.t(
+            "legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.attachmentUploaded",
+            { fileName: file.name }
+          )
+        );
       } catch {
-        message.error(`Failed to upload "${file.name}".`);
+        message.error(
+          appI18n.t(
+            "legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.attachmentUploadFailed",
+            { fileName: file.name }
+          )
+        );
       } finally {
         setAttachmentsUploading((prev) => Math.max(0, prev - 1));
       }
@@ -440,6 +452,7 @@ export function WorkOrderForm({
   );
 
   React.useEffect(() => {
+    setActiveTabKey("general");
     if (initial) {
       setDraft(mapFromInitial(initial));
       setMetadataText(JSON.stringify(initial.metadata ?? {}, null, 2));
@@ -544,7 +557,7 @@ export function WorkOrderForm({
       try {
         metadata = JSON.parse(metadataText);
       } catch {
-        message.error("Metadata JSON is invalid.");
+        message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k013"));
         return;
       }
     }
@@ -696,7 +709,7 @@ export function WorkOrderForm({
       setChecklist(checklistRows ?? []);
       setAttachments(attachmentRows ?? []);
     } catch (err) {
-      message.error("Failed to load work order activity.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k014"));
     } finally {
       setActivityLoading(false);
       setAttachmentsLoading(false);
@@ -724,7 +737,7 @@ export function WorkOrderForm({
     if (!workspaceId || !workOrderId) return;
     const body = commentDraft.trim();
     if (!body) {
-      message.info("Write a comment before posting.");
+      message.info(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k015"));
       return;
     }
     setCommentSaving(true);
@@ -735,9 +748,9 @@ export function WorkOrderForm({
       });
       setComments((prev) => [created, ...prev]);
       setCommentDraft("");
-      message.success("Comment added.");
+      message.success(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k016"));
     } catch (err) {
-      message.error("Failed to add comment.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k017"));
     } finally {
       setCommentSaving(false);
     }
@@ -752,7 +765,7 @@ export function WorkOrderForm({
     if (!workspaceId || !workOrderId) return;
     const title = checklistTitle.trim();
     if (!title) {
-      message.info("Provide a checklist title.");
+      message.info(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k018"));
       return;
     }
     const sortOrder =
@@ -768,9 +781,9 @@ export function WorkOrderForm({
       setChecklist((prev) => [...prev, created]);
       setChecklistTitle("");
       setChecklistSortOrder(null);
-      message.success("Checklist item added.");
+      message.success(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k019"));
     } catch (err) {
-      message.error("Failed to add checklist item.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k020"));
     } finally {
       setChecklistSaving(false);
     }
@@ -787,7 +800,7 @@ export function WorkOrderForm({
       });
       setChecklist((prev) => prev.map((row) => (row.id === item.id ? updated : row)));
     } catch (err) {
-      message.error("Failed to update checklist item.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k021"));
     } finally {
       setChecklistBusyId(null);
     }
@@ -833,9 +846,9 @@ export function WorkOrderForm({
       );
       setChecklist((prev) => prev.map((row) => (row.id === checklistEditingId ? updated : row)));
       setChecklistEditingId(null);
-      message.success("Checklist item updated.");
+      message.success(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k022"));
     } catch (err) {
-      message.error("Failed to update checklist item.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k023"));
     } finally {
       setChecklistBusyId(null);
     }
@@ -848,9 +861,9 @@ export function WorkOrderForm({
       await deleteWorkOrderChecklistItem(workspaceId, workOrderId, itemId);
       setChecklist((prev) => prev.filter((row) => row.id !== itemId));
       if (checklistEditingId === itemId) setChecklistEditingId(null);
-      message.success("Checklist item removed.");
+      message.success(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k024"));
     } catch (err) {
-      message.error("Failed to delete checklist item.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k025"));
     } finally {
       setChecklistBusyId(null);
     }
@@ -862,9 +875,9 @@ export function WorkOrderForm({
     try {
       await deleteWorkOrderAttachment(workspaceId, workOrderId, attachment.id);
       setAttachments((prev) => prev.filter((row) => row.id !== attachment.id));
-      message.success("Attachment removed.");
+      message.success(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k026"));
     } catch {
-      message.error("Failed to remove attachment.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k027"));
     } finally {
       setAttachmentBusyId(null);
     }
@@ -879,7 +892,7 @@ export function WorkOrderForm({
 
   const activityContent = !canManageActivity ? (
     <Empty
-      description="Create the work order to access history, comments, and checklist."
+      description={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k028")}
       image={Empty.PRESENTED_IMAGE_SIMPLE}
     />
   ) : (
@@ -887,10 +900,10 @@ export function WorkOrderForm({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
           <ScheduleOutlined />
-          Activity
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k029")}
         </div>
         <Button size="small" icon={<ReloadOutlined />} onClick={loadActivity} loading={activityLoading}>
-          Refresh
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k030")}
         </Button>
       </div>
 
@@ -902,19 +915,19 @@ export function WorkOrderForm({
             label: (
               <Space size={6}>
                 <ClockCircleOutlined />
-                History
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k031")}
               </Space>
             ),
             children: activityLoading ? (
-              <div style={{ color: "var(--color-text-muted)" }}>Loading history...</div>
+              <div style={{ color: "var(--color-text-muted)" }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k032")}</div>
             ) : sortedHistory.length === 0 ? (
-              <div style={{ color: "var(--color-text-muted)" }}>No status history yet.</div>
+              <div style={{ color: "var(--color-text-muted)" }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k033")}</div>
             ) : (
               <Timeline
                 items={sortedHistory.map((entry) => {
                   const previous = entry.previousStatus?.label ?? "--";
                   const next = entry.newStatus?.label ?? "--";
-                  const changedBy = entry.changedBy ? resolveEmployeeLabel(entry.changedBy) : "System";
+                  const changedBy = entry.changedBy ? resolveEmployeeLabel(entry.changedBy) : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k034");
                   const title = entry.previousStatus ? `${previous} -> ${next}` : `${next}`;
                   return {
                     children: (
@@ -936,14 +949,14 @@ export function WorkOrderForm({
             label: (
               <Space size={6}>
                 <MessageOutlined />
-                Comments
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k035")}
               </Space>
             ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <LabeledField label="New comment" icon={<MessageOutlined />}>
+                <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k036")} icon={<MessageOutlined />}>
                   <Input.TextArea
-                    placeholder="Write a comment"
+                    placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k037")}
                     value={commentDraft}
                     onChange={(e) => setCommentDraft(e.target.value)}
                     rows={3}
@@ -958,18 +971,18 @@ export function WorkOrderForm({
                     loading={commentSaving}
                     disabled={!commentDraft.trim()}
                   >
-                    Post comment
+                    {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k038")}
                   </Button>
                 </div>
                 <Divider style={{ margin: "4px 0" }} />
                 <List
                   loading={activityLoading}
                   dataSource={sortedComments}
-                  locale={{ emptyText: "No comments yet." }}
+                  locale={{ emptyText: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k039") }}
                   renderItem={(comment) => {
                     const author = comment.authorUid
                       ? resolveEmployeeLabel(comment.authorUid)
-                      : "System";
+                      : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k040");
                     return (
                       <List.Item style={{ alignItems: "flex-start" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -991,23 +1004,23 @@ export function WorkOrderForm({
             label: (
               <Space size={6}>
                 <UnorderedListOutlined />
-                Checklist
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k041")}
               </Space>
             ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-end" }}>
-                  <LabeledField label="Title" icon={<UnorderedListOutlined />} style={{ flex: 1, minWidth: 220 }}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k042")} icon={<UnorderedListOutlined />} style={{ flex: 1, minWidth: 220 }}>
                     <Input
-                      placeholder="Checklist item"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k043")}
                       value={checklistTitle}
                       onChange={(e) => setChecklistTitle(e.target.value)}
                     />
                   </LabeledField>
-                  <LabeledField label="Sort order" icon={<NumberOutlined />} style={{ width: 140 }}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k044")} icon={<NumberOutlined />} style={{ width: 140 }}>
                     <InputNumber
                       min={0}
-                      placeholder="Order"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k045")}
                       value={checklistSortOrder ?? undefined}
                       onChange={(value) => setChecklistSortOrder(value ?? null)}
                       style={{ width: "100%" }}
@@ -1021,21 +1034,21 @@ export function WorkOrderForm({
                     loading={checklistSaving}
                     disabled={!checklistTitle.trim()}
                   >
-                    Add item
+                    {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k046")}
                   </Button>
                 </div>
 
                 <List
                   loading={activityLoading}
                   dataSource={sortedChecklist}
-                  locale={{ emptyText: "No checklist items yet." }}
+                  locale={{ emptyText: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k047") }}
                   renderItem={(item) => {
                     const isEditingItem = checklistEditingId === item.id;
                     const isBusy = checklistBusyId === item.id;
                     const completedBy = item.completedBy ? resolveEmployeeLabel(item.completedBy) : "";
                     const completionLabel = item.isDone
                       ? `Completed ${formatDateTime(item.completedAt)}${completedBy ? ` by ${completedBy}` : ""}`
-                      : "Pending";
+                      : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k048");
 
                     if (isEditingItem) {
                       return (
@@ -1049,7 +1062,7 @@ export function WorkOrderForm({
                               onClick={handleSaveEditChecklist}
                               loading={isBusy}
                             >
-                              Save
+                              {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k049")}
                             </Button>,
                             <Button
                               key="cancel"
@@ -1058,13 +1071,13 @@ export function WorkOrderForm({
                               onClick={handleCancelEditChecklist}
                               disabled={isBusy}
                             >
-                              Cancel
+                              {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k050")}
                             </Button>,
                           ]}
                         >
                           <div style={{ display: "flex", flexWrap: "wrap", gap: 12, width: "100%" }}>
                             <Input
-                              placeholder="Checklist title"
+                              placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k051")}
                               value={checklistEditDraft.title}
                               onChange={(e) =>
                                 setChecklistEditDraft((prev) => ({ ...prev, title: e.target.value }))
@@ -1073,7 +1086,7 @@ export function WorkOrderForm({
                             />
                             <InputNumber
                               min={0}
-                              placeholder="Order"
+                              placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k052")}
                               value={checklistEditDraft.sortOrder ?? undefined}
                               onChange={(value) =>
                                 setChecklistEditDraft((prev) => ({ ...prev, sortOrder: value ?? null }))
@@ -1094,17 +1107,17 @@ export function WorkOrderForm({
                             onClick={() => handleStartEditChecklist(item)}
                             disabled={isBusy}
                           >
-                            Edit
+                            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k053")}
                           </Button>,
                           <Popconfirm
                             key="delete"
-                            title="Delete checklist item?"
-                            okText="Delete"
+                            title={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k054")}
+                            okText={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k055")}
                             okButtonProps={{ danger: true }}
                             onConfirm={() => handleDeleteChecklistItem(item.id)}
                           >
                             <Button danger size="small" icon={<DeleteOutlined />} disabled={isBusy}>
-                              Delete
+                              {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k056")}
                             </Button>
                           </Popconfirm>,
                         ]}
@@ -1120,7 +1133,7 @@ export function WorkOrderForm({
                             </span>
                           </Checkbox>
                           <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-                            Order: {item.sortOrder} | {completionLabel}
+                            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k057")}: {item.sortOrder} | {completionLabel}
                           </div>
                         </div>
                       </List.Item>
@@ -1142,14 +1155,14 @@ export function WorkOrderForm({
       title={
         <Space size={8}>
           <PaperClipOutlined />
-          {"Attachments (" + attachments.length + ")"}
+          {`${appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k058")} (${attachments.length})`}
         </Space>
       }
       open={attachmentsOpen}
       onCancel={() => setAttachmentsOpen(false)}
       footer={[
         <Button key="cancel" icon={<CloseOutlined />} onClick={() => setAttachmentsOpen(false)}>
-          Cancel
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k059")}
         </Button>,
       ]}
       width={760}
@@ -1157,8 +1170,8 @@ export function WorkOrderForm({
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
           {canManageActivity
-            ? "Files are stored in Firebase and linked to this work order."
-            : "Save the work order first to enable attachments."}
+            ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k060")
+            : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k061")}
         </div>
 
         <Upload.Dragger
@@ -1169,15 +1182,16 @@ export function WorkOrderForm({
           disabled={!canManageActivity}
         >
           <InboxOutlined style={{ fontSize: 28, color: "var(--color-text-muted)", marginBottom: 8 }} />
-          <p style={{ marginBottom: 8, fontWeight: 600 }}>Click or drag files to attach</p>
+          <p style={{ marginBottom: 8, fontWeight: 600 }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k062")}</p>
           <p style={{ margin: 0, color: "var(--color-text-muted)" }}>
-            Photos and documents up to {maxAttachmentSizeMb} MB per file.
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k063")} {maxAttachmentSizeMb} MB {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k064")}
           </p>
         </Upload.Dragger>
 
         {isAttachmentUploadRunning ? (
           <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
-            Uploading {attachmentsUploading} file{attachmentsUploading > 1 ? "s" : ""}...
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k065")} {attachmentsUploading}{" "}
+            {attachmentsUploading > 1 ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k066") : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k067")}...
           </div>
         ) : null}
 
@@ -1185,17 +1199,17 @@ export function WorkOrderForm({
 
         <div style={{ fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
           <PaperClipOutlined />
-          Attached files
+          {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k068")}
         </div>
         <List
           loading={attachmentsLoading}
           dataSource={attachments}
-          locale={{ emptyText: "No attachments yet." }}
+          locale={{ emptyText: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k069") }}
           renderItem={(attachment) => {
             const fileSize = formatAttachmentSize(attachment.sizeBytes);
             const createdBy = attachment.authorUid
               ? resolveEmployeeLabel(attachment.authorUid)
-              : "System";
+              : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k070");
             const isBusy = attachmentBusyId === attachment.id;
 
             return (
@@ -1208,12 +1222,12 @@ export function WorkOrderForm({
                     onClick={() => openAttachmentPreview(attachment)}
                     disabled={!attachment.downloadUrl || isBusy}
                   >
-                    View
+                    {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k071")}
                   </Button>,
                   <Popconfirm
                     key={"remove-" + attachment.id}
-                    title="Remove attachment?"
-                    okText="Remove"
+                    title={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k072")}
+                    okText={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k073")}
                     okButtonProps={{ danger: true }}
                     onConfirm={() => handleDeleteAttachment(attachment)}
                   >
@@ -1223,7 +1237,7 @@ export function WorkOrderForm({
                       icon={<DeleteOutlined />}
                       disabled={isBusy || isAttachmentUploadRunning}
                     >
-                      Remove
+                      {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k074")}
                     </Button>
                   </Popconfirm>,
                 ]}
@@ -1245,10 +1259,25 @@ export function WorkOrderForm({
     </Modal>
   );
 
+  const shouldUseScrollablePane = activeTabKey !== "general";
+
+  const handleMetadataChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const nextValue = event.target.value;
+      const isShrinking = nextValue.length <= metadataText.length;
+      const fitsFixedHeight = event.target.scrollHeight <= event.target.clientHeight + 1;
+
+      if (isShrinking || fitsFixedHeight) {
+        setMetadataText(nextValue);
+      }
+    },
+    [metadataText]
+  );
+
   if (!workspaceId) {
     return (
       <Empty
-        description="Select or create a workspace to manage work orders."
+        description={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k075")}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
       />
     );
@@ -1256,48 +1285,79 @@ export function WorkOrderForm({
 
   return (
     <div
-      style={{ display: "flex", flexDirection: "column", gap: 16, height: "100%", minHeight: 0, maxWidth: "100%", overflowX: "hidden" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        height: "100%",
+        minHeight: 0,
+        maxWidth: "100%",
+        overflowX: "hidden",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border))",
+        background:
+          "linear-gradient(155deg, color-mix(in srgb, var(--color-surface) 90%, transparent), color-mix(in srgb, var(--color-surface-2) 72%, transparent))",
+        boxShadow: "var(--shadow-sm)",
+        padding: "12px",
+      }}
       data-cy="work-order-form"
     >
       {attachmentsModal}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
+          paddingBottom: 8,
+          borderBottom: "1px solid var(--color-divider)",
+        }}
+      >
         <div style={{ fontWeight: 600, fontSize: 16, display: "inline-flex", alignItems: "center", gap: 8 }}>
           <AppstoreOutlined />
-          {isEditing ? "Edit work order" : "New work order"}
+          {isEditing ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k076") : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k077")}
         </div>
-        <Space wrap>
+        <Space
+          wrap
+          size={8}
+          style={isMobileViewport ? { width: "100%" } : { paddingRight: 44 }}
+        >
           <Button icon={<PaperClipOutlined />} onClick={() => setAttachmentsOpen(true)}>
-            Attachments{attachments.length ? ` (${attachments.length})` : ""}
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k078")}
+            {attachments.length ? ` (${attachments.length})` : ""}
           </Button>
           <Button icon={<DollarCircleOutlined />} onClick={() => openPath("/finance/entries")}>
-            Finance entries
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k079")}
           </Button>
           <Button icon={<SettingOutlined />} onClick={() => openPath("/settings")}>
-            Billing settings
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k080")}
           </Button>
-          {onCancel ? <Button icon={<CloseOutlined />} onClick={onCancel}>Clear</Button> : null}
+          {onCancel ? <Button icon={<CloseOutlined />} onClick={onCancel}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k081")}</Button> : null}
           {isEditing && initial && onDelete ? (
             <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(initial)}>
-              Delete
+              {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k082")}
             </Button>
           ) : null}
         </Space>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: -2 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
         <Tag color={automationTag.color} icon={<DollarCircleOutlined />}>
           {automationTag.label}
         </Tag>
         {financeEntryId ? (
-          <Tag color="blue">{`Entry: ${financeEntryId.slice(0, 10)}${financeEntryId.length > 10 ? "..." : ""}`}</Tag>
+          <Tag color="blue">
+            {`${appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k083")}: ${financeEntryId.slice(0, 10)}${financeEntryId.length > 10 ? "..." : ""}`}
+          </Tag>
         ) : null}
         {isFinalStatus && !hasFinanceEntry ? (
           <Tag color="orange" icon={<InfoCircleOutlined />}>
-            Review finance queue
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k084")}
           </Tag>
         ) : null}
         <Popover
           placement="bottomLeft"
-          title="Finance automation"
+          title={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k085")}
           trigger={["hover", "click"]}
           content={
             <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 320 }}>
@@ -1307,25 +1367,35 @@ export function WorkOrderForm({
               </Typography.Text>
               <Space wrap size={6}>
                 <Button size="small" icon={<DollarCircleOutlined />} onClick={() => openPath("/finance/entries")}>
-                  Finance entries
+                  {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k086")}
                 </Button>
                 <Button size="small" icon={<SettingOutlined />} onClick={() => openPath("/settings")}>
-                  Billing settings
+                  {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k087")}
                 </Button>
               </Space>
             </div>
           }
         >
           <Button size="small" type="text" icon={<InfoCircleOutlined />}>
-            Details
+            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k088")}
           </Button>
         </Popover>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", paddingRight: 4, maxWidth: "100%" }}>
+      <div
+        style={{
+          minHeight: 0,
+          maxHeight: shouldUseScrollablePane ? (isMobileViewport ? "48vh" : "44vh") : "none",
+          overflowY: shouldUseScrollablePane ? "auto" : "visible",
+          overflowX: "hidden",
+          paddingRight: 4,
+          maxWidth: "100%",
+        }}
+      >
         <Tabs
           data-cy="work-order-form-tabs"
-          defaultActiveKey="general"
+          activeKey={activeTabKey}
+          onChange={setActiveTabKey}
           tabBarGutter={isMobileViewport ? 8 : 16}
           style={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}
           items={[
@@ -1334,54 +1404,67 @@ export function WorkOrderForm({
             label: (
               <Space size={6} data-cy="work-order-tab-general">
                 <FileTextOutlined />
-                General
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k089")}
               </Space>
             ),
             children: (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <LabeledField label="Title" icon={<FileTextOutlined />}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k090")} icon={<FileTextOutlined />}>
                   <Input
-                    placeholder="Title"
+                    placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k091")}
                     value={draft.title}
                     onChange={(e) => updateDraft({ title: e.target.value })}
                     data-cy="work-order-title-input"
                   />
                 </LabeledField>
-                <LabeledField label="Description" icon={<MessageOutlined />}>
+                <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k092")} icon={<MessageOutlined />}>
                   <Input.TextArea
-                    placeholder="Description"
+                    placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k093")}
                     value={draft.description ?? ""}
                     onChange={(e) => updateDraft({ description: e.target.value })}
-                    rows={3}
+                    rows={2}
                     data-cy="work-order-description-input"
                   />
                 </LabeledField>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Priority" icon={<FlagOutlined />}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobileViewport ? "1fr" : "repeat(4, minmax(0, 1fr))",
+                    gap: 10,
+                  }}
+                >
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k094")} icon={<FlagOutlined />}>
                     <Select
-                      placeholder="Priority"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k095")}
                       value={draft.priority}
-                      options={priorityOptions}
+                      options={priorityValues.map((value) => ({
+                        value,
+                        label:
+                          value === "low"
+                            ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k096")
+                            : value === "medium"
+                              ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k097")
+                              : value === "high"
+                                ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k098")
+                                : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k099"),
+                      }))}
                       onChange={(value) => updateDraft({ priority: value })}
                       data-cy="work-order-priority-select"
                     />
                   </LabeledField>
-                  <LabeledField label="Status" icon={<InfoCircleOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k100")} icon={<InfoCircleOutlined />}>
                     <Select
-                      placeholder="Status"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k101")}
                       value={draft.statusId}
                       options={statuses.map((s) => ({ value: s.id, label: s.label }))}
                       onChange={(value) => updateDraft({ statusId: value })}
                       data-cy="work-order-status-select"
                     />
                   </LabeledField>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Requester" icon={<UserOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k102")} icon={<UserOutlined />}>
                     <Select
-                      placeholder="Select requester"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k103")}
                       value={draft.requesterUserUid || undefined}
                       allowClear
                       showSearch
@@ -1396,9 +1479,9 @@ export function WorkOrderForm({
                       data-cy="work-order-requester-select"
                     />
                   </LabeledField>
-                  <LabeledField label="Created by" icon={<IdcardOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k104")} icon={<IdcardOutlined />}>
                     <Input
-                      placeholder="Created by"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k105")}
                       value={resolveEmployeeLabel(draft.createdBy ?? currentUserUid)}
                       disabled
                       data-cy="work-order-created-by-input"
@@ -1406,12 +1489,19 @@ export function WorkOrderForm({
                   </LabeledField>
                 </div>
 
-                <LabeledField label="Metadata (JSON)" icon={<CodeOutlined />}>
+                <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k106")} icon={<CodeOutlined />}>
                   <Input.TextArea
-                    placeholder="Metadata (JSON)"
+                    placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k107")}
                     value={metadataText}
-                    onChange={(e) => setMetadataText(e.target.value)}
+                    onChange={handleMetadataChange}
                     rows={4}
+                    style={{
+                      minHeight: 120,
+                      maxHeight: 120,
+                      height: 120,
+                      overflow: "hidden",
+                      resize: "none",
+                    }}
                     data-cy="work-order-metadata-input"
                   />
                 </LabeledField>
@@ -1423,27 +1513,27 @@ export function WorkOrderForm({
             label: (
               <Space size={6} data-cy="work-order-tab-schedule">
                 <CalendarOutlined />
-                Schedule
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k108")}
               </Space>
             ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Scheduled start" icon={<CalendarOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k109")} icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
                       format={APP_DATE_TIME_FORMAT}
-                      placeholder="Scheduled start"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k110")}
                       value={toDayjsValue(draft.scheduledStartAt)}
                       onChange={(value) => updateDraft({ scheduledStartAt: toIsoDateTimeValue(value) })}
                       data-cy="work-order-scheduled-start-input"
                     />
                   </LabeledField>
-                  <LabeledField label="Scheduled end" icon={<CalendarOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k111")} icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
                       format={APP_DATE_TIME_FORMAT}
-                      placeholder="Scheduled end"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k112")}
                       value={toDayjsValue(draft.scheduledEndAt)}
                       onChange={(value) => updateDraft({ scheduledEndAt: toIsoDateTimeValue(value) })}
                       data-cy="work-order-scheduled-end-input"
@@ -1452,20 +1542,20 @@ export function WorkOrderForm({
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                  <LabeledField label="Due at" icon={<CalendarOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k113")} icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
                       format={APP_DATE_TIME_FORMAT}
-                      placeholder="Due at"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k114")}
                       value={toDayjsValue(draft.dueAt)}
                       onChange={(value) => updateDraft({ dueAt: toIsoDateTimeValue(value) })}
                       data-cy="work-order-due-at-input"
                     />
                   </LabeledField>
-                  <LabeledField label="Estimated duration (min)" icon={<ClockCircleOutlined />}>
+                  <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k115")} icon={<ClockCircleOutlined />}>
                     <InputNumber
                       min={0}
-                      placeholder="Estimated duration (min)"
+                      placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k116")}
                       value={draft.estimatedDurationMinutes ?? undefined}
                       onChange={(value) => updateDraft({ estimatedDurationMinutes: value ?? null })}
                       style={{ width: "100%" }}
@@ -1476,20 +1566,20 @@ export function WorkOrderForm({
 
                 {isEditing ? (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
-                    <LabeledField label="Actual duration (min)" icon={<ClockCircleOutlined />}>
+                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k117")} icon={<ClockCircleOutlined />}>
                       <InputNumber
                         min={0}
-                        placeholder="Actual duration (min)"
+                        placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k118")}
                         value={draft.actualDurationMinutes ?? undefined}
                         onChange={(value) => updateDraft({ actualDurationMinutes: value ?? null })}
                         style={{ width: "100%" }}
                       />
                     </LabeledField>
-                    <LabeledField label="Completed at" icon={<CalendarOutlined />}>
+                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k119")} icon={<CalendarOutlined />}>
                       <DatePicker
                         showTime={{ format: APP_TIME_FORMAT }}
                         format={APP_DATE_TIME_FORMAT}
-                        placeholder="Completed at"
+                        placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k120")}
                         value={toDayjsValue(draft.completedAt)}
                         onChange={(value) => updateDraft({ completedAt: toIsoDateTimeValue(value) })}
                       />
@@ -1504,20 +1594,20 @@ export function WorkOrderForm({
             label: (
               <Space size={6} data-cy="work-order-tab-team">
                 <TeamOutlined />
-                Team
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k121")}
               </Space>
             ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ fontWeight: 600 }}>Workers</div>
+                  <div style={{ fontWeight: 600 }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k122")}</div>
                   <Button icon={<PlusOutlined />} onClick={addWorker} data-cy="work-order-add-worker-button">
-                    Add worker
+                    {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k123")}
                   </Button>
                 </div>
 
                 {(draft.workers ?? []).length === 0 ? (
-                  <div style={{ color: "var(--color-text-muted)" }}>No workers assigned.</div>
+                  <div style={{ color: "var(--color-text-muted)" }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k124")}</div>
                 ) : null}
 
                 {(draft.workers ?? []).map((line, idx) => (
@@ -1528,9 +1618,9 @@ export function WorkOrderForm({
                     align="start"
                     data-cy={`work-order-worker-row-${idx}`}
                   >
-                    <LabeledField label="Worker" icon={<UserOutlined />} style={{ width: 260 }}>
+                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k125")} icon={<UserOutlined />} style={{ width: 260 }}>
                       <Select
-                        placeholder="Select team member"
+                        placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k126")}
                         value={line.userUid || undefined}
                         showSearch
                         allowClear
@@ -1546,39 +1636,40 @@ export function WorkOrderForm({
                         data-cy={`work-order-worker-select-${idx}`}
                       />
                     </LabeledField>
-                    <LabeledField label="Role" icon={<IdcardOutlined />} style={{ width: 170 }}>
+                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k127")} icon={<IdcardOutlined />} style={{ width: 170 }}>
                       <Select
                         value={line.assignmentRole}
                         style={{ width: "100%" }}
                         options={[
-                          { value: "executor", label: "Executor" },
-                          { value: "assistant", label: "Assistant" },
-                          { value: "reviewer", label: "Reviewer" },
+                          { value: "executor", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k128") },
+                          { value: "assistant", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k129") },
+                          { value: "reviewer", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k130") },
                         ]}
                         onChange={(value) => updateWorker(idx, { assignmentRole: value })}
                         data-cy={`work-order-worker-role-select-${idx}`}
                       />
                     </LabeledField>
-                    <LabeledField label="Allocated minutes" icon={<ClockCircleOutlined />} style={{ width: 150 }}>
+                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k131")} icon={<ClockCircleOutlined />} style={{ width: 150 }}>
                       <InputNumber
                         min={0}
-                        placeholder="Minutes"
+                        placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k132")}
                         value={line.allocatedMinutes}
                         onChange={(value) => updateWorker(idx, { allocatedMinutes: value ?? undefined })}
                         style={{ width: "100%" }}
                         data-cy={`work-order-worker-minutes-input-${idx}`}
                       />
                     </LabeledField>
-                    <div style={{ display: "flex", alignItems: "flex-end", minHeight: "100%" }}>
+                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k133")} style={{ width: 126 }}>
                       <Button
                         danger
                         icon={<DeleteOutlined />}
+                        style={{ width: "100%" }}
                         onClick={() => removeWorker(idx)}
                         data-cy={`work-order-worker-remove-button-${idx}`}
                       >
-                        Remove
+                        {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k134")}
                       </Button>
-                    </div>
+                    </LabeledField>
                   </Space>
                 ))}
               </div>
@@ -1589,17 +1680,17 @@ export function WorkOrderForm({
             label: (
               <Space size={6} data-cy="work-order-tab-lines">
                 <UnorderedListOutlined />
-                Lines
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k135")}
               </Space>
             ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <LabeledField label="Line type" icon={<AppstoreOutlined />}>
+                <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k136")} icon={<AppstoreOutlined />}>
                   <Segmented
                     value={lineMode}
                     options={[
-                      { label: "Services", value: "services" },
-                      { label: "Inventory", value: "inventory" },
+                      { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k137"), value: "services" },
+                      { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k138"), value: "inventory" },
                     ]}
                     onChange={(value) => setLineMode(value as "services" | "inventory")}
                     data-cy="work-order-line-mode-segmented"
@@ -1609,18 +1700,18 @@ export function WorkOrderForm({
                 {lineMode === "services" ? (
                   <>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ fontWeight: 600 }}>Service lines</div>
+                      <div style={{ fontWeight: 600 }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k139")}</div>
                       <Button
                         icon={<PlusOutlined />}
                         onClick={addServiceLine}
                         data-cy="work-order-add-service-line-button"
                       >
-                        Add service
+                        {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k140")}
                       </Button>
                     </div>
 
                     {(draft.serviceLines ?? []).length === 0 ? (
-                      <div style={{ color: "var(--color-text-muted)" }}>No service lines.</div>
+                      <div style={{ color: "var(--color-text-muted)" }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k141")}</div>
                     ) : null}
 
                     {(draft.serviceLines ?? []).map((line, idx) => (
@@ -1637,9 +1728,9 @@ export function WorkOrderForm({
                         data-cy={`work-order-service-line-${idx}`}
                       >
                         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px", gap: 10 }}>
-                          <LabeledField label="Service" icon={<ToolOutlined />} style={{ minWidth: 0 }}>
+                          <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k142")} icon={<ToolOutlined />} style={{ minWidth: 0 }}>
                             <Select
-                              placeholder="Select service"
+                              placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k143")}
                               value={line.serviceId || undefined}
                               showSearch
                               allowClear
@@ -1666,10 +1757,10 @@ export function WorkOrderForm({
                               data-cy={`work-order-service-select-${idx}`}
                             />
                           </LabeledField>
-                          <LabeledField label="Qty" icon={<NumberOutlined />}>
+                          <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k144")} icon={<NumberOutlined />}>
                             <InputNumber
                               min={1}
-                              placeholder="Qty"
+                              placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k145")}
                               value={line.quantity}
                               onChange={(value) => updateServiceLine(idx, { quantity: value ?? undefined })}
                               style={{ width: "100%" }}
@@ -1681,15 +1772,15 @@ export function WorkOrderForm({
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "140px minmax(0, 1fr) auto",
+                            gridTemplateColumns: "140px minmax(0, 1fr) 128px",
                             gap: 10,
                             alignItems: "end",
                           }}
                         >
-                          <LabeledField label="Unit price (cents)" icon={<NumberOutlined />}>
+                          <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k146")} icon={<NumberOutlined />}>
                             <InputNumber
                               min={0}
-                              placeholder="Unit price"
+                              placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k147")}
                               value={line.unitPriceCents}
                               onChange={(value) =>
                                 updateServiceLine(idx, { unitPriceCents: value ?? undefined })
@@ -1698,25 +1789,26 @@ export function WorkOrderForm({
                               data-cy={`work-order-service-unit-price-input-${idx}`}
                             />
                           </LabeledField>
-                          <LabeledField label="Notes" icon={<FileTextOutlined />} style={{ minWidth: 0 }}>
+                          <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k148")} icon={<FileTextOutlined />} style={{ minWidth: 0 }}>
                             <Input
-                              placeholder="Notes"
+                              placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k149")}
                               value={line.notes ?? ""}
                               onChange={(e) => updateServiceLine(idx, { notes: e.target.value })}
                               style={{ width: "100%" }}
                               data-cy={`work-order-service-notes-input-${idx}`}
                             />
                           </LabeledField>
-                          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k150")}>
                             <Button
                               danger
                               icon={<DeleteOutlined />}
+                              style={{ width: "100%" }}
                               onClick={() => removeServiceLine(idx)}
                               data-cy={`work-order-service-remove-button-${idx}`}
                             >
-                              Remove
+                              {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k151")}
                             </Button>
-                          </div>
+                          </LabeledField>
                         </div>
                       </div>
                     ))}
@@ -1724,18 +1816,18 @@ export function WorkOrderForm({
                 ) : (
                   <>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ fontWeight: 600 }}>Inventory lines</div>
+                      <div style={{ fontWeight: 600 }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k152")}</div>
                       <Button
                         icon={<PlusOutlined />}
                         onClick={addInventoryLine}
                         data-cy="work-order-add-inventory-line-button"
                       >
-                        Add item
+                        {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k153")}
                       </Button>
                     </div>
 
                     {(draft.inventoryLines ?? []).length === 0 ? (
-                      <div style={{ color: "var(--color-text-muted)" }}>No inventory items.</div>
+                      <div style={{ color: "var(--color-text-muted)" }}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k154")}</div>
                     ) : null}
 
                     {(draft.inventoryLines ?? []).map((line, idx) => {
@@ -1759,9 +1851,9 @@ export function WorkOrderForm({
                           align="start"
                           data-cy={`work-order-inventory-line-${idx}`}
                         >
-                        <LabeledField label="Inventory item" icon={<InboxOutlined />} style={{ width: 220 }}>
+                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k155")} icon={<InboxOutlined />} style={{ width: 220 }}>
                           <Select
-                            placeholder="Select inventory item"
+                            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k156")}
                             value={line.inventoryItemId || undefined}
                             showSearch
                             allowClear
@@ -1781,66 +1873,67 @@ export function WorkOrderForm({
                               <Typography.Text
                                 type={exceedsAvailable ? "danger" : "secondary"}
                               >
-                                Available: {availableQuantity}
+                                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k157")}: {availableQuantity}
                                 {exceedsAvailable
-                                  ? " - planned/consumed quantity exceeds stock"
+                                  ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k158")
                                   : ""}
                               </Typography.Text>
                             </div>
                           ) : null}
                         </LabeledField>
-                        <LabeledField label="Direction" icon={<ScheduleOutlined />} style={{ width: 130 }}>
+                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k159")} icon={<ScheduleOutlined />} style={{ width: 130 }}>
                           <Select
                             value={line.direction}
                             style={{ width: "100%" }}
                             options={[
-                              { value: "input", label: "Input" },
-                              { value: "output", label: "Output" },
+                              { value: "input", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k160") },
+                              { value: "output", label: appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k161") },
                             ]}
                             onChange={(value) => updateInventoryLine(idx, { direction: value })}
                             data-cy={`work-order-inventory-direction-select-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label="Planned quantity" icon={<NumberOutlined />} style={{ width: 120 }}>
+                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k162")} icon={<NumberOutlined />} style={{ width: 120 }}>
                           <InputNumber
                             min={0}
-                            placeholder="Planned"
+                            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k163")}
                             value={line.plannedQuantity}
                             onChange={(value) => updateInventoryLine(idx, { plannedQuantity: value ?? undefined })}
                             style={{ width: "100%" }}
                             data-cy={`work-order-inventory-planned-input-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label="Consumed quantity" icon={<NumberOutlined />} style={{ width: 120 }}>
+                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k164")} icon={<NumberOutlined />} style={{ width: 120 }}>
                           <InputNumber
                             min={0}
-                            placeholder="Consumed"
+                            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k165")}
                             value={line.consumedQuantity}
                             onChange={(value) => updateInventoryLine(idx, { consumedQuantity: value ?? undefined })}
                             style={{ width: "100%" }}
                             data-cy={`work-order-inventory-consumed-input-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label="Unit cost (cents)" icon={<NumberOutlined />} style={{ width: 170 }}>
+                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k166")} icon={<NumberOutlined />} style={{ width: 170 }}>
                           <InputNumber
                             min={0}
-                            placeholder="Unit cost (cents)"
+                            placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k167")}
                             value={line.unitCostCents}
                             onChange={(value) => updateInventoryLine(idx, { unitCostCents: value ?? undefined })}
                             style={{ width: "100%" }}
                             data-cy={`work-order-inventory-unit-cost-input-${idx}`}
                           />
                         </LabeledField>
-                        <div style={{ display: "flex", alignItems: "flex-end", minHeight: "100%" }}>
+                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k168")} style={{ width: 126 }}>
                           <Button
                             danger
                             icon={<DeleteOutlined />}
+                            style={{ width: "100%" }}
                             onClick={() => removeInventoryLine(idx)}
                             data-cy={`work-order-inventory-remove-button-${idx}`}
                           >
-                            Remove
+                            {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k169")}
                           </Button>
-                        </div>
+                        </LabeledField>
                       </Space>
                       );
                     })}
@@ -1854,7 +1947,7 @@ export function WorkOrderForm({
             label: (
               <Space size={6} data-cy="work-order-tab-activity">
                 <ScheduleOutlined />
-                Activity
+                {appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k170")}
               </Space>
             ),
             children: activityContent,
@@ -1874,7 +1967,7 @@ export function WorkOrderForm({
           onClick={handleSubmit}
           data-cy="work-order-submit-button"
         >
-          {isEditing ? "Save changes" : "Create work order"}
+          {isEditing ? appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k171") : appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k172")}
         </Button>
       </div>
     </div>

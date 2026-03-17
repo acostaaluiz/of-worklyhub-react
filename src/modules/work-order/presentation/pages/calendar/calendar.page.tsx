@@ -2,6 +2,7 @@ import React from "react";
 import dayjs from "dayjs";
 import { message } from "antd";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { companyService } from "@modules/company/services/company.service";
@@ -39,7 +40,7 @@ function resolveOrderRangeMs(order: WorkOrder): { startMs: number; endMs: number
 }
 
 function WorkOrderCalendarPageContent(): React.ReactElement {
-  const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
+        const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
     const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
     return (ws?.workspaceId ?? ws?.id) as string | undefined;
   });
@@ -73,7 +74,7 @@ function WorkOrderCalendarPageContent(): React.ReactElement {
       const sorted = data.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       setStatuses(sorted);
     } catch (err) {
-      message.error("Failed to load work order statuses.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_calendar_calendar_page.k001"));
     }
   }, [workspaceId]);
 
@@ -140,7 +141,7 @@ function WorkOrderCalendarPageContent(): React.ReactElement {
           rangeFilterSupportRef.current = false;
         }
       } catch (err) {
-        message.error("Failed to load work orders for calendar.");
+        message.error(appI18n.t("legacyInline.work_order.presentation_pages_calendar_calendar_page.k002"));
       } finally {
         setLoading(false);
       }
@@ -190,7 +191,7 @@ function WorkOrderCalendarPageContent(): React.ReactElement {
 
 export class WorkOrderCalendarPage extends BasePage {
   protected override options = {
-    title: "Work orders calendar | WorklyHub",
+    title: `${appI18n.t("workOrder.pageTitles.calendar")} | WorklyHub`,
     requiresAuth: true,
   };
 

@@ -24,16 +24,39 @@ type LoginFormValues = {
   password: string;
 };
 
+export type LoginFormCopy = {
+  title: string;
+  subtitle: string;
+  emailLabel: string;
+  emailRequired: string;
+  emailInvalid: string;
+  emailPlaceholder: string;
+  passwordLabel: string;
+  passwordRequired: string;
+  passwordMin: string;
+  passwordPlaceholder: string;
+  forgotPassword: string;
+  submit: string;
+  continueWith: string;
+  googleAriaLabel: string;
+  facebookAriaLabel: string;
+  notMember: string;
+  registerNow: string;
+};
+
 type Props = BaseProps & {
   onSubmit?: (values: LoginFormValues) => Promise<void>;
   onRegister?: () => void;
   onForgotPassword?: () => void;
+  copy: LoginFormCopy;
+  languageControl?: React.ReactNode;
 };
 
 export class LoginForm extends BaseComponent<Props> {
   private formRef = React.createRef<FormInstance<LoginFormValues>>();
 
   protected override renderView(): React.ReactNode {
+    const { copy } = this.props;
     const handleSubmit = (_values: LoginFormValues) => {
       const { onSubmit } = this.props;
       if (!onSubmit) return;
@@ -51,12 +74,18 @@ export class LoginForm extends BaseComponent<Props> {
       <FormCard className="surface" styles={{ body: { padding: 0 } }}>
         <CardBody>
           <Space orientation="vertical" size={16} style={{ width: "100%" }}>
+            {this.props.languageControl ? (
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                {this.props.languageControl}
+              </div>
+            ) : null}
+
             <TitleBlock>
               <Typography.Title level={2} style={{ margin: 0 }}>
-                Hello again
+                {copy.title}
               </Typography.Title>
               <Typography.Text type="secondary">
-                Welcome back. Please sign in to continue.
+                {copy.subtitle}
               </Typography.Text>
             </TitleBlock>
 
@@ -70,16 +99,16 @@ export class LoginForm extends BaseComponent<Props> {
               data-cy="login-form"
             >
               <Form.Item<LoginFormValues>
-                label="Email"
+                label={copy.emailLabel}
                 name="email"
                 rules={[
-                  { required: true, message: "Email is required" },
-                  { type: "email", message: "Enter a valid email" },
+                  { required: true, message: copy.emailRequired },
+                  { type: "email", message: copy.emailInvalid },
                 ]}
               >
                 <Input
                   size="large"
-                  placeholder="Enter your email"
+                  placeholder={copy.emailPlaceholder}
                   autoComplete="email"
                   data-cy="login-email-input"
                   prefix={
@@ -91,16 +120,16 @@ export class LoginForm extends BaseComponent<Props> {
               </Form.Item>
 
               <Form.Item<LoginFormValues>
-                label="Password"
+                label={copy.passwordLabel}
                 name="password"
                 rules={[
-                  { required: true, message: "Password is required" },
-                  { min: 6, message: "Password must be at least 6 characters" },
+                  { required: true, message: copy.passwordRequired },
+                  { min: 6, message: copy.passwordMin },
                 ]}
               >
                 <Input.Password
                   size="large"
-                  placeholder="Enter your password"
+                  placeholder={copy.passwordPlaceholder}
                   autoComplete="current-password"
                   data-cy="login-password-input"
                   prefix={
@@ -116,7 +145,7 @@ export class LoginForm extends BaseComponent<Props> {
 
               <ActionsRow>
                 <Typography.Link onClick={() => this.props.onForgotPassword?.()}>
-                  Forgot password?
+                  {copy.forgotPassword}
                 </Typography.Link>
               </ActionsRow>
 
@@ -124,30 +153,30 @@ export class LoginForm extends BaseComponent<Props> {
                 <ButtonIcon aria-hidden>
                   <LogIn size={18} />
                 </ButtonIcon>
-                Sign in
+                {copy.submit}
               </PrimaryButton>
 
               <Divider
                 plain
                 style={{ margin: "var(--space-6) 0 var(--space-5)" }}
               >
-                Or continue with
+                {copy.continueWith}
               </Divider>
 
               <SocialRow>
-                <SocialButton size="large" aria-label="Continue with Google">
+                <SocialButton size="large" aria-label={copy.googleAriaLabel}>
                   <GoogleIcon size={18} />
                 </SocialButton>
 
-                <SocialButton size="large" aria-label="Continue with Facebook">
+                <SocialButton size="large" aria-label={copy.facebookAriaLabel}>
                    <FacebookIcon size={64} />
                 </SocialButton>
               </SocialRow>
 
               <BottomRow>
-                <Typography.Text type="secondary">Not a member?</Typography.Text>{" "}
+                <Typography.Text type="secondary">{copy.notMember}</Typography.Text>{" "}
                   <Typography.Link onClick={() => this.props.onRegister?.()} data-cy="login-register-link">
-                    Register now
+                    {copy.registerNow}
                   </Typography.Link>
               </BottomRow>
             </Form>

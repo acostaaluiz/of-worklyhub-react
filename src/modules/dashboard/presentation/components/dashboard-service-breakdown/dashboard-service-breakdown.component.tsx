@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { BriefcaseBusiness } from "lucide-react";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 
 import type { DashboardServiceSalesModel } from "../../../interfaces/dashboard-service-sales.model";
 import {
@@ -59,7 +60,7 @@ function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardServiceSa
             fontSize: "var(--font-size-sm)",
           }}
         >
-          Revenue
+          {appI18n.t("dashboard.serviceBreakdown.tooltip.revenue")}
         </span>
         <span style={{ fontWeight: 800 }}>{formatMoney(item.revenue)}</span>
       </div>
@@ -76,7 +77,7 @@ function CustomTooltip({ active, payload }: ChartTooltipProps<DashboardServiceSa
             fontSize: "var(--font-size-sm)",
           }}
         >
-          Count
+          {appI18n.t("dashboard.serviceBreakdown.tooltip.count")}
         </span>
         <span style={{ fontWeight: 800 }}>{item.count}</span>
       </div>
@@ -91,8 +92,8 @@ export function DashboardServiceBreakdown(props: Props) {
     <WidgetCard className="surface">
       <WidgetHeader>
         <div>
-          <div className="title">Top services</div>
-          <div className="subtitle">Revenue by service</div>
+          <div className="title">{appI18n.t("dashboard.serviceBreakdown.title")}</div>
+          <div className="subtitle">{appI18n.t("dashboard.serviceBreakdown.subtitle")}</div>
         </div>
         <div className="header-icon" aria-hidden="true">
           <BriefcaseBusiness size={18} />

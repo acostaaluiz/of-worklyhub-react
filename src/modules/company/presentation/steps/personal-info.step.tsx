@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Form, Input } from "antd";
 import { Mail, Phone, User } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { maskPhone } from "@core/utils/mask";
 import type { WizardStep } from "@shared/ui/components/form-step/form-step.component";
 import { FieldIcon } from "@shared/styles/global";
@@ -10,13 +11,13 @@ export function personalInfoStep(): WizardStep {
   const content: ReactNode = (
     <>
       <Form.Item
-        label="Full name"
+        label={appI18n.t("company.steps.personal.fields.fullName.label")}
         name="fullName"
-        rules={[{ required: true, message: "Full name is required" }]}
+        rules={[{ required: true, message: appI18n.t("company.steps.personal.fields.fullName.required") }]}
       >
         <Input
           size="large"
-          placeholder="Enter your full name"
+          placeholder={appI18n.t("company.steps.personal.fields.fullName.placeholder")}
           data-cy="company-setup-full-name-input"
           prefix={
             <FieldIcon aria-hidden>
@@ -27,16 +28,16 @@ export function personalInfoStep(): WizardStep {
       </Form.Item>
 
       <Form.Item
-        label="Email"
+        label={appI18n.t("company.steps.personal.fields.email.label")}
         name="email"
         rules={[
-          { required: true, message: "Email is required" },
-          { type: "email", message: "Enter a valid email" },
+          { required: true, message: appI18n.t("company.steps.personal.fields.email.required") },
+          { type: "email", message: appI18n.t("company.steps.personal.fields.email.invalid") },
         ]}
       >
         <Input
           size="large"
-          placeholder="Enter your email"
+          placeholder={appI18n.t("company.steps.personal.fields.email.placeholder")}
           autoComplete="email"
           data-cy="company-setup-email-input"
           prefix={
@@ -47,10 +48,10 @@ export function personalInfoStep(): WizardStep {
         />
       </Form.Item>
 
-      <Form.Item label="Phone (optional)" name="phone" normalize={(value) => maskPhone(String(value ?? ""))}>
+      <Form.Item label={appI18n.t("company.steps.personal.fields.phone.label")} name="phone" normalize={(value) => maskPhone(String(value ?? ""))}>
         <Input
           size="large"
-          placeholder="Enter your phone number"
+          placeholder={appI18n.t("company.steps.personal.fields.phone.placeholder")}
           data-cy="company-setup-phone-input"
           prefix={
             <FieldIcon aria-hidden>
@@ -64,8 +65,8 @@ export function personalInfoStep(): WizardStep {
 
   return {
     id: "owner",
-    title: "Owner profile",
-    subtitle: "Basic account data used for authentication and communication.",
+    title: appI18n.t("company.steps.personal.title"),
+    subtitle: appI18n.t("company.steps.personal.subtitle"),
     icon: <User size={16} />,
     content,
     fields: ["fullName", "email"],

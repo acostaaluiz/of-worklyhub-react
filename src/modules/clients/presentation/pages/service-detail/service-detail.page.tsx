@@ -1,4 +1,5 @@
 import React from "react";
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import { ServiceDetailTemplate } from "@modules/clients/presentation/templates/service-detail/service-detail.template";
 import { getAvailableServices } from "@modules/clients/services/clients.service";
@@ -17,7 +18,7 @@ interface ServiceDetailState extends BasePageState {
 
 export class ServiceDetailPage extends BasePage<PageProps, ServiceDetailState> {
   protected override options = {
-    title: "Service | WorklyHub",
+    title: `${appI18n.t("clients.pageTitles.serviceDetail")} | WorklyHub`,
     requiresAuth: false,
   };
 

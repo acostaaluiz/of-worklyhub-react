@@ -5,6 +5,7 @@ Tema
 - Tokens adicionais em `src/shared/styles/theme/tokens.scss`.
 - `AppThemeProvider` (src/app/bootstrap/theme-provider.component.tsx) traduz tokens para Ant Design.
 - Preferencias de tema via `themeService` (`of-theme-preference`).
+- Preferencias de idioma via i18n em `src/core/i18n` (`of-language-preference`).
 
 Componentes
 - Componentes compartilhados ficam em `src/shared`.
@@ -19,3 +20,5 @@ Boas praticas
 - Use CSS variables para cores e espacamento.
 - Mantenha consistencia com Ant Design (tokens e componentes).
 - Evite inline styles repetidos; prefira styles/tema.
+- Todo texto novo de UI deve passar por i18n (`react-i18next`) com `en-US` e `pt-BR`.
+- Evite literais hardcoded em templates/pages quando houver chave de traducao.

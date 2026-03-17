@@ -115,6 +115,14 @@ export const TableWrap = styled.div`
   .ant-spin-container {
     height: 100%;
   }
+
+  .work-order-actions-col {
+    padding-right: 20px !important;
+  }
+
+  .work-order-actions-col .ant-space {
+    flex-wrap: nowrap;
+  }
 `;
 
 export const MobileList = styled.div`

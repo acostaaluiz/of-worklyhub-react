@@ -7,6 +7,7 @@ import { usersAuthService } from "@modules/users/services/auth.service";
 import { usersOverviewService } from "@modules/users/services/overview.service";
 import { usersService } from "@modules/users/services/user.service";
 import { companyService } from "@modules/company/services/company.service";
+import type { Workspace } from "@modules/company/services/company.service";
 
 jest.mock("@modules/users/services/auth.service", () => ({
   usersAuthService: {
@@ -85,11 +86,11 @@ describe("RedirectIfAuthenticated", () => {
     mockedCompanyService.fetchWorkspaceByEmail.mockResolvedValue({
       id: "workspace-1",
       email: "premium@worklyhub.com",
-    } as DataValue);
+    } as Workspace);
 
     renderGuard();
 
-    expect(await screen.findByText("home")).toBeInTheDocument();
+    expect(await screen.findByText("home")).toBeTruthy();
     expect(mockedUsersOverviewService.fetchOverview).toHaveBeenCalledWith(true);
     expect(mockedCompanyService.fetchWorkspaceByEmail).toHaveBeenCalledWith(
       "premium@worklyhub.com"
@@ -106,7 +107,7 @@ describe("RedirectIfAuthenticated", () => {
 
     renderGuard();
 
-    expect(await screen.findByText("plans")).toBeInTheDocument();
+    expect(await screen.findByText("plans")).toBeTruthy();
     expect(mockedCompanyService.fetchWorkspaceByEmail).not.toHaveBeenCalled();
   });
 });

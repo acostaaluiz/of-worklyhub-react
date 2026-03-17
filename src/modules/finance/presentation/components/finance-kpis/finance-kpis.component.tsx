@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import { Card, Row, Col, Skeleton } from "antd";
 import { DollarSign, CreditCard, TrendingUp, Percent } from "lucide-react";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import { FinanceApi } from "@modules/finance/services/finance-api";
 import { httpClient } from "@core/http/client.instance";
 import { useFinanceApi } from "@modules/finance/services/finance.service";
@@ -13,7 +14,7 @@ import {
 } from "@modules/finance/utils/finance-value-status";
 
 export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
-  const api = useFinanceApi();
+        const api = useFinanceApi();
   const [entries, setEntries] = React.useState<FinanceEntryListItem[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [dashboardKpis, setDashboardKpis] = React.useState<{
@@ -121,16 +122,16 @@ export function FinanceKpis({ workspaceId }: { workspaceId?: string }) {
   return (
     <Row gutter={16} style={{ marginBottom: 24 }}>
       <Col xs={12} md={6}>
-        {renderCard("Income", formatMoney(receita), receita, "income", <DollarSign size={16} />)}
+        {renderCard(appI18n.t("legacyInline.finance.presentation_components_finance_kpis_finance_kpis_component.k001"), formatMoney(receita), receita, "income", <DollarSign size={16} />)}
       </Col>
       <Col xs={12} md={6}>
-        {renderCard("Expense", formatMoney(despesa), despesa, "expense", <CreditCard size={16} />)}
+        {renderCard(appI18n.t("legacyInline.finance.presentation_components_finance_kpis_finance_kpis_component.k002"), formatMoney(despesa), despesa, "expense", <CreditCard size={16} />)}
       </Col>
       <Col xs={12} md={6}>
-        {renderCard("Profit", formatMoney(lucro), lucro, "neutral", <TrendingUp size={16} />)}
+        {renderCard(appI18n.t("legacyInline.finance.presentation_components_finance_kpis_finance_kpis_component.k003"), formatMoney(lucro), lucro, "neutral", <TrendingUp size={16} />)}
       </Col>
       <Col xs={12} md={6}>
-        {renderCard("Margin", `${(margem * 100).toFixed(1)}%`, margem, "neutral", <Percent size={16} />)}
+        {renderCard(appI18n.t("legacyInline.finance.presentation_components_finance_kpis_finance_kpis_component.k004"), `${(margem * 100).toFixed(1)}%`, margem, "neutral", <Percent size={16} />)}
       </Col>
     </Row>
   );

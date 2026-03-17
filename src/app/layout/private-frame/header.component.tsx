@@ -23,6 +23,8 @@ import { Svg } from "@shared/ui/components/svg/svg.component";
 import { AutocompleteInput, type AutocompleteItem } from "@shared/ui/components/autocomplete/autocomplete.component";
 import { usersOverviewService } from "@modules/users/services/overview.service";
 import { resolveModulePath } from "@modules/users/presentation/utils/module-navigation";
+import { getLocalizedModuleCopy } from "@modules/users/presentation/utils/module-localization";
+import { i18n as appI18n } from "@core/i18n";
 
 import {
   HeaderShell,
@@ -54,11 +56,25 @@ type State = BaseState & {
 };
 
 export class AppHeader extends BaseComponent<Props, State> {
+  private handleLanguageChanged = () => {
+    this.forceUpdate();
+  };
+
   public state: State = {
     isLoading: false,
     error: undefined,
     mobileMenuOpen: false,
   };
+
+  override componentDidMount(): void {
+    super.componentDidMount();
+    appI18n.on("languageChanged", this.handleLanguageChanged);
+  }
+
+  override componentWillUnmount(): void {
+    appI18n.off("languageChanged", this.handleLanguageChanged);
+    super.componentWillUnmount();
+  }
 
   private mapIcon(key?: string): React.ReactNode {
     switch (key) {
@@ -94,14 +110,21 @@ export class AppHeader extends BaseComponent<Props, State> {
       const modules = overview?.modules ?? [];
 
       const items: AutocompleteItem[] = modules
-        .map((m) => ({
-          key: m.uid,
-          title: m.name,
-          subtitle: m.description ?? "",
-          value: m.name,
-          icon: this.mapIcon(m.icon),
-          meta: { to: resolveModulePath({ id: m.uid, title: m.name }, "/modules") },
-        }))
+        .map((m) => {
+          const to = resolveModulePath({ id: m.uid, title: m.name }, "/modules");
+          const localized = getLocalizedModuleCopy(m, to);
+          const title = (m.name ?? "").trim() || localized.title;
+          const subtitle = (m.description ?? "").trim() || (localized.description ?? "");
+
+          return {
+            key: m.uid,
+            title,
+            subtitle,
+            value: title,
+            icon: this.mapIcon(m.icon),
+            meta: { to },
+          };
+        })
         .filter((item) => {
           if (!normalized) return true;
           const bucket = `${item.title ?? ""} ${item.subtitle ?? ""}`.toLowerCase();
@@ -112,9 +135,9 @@ export class AppHeader extends BaseComponent<Props, State> {
       if (seeAllPath) {
         items.push({
           key: "all-modules",
-          title: "See all modules",
-          subtitle: "View all available modules",
-          value: "See all modules",
+          title: appI18n.t("home.quickModules.seeAll.title"),
+          subtitle: appI18n.t("home.quickModules.seeAll.subtitle"),
+          value: appI18n.t("home.quickModules.seeAll.title"),
           icon: <LayoutGrid />,
           meta: { to: seeAllPath },
         });
@@ -211,7 +234,7 @@ export class AppHeader extends BaseComponent<Props, State> {
               <MobileMenuButton
                 type="button"
                 onClick={this.handleOpenMobileMenu}
-                aria-label="Open navigation menu"
+                aria-label={appI18n.t("layout.header.aria.openNavigationMenu")}
               >
                 <MenuIcon size={18} />
               </MobileMenuButton>
@@ -229,7 +252,7 @@ export class AppHeader extends BaseComponent<Props, State> {
             <Center>
               <SearchWrap>
                 <AutocompleteInput
-                  placeholder="Search modules"
+                  placeholder={appI18n.t("layout.header.search.placeholder")}
                   prefix={
                     <FieldIcon aria-hidden>
                       <Search size={18} />
@@ -254,14 +277,14 @@ export class AppHeader extends BaseComponent<Props, State> {
                   <Button
                     className={`notifications-button${hasUnread ? " has-unread" : ""}`}
                     onClick={() => this.props.onNotificationsClick?.()}
-                    aria-label="Notifications"
+                    aria-label={appI18n.t("layout.header.aria.notifications")}
                   >
                     <Bell size={16} />
                   </Button>
                 </Badge>
 
                 <Button className="upgrade-button" onClick={() => this.props.onUpgrade?.()}>
-                  Upgrade
+                  {appI18n.t("layout.header.actions.upgrade")}
                 </Button>
 
                 <Dropdown
@@ -281,7 +304,7 @@ export class AppHeader extends BaseComponent<Props, State> {
         </div>
 
         <Drawer
-          title="Menu"
+          title={appI18n.t("layout.header.mobile.menuTitle")}
           placement="left"
           width={drawerWidth}
           onClose={this.handleCloseMobileMenu}
@@ -314,10 +337,10 @@ export class AppHeader extends BaseComponent<Props, State> {
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Button onClick={() => { this.props.onNotificationsClick?.(); this.handleCloseMobileMenu(); }}>
-                Notifications
+                {appI18n.t("layout.header.mobile.notifications")}
               </Button>
               <Button type="primary" onClick={() => { this.props.onUpgrade?.(); this.handleCloseMobileMenu(); }}>
-                Upgrade
+                {appI18n.t("layout.header.actions.upgrade")}
               </Button>
             </div>
 

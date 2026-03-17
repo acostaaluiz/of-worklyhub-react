@@ -24,6 +24,38 @@ type RegisterFormValues = {
   acceptTerms: boolean;
 };
 
+export type RegisterFormCopy = {
+  title: string;
+  subtitle: string;
+  fullNameLabel: string;
+  fullNameRequired: string;
+  fullNameMin: string;
+  fullNamePlaceholder: string;
+  emailLabel: string;
+  emailRequired: string;
+  emailInvalid: string;
+  emailPlaceholder: string;
+  passwordLabel: string;
+  passwordRequired: string;
+  passwordMin: string;
+  passwordPlaceholder: string;
+  confirmPasswordLabel: string;
+  confirmPasswordRequired: string;
+  confirmPasswordMismatch: string;
+  confirmPasswordPlaceholder: string;
+  acceptTermsError: string;
+  acceptTermsPrefix: string;
+  termsLink: string;
+  and: string;
+  privacyLink: string;
+  submit: string;
+  continueWith: string;
+  googleAriaLabel: string;
+  facebookAriaLabel: string;
+  alreadyHaveAccount: string;
+  signIn: string;
+};
+
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import { navigateTo } from "@core/navigation/navigation.service";
@@ -31,12 +63,15 @@ import { navigateTo } from "@core/navigation/navigation.service";
 type Props = BaseProps & {
   onSubmit?: (values: RegisterFormValues) => Promise<void>;
   onLogin?: () => void;
+  copy: RegisterFormCopy;
+  languageControl?: React.ReactNode;
 };
 
 export class RegisterForm extends BaseComponent<Props> {
   private formRef = React.createRef<FormInstance<RegisterFormValues>>();
 
   protected override renderView(): React.ReactNode {
+    const { copy } = this.props;
     const handleSubmit = (_values: RegisterFormValues) => {
       const { onSubmit } = this.props;
       if (!onSubmit) return;
@@ -54,12 +89,18 @@ export class RegisterForm extends BaseComponent<Props> {
       <FormCard className="surface" styles={{ body: { padding: 0 } }}>
         <CardBody>
           <Space orientation="vertical" size={16} style={{ width: "100%" }}>
+            {this.props.languageControl ? (
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                {this.props.languageControl}
+              </div>
+            ) : null}
+
             <TitleBlock>
               <Typography.Title level={2} style={{ margin: 0 }}>
-                Create account
+                {copy.title}
               </Typography.Title>
               <Typography.Text type="secondary">
-                Create your account in a few seconds.
+                {copy.subtitle}
               </Typography.Text>
             </TitleBlock>
 
@@ -79,16 +120,16 @@ export class RegisterForm extends BaseComponent<Props> {
               data-cy="register-form"
             >
               <Form.Item<RegisterFormValues>
-                label="Full name"
+                label={copy.fullNameLabel}
                 name="name"
                 rules={[
-                  { required: true, message: "Name is required" },
-                  { min: 2, message: "Name must be at least 2 characters" },
+                  { required: true, message: copy.fullNameRequired },
+                  { min: 2, message: copy.fullNameMin },
                 ]}
               >
                 <Input
                   size="large"
-                  placeholder="Enter your full name"
+                  placeholder={copy.fullNamePlaceholder}
                   autoComplete="name"
                   data-cy="register-name-input"
                   prefix={
@@ -100,16 +141,16 @@ export class RegisterForm extends BaseComponent<Props> {
               </Form.Item>
 
               <Form.Item<RegisterFormValues>
-                label="Email"
+                label={copy.emailLabel}
                 name="email"
                 rules={[
-                  { required: true, message: "Email is required" },
-                  { type: "email", message: "Enter a valid email" },
+                  { required: true, message: copy.emailRequired },
+                  { type: "email", message: copy.emailInvalid },
                 ]}
               >
                 <Input
                   size="large"
-                  placeholder="Enter your email"
+                  placeholder={copy.emailPlaceholder}
                   autoComplete="email"
                   data-cy="register-email-input"
                   prefix={
@@ -121,17 +162,17 @@ export class RegisterForm extends BaseComponent<Props> {
               </Form.Item>
 
               <Form.Item<RegisterFormValues>
-                label="Password"
+                label={copy.passwordLabel}
                 name="password"
                 rules={[
-                  { required: true, message: "Password is required" },
-                  { min: 6, message: "Password must be at least 6 characters" },
+                  { required: true, message: copy.passwordRequired },
+                  { min: 6, message: copy.passwordMin },
                 ]}
                 hasFeedback
               >
                 <Input.Password
                   size="large"
-                  placeholder="Create a password"
+                  placeholder={copy.passwordPlaceholder}
                   autoComplete="new-password"
                   data-cy="register-password-input"
                   prefix={
@@ -146,24 +187,24 @@ export class RegisterForm extends BaseComponent<Props> {
               </Form.Item>
 
               <Form.Item<RegisterFormValues>
-                label="Confirm password"
+                label={copy.confirmPasswordLabel}
                 name="confirmPassword"
                 dependencies={["password"]}
                 hasFeedback
                 rules={[
-                  { required: true, message: "Please confirm your password" },
+                  { required: true, message: copy.confirmPasswordRequired },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       const password = getFieldValue("password");
                       if (!value || value === password) return Promise.resolve();
-                      return Promise.reject(new Error("Passwords do not match"));
+                      return Promise.reject(new Error(copy.confirmPasswordMismatch));
                     },
                   }),
                 ]}
               >
                 <Input.Password
                   size="large"
-                  placeholder="Repeat your password"
+                  placeholder={copy.confirmPasswordPlaceholder}
                   autoComplete="new-password"
                   data-cy="register-confirm-password-input"
                   prefix={
@@ -187,7 +228,7 @@ export class RegisterForm extends BaseComponent<Props> {
                         ? Promise.resolve()
                         : Promise.reject(
                             new Error(
-                              "You must accept the Terms of Service and Privacy Policy"
+                              copy.acceptTermsError
                             )
                           ),
                   },
@@ -195,7 +236,7 @@ export class RegisterForm extends BaseComponent<Props> {
               >
                 <Checkbox data-cy="register-accept-terms">
                   <Typography.Text type="secondary">
-                    I agree to the{" "}
+                    {copy.acceptTermsPrefix}{" "}
                     <Typography.Link
                       onClick={(event) => {
                         event.preventDefault();
@@ -203,9 +244,9 @@ export class RegisterForm extends BaseComponent<Props> {
                         navigateTo("/terms");
                       }}
                     >
-                      Terms of Service
+                      {copy.termsLink}
                     </Typography.Link>{" "}
-                    and{" "}
+                    {copy.and}{" "}
                     <Typography.Link
                       onClick={(event) => {
                         event.preventDefault();
@@ -213,7 +254,7 @@ export class RegisterForm extends BaseComponent<Props> {
                         navigateTo("/privacy");
                       }}
                     >
-                      Privacy Policy
+                      {copy.privacyLink}
                     </Typography.Link>
                     .
                   </Typography.Text>
@@ -224,32 +265,32 @@ export class RegisterForm extends BaseComponent<Props> {
                 <ButtonIcon aria-hidden>
                   <UserPlus size={18} />
                 </ButtonIcon>
-                Create account
+                {copy.submit}
               </PrimaryButton>
 
               <Divider
                 plain
                 style={{ margin: "var(--space-6) 0 var(--space-5)" }}
               >
-                Or continue with
+                {copy.continueWith}
               </Divider>
 
               <SocialRow>
-                <SocialButton size="large" aria-label="Continue with Google">
+                <SocialButton size="large" aria-label={copy.googleAriaLabel}>
                   <GoogleIcon size={18} />
                 </SocialButton>
 
-                <SocialButton size="large" aria-label="Continue with Facebook">
+                <SocialButton size="large" aria-label={copy.facebookAriaLabel}>
                   <FacebookIcon size={18} />
                 </SocialButton>
               </SocialRow>
 
               <BottomRow>
                 <Typography.Text type="secondary">
-                  Already have an account?
+                  {copy.alreadyHaveAccount}
                 </Typography.Text>{" "}
                 <Typography.Link onClick={() => this.props.onLogin?.()} data-cy="register-signin-link">
-                  Sign in
+                  {copy.signIn}
                 </Typography.Link>
               </BottomRow>
             </Form>

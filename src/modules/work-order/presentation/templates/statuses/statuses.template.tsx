@@ -2,6 +2,7 @@ import React from "react";
 import { Typography } from "antd";
 import { ListChecks } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import {
   PageStack,
@@ -21,7 +22,7 @@ type Props = {
 };
 
 export function WorkOrderStatusesTemplate({ list, form, actions }: Props) {
-  return (
+        return (
     <BaseTemplate
       content={
         <PageStack>
@@ -32,10 +33,10 @@ export function WorkOrderStatusesTemplate({ list, form, actions }: Props) {
               </TemplateIcon>
               <TemplateTitleCopy>
                 <Typography.Title level={2} style={{ margin: 0 }}>
-                  Work order statuses
+                  {appI18n.t("legacyInline.work_order.presentation_templates_statuses_statuses_template.k001")}
                 </Typography.Title>
                 <Typography.Text type="secondary">
-                  Configure stages and default workflow for your work orders.
+                  {appI18n.t("legacyInline.work_order.presentation_templates_statuses_statuses_template.k002")}
                 </Typography.Text>
               </TemplateTitleCopy>
             </TemplateTitleBlock>

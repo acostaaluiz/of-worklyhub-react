@@ -1,4 +1,6 @@
 import { ReceiptText } from "lucide-react";
+
+import { i18n as appI18n } from "@core/i18n";
 import { BaseTemplate } from "@shared/base/base.template";
 import { FinanceEntryForm } from "@modules/finance/presentation/components/finance-entry-form/finance-entry-form.component";
 import { FinanceEntriesList } from "@modules/finance/presentation/components/finance-entries-list/finance-entries-list.component";
@@ -22,7 +24,7 @@ type Props = {
 };
 
 export function EntriesTemplate({ workspaceId }: Props) {
-  return (
+        return (
     <BaseTemplate
       content={
         <TemplateShell>
@@ -32,9 +34,9 @@ export function EntriesTemplate({ workspaceId }: Props) {
                 <ReceiptText size={20} />
               </HeaderIcon>
               <HeaderCopy>
-                <HeaderTitle data-cy="finance-entries-title">Entries</HeaderTitle>
+                <HeaderTitle data-cy="finance-entries-title">{appI18n.t("legacyInline.finance.presentation_templates_entries_entries_template.k001")}</HeaderTitle>
                 <HeaderSubtitle>
-                  Incomes, expenses, and fixed costs from your daily operation.
+                  {appI18n.t("legacyInline.finance.presentation_templates_entries_entries_template.k002")}
                 </HeaderSubtitle>
               </HeaderCopy>
             </HeaderMain>
@@ -48,7 +50,7 @@ export function EntriesTemplate({ workspaceId }: Props) {
 
             <SidePanel data-cy="finance-entries-side-panel">
               <SidePanelInner data-cy="finance-entries-form-panel">
-                <h3 style={{ marginTop: 0 }}>Add new entry</h3>
+                <h3 style={{ marginTop: 0 }}>{appI18n.t("legacyInline.finance.presentation_templates_entries_entries_template.k003")}</h3>
                 <FinanceEntryForm workspaceId={workspaceId} />
               </SidePanelInner>
             </SidePanel>

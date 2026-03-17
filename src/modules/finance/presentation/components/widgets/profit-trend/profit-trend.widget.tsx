@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 import { formatMoney } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 
 import type { FinanceSeries } from "../../../../interfaces/finance-series.model";
 import {
@@ -35,7 +36,7 @@ type TrendTooltipProps = {
 };
 
 function CustomTooltip({ active, payload, label }: TrendTooltipProps) {
-  if (!active || !payload?.length) return null;
+        if (!active || !payload?.length) return null;
 
   const get = (k: string) => {
     const value = payload.find((point) => point.dataKey === k)?.value;
@@ -53,19 +54,19 @@ function CustomTooltip({ active, payload, label }: TrendTooltipProps) {
     <TooltipCard>
       <div className="tTitle">{tooltipLabel}</div>
       <div className="tRow">
-        <div className="k">Revenue</div>
+        <div className="k">{appI18n.t("legacyInline.finance.presentation_components_widgets_profit_trend_profit_trend_widget.k001")}</div>
         <div className="v" style={{ color: getFinanceValueColor(revenue, { context: "income" }) }}>
           {formatMoney(revenue)}
         </div>
       </div>
       <div className="tRow">
-        <div className="k">Expenses</div>
+        <div className="k">{appI18n.t("legacyInline.finance.presentation_components_widgets_profit_trend_profit_trend_widget.k002")}</div>
         <div className="v" style={{ color: getFinanceValueColor(expenses, { context: "expense" }) }}>
           {formatMoney(expenses)}
         </div>
       </div>
       <div className="tRow">
-        <div className="k">Profit</div>
+        <div className="k">{appI18n.t("legacyInline.finance.presentation_components_widgets_profit_trend_profit_trend_widget.k003")}</div>
         <div className="v" style={{ color: getFinanceValueColor(profit, { context: "neutral" }) }}>
           {formatMoney(profit)}
         </div>
@@ -82,7 +83,7 @@ export function ProfitTrendWidget({
   loading,
   subtitle,
 }: Props) {
-  const data = revenue.points.map((p, idx) => ({
+        const data = revenue.points.map((p, idx) => ({
     label: p.label,
     revenue: p.value,
     expenses: expenses.points[idx]?.value ?? 0,
@@ -92,9 +93,9 @@ export function ProfitTrendWidget({
   return (
     <WidgetCard className={className}>
       <WidgetHeader>
-        <div className="title">Profit Trend</div>
+        <div className="title">{appI18n.t("legacyInline.finance.presentation_components_widgets_profit_trend_profit_trend_widget.k004")}</div>
         <div className="subtitle">
-          {subtitle ?? "Profit computed from revenue minus expenses."}
+          {subtitle ?? appI18n.t("legacyInline.finance.presentation_components_widgets_profit_trend_profit_trend_widget.k005")}
         </div>
       </WidgetHeader>
 

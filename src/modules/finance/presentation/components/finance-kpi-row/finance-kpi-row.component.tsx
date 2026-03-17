@@ -1,5 +1,7 @@
 import { Skeleton } from "antd";
+import { useCallback, useMemo } from "react";
 import { formatMoneyCompact, formatNumberCompact } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import type { FinanceKpiModel } from "../../../interfaces/finance-kpi.model";
 import {
   type FinanceValueContext,
@@ -28,10 +30,10 @@ const formatKpiValue = (kpi: FinanceKpiModel) => {
   return formatNumberCompact(kpi.value);
 };
 
-const formatDelta = (delta?: number) => {
+const formatDelta = (delta: number | undefined, suffix: string) => {
   if (delta === undefined || !Number.isFinite(delta)) return null;
   const sign = delta >= 0 ? "+" : "";
-  return `${sign}${(delta * 100).toFixed(1)}% vs prev.`;
+  return `${sign}${(delta * 100).toFixed(1)}% ${suffix}`;
 };
 
 const kpiContextMap: Record<FinanceKpiModel["id"], FinanceValueContext> = {
@@ -41,14 +43,28 @@ const kpiContextMap: Record<FinanceKpiModel["id"], FinanceValueContext> = {
   margin: "neutral",
 };
 
-const fallbackKpis: FinanceKpiModel[] = [
-  { id: "revenue", label: "Revenue", value: 0, format: "money" },
-  { id: "expenses", label: "Expenses", value: 0, format: "money" },
-  { id: "profit", label: "Profit", value: 0, format: "money" },
-  { id: "margin", label: "Margin", value: 0, format: "percent" },
-];
-
 export function FinanceKpiRow({ kpis, loading }: Props) {
+        const fallbackKpis: FinanceKpiModel[] = useMemo(
+    () => [
+      { id: "revenue", label: appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k001"), value: 0, format: "money" },
+      { id: "expenses", label: appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k002"), value: 0, format: "money" },
+      { id: "profit", label: appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k003"), value: 0, format: "money" },
+      { id: "margin", label: appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k004"), value: 0, format: "percent" },
+    ],
+    []
+  );
+
+  const resolveKpiLabel = useCallback(
+    (kpi: FinanceKpiModel) => {
+      if (kpi.id === "revenue") return appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k005");
+      if (kpi.id === "expenses") return appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k006");
+      if (kpi.id === "profit") return appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k007");
+      if (kpi.id === "margin") return appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k008");
+      return kpi.label;
+    },
+    []
+  );
+
   const items = (kpis?.length ? kpis : fallbackKpis).slice(0, 4);
 
   return (
@@ -62,7 +78,7 @@ export function FinanceKpiRow({ kpis, loading }: Props) {
               {(() => {
                 const context = kpiContextMap[k.id] ?? "neutral";
                 const valueColor = getFinanceValueColor(k.value, { context });
-                const deltaText = formatDelta(k.delta);
+                const deltaText = formatDelta(k.delta, appI18n.t("legacyInline.finance.presentation_components_finance_kpi_row_finance_kpi_row_component.k009"));
                 const deltaColor =
                   deltaText == null
                     ? "var(--color-text-muted)"
@@ -71,7 +87,7 @@ export function FinanceKpiRow({ kpis, loading }: Props) {
                 return (
                   <>
                     <KpiMeta>
-                      <div className="label">{k.label}</div>
+                      <div className="label">{resolveKpiLabel(k)}</div>
                       <div className="delta" style={{ color: deltaColor }}>
                         {deltaText ?? "\u00A0"}
                       </div>

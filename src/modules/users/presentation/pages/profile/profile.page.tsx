@@ -1,5 +1,6 @@
 import React from "react";
 import { message } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 import { applicationService } from "@core/application/application.service";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import { isAppError } from "@core/errors/is-app-error";
@@ -9,6 +10,11 @@ import AvatarUploadModal from "@shared/ui/components/avatar-upload/avatar-upload
 import { loadingService } from "@shared/ui/services/loading.service";
 import { companyService } from "@modules/company/services/company.service";
 import { usersAuthService } from "@modules/users/services/auth.service";
+import type {
+  AiTokenLedgerEntryModel,
+  AiTokenSummaryModel,
+} from "@modules/users/interfaces/ai-token.model";
+import { usersAiTokensService } from "@modules/users/services/ai-tokens.service";
 import { usersService } from "@modules/users/services/user.service";
 import ProfileTemplate, { type PersonalModel, type CompanyModel } from "@modules/users/presentation/templates/profile/profile.template";
 
@@ -52,12 +58,16 @@ type State = {
   isSavingCompany?: boolean;
   isAvatarLoading?: boolean;
   isWallpaperLoading?: boolean;
+  aiTokensSummary?: AiTokenSummaryModel;
+  aiTokensLedger?: AiTokenLedgerEntryModel[];
+  aiTokensTotal?: number;
+  isAiTokensLoading?: boolean;
   categories?: ApplicationCategoryItem[];
   industries?: ApplicationIndustryItem[];
 };
 
 export class ProfilePage extends BasePage<{}, State> {
-  protected override options = { title: "Profile | WorklyHub", requiresAuth: true };
+  protected override options = { title: `${appI18n.t("users.pageTitles.profile")} | WorklyHub`, requiresAuth: true };
 
   public state: State = {
     isLoading: false,
@@ -77,6 +87,10 @@ export class ProfilePage extends BasePage<{}, State> {
     isSavingCompany: false,
     isAvatarLoading: false,
     isWallpaperLoading: false,
+    aiTokensSummary: undefined,
+    aiTokensLedger: [],
+    aiTokensTotal: 0,
+    isAiTokensLoading: false,
     categories: undefined,
     industries: undefined,
   };
@@ -192,6 +206,26 @@ export class ProfilePage extends BasePage<{}, State> {
     return { company, wallpaperCandidate };
   }
 
+  private loadAiTokensSilently = async () => {
+    this.setSafeState({ isAiTokensLoading: true });
+    try {
+      const [summary, ledger] = await Promise.all([
+        usersAiTokensService.fetchSummary(),
+        usersAiTokensService.listLedger({ limit: 30, offset: 0 }),
+      ]);
+
+      this.setSafeState({
+        aiTokensSummary: summary,
+        aiTokensLedger: ledger.items ?? [],
+        aiTokensTotal: ledger.total ?? 0,
+      });
+    } catch {
+      // ignore ai token loading errors in profile
+    } finally {
+      this.setSafeState({ isAiTokensLoading: false });
+    }
+  };
+
   protected override async onInit(): Promise<void> {
     await this.runAsync(async () => {
       let categories = applicationService.getCategoriesValue() ?? undefined;
@@ -215,6 +249,9 @@ export class ProfilePage extends BasePage<{}, State> {
 
       this.setSafeState({ categories, industries });
       const session = usersAuthService.getSessionValue();
+      if (session?.uid) {
+        await this.loadAiTokensSilently();
+      }
 
       const personal: PersonalModel = {
         fullName: (session?.name as string) ?? "",
@@ -268,7 +305,9 @@ export class ProfilePage extends BasePage<{}, State> {
                   const price = found.monthly_amount ?? found.yearly_amount ?? 0;
                   personal.planId = Number(found.id);
                   personal.planName = found.title;
-                  personal.planPrice = `${formatMoney(price, { precision: 0 })}/month`;
+                  personal.planPrice = appI18n.t("users.profile.plan.pricePerMonth", {
+                    value: formatMoney(price, { precision: 0 }),
+                  });
                 } else {
                   personal.planId = Number(planId);
                 }
@@ -333,9 +372,9 @@ export class ProfilePage extends BasePage<{}, State> {
 
       // preload and set only after fully loaded
       await this.preloadAndSetAvatar(path);
-      message.success("Photo uploaded successfully");
+      message.success(appI18n.t("users.profile.messages.uploadPhotoSuccess"));
     } catch {
-      message.error("Failed to upload photo");
+      message.error(appI18n.t("users.profile.messages.uploadPhotoError"));
     } finally {
       this.setSafeState({ isUploadingAvatar: false, avatarModalOpen: false });
     }
@@ -358,9 +397,9 @@ export class ProfilePage extends BasePage<{}, State> {
         if (mapped.wallpaperCandidate) await this.preloadAndSetWallpaper(mapped.wallpaperCandidate);
       }
 
-      message.success("Wallpaper uploaded successfully");
+      message.success(appI18n.t("users.profile.messages.uploadWallpaperSuccess"));
     } catch {
-      message.error("Failed to upload wallpaper");
+      message.error(appI18n.t("users.profile.messages.uploadWallpaperError"));
     } finally {
       this.setSafeState({ isUploadingWallpaper: false, wallpaperModalOpen: false });
     }
@@ -391,9 +430,11 @@ export class ProfilePage extends BasePage<{}, State> {
       };
 
       this.setSafeState({ personal: nextPersonal });
-      message.success("Personal information saved");
+      message.success(appI18n.t("users.profile.messages.savePersonalSuccess"));
     } catch (err) {
-      message.error(isAppError(err) ? err.message : "Failed to save personal information");
+      message.error(
+        isAppError(err) ? err.message : appI18n.t("users.profile.messages.savePersonalError")
+      );
     } finally {
       this.setSafeState({ isSavingPersonal: false });
       loadingService.hide();
@@ -426,20 +467,30 @@ export class ProfilePage extends BasePage<{}, State> {
         this.setSafeState({ company: values });
       }
 
-      message.success("Company information saved");
+      message.success(appI18n.t("users.profile.messages.saveCompanySuccess"));
     } catch (err) {
-      message.error(isAppError(err) ? err.message : "Failed to save company information");
+      message.error(
+        isAppError(err) ? err.message : appI18n.t("users.profile.messages.saveCompanyError")
+      );
     } finally {
       this.setSafeState({ isSavingCompany: false });
       loadingService.hide();
     }
   };
 
+  private handleRefreshAiTokens = async () => {
+    await this.loadAiTokensSilently();
+  };
+
   protected override renderPage(): React.ReactNode {
     const tabParam = typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("tab")?.toLowerCase()
       : undefined;
-    const defaultTab = tabParam === "company" ? "company" : "personal";
+    const defaultTab = tabParam === "company"
+      ? "company"
+      : tabParam === "ai-tokens"
+        ? "ai-tokens"
+        : "personal";
 
     return (
       <div data-cy="users-profile-page">
@@ -449,10 +500,15 @@ export class ProfilePage extends BasePage<{}, State> {
           categories={this.state.categories}
           industries={this.state.industries}
           defaultTab={defaultTab}
+          aiTokensSummary={this.state.aiTokensSummary}
+          aiTokensLedger={this.state.aiTokensLedger}
+          aiTokensTotal={this.state.aiTokensTotal}
+          isAiTokensLoading={this.state.isAiTokensLoading}
           isAvatarLoading={this.state.isAvatarLoading}
           isWallpaperLoading={this.state.isWallpaperLoading}
           isSavingPersonal={this.state.isSavingPersonal}
           isSavingCompany={this.state.isSavingCompany}
+          onRefreshAiTokens={this.handleRefreshAiTokens}
           onOpenAvatar={this.handleOpenAvatar}
           onOpenWallpaper={this.handleOpenWallpaper}
           onSavePersonal={this.handleSavePersonal}
@@ -461,8 +517,8 @@ export class ProfilePage extends BasePage<{}, State> {
 
         <AvatarUploadModal
           open={!!this.state.avatarModalOpen}
-          title="Upload profile photo"
-          subtitle="Select or drag an image to update your profile photo"
+          title={appI18n.t("users.profile.modals.avatar.title")}
+          subtitle={appI18n.t("users.profile.modals.avatar.subtitle")}
           onClose={this.handleCloseAvatar}
           onUpload={this.handleUploadAvatar}
           isUploading={!!this.state.isUploadingAvatar}
@@ -471,8 +527,8 @@ export class ProfilePage extends BasePage<{}, State> {
 
         <AvatarUploadModal
           open={!!this.state.wallpaperModalOpen}
-          title="Upload wallpaper"
-          subtitle="Select or drag an image to update your company wallpaper"
+          title={appI18n.t("users.profile.modals.wallpaper.title")}
+          subtitle={appI18n.t("users.profile.modals.wallpaper.subtitle")}
           onClose={this.handleCloseWallpaper}
           onUpload={this.handleUploadWallpaper}
           isUploading={!!this.state.isUploadingWallpaper}

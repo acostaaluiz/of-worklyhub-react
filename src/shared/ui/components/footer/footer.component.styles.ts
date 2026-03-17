@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { Typography } from "antd";
 
 export const FooterShell = styled.footer`
   width: 100%;
@@ -7,7 +8,7 @@ export const FooterShell = styled.footer`
 `;
 
 export const FooterInner = styled.div`
-  padding: var(--space-6) 0;
+  padding: var(--space-6) var(--space-4);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -15,7 +16,7 @@ export const FooterInner = styled.div`
 
   @media (max-width: 768px) {
     flex-direction: column;
-    padding: var(--space-5) 0;
+    padding: var(--space-5) var(--space-3);
   }
 `;
 
@@ -50,9 +51,9 @@ export const Right = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  width: 100%;
 
   @media (max-width: 768px) {
-    width: 100%;
     align-items: flex-start;
   }
 `;
@@ -76,5 +77,56 @@ export const FooterLink = styled.span`
 
   &:hover {
     color: var(--color-link-hover);
+  }
+`;
+
+export const AttributionRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+`;
+
+export const AttributionLabel = styled(Typography.Text)`
+  font-size: var(--font-size-xs);
+`;
+
+export const AttributionLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: opacity 160ms ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+export const AttributionBrand = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+
+  .of-logo {
+    width: auto;
+    height: 14px;
+    display: block;
+  }
+`;
+
+export const FooterMetaRow = styled.div`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
   }
 `;

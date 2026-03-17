@@ -62,9 +62,10 @@ export const TemplateTitleCopy = styled.div`
   min-width: 0;
 `;
 
-export const Shell = styled.div`
+export const Shell = styled.div<{ $hasEditor?: boolean }>`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-columns: ${({ $hasEditor = true }) =>
+    $hasEditor ? "minmax(0, 1fr) 420px" : "minmax(0, 1fr)"};
   gap: var(--space-5);
   align-items: stretch;
 

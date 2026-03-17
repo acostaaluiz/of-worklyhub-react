@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 
+import { i18n as appI18n } from "@core/i18n";
 import { formatAppDateTime } from "@core/utils/date-time";
 import { companyService } from "@modules/company/services/company.service";
 import {
@@ -127,7 +128,7 @@ function normalizeSettings(input?: Partial<WorkOrderWorkspaceSettings>): WorkOrd
 }
 
 function WorkOrderSettingsPageContent(): React.ReactElement {
-  const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
+        const [workspaceId, setWorkspaceId] = React.useState<string | undefined>(() => {
     const ws = companyService.getWorkspaceValue() as { workspaceId?: string; id?: string } | null;
     return (ws?.workspaceId ?? ws?.id) as string | undefined;
   });
@@ -166,7 +167,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
       const bundle = await getWorkOrderSettings(workspaceId);
       applyBundle(bundle);
     } catch (_err) {
-      message.error("Failed to load work-order settings.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k001"));
     } finally {
       setLoading(false);
     }
@@ -178,7 +179,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
 
   const handleSubmit = async (values: WorkOrderWorkspaceSettings) => {
     if (!workspaceId) {
-      message.error("Workspace is required.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k002"));
       return;
     }
 
@@ -188,9 +189,9 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
       const normalizedValues = normalizeSettings(values);
       const bundle = await upsertWorkOrderSettings(workspaceId, normalizedValues, userUid);
       applyBundle(bundle);
-      message.success("Work-order settings saved.");
+      message.success(appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k003"));
     } catch (_err) {
-      message.error("Failed to save work-order settings.");
+      message.error(appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k004"));
     } finally {
       setSaving(false);
     }
@@ -207,13 +208,15 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
           <PageStack>
             <SettingsPageHeader
               icon={<Settings2 size={22} />}
-              title="Work-order settings"
-              description="Configure default behavior and validation rules per workspace."
+              title={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k005")}
+              description={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k006")}
               meta={
                 <SettingsSourceTags
                   source={source}
                   updatedAt={updatedAt}
                   formatUpdatedAt={(value) => formatAppDateTime(value, "--")}
+                  updatedPrefix={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k007")}
+                  emptyLabel={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k008")}
                 />
               }
             />
@@ -225,7 +228,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                 showIcon
                 type="info"
                 style={{ marginBottom: 16 }}
-                message="These settings are workspace-specific and start with default values."
+                message={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k009")}
               />
 
               <Form<WorkOrderWorkspaceSettings>
@@ -243,26 +246,26 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                       key: "planning",
                       label: (
                         <span data-cy="work-order-settings-tab-planning">
-                          <IconLabel icon={<CalendarClock size={14} />} text="Planning" />
+                          <IconLabel icon={<CalendarClock size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k010")} />
                         </span>
                       ),
                       children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Planning defaults
+                          {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k011")}
                         </Typography.Title>
                         <Space size={16} style={{ width: "100%", display: "flex", flexWrap: "wrap" }}>
                           <Form.Item
                             name="defaultPriority"
-                            label={<IconLabel icon={<SlidersHorizontal size={14} />} text="Default priority" />}
+                            label={<IconLabel icon={<SlidersHorizontal size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k012")} />}
                             style={{ minWidth: 240 }}
                           >
                             <Select
                               options={[
-                                { value: "low", label: "Low" },
-                                { value: "medium", label: "Medium" },
-                                { value: "high", label: "High" },
-                                { value: "urgent", label: "Urgent" },
+                                { value: "low", label: appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k013") },
+                                { value: "medium", label: appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k014") },
+                                { value: "high", label: appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k015") },
+                                { value: "urgent", label: appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k016") },
                               ]}
                               data-cy="work-order-settings-default-priority-select"
                             />
@@ -270,7 +273,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
 
                           <Form.Item
                             name="defaultEstimatedDurationMinutes"
-                            label={<IconLabel icon={<CalendarClock size={14} />} text="Default estimated duration (min)" />}
+                            label={<IconLabel icon={<CalendarClock size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k017")} />}
                             style={{ minWidth: 240 }}
                           >
                             <InputNumber
@@ -284,7 +287,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
 
                           <Form.Item
                             name="defaultDueInHours"
-                            label={<IconLabel icon={<CalendarClock size={14} />} text="Default due in (hours)" />}
+                            label={<IconLabel icon={<CalendarClock size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k018")} />}
                             style={{ minWidth: 240 }}
                           >
                             <InputNumber
@@ -298,7 +301,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
 
                           <Form.Item
                             name="dueSoonWindowHours"
-                            label={<IconLabel icon={<CalendarClock size={14} />} text="Due-soon window (hours)" />}
+                            label={<IconLabel icon={<CalendarClock size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k019")} />}
                             style={{ minWidth: 240 }}
                           >
                             <InputNumber
@@ -314,7 +317,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                         <Form.Item
                           name="autoFillDueAtOnCreate"
                           valuePropName="checked"
-                          label={<IconLabel icon={<CalendarClock size={14} />} text="Auto-fill due date on creation" />}
+                          label={<IconLabel icon={<CalendarClock size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k020")} />}
                         >
                           <Switch data-cy="work-order-settings-auto-fill-due-switch" />
                         </Form.Item>
@@ -325,33 +328,33 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                     key: "workflow",
                     label: (
                       <span data-cy="work-order-settings-tab-workflow">
-                        <IconLabel icon={<ShieldCheck size={14} />} text="Workflow" />
+                        <IconLabel icon={<ShieldCheck size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k021")} />
                       </span>
                     ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Workflow validations
+                          {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k022")}
                         </Typography.Title>
                         <Space size={16} style={{ width: "100%", display: "flex", flexWrap: "wrap" }}>
                           <Form.Item
                             name="requireWorkerOnCreate"
                             valuePropName="checked"
-                            label={<IconLabel icon={<ShieldCheck size={14} />} text="Require worker on create" />}
+                            label={<IconLabel icon={<ShieldCheck size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k023")} />}
                           >
                             <Switch data-cy="work-order-settings-require-worker-switch" />
                           </Form.Item>
                           <Form.Item
                             name="requireChecklistToComplete"
                             valuePropName="checked"
-                            label={<IconLabel icon={<ShieldCheck size={14} />} text="Require full checklist to complete" />}
+                            label={<IconLabel icon={<ShieldCheck size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k024")} />}
                           >
                             <Switch data-cy="work-order-settings-require-checklist-switch" />
                           </Form.Item>
                           <Form.Item
                             name="requireAttachmentToComplete"
                             valuePropName="checked"
-                            label={<IconLabel icon={<ShieldCheck size={14} />} text="Require attachment to complete" />}
+                            label={<IconLabel icon={<ShieldCheck size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k025")} />}
                           >
                             <Switch data-cy="work-order-settings-require-attachment-switch" />
                           </Form.Item>
@@ -363,25 +366,25 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                     key: "attachments",
                     label: (
                       <span data-cy="work-order-settings-tab-attachments">
-                        <IconLabel icon={<Paperclip size={14} />} text="Attachments" />
+                        <IconLabel icon={<Paperclip size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k026")} />
                       </span>
                     ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Attachment rules
+                          {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k027")}
                         </Typography.Title>
                         <Space size={16} style={{ width: "100%", display: "flex", flexWrap: "wrap" }}>
                           <Form.Item
                             name="attachmentsEnabled"
                             valuePropName="checked"
-                            label={<IconLabel icon={<Paperclip size={14} />} text="Enable attachments" />}
+                            label={<IconLabel icon={<Paperclip size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k028")} />}
                           >
                             <Switch data-cy="work-order-settings-attachments-enabled-switch" />
                           </Form.Item>
                           <Form.Item
                             name="maxAttachmentsPerWorkOrder"
-                            label={<IconLabel icon={<Paperclip size={14} />} text="Max files per work order" />}
+                            label={<IconLabel icon={<Paperclip size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k029")} />}
                             style={{ minWidth: 240 }}
                           >
                             <InputNumber
@@ -394,7 +397,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                           </Form.Item>
                           <Form.Item
                             name="maxAttachmentSizeMb"
-                            label={<IconLabel icon={<Paperclip size={14} />} text="Max file size (MB)" />}
+                            label={<IconLabel icon={<Paperclip size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k030")} />}
                             style={{ minWidth: 240 }}
                           >
                             <InputNumber
@@ -409,7 +412,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
 
                         <Form.Item
                           name="allowedAttachmentMimeTypes"
-                          label={<IconLabel icon={<Paperclip size={14} />} text="Allowed MIME types" />}
+                          label={<IconLabel icon={<Paperclip size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k031")} />}
                         >
                           <Select
                             mode="tags"
@@ -426,32 +429,31 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                     key: "billing-automation",
                     label: (
                       <span data-cy="work-order-settings-tab-billing">
-                        <IconLabel icon={<ReceiptText size={14} />} text="Billing automation" />
+                        <IconLabel icon={<ReceiptText size={14} />} text={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k032")} />
                       </span>
                     ),
                     children: (
                       <>
                         <Typography.Title level={5} style={{ marginTop: 0 }}>
-                          Execution to billing flow
+                          {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k033")}
                         </Typography.Title>
                         <Typography.Paragraph type="secondary" style={{ marginBottom: 8 }}>
-                          Final execution statuses can automatically create finance entries. NF-e
-                          trigger is optional and depends on billing settings.
+                          {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k034")}
                         </Typography.Paragraph>
                         <Alert
                           showIcon
                           type="info"
                           style={{ marginBottom: 8 }}
-                          message="Configure module billing + NF-e in global settings"
-                          description="Open workspace billing settings to enable/disable automation for Work Order and Schedule."
+                          message={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k035")}
+                          description={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k036")}
                         />
                         {isDevEnvironment ? (
                           <Alert
                             showIcon
                             type="warning"
                             style={{ marginBottom: 8 }}
-                            message="Development environment"
-                            description="GOV endpoints may be unavailable in dev. Financial launch still works independently of NF-e emission."
+                            message={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k037")}
+                            description={appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k038")}
                           />
                         ) : null}
                         <Button
@@ -461,7 +463,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                           }}
                           data-cy="work-order-settings-open-billing-button"
                         >
-                          Open billing settings
+                          {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k039")}
                         </Button>
                       </>
                     ),
@@ -477,7 +479,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                   icon={<RotateCcw size={15} />}
                   data-cy="work-order-settings-restore-defaults-button"
                 >
-                  Restore defaults
+                  {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k040")}
                 </Button>
                 <Button
                   type="primary"
@@ -486,7 +488,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
                   icon={<Save size={16} />}
                   data-cy="work-order-settings-save-button"
                 >
-                  Save settings
+                  {appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k041")}
                 </Button>
               </Space>
               </Form>
@@ -500,7 +502,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
 
 export class WorkOrderSettingsPage extends BasePage {
   protected override options = {
-    title: "Work-order settings | WorklyHub",
+    title: `${appI18n.t("workOrder.pageTitles.settings")} | WorklyHub`,
     requiresAuth: true,
   };
 

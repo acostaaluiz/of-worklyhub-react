@@ -1,5 +1,6 @@
 import React from "react";
 import { Typography } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 
 import { BasePage } from "@shared/base/base.page";
 import { navigateTo } from "@core/navigation/navigation.service";
@@ -8,7 +9,7 @@ import { LegalSection } from "../../templates/legal/legal.template.styles";
 
 export class PrivacyPage extends BasePage {
   protected override options = {
-    title: "Privacy Policy | WorklyHub",
+    title: `${appI18n.t("users.pageTitles.privacy")} | WorklyHub`,
     requiresAuth: false,
   };
 

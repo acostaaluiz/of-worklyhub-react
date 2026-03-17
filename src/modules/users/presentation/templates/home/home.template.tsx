@@ -1,5 +1,6 @@
 import React from "react";
 import { Popover } from "antd";
+import { useTranslation } from "react-i18next";
 import ServicesCards from "@modules/users/presentation/components/home/services-cards.component";
 import MetricsCards from "@modules/users/presentation/components/home/metrics-cards.component";
 import {
@@ -87,8 +88,11 @@ function initialsFrom(name?: string) {
     .toUpperCase();
 }
 
-function formatNext(next?: { title?: string; date?: string; time?: string }) {
-  if (!next) return "No upcoming appointment";
+function formatNext(
+  next: { title?: string; date?: string; time?: string } | undefined,
+  t: (key: string) => string
+) {
+  if (!next) return t("home.hero.highlights.nextAppointment.empty");
   const date = formatDate(next.date, "DD/MM");
   const time = next.time ? ` ${next.time}` : "";
   return `${date}${time}`.trim();
@@ -104,26 +108,27 @@ export default function UsersHomeTemplate({
   onEditCompany,
   onOpenTutorials,
 }: Props) {
+  const { t } = useTranslation();
   const initials = initialsFrom(companyName);
   const readinessSignals = [
     {
       key: "company-name",
-      label: "Company name configured",
+      label: t("home.readiness.signals.companyNameConfigured"),
       completed: Boolean(companyName),
     },
     {
       key: "company-description",
-      label: "Company description configured",
+      label: t("home.readiness.signals.companyDescriptionConfigured"),
       completed: Boolean(description),
     },
     {
       key: "plan",
-      label: "Active plan detected",
+      label: t("home.readiness.signals.activePlanDetected"),
       completed: Boolean(planTitle),
     },
     {
       key: "next-appointment",
-      label: "At least one upcoming appointment",
+      label: t("home.readiness.signals.upcomingAppointment"),
       completed: Boolean(metrics?.nextAppointment),
     },
   ];
@@ -134,9 +139,12 @@ export default function UsersHomeTemplate({
   const readinessTooltipContent = (
     <ReadinessTooltipCard>
       <ReadinessTooltipHeader>
-        <span className="title">Setup checklist</span>
+        <span className="title">{t("home.readiness.tooltip.title")}</span>
         <span className="meta">
-          {readinessCount}/{readinessTotal} complete
+          {t("home.readiness.tooltip.progress", {
+            completed: readinessCount,
+            total: readinessTotal,
+          })}
         </span>
       </ReadinessTooltipHeader>
 
@@ -151,8 +159,8 @@ export default function UsersHomeTemplate({
 
       <ReadinessTooltipFootnote $completed={missingReadinessSignals.length <= 0}>
         {missingReadinessSignals.length <= 0
-          ? "All setup signals are complete."
-          : `${missingReadinessSignals.length} pending item(s) to reach 100%.`}
+          ? t("home.readiness.tooltip.complete")
+          : t("home.readiness.tooltip.pending", { count: missingReadinessSignals.length })}
       </ReadinessTooltipFootnote>
     </ReadinessTooltipCard>
   );
@@ -171,10 +179,11 @@ export default function UsersHomeTemplate({
           </HeroIdentity>
 
           <HeroCopy>
-            <HeroTitle>{name ? `Welcome, ${name}` : "Welcome"}</HeroTitle>
+            <HeroTitle>
+              {name ? t("home.hero.titleWithName", { name }) : t("home.hero.title")}
+            </HeroTitle>
             <HeroDescription>
-              Start your day with priority signals and jump into the modules that
-              keep your operation moving.
+              {t("home.hero.description")}
             </HeroDescription>
           </HeroCopy>
 
@@ -182,12 +191,12 @@ export default function UsersHomeTemplate({
             {onOpenTutorials ? (
               <HeroButton onClick={onOpenTutorials} $variant="ghost">
                 <BookOpenCheck size={16} />
-                Tutorials
+                {t("home.hero.actions.tutorials")}
               </HeroButton>
             ) : null}
             <HeroButton onClick={onEditCompany} $variant="primary">
               <Settings2 size={16} />
-              Edit company
+              {t("home.hero.actions.editCompany")}
             </HeroButton>
           </HeroActions>
         </HeroMainRow>
@@ -198,9 +207,11 @@ export default function UsersHomeTemplate({
               <CalendarDays size={16} />
             </HeroHighlightIcon>
             <HeroHighlightMeta>
-              <HeroHighlightLabel>Today load</HeroHighlightLabel>
+              <HeroHighlightLabel>{t("home.hero.highlights.todayLoad.label")}</HeroHighlightLabel>
               <HeroHighlightValue>
-                {metrics?.appointmentsToday ?? 0} appointments
+                {t("home.hero.highlights.todayLoad.value", {
+                  count: metrics?.appointmentsToday ?? 0,
+                })}
               </HeroHighlightValue>
             </HeroHighlightMeta>
           </HeroHighlightCard>
@@ -210,7 +221,7 @@ export default function UsersHomeTemplate({
               <DollarSign size={16} />
             </HeroHighlightIcon>
             <HeroHighlightMeta>
-              <HeroHighlightLabel>Revenue pulse</HeroHighlightLabel>
+              <HeroHighlightLabel>{t("home.hero.highlights.revenuePulse.label")}</HeroHighlightLabel>
               <HeroHighlightValue>
                 {formatMoney(metrics?.revenueThisMonthCents ?? null)}
               </HeroHighlightValue>
@@ -222,9 +233,9 @@ export default function UsersHomeTemplate({
               <Sparkles size={16} />
             </HeroHighlightIcon>
             <HeroHighlightMeta>
-              <HeroHighlightLabel>Next appointment</HeroHighlightLabel>
+              <HeroHighlightLabel>{t("home.hero.highlights.nextAppointment.label")}</HeroHighlightLabel>
               <HeroHighlightValue>
-                {formatNext(metrics?.nextAppointment)}
+                {formatNext(metrics?.nextAppointment, t)}
               </HeroHighlightValue>
             </HeroHighlightMeta>
           </HeroHighlightCard>
@@ -232,9 +243,9 @@ export default function UsersHomeTemplate({
       </HeroSection>
 
       <ContentSection $delay="1">
-        <SectionTitle>Indicators</SectionTitle>
+        <SectionTitle>{t("home.sections.indicators.title")}</SectionTitle>
         <SectionDescription>
-          Watch risks and pending signals without duplicating top-line KPIs.
+          {t("home.sections.indicators.description")}
         </SectionDescription>
 
         <MetricsWrap>
@@ -253,9 +264,9 @@ export default function UsersHomeTemplate({
       </ContentSection>
 
       <ContentSection $delay="2">
-        <SectionTitle>Company snapshot</SectionTitle>
+        <SectionTitle>{t("home.sections.companySnapshot.title")}</SectionTitle>
         <SectionDescription>
-          Quick context before you start executing.
+          {t("home.sections.companySnapshot.description")}
         </SectionDescription>
 
         <CompanyCards>
@@ -264,7 +275,7 @@ export default function UsersHomeTemplate({
               <Briefcase size={16} />
             </CompanyIcon>
             <CompanyMeta>
-              <CompanyLabel>Company</CompanyLabel>
+              <CompanyLabel>{t("home.companyCards.company.label")}</CompanyLabel>
               <CompanyValue>{companyName ?? "--"}</CompanyValue>
               {description ? <CompanyText>{description}</CompanyText> : null}
             </CompanyMeta>
@@ -277,10 +288,13 @@ export default function UsersHomeTemplate({
                   <Gauge size={16} />
                 </CompanyIcon>
                 <CompanyMeta>
-                  <CompanyLabel>Setup readiness</CompanyLabel>
-                  <CompanyValue>{readinessPercent}% ready</CompanyValue>
+                  <CompanyLabel>{t("home.companyCards.readiness.label")}</CompanyLabel>
+                  <CompanyValue>{t("home.companyCards.readiness.value", { percent: readinessPercent })}</CompanyValue>
                   <CompanyText>
-                    {readinessCount}/{readinessTotal} key workspace signals configured
+                    {t("home.companyCards.readiness.meta", {
+                      configured: readinessCount,
+                      total: readinessTotal,
+                    })}
                   </CompanyText>
                 </CompanyMeta>
               </CompanyCard>
@@ -292,7 +306,7 @@ export default function UsersHomeTemplate({
               <LayoutGrid size={16} />
             </CompanyIcon>
             <CompanyMeta>
-              <CompanyLabel>Plan</CompanyLabel>
+              <CompanyLabel>{t("home.companyCards.plan.label")}</CompanyLabel>
               <CompanyValue>{planTitle ?? "--"}</CompanyValue>
             </CompanyMeta>
           </CompanyCard>
@@ -300,9 +314,9 @@ export default function UsersHomeTemplate({
       </ContentSection>
 
       <ContentSection $delay="3">
-        <SectionTitle>Choose a module to start</SectionTitle>
+        <SectionTitle>{t("home.sections.modules.title")}</SectionTitle>
         <SectionDescription>
-          Jump straight into the core workflows of your day.
+          {t("home.sections.modules.description")}
         </SectionDescription>
         <ServicesArea>
           <ServicesCards services={services ?? []} />

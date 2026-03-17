@@ -1,5 +1,6 @@
 import React from "react";
 import { message } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
 import { companyService } from "@modules/company/services/company.service";
 import type { Client360Bundle } from "@modules/clients/interfaces/client-360.model";
@@ -94,7 +95,7 @@ function Customer360PageContent() {
 
 export class Customer360Page extends BasePage {
   protected override options = {
-    title: "Client 360 | WorklyHub",
+    title: `${appI18n.t("clients.pageTitles.customer360")} | WorklyHub`,
     requiresAuth: true,
   };
 
@@ -104,4 +105,3 @@ export class Customer360Page extends BasePage {
 }
 
 export default Customer360Page;
-

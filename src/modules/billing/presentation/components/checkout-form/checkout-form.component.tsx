@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Divider, Form, Input, Space, Tag, Typography, message } from "antd";
 import type { FormInstance } from "antd";
 import { Building2, Globe, Lock, Mail, RotateCcw, User, WalletCards } from "lucide-react";
+import { i18n as appI18n } from "@core/i18n";
 
 import { FieldIcon, ButtonIcon } from "@shared/styles/global.ts";
 import { BaseComponent } from "@shared/base/base.component";
@@ -45,8 +46,8 @@ type CheckoutState = BaseState & {
 };
 
 function gatewayLabel(gateway: PaymentGateway): string {
-  if (gateway === "paypal") return "PayPal";
-  return "Mercado Pago";
+  if (gateway === "paypal") return appI18n.t("billing.checkout.gateway.paypal");
+  return appI18n.t("billing.checkout.gateway.mercadopago");
 }
 
 const CHECKOUT_GATEWAY_HOSTS: Record<PaymentGateway, readonly string[]> = {
@@ -118,10 +119,12 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
       if (typeof maybeMessage === "string" && maybeMessage.trim()) return maybeMessage;
       const maybeCode = (error as { code?: unknown }).code;
       if (typeof maybeCode === "string" && maybeCode.trim()) {
-        return `Checkout error (${maybeCode}). Please try again.`;
+        return appI18n.t("billing.checkout.descriptions.checkoutErrorWithCode", {
+          code: maybeCode,
+        });
       }
     }
-    return "Unable to contact the payment gateway right now. Please try again.";
+    return appI18n.t("billing.checkout.descriptions.gatewayUnavailable");
   }
 
   private handleRetry = async (): Promise<void> => {
@@ -135,19 +138,19 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
         <CardBody>
           <Space direction="vertical" size={16} style={{ width: "100%" }}>
             <Typography.Title level={4} style={{ margin: 0 }}>
-              Checkout unavailable
+              {appI18n.t("billing.checkout.errorView.title")}
             </Typography.Title>
 
             <Alert
               type="error"
               showIcon
-              message="Payment gateway returned an error"
+              message={appI18n.t("billing.checkout.errorView.alertTitle")}
               description={this.describeError(error)}
             />
 
             <Row style={{ justifyContent: "space-between" }}>
               <SecondaryButton size="large" onClick={() => navigateTo("/billing/plans")}>
-                Back to plans
+                {appI18n.t("billing.checkout.errorView.backToPlans")}
               </SecondaryButton>
 
               <PrimaryButton
@@ -160,7 +163,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                 <ButtonIcon aria-hidden>
                   <RotateCcw size={16} />
                 </ButtonIcon>
-                Try again
+                {appI18n.t("billing.checkout.errorView.tryAgain")}
               </PrimaryButton>
             </Row>
           </Space>
@@ -198,12 +201,12 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
   protected override renderView(): React.ReactNode {
     const handleSubmit = async (values: CheckoutValues) => {
       if (!this.state.selectedPlanId) {
-        message.error("Select a plan before finishing payment.");
+        message.error(appI18n.t("billing.checkout.messages.selectPlan"));
         return;
       }
 
       if (!this.state.paymentConfigured) {
-        message.error("Payment provider is not configured. Please try again later.");
+        message.error(appI18n.t("billing.checkout.messages.providerNotConfigured"));
         return;
       }
 
@@ -236,29 +239,27 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
         if (data?.type === "preference" && data.checkoutUrl) {
           const safeCheckoutUrl = this.resolveSafeCheckoutUrl(data.checkoutUrl);
           if (!safeCheckoutUrl) {
-            message.error("Invalid payment redirect URL. Please contact support.");
+            message.error(appI18n.t("billing.checkout.messages.invalidRedirectUrl"));
             this.setError(new Error("invalid_checkout_redirect_url"));
             return;
           }
-          message.info("Redirecting to the payment provider...");
+          message.info(appI18n.t("billing.checkout.messages.redirecting"));
           window.location.assign(safeCheckoutUrl);
           return;
         }
 
         if (data?.status === "approved") {
-          message.success("Payment approved!");
+          message.success(appI18n.t("billing.checkout.messages.paymentApproved"));
         } else if (data?.status === "pending") {
-          message.info(
-            "Payment pending confirmation. We will notify you once it is approved."
-          );
+          message.info(appI18n.t("billing.checkout.messages.paymentPending"));
         } else {
-          message.success("Checkout created.");
+          message.success(appI18n.t("billing.checkout.messages.checkoutCreated"));
         }
       } catch (err) {
         const msg =
           err instanceof Error && err.message
             ? err.message
-            : "Failed to create checkout.";
+            : appI18n.t("billing.checkout.messages.failedCreateCheckout");
         message.error(msg);
         this.setError(err);
       } finally {
@@ -274,11 +275,10 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
           <Space direction="vertical" size={14} style={{ width: "100%", flex: 1 }}>
             <div>
               <Typography.Title level={4} style={{ margin: 0 }}>
-                Checkout details
+                {appI18n.t("billing.checkout.form.title")}
               </Typography.Title>
               <Typography.Text type="secondary">
-                Payment is completed on the selected gateway page. No card fields are
-                handled here.
+                {appI18n.t("billing.checkout.form.subtitle")}
               </Typography.Text>
             </div>
 
@@ -286,22 +286,24 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
               type="info"
               showIcon
               icon={<Globe size={16} />}
-              message={`Gateway: ${gatewayLabel(gateway)}`}
-              description="You will be redirected to a secure hosted checkout to finish payment."
+              message={appI18n.t("billing.checkout.form.gatewayMessage", {
+                gateway: gatewayLabel(gateway),
+              })}
+              description={appI18n.t("billing.checkout.form.gatewayDescription")}
             />
 
             {!paymentConfigured ? (
               <Alert
                 type="warning"
                 showIcon
-                message="Payment temporarily unavailable"
-                description="Gateway credentials are not configured yet."
+                message={appI18n.t("billing.checkout.form.temporarilyUnavailable")}
+                description={appI18n.t("billing.checkout.form.credentialsMissing")}
               />
             ) : null}
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <Tag icon={<WalletCards size={12} />}>{gatewayLabel(gateway)}</Tag>
-              <Tag icon={<Lock size={12} />}>Hosted checkout</Tag>
+              <Tag icon={<Lock size={12} />}>{appI18n.t("billing.checkout.form.hostedTag")}</Tag>
             </div>
 
             <Form<CheckoutValues>
@@ -317,19 +319,19 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
               style={{ width: "100%", display: "flex", flexDirection: "column", flex: 1 }}
             >
               <SectionTitle>
-                <Typography.Text strong>Contact</Typography.Text>
+                <Typography.Text strong>{appI18n.t("billing.checkout.form.contact")}</Typography.Text>
               </SectionTitle>
 
               <Row>
                 <Form.Item<CheckoutValues>
-                  label="Full name"
+                  label={appI18n.t("billing.checkout.form.fullName")}
                   name="fullName"
-                  rules={[{ required: true, message: "Full name is required" }]}
+                  rules={[{ required: true, message: appI18n.t("billing.checkout.form.fullNameRequired") }]}
                   style={{ marginBottom: 0, flex: 1 }}
                 >
                   <Input
                     size="large"
-                    placeholder="Enter your full name"
+                    placeholder={appI18n.t("billing.checkout.form.fullNamePlaceholder")}
                     prefix={
                       <FieldIcon aria-hidden>
                         <User size={18} />
@@ -341,17 +343,17 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
 
               <Row>
                 <Form.Item<CheckoutValues>
-                  label="Email"
+                  label={appI18n.t("billing.checkout.form.email")}
                   name="email"
                   rules={[
-                    { required: true, message: "Email is required" },
-                    { type: "email", message: "Enter a valid email" },
+                    { required: true, message: appI18n.t("billing.checkout.form.emailRequired") },
+                    { type: "email", message: appI18n.t("billing.checkout.form.emailInvalid") },
                   ]}
                   style={{ marginBottom: 0, flex: 1 }}
                 >
                   <Input
                     size="large"
-                    placeholder="Enter your email"
+                    placeholder={appI18n.t("billing.checkout.form.emailPlaceholder")}
                     autoComplete="email"
                     prefix={
                       <FieldIcon aria-hidden>
@@ -364,13 +366,13 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
 
               <Row>
                 <Form.Item<CheckoutValues>
-                  label="Company (optional)"
+                  label={appI18n.t("billing.checkout.form.companyOptional")}
                   name="company"
                   style={{ marginBottom: 0, flex: 1 }}
                 >
                   <Input
                     size="large"
-                    placeholder="Company name"
+                    placeholder={appI18n.t("billing.checkout.form.companyPlaceholder")}
                     prefix={
                       <FieldIcon aria-hidden>
                         <Building2 size={18} />
@@ -388,7 +390,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   htmlType="button"
                   onClick={() => navigateTo("/billing/plans")}
                 >
-                  Change plan
+                  {appI18n.t("billing.checkout.form.changePlan")}
                 </SecondaryButton>
 
                 <PrimaryButton
@@ -401,7 +403,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   <ButtonIcon aria-hidden>
                     <Lock size={18} />
                   </ButtonIcon>
-                  Continue to gateway
+                  {appI18n.t("billing.checkout.form.continueGateway")}
                 </PrimaryButton>
               </Row>
             </Form>

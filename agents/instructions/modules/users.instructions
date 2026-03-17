@@ -12,6 +12,8 @@ Rotas e entradas
 - Stack privado: `src/modules/users/presentation/stacks/users.stack.tsx`.
   - `/home`: home.page
   - `/users`: profile.page
+  - `/settings`: settings.page
+  - `/tutorials`: tutorials.page
   - `/modules`: all-modules.page
 
 Modelos principais
@@ -45,3 +47,5 @@ Guardrails
 - Evitar usar dados de perfil sem verificar `UserSession`.
 - Usuario novo nao deve receber plano por padrao na criacao.
 - UI nao deve ativar plano diretamente via selecao de card.
+- Tutoriais e telas de users devem respeitar idioma ativo (`en-US`/`pt-BR`) via i18n.
+- Se ajustar `/settings`, manter seletor de idioma funcional e persistido.

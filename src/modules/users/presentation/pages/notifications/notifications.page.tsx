@@ -1,5 +1,6 @@
 import React from "react";
 import { message } from "antd";
+import { i18n as appI18n } from "@core/i18n";
 
 import { BasePage } from "@shared/base/base.page";
 import type { NotificationSummaryModel, UserNotificationModel } from "@modules/users/interfaces/notification.model";
@@ -34,7 +35,7 @@ function dedupeById(items: UserNotificationModel[]): UserNotificationModel[] {
 }
 
 export class NotificationsPage extends BasePage<{}, State> {
-  protected override options = { title: "Notifications | WorklyHub", requiresAuth: true };
+  protected override options = { title: `${appI18n.t("users.pageTitles.notifications")} | WorklyHub`, requiresAuth: true };
 
   public state: State = {
     isLoading: false,

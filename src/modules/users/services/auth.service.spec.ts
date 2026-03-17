@@ -183,6 +183,7 @@ describe("UsersAuthService", () => {
     await service.signOut();
 
     expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.idToken");
     expect(mockedAuthManager.signOut).toHaveBeenCalledTimes(1);
     expect(mockedUsersService.clear).toHaveBeenCalledTimes(1);
     expect(mockedCompanyService.clear).toHaveBeenCalledTimes(1);
@@ -195,21 +196,21 @@ describe("UsersAuthService", () => {
     );
     await expect(service.signOut()).rejects.toThrow("firebase-signout-failure");
 
-    expect(mockedStorage.remove).toHaveBeenCalledTimes(2);
+    expect(mockedStorage.remove).toHaveBeenCalledTimes(4);
     expect(mockedAuthManager.signOut).toHaveBeenCalledTimes(2);
   });
 
   it("clears local session and caches when authManager triggers external signOut", () => {
-    let listener: (() => void) | null = null;
-    mockedAuthManager.onSignOut.mockImplementationOnce((cb: () => void) => {
-      listener = cb;
-      return () => undefined;
-    });
+    mockedAuthManager.onSignOut.mockReturnValueOnce(() => undefined);
     const service = new UsersAuthService();
 
+    const listener = mockedAuthManager.onSignOut.mock.calls[0]?.[0] as
+      | (() => void)
+      | undefined;
     listener?.();
 
     expect(mockedStorage.remove).toHaveBeenCalledWith("auth.session");
+    expect(mockedStorage.remove).toHaveBeenCalledWith("auth.idToken");
     expect(mockedUsersService.clear).toHaveBeenCalledTimes(1);
     expect(mockedCompanyService.clear).toHaveBeenCalledTimes(1);
     expect(mockedApplicationService.clear).toHaveBeenCalledTimes(1);

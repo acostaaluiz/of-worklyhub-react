@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { i18n as appI18n } from "@core/i18n";
 import CategoryManagerComponent from "@modules/inventory/presentation/components/category-manager/category-manager.component";
 import StockTemplate from "@modules/inventory/presentation/templates/stock/stock.template";
 import { BasePage } from "@shared/base/base.page";
@@ -15,7 +16,7 @@ function InventoryCategoriesPageContent() {
 
 export class InventoryCategoriesPage extends BasePage {
   protected override options = {
-    title: "Inventory - Categories | WorklyHub",
+    title: `${appI18n.t("inventory.pageTitles.categories")} | WorklyHub`,
     requiresAuth: true,
   };
 

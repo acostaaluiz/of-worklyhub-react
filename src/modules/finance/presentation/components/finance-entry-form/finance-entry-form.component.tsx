@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Form, Input, InputNumber, Select, Button, DatePicker, message } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { getDateFormat, getMaskConfig, getMoneyInput } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 import { loadingService } from "@shared/ui/services/loading.service";
 import type {
   FinanceEntryCreatePayload,
@@ -25,7 +26,7 @@ type Props = {
 };
 
 export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
-  const [form] = Form.useForm<FinanceEntryFormValues>();
+        const [form] = Form.useForm<FinanceEntryFormValues>();
   const api = useFinanceApi();
   const [types, setTypes] = useState<FinanceEntryType[]>([]);
   const moneyInput = getMoneyInput();
@@ -72,12 +73,12 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
 
       loadingService.show();
       const created = await api.createEntry({ ...payload, workspaceId });
-      message.success("Entry saved");
+      message.success(appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k001"));
       onSaved?.(created);
       form.resetFields();
       return created;
     } catch (err) {
-      message.error("Error saving entry");
+      message.error(appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k002"));
       throw err;
     } finally {
       loadingService.hide();
@@ -86,28 +87,28 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
 
   return (
     <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ type: undefined, amount: initial?.amountCents ? initial.amountCents / 100 : undefined }}>
-      <Form.Item name="type" label="Type" rules={[{ required: true }]}>
+      <Form.Item name="type" label={appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k003")} rules={[{ required: true }]}>
         <Select
           options={types.map((t) => ({ label: t.name, value: t.id }))}
           loading={types.length === 0}
         />
       </Form.Item>
 
-      <Form.Item name="amount" label={`Amount (${currencyCode})`} rules={[{ required: true }]}>
+      <Form.Item name="amount" label={`${appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k004")} (${currencyCode})`} rules={[{ required: true }]}>
         <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
       </Form.Item>
 
-      <Form.Item name="date" label="Date">
+      <Form.Item name="date" label={appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k005")}>
         <DatePicker style={{ width: "100%" }} format={dateFormat} />
       </Form.Item>
 
-      <Form.Item name="description" label="Description">
+      <Form.Item name="description" label={appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k006")}>
         <Input.TextArea rows={4} />
       </Form.Item>
 
       <Form.Item>
         <Button type="primary" htmlType="submit">
-          Save
+          {appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k007")}
         </Button>
       </Form.Item>
     </Form>

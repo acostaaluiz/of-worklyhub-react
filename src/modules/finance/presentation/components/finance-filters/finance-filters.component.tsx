@@ -2,6 +2,7 @@ import { Button, DatePicker, Grid, Segmented, Select } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { RefreshCcw } from "lucide-react";
 import { getDateFormat } from "@core/utils/mask";
+import { i18n as appI18n } from "@core/i18n";
 
 import type { FinanceGroupBy } from "../../../interfaces/finance-groupby.model";
 import type { FinanceView } from "../../../interfaces/finance-query.model";
@@ -41,17 +42,17 @@ export function FinanceFilters({
   onRefresh,
   availableViews,
 }: Props) {
-  const screens = Grid.useBreakpoint();
+        const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
   const dateFormat = getDateFormat();
   const viewOptions: Array<{ label: string; value: FinanceView }> = [
-    { label: "Overview", value: "overview" },
-    { label: "Insights", value: "insights" },
-    { label: "Revenue", value: "revenue" },
-    { label: "Services", value: "top-services" },
-    { label: "Expenses", value: "expenses" },
-    { label: "Profit", value: "profit" },
-    { label: "Cashflow", value: "cashflow" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k001"), value: "overview" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k002"), value: "insights" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k003"), value: "revenue" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k004"), value: "top-services" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k005"), value: "expenses" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k006"), value: "profit" },
+    { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k007"), value: "cashflow" },
   ];
 
   const options = availableViews?.length
@@ -63,7 +64,7 @@ export function FinanceFilters({
     <Row>
       <Left>
         <PeriodGroup>
-          <div className="label">Period</div>
+          <div className="label">{appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k008")}</div>
 
           <DatePicker.RangePicker
             value={periodValue}
@@ -80,7 +81,7 @@ export function FinanceFilters({
         {/* VIEW selector must be next to period */}
         {isMobile ? (
           <SelectGroup>
-            <div className="label">View</div>
+            <div className="label">{appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k009")}</div>
             <Select
               className="control"
               value={view}
@@ -102,15 +103,15 @@ export function FinanceFilters({
       <Right>
         {isMobile ? (
           <SelectGroup>
-            <div className="label">Group by</div>
+            <div className="label">{appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k010")}</div>
             <Select
               className="control"
               value={groupBy}
               onChange={(v) => onChangeGroupBy(v as FinanceGroupBy)}
               options={[
-                { label: "Day", value: "day" },
-                { label: "Week", value: "week" },
-                { label: "Month", value: "month" },
+                { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k011"), value: "day" },
+                { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k012"), value: "week" },
+                { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k013"), value: "month" },
               ]}
             />
           </SelectGroup>
@@ -120,9 +121,9 @@ export function FinanceFilters({
               value={groupBy}
               onChange={(v) => onChangeGroupBy(v as FinanceGroupBy)}
               options={[
-                { label: "Day", value: "day" },
-                { label: "Week", value: "week" },
-                { label: "Month", value: "month" },
+                { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k014"), value: "day" },
+                { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k015"), value: "week" },
+                { label: appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k016"), value: "month" },
               ]}
             />
           </SegmentedRail>
@@ -133,7 +134,7 @@ export function FinanceFilters({
           loading={!!loading}
           onClick={onRefresh}
         >
-          Refresh
+          {appI18n.t("legacyInline.finance.presentation_components_finance_filters_finance_filters_component.k017")}
         </Button>
       </Right>
     </Row>
