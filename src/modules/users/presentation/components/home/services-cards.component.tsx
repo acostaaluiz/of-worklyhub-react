@@ -1,9 +1,9 @@
 import React from "react";
 import { Col } from "antd";
-import { useNavigate } from "react-router-dom";
 import { resolveModulePath } from "@modules/users/presentation/utils/module-navigation";
 import {
   ServiceCard,
+  ServiceCardLink,
   ServiceContent,
   ServiceIcon,
   ServiceMeta,
@@ -19,30 +19,34 @@ type Props = {
 };
 
 export default function ServicesCards({ services }: Props) {
-  const navigate = useNavigate();
-
   return (
     <ServicesRow gutter={[16, 16]}>
       {services.map((s) => {
         const path = resolveModulePath({ id: s.id, title: s.title });
         const isDisabled = !path;
+        const cardContent = (
+          <ServiceContent>
+            <ServiceIcon>{s.icon}</ServiceIcon>
+            <ServiceMeta>
+              <ServiceTitle>{s.title}</ServiceTitle>
+              <ServiceSubtitle>{s.subtitle}</ServiceSubtitle>
+            </ServiceMeta>
+          </ServiceContent>
+        );
+
         return (
           <Col key={s.id} xs={24} sm={12} md={8} lg={6}>
-            <ServiceCard
-              hoverable={!isDisabled}
-              $disabled={isDisabled}
-              onClick={() => {
-                if (!isDisabled && path) navigate(path);
-              }}
-            >
-              <ServiceContent>
-                <ServiceIcon>{s.icon}</ServiceIcon>
-                <ServiceMeta>
-                  <ServiceTitle>{s.title}</ServiceTitle>
-                  <ServiceSubtitle>{s.subtitle}</ServiceSubtitle>
-                </ServiceMeta>
-              </ServiceContent>
-            </ServiceCard>
+            {isDisabled ? (
+              <ServiceCard hoverable={false} $disabled>
+                {cardContent}
+              </ServiceCard>
+            ) : (
+              <ServiceCardLink to={path}>
+                <ServiceCard hoverable $disabled={false}>
+                  {cardContent}
+                </ServiceCard>
+              </ServiceCardLink>
+            )}
           </Col>
         );
       })}

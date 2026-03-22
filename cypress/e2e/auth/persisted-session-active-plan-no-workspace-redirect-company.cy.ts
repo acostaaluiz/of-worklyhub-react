@@ -95,7 +95,6 @@ describe("Persisted session redirect with active plan and no workspace", () => {
       },
     });
 
-    cy.wait("@overviewRequest", { timeout: 30000 });
     cy.wait("@workspaceRequest", { timeout: 30000 });
 
     cy.location("pathname", { timeout: 40000 }).should("eq", "/company/introduction");

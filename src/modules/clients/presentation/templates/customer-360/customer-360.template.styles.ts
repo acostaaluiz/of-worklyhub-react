@@ -103,6 +103,13 @@ export const CardHeader = styled.div`
   align-items: center;
 `;
 
+export const CardFooter = styled.div`
+  padding: 8px 12px;
+  border-top: 1px solid var(--color-divider);
+  display: flex;
+  justify-content: flex-end;
+`;
+
 export const CardTitle = styled.h3`
   margin: 0;
   font-size: 18px;

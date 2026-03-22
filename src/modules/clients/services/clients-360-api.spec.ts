@@ -18,14 +18,29 @@ describe("Clients360Api", () => {
     };
     const { api, request } = createApi(payload);
 
-    const bundle = await api.getBundle("ws-1", "  john  ");
+    const bundle = await api.getBundle("ws-1", {
+      search: "  john  ",
+      profilesLimit: 20,
+      profilesOffset: 40,
+      timelineLimit: 30,
+      timelineOffset: 60,
+      clientId: " client-1 ",
+    });
 
     expect(bundle.source).toBe("backend");
     expect(request).toHaveBeenCalledWith(
       expect.objectContaining({
         method: "GET",
         url: "/clients/internal/customer-360",
-        query: { workspaceId: "ws-1", search: "john" },
+        query: {
+          workspaceId: "ws-1",
+          search: "john",
+          profilesLimit: 20,
+          profilesOffset: 40,
+          timelineLimit: 30,
+          timelineOffset: 60,
+          clientId: "client-1",
+        },
         headers: {
           Accept: "application/json",
           "x-workspace-id": "ws-1",
@@ -45,10 +60,13 @@ describe("Clients360Api", () => {
     };
     const { api, request } = createApi(payload);
 
-    const bundle = await api.getBundle("ws-2", "   ");
+    const bundle = await api.getBundle("ws-2", {
+      search: "   ",
+      profilesLimit: -1 as unknown as number,
+      profilesOffset: -2 as unknown as number,
+    });
 
     expect(bundle.source).toBe("aggregated");
     expect(request.mock.calls[0][0].query).toEqual({ workspaceId: "ws-2" });
   });
 });
-

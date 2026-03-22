@@ -25,6 +25,7 @@ Data da avaliacao: 2026-03-17
   - `google_credentials_file` (com fallback para ADC quando vazio).
 - `terraform.tfvars.example` atualizado para facilitar substituicao.
 - `infra/README.md` atualizado com passo de credencial antes do apply.
+- Firebase Web config no frontend parametrizado por `VITE_FIREBASE_*` (com fallback), removendo acoplamento fixo do projeto no codigo.
 
 ### Backend (Terraform completo)
 
@@ -57,6 +58,7 @@ Nos servicos `auth`, `company`, `finance`, `users` e `work-order`:
   - artefatos Terraform
   - JSON de credenciais em `infra/firebase/*.json`
   - JSON em `apps/*/*/secrets/*.json`
+- Arquivos JSON de Firebase previamente com chave real foram sanitizados com placeholders.
 
 ## Modelo de custo recomendado (baixo custo inicial)
 

@@ -45,6 +45,13 @@ import {
   ModuleTitle,
   ModuleToggleList,
   ModuleToggleRow,
+  PresetPaletteBadge,
+  PresetPaletteButton,
+  PresetPaletteGrid,
+  PresetPaletteMeta,
+  PresetPaletteSwatch,
+  PresetPaletteSwatches,
+  PresetPaletteTitle,
   SettingsShell,
   SettingsTemplateRoot,
   TabPaneBody,
@@ -99,65 +106,287 @@ const MODULE_OPTIONS: ModuleOption[] = [
 
 type AppearanceColorKey = keyof ThemeCustomColors;
 
-type AppearanceColorOption = {
-  key: AppearanceColorKey;
+type CompleteThemeColors = Required<ThemeCustomColors>;
+
+type AppearancePresetPalette = {
+  id: string;
   labelKey: string;
   descriptionKey: string;
-  cssVariable: string;
-  fallbackByMode: Record<ThemeMode, string>;
+  colorsByMode: Record<ThemeMode, CompleteThemeColors>;
 };
 
 const HEX_COLOR_PATTERN = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
 
-const APPEARANCE_COLOR_OPTIONS: AppearanceColorOption[] = [
+const APPEARANCE_COLOR_KEYS: AppearanceColorKey[] = [
+  "background",
+  "surface",
+  "surfaceAlt",
+  "primary",
+  "secondary",
+  "tertiary",
+  "text",
+];
+
+const APPEARANCE_PRESET_PALETTES: AppearancePresetPalette[] = [
   {
-    key: "background",
-    labelKey: "users.settings.appearance.customColors.options.background.label",
-    descriptionKey: "users.settings.appearance.customColors.options.background.description",
-    cssVariable: "--color-background",
-    fallbackByMode: { light: "#f4f6f9", dark: "#0f1f26" },
+    id: "atlas",
+    labelKey: "users.settings.appearance.customColors.presets.atlas.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.atlas.description",
+    colorsByMode: {
+      light: {
+        background: "#f4f6f9",
+        surface: "#ffffff",
+        surfaceAlt: "#eaf2ff",
+        primary: "#1e70ff",
+        secondary: "#00cfa3",
+        tertiary: "#7059ff",
+        text: "#071318",
+      },
+      dark: {
+        background: "#0f1f26",
+        surface: "#132a33",
+        surfaceAlt: "#173642",
+        primary: "#4de6d3",
+        secondary: "#2dd4bf",
+        tertiary: "#8b7bff",
+        text: "#e6f1f4",
+      },
+    },
   },
   {
-    key: "surface",
-    labelKey: "users.settings.appearance.customColors.options.surface.label",
-    descriptionKey: "users.settings.appearance.customColors.options.surface.description",
-    cssVariable: "--color-surface",
-    fallbackByMode: { light: "#ffffff", dark: "#132a33" },
+    id: "sunrise",
+    labelKey: "users.settings.appearance.customColors.presets.sunrise.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.sunrise.description",
+    colorsByMode: {
+      light: {
+        background: "#fff6ed",
+        surface: "#ffffff",
+        surfaceAlt: "#ffe9d7",
+        primary: "#ff7a00",
+        secondary: "#ff4d4f",
+        tertiary: "#a63ff0",
+        text: "#2b1206",
+      },
+      dark: {
+        background: "#2a160a",
+        surface: "#3a2114",
+        surfaceAlt: "#4b2b1b",
+        primary: "#ff9b45",
+        secondary: "#ff6a6d",
+        tertiary: "#c085ff",
+        text: "#ffeada",
+      },
+    },
   },
   {
-    key: "surfaceAlt",
-    labelKey: "users.settings.appearance.customColors.options.surfaceAlt.label",
-    descriptionKey: "users.settings.appearance.customColors.options.surfaceAlt.description",
-    cssVariable: "--color-surface-2",
-    fallbackByMode: { light: "#eef4ff", dark: "#173642" },
+    id: "forest",
+    labelKey: "users.settings.appearance.customColors.presets.forest.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.forest.description",
+    colorsByMode: {
+      light: {
+        background: "#f1f8f4",
+        surface: "#ffffff",
+        surfaceAlt: "#e1f3e8",
+        primary: "#198754",
+        secondary: "#0db39e",
+        tertiary: "#4b7f25",
+        text: "#0d1f14",
+      },
+      dark: {
+        background: "#102018",
+        surface: "#162a20",
+        surfaceAlt: "#1f372b",
+        primary: "#45c17a",
+        secondary: "#2dcab3",
+        tertiary: "#9bc56c",
+        text: "#e2f2e9",
+      },
+    },
   },
   {
-    key: "primary",
-    labelKey: "users.settings.appearance.customColors.options.primary.label",
-    descriptionKey: "users.settings.appearance.customColors.options.primary.description",
-    cssVariable: "--color-primary",
-    fallbackByMode: { light: "#1e70ff", dark: "#4de6d3" },
+    id: "berry",
+    labelKey: "users.settings.appearance.customColors.presets.berry.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.berry.description",
+    colorsByMode: {
+      light: {
+        background: "#fff3f7",
+        surface: "#ffffff",
+        surfaceAlt: "#ffe3ed",
+        primary: "#e83e8c",
+        secondary: "#c52c74",
+        tertiary: "#6f42c1",
+        text: "#26111a",
+      },
+      dark: {
+        background: "#29131f",
+        surface: "#3a1b2b",
+        surfaceAlt: "#4a2236",
+        primary: "#ff71ad",
+        secondary: "#e65a95",
+        tertiary: "#9e7ae0",
+        text: "#ffe5ef",
+      },
+    },
   },
   {
-    key: "secondary",
-    labelKey: "users.settings.appearance.customColors.options.secondary.label",
-    descriptionKey: "users.settings.appearance.customColors.options.secondary.description",
-    cssVariable: "--color-secondary",
-    fallbackByMode: { light: "#00d6a0", dark: "#2dd4bf" },
+    id: "ocean",
+    labelKey: "users.settings.appearance.customColors.presets.ocean.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.ocean.description",
+    colorsByMode: {
+      light: {
+        background: "#edf8fb",
+        surface: "#ffffff",
+        surfaceAlt: "#def0f7",
+        primary: "#0b84a5",
+        secondary: "#00a6fb",
+        tertiary: "#2b59c3",
+        text: "#08202b",
+      },
+      dark: {
+        background: "#0f2230",
+        surface: "#163042",
+        surfaceAlt: "#1b3f52",
+        primary: "#36b8d9",
+        secondary: "#54c5ff",
+        tertiary: "#7ea1ff",
+        text: "#ddf2fb",
+      },
+    },
   },
   {
-    key: "tertiary",
-    labelKey: "users.settings.appearance.customColors.options.tertiary.label",
-    descriptionKey: "users.settings.appearance.customColors.options.tertiary.description",
-    cssVariable: "--color-tertiary",
-    fallbackByMode: { light: "#7a2cff", dark: "#7a2cff" },
+    id: "graphite",
+    labelKey: "users.settings.appearance.customColors.presets.graphite.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.graphite.description",
+    colorsByMode: {
+      light: {
+        background: "#f5f7fa",
+        surface: "#ffffff",
+        surfaceAlt: "#e9edf3",
+        primary: "#4b5d73",
+        secondary: "#3c91e6",
+        tertiary: "#6b7280",
+        text: "#101927",
+      },
+      dark: {
+        background: "#131922",
+        surface: "#1a2431",
+        surfaceAlt: "#223040",
+        primary: "#8aa0b7",
+        secondary: "#6ab5ff",
+        tertiary: "#9aa5b1",
+        text: "#e8edf5",
+      },
+    },
   },
   {
-    key: "text",
-    labelKey: "users.settings.appearance.customColors.options.text.label",
-    descriptionKey: "users.settings.appearance.customColors.options.text.description",
-    cssVariable: "--color-text",
-    fallbackByMode: { light: "#071318", dark: "#e6f1f4" },
+    id: "mango",
+    labelKey: "users.settings.appearance.customColors.presets.mango.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.mango.description",
+    colorsByMode: {
+      light: {
+        background: "#fff8ed",
+        surface: "#ffffff",
+        surfaceAlt: "#ffefcf",
+        primary: "#ff9f1c",
+        secondary: "#ffbf00",
+        tertiary: "#ff6f3c",
+        text: "#2a1804",
+      },
+      dark: {
+        background: "#2a1b06",
+        surface: "#38250d",
+        surfaceAlt: "#493013",
+        primary: "#ffbc5b",
+        secondary: "#ffd250",
+        tertiary: "#ff8f63",
+        text: "#ffefd2",
+      },
+    },
+  },
+  {
+    id: "lagoon",
+    labelKey: "users.settings.appearance.customColors.presets.lagoon.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.lagoon.description",
+    colorsByMode: {
+      light: {
+        background: "#ecfbf9",
+        surface: "#ffffff",
+        surfaceAlt: "#d9f5ef",
+        primary: "#00bfa6",
+        secondary: "#00a8e8",
+        tertiary: "#2f5dff",
+        text: "#05211c",
+      },
+      dark: {
+        background: "#08231f",
+        surface: "#10312b",
+        surfaceAlt: "#154138",
+        primary: "#34d9c2",
+        secondary: "#4ec8ff",
+        tertiary: "#7d9fff",
+        text: "#d7f7f1",
+      },
+    },
+  },
+  {
+    id: "plum",
+    labelKey: "users.settings.appearance.customColors.presets.plum.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.plum.description",
+    colorsByMode: {
+      light: {
+        background: "#f9f2ff",
+        surface: "#ffffff",
+        surfaceAlt: "#efe2ff",
+        primary: "#7b2cbf",
+        secondary: "#9d4edd",
+        tertiary: "#4cc9f0",
+        text: "#1d112b",
+      },
+      dark: {
+        background: "#1c1030",
+        surface: "#261642",
+        surfaceAlt: "#32205a",
+        primary: "#b084f5",
+        secondary: "#c39dff",
+        tertiary: "#7cdfff",
+        text: "#efe5ff",
+      },
+    },
+  },
+  {
+    id: "copper",
+    labelKey: "users.settings.appearance.customColors.presets.copper.label",
+    descriptionKey:
+      "users.settings.appearance.customColors.presets.copper.description",
+    colorsByMode: {
+      light: {
+        background: "#faf4ee",
+        surface: "#ffffff",
+        surfaceAlt: "#f0e3d6",
+        primary: "#b35c2e",
+        secondary: "#8f7d43",
+        tertiary: "#d97706",
+        text: "#23150b",
+      },
+      dark: {
+        background: "#24170e",
+        surface: "#322015",
+        surfaceAlt: "#412a1c",
+        primary: "#d38a5a",
+        secondary: "#b79b63",
+        tertiary: "#f3a23e",
+        text: "#f5e8dc",
+      },
+    },
   },
 ];
 
@@ -177,8 +406,47 @@ function normalizeHexColor(value: unknown): string | null {
   return trimmed.toLowerCase();
 }
 
-function toColorInputValue(value: unknown, fallback: string): string {
-  return normalizeHexColor(value) ?? fallback;
+function normalizeThemeColors(
+  colors: ThemeCustomColors | null | undefined
+): ThemeCustomColors {
+  if (!colors || typeof colors !== "object") return {};
+
+  const normalized: ThemeCustomColors = {};
+  APPEARANCE_COLOR_KEYS.forEach((key) => {
+    const color = normalizeHexColor(colors[key]);
+    if (color) normalized[key] = color;
+  });
+
+  return normalized;
+}
+
+function areThemeColorsEqual(
+  left: ThemeCustomColors | null | undefined,
+  right: ThemeCustomColors | null | undefined
+): boolean {
+  const normalizedLeft = normalizeThemeColors(left);
+  const normalizedRight = normalizeThemeColors(right);
+
+  return APPEARANCE_COLOR_KEYS.every(
+    (key) => normalizedLeft[key] === normalizedRight[key]
+  );
+}
+
+function resolvePaletteSwatchColors(colors: ThemeCustomColors): string[] {
+  const defaultPalette = APPEARANCE_PRESET_PALETTES[0]?.colorsByMode.light;
+  const fallbackBackground = defaultPalette?.background ?? "#f4f6f9";
+  const fallbackSurfaceAlt = defaultPalette?.surfaceAlt ?? "#eaf2ff";
+  const fallbackPrimary = defaultPalette?.primary ?? "#1e70ff";
+  const fallbackSecondary = defaultPalette?.secondary ?? "#00cfa3";
+  const fallbackTertiary = defaultPalette?.tertiary ?? "#7059ff";
+
+  return [
+    normalizeHexColor(colors.background) ?? fallbackBackground,
+    normalizeHexColor(colors.surfaceAlt) ?? fallbackSurfaceAlt,
+    normalizeHexColor(colors.primary) ?? fallbackPrimary,
+    normalizeHexColor(colors.secondary) ?? fallbackSecondary,
+    normalizeHexColor(colors.tertiary) ?? fallbackTertiary,
+  ];
 }
 
 type NfeConfigurationFormValues = {
@@ -286,16 +554,6 @@ function toJsonText(value: DataValue): string | undefined {
   const keys = Object.keys(value as DataMap);
   if (keys.length <= 0) return undefined;
   return JSON.stringify(value, null, 2);
-}
-
-function readCssColorVariable(variableName: string, fallback: string): string {
-  if (typeof window === "undefined") return fallback;
-
-  const raw = getComputedStyle(document.documentElement)
-    .getPropertyValue(variableName)
-    .trim();
-
-  return toColorInputValue(raw, fallback);
 }
 
 function parseJsonObject(
@@ -548,32 +806,23 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     );
   };
 
-  const resolveAppearanceColor = React.useCallback(
-    (option: AppearanceColorOption): string => {
-      const fallback = option.fallbackByMode[themePreference];
-      const stored = normalizeHexColor(customColors[option.key]);
-      if (stored) return stored;
-      return readCssColorVariable(option.cssVariable, fallback);
-    },
+  const handlePresetPaletteSelect = (palette: AppearancePresetPalette) => {
+    const colors = palette.colorsByMode[themePreference];
+    themeService.setCustomColors(colors);
+    message.success(
+      t("users.settings.appearance.customColors.applySuccess", {
+        palette: t(palette.labelKey),
+      })
+    );
+  };
+
+  const activePresetPalette = React.useMemo(
+    () =>
+      APPEARANCE_PRESET_PALETTES.find((palette) =>
+        areThemeColorsEqual(customColors, palette.colorsByMode[themePreference])
+      ) ?? null,
     [customColors, themePreference]
   );
-
-  const handleCustomColorChange = (
-    option: AppearanceColorOption,
-    rawColor: string
-  ) => {
-    const normalized = toColorInputValue(
-      rawColor,
-      option.fallbackByMode[themePreference]
-    );
-
-    const nextColors: ThemeCustomColors = {
-      ...themeService.getCustomColors(),
-      [option.key]: normalized,
-    };
-
-    themeService.setCustomColors(nextColors);
-  };
 
   const handleResetCustomColors = () => {
     themeService.clearCustomColors();
@@ -584,6 +833,16 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
     () => Object.keys(customColors).length > 0,
     [customColors]
   );
+
+  const activePaletteStatus = React.useMemo(() => {
+    if (!hasCustomColors) {
+      return t("users.settings.appearance.customColors.states.default");
+    }
+    if (activePresetPalette) {
+      return t(activePresetPalette.labelKey);
+    }
+    return t("users.settings.appearance.customColors.states.custom");
+  }, [activePresetPalette, hasCustomColors, t]);
 
   const moduleTab = (
     <TabPaneBody>
@@ -1108,43 +1367,52 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
 
   const appearanceCustomColorsContent = (
     <AppearanceTabContent>
-      <ModuleToggleList>
-        {APPEARANCE_COLOR_OPTIONS.map((option) => {
-          const colorValue = resolveAppearanceColor(option);
+      <Alert
+        showIcon
+        type="info"
+        style={{ marginBottom: 8 }}
+        message={t("users.settings.appearance.customColors.introTitle")}
+        description={t("users.settings.appearance.customColors.introDescription")}
+      />
+
+      <PresetPaletteGrid>
+        {APPEARANCE_PRESET_PALETTES.map((palette) => {
+          const isSelected = activePresetPalette?.id === palette.id;
+          const swatches = resolvePaletteSwatchColors(
+            palette.colorsByMode[themePreference]
+          );
           return (
-            <ModuleToggleRow key={option.key}>
-              <div>
-                <ModuleTitle>{t(option.labelKey)}</ModuleTitle>
-                <ModuleDescription>{t(option.descriptionKey)}</ModuleDescription>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="color"
-                  value={colorValue}
-                  onChange={(event) =>
-                    handleCustomColorChange(option, event.target.value)
-                  }
-                  style={{
-                    width: 44,
-                    height: 32,
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 8,
-                    background: "transparent",
-                    cursor: "pointer",
-                  }}
-                  data-cy={`settings-appearance-color-${option.key}-picker`}
-                />
-                <Input
-                  value={colorValue.toUpperCase()}
-                  readOnly
-                  style={{ width: 108 }}
-                  data-cy={`settings-appearance-color-${option.key}-value`}
-                />
-              </div>
-            </ModuleToggleRow>
+            <PresetPaletteButton
+              key={palette.id}
+              type="button"
+              onClick={() => handlePresetPaletteSelect(palette)}
+              $selected={isSelected}
+              aria-pressed={isSelected}
+              data-cy={`settings-appearance-preset-${palette.id}-button`}
+            >
+              <PresetPaletteSwatches>
+                {swatches.map((swatchColor, index) => (
+                  <PresetPaletteSwatch
+                    key={`${palette.id}-swatch-${index}`}
+                    $color={swatchColor}
+                  />
+                ))}
+              </PresetPaletteSwatches>
+              <PresetPaletteMeta>
+                <div>
+                  <PresetPaletteTitle>{t(palette.labelKey)}</PresetPaletteTitle>
+                  <ModuleDescription>{t(palette.descriptionKey)}</ModuleDescription>
+                </div>
+                {isSelected ? (
+                  <PresetPaletteBadge>
+                    {t("users.settings.appearance.customColors.selected")}
+                  </PresetPaletteBadge>
+                ) : null}
+              </PresetPaletteMeta>
+            </PresetPaletteButton>
           );
         })}
-      </ModuleToggleList>
+      </PresetPaletteGrid>
 
       <ActionsRow style={{ gap: 8, flexWrap: "wrap" }}>
         <Button
@@ -1156,9 +1424,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
         </Button>
         <Button disabled data-cy="settings-appearance-custom-status">
           {t("users.settings.appearance.customColors.status", {
-            state: hasCustomColors
-              ? t("users.settings.appearance.customColors.states.enabled")
-              : t("users.settings.appearance.customColors.states.disabled"),
+            state: activePaletteStatus,
           })}
         </Button>
       </ActionsRow>

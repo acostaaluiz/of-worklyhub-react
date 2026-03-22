@@ -54,6 +54,7 @@ export class UsersAuthService {
   private clearCachedData(): void {
     localStorageProvider.remove(SESSION_KEY);
     localStorageProvider.remove(TOKEN_KEY);
+    this.clearBrowserStorage();
     try {
       usersService.clear();
     } catch {
@@ -80,30 +81,21 @@ export class UsersAuthService {
       // ignore
     }
 
-    // Defensive cleanup for stale keys from previous app versions or language caches.
-    this.purgeLocalStorageByPrefix([
-      "application.",
-      "company.",
-      "users.overview",
-      "users.aiTokens",
-      "users.aiTokenLedger",
-    ]);
-
     this.session$.next(null);
     themeService.refreshForCurrentUser();
   }
 
-  private purgeLocalStorageByPrefix(prefixes: string[]): void {
+  private clearBrowserStorage(): void {
     if (typeof window === "undefined") return;
+
     try {
-      const { localStorage } = window;
-      for (let index = localStorage.length - 1; index >= 0; index -= 1) {
-        const key = localStorage.key(index);
-        if (!key) continue;
-        if (prefixes.some((prefix) => key.startsWith(prefix))) {
-          localStorage.removeItem(key);
-        }
-      }
+      window.localStorage.clear();
+    } catch {
+      // ignore storage access errors
+    }
+
+    try {
+      window.sessionStorage.clear();
     } catch {
       // ignore storage access errors
     }

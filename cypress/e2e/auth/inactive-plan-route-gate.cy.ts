@@ -11,6 +11,17 @@ function createSeed(): InactivePlanSeed {
 }
 
 function mockInactivePlanApis(seed: InactivePlanSeed): void {
+  cy.intercept("GET", /\/company\/internal\/workspace(?:\?.*)?$/, {
+    statusCode: 200,
+    body: {
+      workspace: {
+        id: "ws-cypress-inactive-plan",
+        workspaceId: "ws-cypress-inactive-plan",
+        email: seed.email,
+      },
+    },
+  }).as("workspaceRequest");
+
   cy.intercept("GET", "**/me/overview*", {
     statusCode: 200,
     body: {
@@ -88,6 +99,7 @@ describe("Inactive plan route gate", () => {
       },
     });
 
+    cy.wait("@workspaceRequest", { timeout: 30000 });
     cy.wait("@overviewRequest", { timeout: 30000 });
     cy.location("pathname", { timeout: 40000 }).should("eq", "/billing/plans");
     cy.wait("@billingPlansRequest", { timeout: 30000 });

@@ -3,6 +3,7 @@ import { httpClient } from "@core/http/client.instance";
 import { companyService } from "@modules/company/services/company.service";
 import type {
   Client360Bundle,
+  Client360PaginationMeta,
   ClientProfile,
   ClientTimelineItem,
 } from "@modules/clients/interfaces/client-360.model";
@@ -19,6 +20,11 @@ type FetchClient360Options = {
   search?: string;
   from?: string;
   to?: string;
+  profilesLimit?: number;
+  profilesOffset?: number;
+  timelineLimit?: number;
+  timelineOffset?: number;
+  selectedClientId?: string;
 };
 
 type ClientSeed = {
@@ -31,6 +37,18 @@ type ClientSeed = {
 type MutableProfile = ClientProfile & {
   tagsSet: Set<string>;
 };
+
+type NormalizedPaginationQuery = {
+  profilesLimit: number;
+  profilesOffset: number;
+  timelineLimit: number;
+  timelineOffset: number;
+  selectedClientId?: string;
+};
+
+const DEFAULT_PROFILES_LIMIT = 20;
+const DEFAULT_TIMELINE_LIMIT = 20;
+const MAX_LIST_LIMIT = 200;
 
 const EMAIL_REGEX = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
 const PHONE_REGEX = /(\+?\d[\d\s().-]{7,}\d)/;
@@ -143,6 +161,60 @@ function updateDates(profile: MutableProfile, eventAt: string) {
   }
 }
 
+function toPositiveInt(value: number | undefined, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return fallback;
+  return Math.min(Math.floor(value), MAX_LIST_LIMIT);
+}
+
+function toNonNegativeInt(value: number | undefined): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return 0;
+  return Math.floor(value);
+}
+
+function normalizeClientId(value?: string): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function buildPaginationMeta(
+  total: number,
+  requestedLimit: number,
+  requestedOffset: number
+): { meta: Client360PaginationMeta; offset: number } {
+  const safeLimit = toPositiveInt(requestedLimit, DEFAULT_PROFILES_LIMIT);
+  const safeTotal = Math.max(0, Math.floor(Number.isFinite(total) ? total : 0));
+  const maxOffset =
+    safeTotal <= 0 ? 0 : Math.max(0, (Math.ceil(safeTotal / safeLimit) - 1) * safeLimit);
+  const safeOffset = Math.min(toNonNegativeInt(requestedOffset), maxOffset);
+  const consumed = Math.min(safeLimit, Math.max(0, safeTotal - safeOffset));
+  const hasMore = safeOffset + consumed < safeTotal;
+
+  return {
+    meta: {
+      limit: safeLimit,
+      offset: safeOffset,
+      total: safeTotal,
+      hasMore,
+      nextOffset: hasMore ? safeOffset + consumed : null,
+    },
+    offset: safeOffset,
+  };
+}
+
+function paginateRows<T>(
+  rows: T[],
+  requestedLimit: number,
+  requestedOffset: number
+): { rows: T[]; page: Client360PaginationMeta } {
+  const total = Array.isArray(rows) ? rows.length : 0;
+  const { meta, offset } = buildPaginationMeta(total, requestedLimit, requestedOffset);
+  return {
+    rows: rows.slice(offset, offset + meta.limit),
+    page: meta,
+  };
+}
+
 export class Clients360Service {
   private api = new Clients360Api(httpClient);
 
@@ -156,6 +228,103 @@ export class Clients360Service {
     const ws = companyService.getWorkspaceValue();
     if (!ws) return undefined;
     return toWorkspaceId((ws as DataMap)["workspaceId"]) ?? toWorkspaceId((ws as DataMap)["id"]);
+  }
+
+  private normalizePaginationQuery(options: FetchClient360Options): NormalizedPaginationQuery {
+    return {
+      profilesLimit: toPositiveInt(options.profilesLimit, DEFAULT_PROFILES_LIMIT),
+      profilesOffset: toNonNegativeInt(options.profilesOffset),
+      timelineLimit: toPositiveInt(options.timelineLimit, DEFAULT_TIMELINE_LIMIT),
+      timelineOffset: toNonNegativeInt(options.timelineOffset),
+      selectedClientId: normalizeClientId(options.selectedClientId),
+    };
+  }
+
+  private isValidPaginationMeta(
+    meta: Client360PaginationMeta | undefined
+  ): meta is Client360PaginationMeta {
+    if (!meta) return false;
+    return (
+      typeof meta.limit === "number" &&
+      Number.isFinite(meta.limit) &&
+      meta.limit > 0 &&
+      typeof meta.offset === "number" &&
+      Number.isFinite(meta.offset) &&
+      meta.offset >= 0 &&
+      typeof meta.total === "number" &&
+      Number.isFinite(meta.total) &&
+      meta.total >= 0 &&
+      typeof meta.hasMore === "boolean"
+    );
+  }
+
+  private applyLocalPagination(
+    bundle: Client360Bundle,
+    paginationQuery: NormalizedPaginationQuery
+  ): Client360Bundle {
+    const pagedProfiles = paginateRows(
+      bundle.profiles ?? [],
+      paginationQuery.profilesLimit,
+      paginationQuery.profilesOffset
+    );
+    const visibleProfileIds = new Set(pagedProfiles.rows.map((profile) => profile.id));
+    const scopedTimeline = (bundle.timeline ?? []).filter((event) => {
+      if (paginationQuery.selectedClientId) {
+        return event.clientId === paginationQuery.selectedClientId;
+      }
+      return visibleProfileIds.has(event.clientId);
+    });
+    const pagedTimeline = paginateRows(
+      scopedTimeline,
+      paginationQuery.timelineLimit,
+      paginationQuery.timelineOffset
+    );
+
+    return {
+      generatedAt: bundle.generatedAt,
+      source: bundle.source,
+      profiles: pagedProfiles.rows,
+      timeline: pagedTimeline.rows,
+      pagination: {
+        profiles: pagedProfiles.page,
+        timeline: pagedTimeline.page,
+      },
+    };
+  }
+
+  private normalizeBackendPagination(bundle: Client360Bundle): Client360Bundle {
+    const profilesPage = this.isValidPaginationMeta(bundle.pagination?.profiles)
+      ? buildPaginationMeta(
+          bundle.pagination!.profiles.total,
+          bundle.pagination!.profiles.limit,
+          bundle.pagination!.profiles.offset
+        ).meta
+      : buildPaginationMeta(bundle.profiles.length, bundle.profiles.length || 1, 0).meta;
+    const timelinePage = this.isValidPaginationMeta(bundle.pagination?.timeline)
+      ? buildPaginationMeta(
+          bundle.pagination!.timeline.total,
+          bundle.pagination!.timeline.limit,
+          bundle.pagination!.timeline.offset
+        ).meta
+      : buildPaginationMeta(bundle.timeline.length, bundle.timeline.length || 1, 0).meta;
+
+    return {
+      ...bundle,
+      pagination: {
+        profiles: profilesPage,
+        timeline: timelinePage,
+      },
+    };
+  }
+
+  private hasOversizedBackendPagePayload(bundle: Client360Bundle): boolean {
+    if (!this.isValidPaginationMeta(bundle.pagination?.profiles)) return false;
+    if (!this.isValidPaginationMeta(bundle.pagination?.timeline)) return false;
+
+    return (
+      bundle.profiles.length > bundle.pagination.profiles.limit ||
+      bundle.timeline.length > bundle.pagination.timeline.limit
+    );
   }
 
   private buildProfileKey(seed: ClientSeed): string {
@@ -477,12 +646,27 @@ export class Clients360Service {
 
   async fetchBundle(options: FetchClient360Options = {}): Promise<Client360Bundle> {
     const workspaceId = options.workspaceId ?? this.resolveWorkspaceId();
+    const paginationQuery = this.normalizePaginationQuery(options);
     if (!workspaceId) {
+      const emptyProfilesPage = buildPaginationMeta(
+        0,
+        paginationQuery.profilesLimit,
+        paginationQuery.profilesOffset
+      ).meta;
+      const emptyTimelinePage = buildPaginationMeta(
+        0,
+        paginationQuery.timelineLimit,
+        paginationQuery.timelineOffset
+      ).meta;
       return {
         generatedAt: new Date().toISOString(),
         source: "aggregated",
         profiles: [],
         timeline: [],
+        pagination: {
+          profiles: emptyProfilesPage,
+          timeline: emptyTimelinePage,
+        },
       };
     }
 
@@ -491,25 +675,48 @@ export class Clients360Service {
       (options.search ?? "").trim().toLowerCase(),
       options.from ?? "",
       options.to ?? "",
+      paginationQuery.profilesLimit,
+      paginationQuery.profilesOffset,
+      paginationQuery.timelineLimit,
+      paginationQuery.timelineOffset,
+      paginationQuery.selectedClientId ?? "",
     ].join("|");
     const inFlight = this.inFlightRequests.get(requestKey);
     if (inFlight) return inFlight;
 
     const request = (async () => {
       try {
-        const backendBundle = await this.api.getBundle(workspaceId, options.search);
+        const backendBundle = await this.api.getBundle(workspaceId, {
+          search: options.search,
+          profilesLimit: paginationQuery.profilesLimit,
+          profilesOffset: paginationQuery.profilesOffset,
+          timelineLimit: paginationQuery.timelineLimit,
+          timelineOffset: paginationQuery.timelineOffset,
+          clientId: paginationQuery.selectedClientId,
+        });
         if (
           backendBundle &&
           Array.isArray(backendBundle.profiles) &&
           Array.isArray(backendBundle.timeline)
         ) {
-          return backendBundle;
+          if (
+            this.isValidPaginationMeta(backendBundle.pagination?.profiles) &&
+            this.isValidPaginationMeta(backendBundle.pagination?.timeline)
+          ) {
+            const normalized = this.normalizeBackendPagination(backendBundle);
+            if (this.hasOversizedBackendPagePayload(normalized)) {
+              return this.applyLocalPagination(backendBundle, paginationQuery);
+            }
+            return normalized;
+          }
+          return this.applyLocalPagination(backendBundle, paginationQuery);
         }
       } catch {
         // fallback to aggregation for MVP
       }
 
-      return this.buildAggregatedBundle(workspaceId, options);
+      const aggregated = await this.buildAggregatedBundle(workspaceId, options);
+      return this.applyLocalPagination(aggregated, paginationQuery);
     })();
 
     this.inFlightRequests.set(requestKey, request);

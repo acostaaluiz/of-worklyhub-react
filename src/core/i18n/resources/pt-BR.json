@@ -659,10 +659,10 @@
       },
       "appearance": {
         "title": "Aparencia",
-        "subtitle": "Alterne entre tema claro e escuro e personalize cores principais opcionalmente.",
+        "subtitle": "Alterne entre tema claro e escuro e escolha paletas de cores curadas.",
         "tabs": {
           "theme": "Tema",
-          "customColors": "Cores personalizadas"
+          "customColors": "Paletas"
         },
         "theme": {
           "alertTitle": "Modo de tema",
@@ -681,41 +681,57 @@
           "updateSuccess": "Tema atualizado para {{mode}}."
         },
         "customColors": {
+          "introTitle": "Paletas predefinidas",
+          "introDescription": "Escolha uma paleta curada para manter contraste e consistencia visual em toda a aplicacao.",
+          "selected": "Ativa",
+          "applySuccess": "Paleta {{palette}} aplicada.",
           "reset": "Usar paleta padrao",
           "resetSuccess": "Cores personalizadas removidas. Paleta padrao restaurada.",
-          "status": "Paleta personalizada: {{state}}",
+          "status": "Paleta atual: {{state}}",
           "states": {
-            "enabled": "Ativada",
-            "disabled": "Desativada"
+            "default": "Padrao",
+            "custom": "Personalizada (legado)"
           },
-          "options": {
-            "background": {
-              "label": "Cor de fundo",
-              "description": "Cor principal de fundo da aplicacao."
+          "presets": {
+            "atlas": {
+              "label": "Atlas",
+              "description": "Azuis equilibrados e acentos menta no estilo base do WorklyHub."
             },
-            "surface": {
-              "label": "Cor de superficie",
-              "description": "Cor base de cards e paineis."
+            "sunrise": {
+              "label": "Sunrise",
+              "description": "Laranjas quentes e magenta para superficies mais vivas."
             },
-            "surfaceAlt": {
-              "label": "Cor de superficie alternativa",
-              "description": "Cor secundaria para paineis e camadas de superficie."
+            "forest": {
+              "label": "Forest",
+              "description": "Verdes e teais com contraste calmo para uso prolongado."
             },
-            "primary": {
-              "label": "Cor primaria",
-              "description": "Acoes principais, destaques e acentos interativos."
+            "berry": {
+              "label": "Berry",
+              "description": "Acentos rosa e violeta com boa legibilidade."
             },
-            "secondary": {
-              "label": "Cor secundaria",
-              "description": "Acentos secundarios e destaques de apoio."
+            "ocean": {
+              "label": "Ocean",
+              "description": "Ciano profundo e azul intenso para telas com muitos dados."
             },
-            "tertiary": {
-              "label": "Cor terciaria",
-              "description": "Acento complementar usado em gradientes e detalhes."
+            "graphite": {
+              "label": "Graphite",
+              "description": "Tons neutros de grafite com acoes em azul discreto."
             },
-            "text": {
-              "label": "Cor do texto",
-              "description": "Cor principal para titulos e conteudo."
+            "mango": {
+              "label": "Mango",
+              "description": "Acentos dourados e laranja com visual mais quente."
+            },
+            "lagoon": {
+              "label": "Lagoon",
+              "description": "Paleta aqua fresca com contraste forte nas acoes."
+            },
+            "plum": {
+              "label": "Plum",
+              "description": "Base roxa com acentos frios de apoio."
+            },
+            "copper": {
+              "label": "Copper",
+              "description": "Paleta terrosa em bronze com contraste conservador."
             }
           }
         }

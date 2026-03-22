@@ -23,6 +23,10 @@ import {
 } from "./checkout-form.component.styles";
 
 import { billingService } from "@modules/billing/services/billing.service";
+import { companyService } from "@modules/company/services/company.service";
+import { usersAuthService } from "@modules/users/services/auth.service";
+import { usersOverviewService } from "@modules/users/services/overview.service";
+import { isActivePlan } from "@modules/users/services/plan-status";
 import type {
   BillingCycle,
   BillingPlan,
@@ -61,6 +65,13 @@ const CHECKOUT_GATEWAY_HOSTS: Record<PaymentGateway, readonly string[]> = {
   ],
   paypal: ["paypal.com"],
 };
+
+type SessionLike = {
+  email?: string;
+  claims?: {
+    email?: string;
+  } | null;
+} | null;
 
 export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
   private formRef = React.createRef<FormInstance<CheckoutValues>>();
@@ -134,7 +145,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
 
   protected override renderError(error: DataValue | Error): React.ReactNode {
     return (
-      <FormCard className="surface" styles={{ body: { padding: 0 } }}>
+      <FormCard className="surface" styles={{ body: { padding: 0 } }} data-cy="billing-checkout-error-card">
         <CardBody>
           <Space direction="vertical" size={16} style={{ width: "100%" }}>
             <Typography.Title level={4} style={{ margin: 0 }}>
@@ -149,17 +160,18 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
             />
 
             <Row style={{ justifyContent: "space-between" }}>
-              <SecondaryButton size="large" onClick={() => navigateTo("/billing/plans")}>
+              <SecondaryButton size="large" onClick={() => navigateTo("/billing/plans")} data-cy="billing-checkout-error-back-button">
                 {appI18n.t("billing.checkout.errorView.backToPlans")}
               </SecondaryButton>
 
-              <PrimaryButton
-                type="primary"
-                size="large"
-                onClick={() => {
-                  void this.handleRetry();
-                }}
-              >
+                <PrimaryButton
+                  type="primary"
+                  size="large"
+                  onClick={() => {
+                    void this.handleRetry();
+                  }}
+                  data-cy="billing-checkout-error-retry-button"
+                >
                 <ButtonIcon aria-hidden>
                   <RotateCcw size={16} />
                 </ButtonIcon>
@@ -196,6 +208,50 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
       includeWindowHost: false,
     });
     return toSafeExternalUrl(url, { allowedHosts: trustedHosts });
+  }
+
+  private resolveSessionEmail(session: SessionLike): string | undefined {
+    const fromSession = session?.email;
+    if (typeof fromSession === "string" && fromSession.trim().length > 0) {
+      return fromSession.trim();
+    }
+
+    const fromClaims = session?.claims?.email;
+    if (typeof fromClaims === "string" && fromClaims.trim().length > 0) {
+      return fromClaims.trim();
+    }
+
+    return undefined;
+  }
+
+  private async resolvePostCheckoutRoute(): Promise<string> {
+    let profile = usersOverviewService.getOverviewValue()?.profile ?? null;
+    let resolvedEmail =
+      profile?.email ?? this.resolveSessionEmail(usersAuthService.getSessionValue() as SessionLike);
+
+    try {
+      const overview = await usersOverviewService.fetchOverview();
+      if (overview?.profile) {
+        profile = overview.profile;
+        resolvedEmail = overview.profile.email ?? resolvedEmail;
+      }
+    } catch {
+      // keep cached profile/email when overview request fails
+    }
+
+    let workspaceExists = companyService.getWorkspaceValue() ? true : false;
+    if (resolvedEmail) {
+      try {
+        const workspace = await companyService.fetchWorkspaceByEmail(resolvedEmail);
+        workspaceExists = workspace ? true : false;
+      } catch {
+        workspaceExists = companyService.getWorkspaceValue() ? true : false;
+      }
+    }
+
+    if (!workspaceExists) return "/company/introduction";
+    if (isActivePlan(profile)) return "/home";
+    return "/billing/plans";
   }
 
   protected override renderView(): React.ReactNode {
@@ -249,7 +305,25 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
         }
 
         if (data?.status === "approved") {
+          const planNumber = Number(data?.plan?.dbId ?? data?.plan?.id);
+          usersOverviewService.setActivePlanFromCheckout({
+            email: values.email ?? this.resolveSessionEmail(usersAuthService.getSessionValue() as SessionLike),
+            name: values.fullName,
+            planId: Number.isFinite(planNumber) ? planNumber : undefined,
+            planTitle: data?.plan?.name,
+          });
+          try {
+            // Always sync with backend entitlement after approved checkout
+            // to avoid keeping stale modules from a previous plan.
+            await usersOverviewService.fetchOverview(true);
+          } catch {
+            // keep optimistic overview as fallback
+          }
+
           message.success(appI18n.t("billing.checkout.messages.paymentApproved"));
+          const nextRoute = await this.resolvePostCheckoutRoute();
+          navigateTo(nextRoute, { replace: true });
+          return;
         } else if (data?.status === "pending") {
           message.info(appI18n.t("billing.checkout.messages.paymentPending"));
         } else {
@@ -270,7 +344,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     const { gateway, paymentConfigured } = this.state;
 
     return (
-      <FormCard className="surface" styles={{ body: { padding: 0 } }}>
+      <FormCard className="surface" styles={{ body: { padding: 0 } }} data-cy="billing-checkout-form-card">
         <CardBody>
           <Space direction="vertical" size={14} style={{ width: "100%", flex: 1 }}>
             <div>
@@ -317,6 +391,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
               }}
               onFinish={handleSubmit}
               style={{ width: "100%", display: "flex", flexDirection: "column", flex: 1 }}
+              data-cy="billing-checkout-form"
             >
               <SectionTitle>
                 <Typography.Text strong>{appI18n.t("billing.checkout.form.contact")}</Typography.Text>
@@ -332,6 +407,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   <Input
                     size="large"
                     placeholder={appI18n.t("billing.checkout.form.fullNamePlaceholder")}
+                    data-cy="billing-checkout-full-name-input"
                     prefix={
                       <FieldIcon aria-hidden>
                         <User size={18} />
@@ -355,6 +431,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                     size="large"
                     placeholder={appI18n.t("billing.checkout.form.emailPlaceholder")}
                     autoComplete="email"
+                    data-cy="billing-checkout-email-input"
                     prefix={
                       <FieldIcon aria-hidden>
                         <Mail size={18} />
@@ -373,6 +450,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   <Input
                     size="large"
                     placeholder={appI18n.t("billing.checkout.form.companyPlaceholder")}
+                    data-cy="billing-checkout-company-input"
                     prefix={
                       <FieldIcon aria-hidden>
                         <Building2 size={18} />
@@ -389,6 +467,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   size="large"
                   htmlType="button"
                   onClick={() => navigateTo("/billing/plans")}
+                  data-cy="billing-checkout-change-plan-button"
                 >
                   {appI18n.t("billing.checkout.form.changePlan")}
                 </SecondaryButton>
@@ -399,6 +478,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                   size="large"
                   loading={this.state.submitting}
                   disabled={!paymentConfigured}
+                  data-cy="billing-checkout-submit-button"
                 >
                   <ButtonIcon aria-hidden>
                     <Lock size={18} />

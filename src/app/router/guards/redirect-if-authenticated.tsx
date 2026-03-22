@@ -52,36 +52,20 @@ export default function RedirectIfAuthenticated() {
       let resolvedProfile = usersOverviewService.getOverviewValue()?.profile ?? null;
       let resolvedEmail = resolveSessionEmail(session as SessionLike) ?? resolvedProfile?.email;
 
-      try {
-        const overview = await usersOverviewService.fetchOverview(true);
-        if (overview?.profile) {
-          resolvedProfile = overview.profile;
-          resolvedEmail = overview.profile.email ?? resolvedEmail;
-        }
-      } catch {
-        // keep cached profile when overview request fails
-      }
-
-      if (!resolvedProfile && resolvedEmail) {
+      if (!resolvedEmail) {
         try {
-          resolvedProfile = await usersService.fetchByEmail(resolvedEmail);
-          resolvedEmail = resolvedProfile?.email ?? resolvedEmail;
+          const overview = await usersOverviewService.fetchOverview(true);
+          if (overview?.profile) {
+            resolvedProfile = overview.profile;
+            resolvedEmail = overview.profile.email ?? resolvedEmail;
+          }
         } catch {
-          // keep unresolved profile when user endpoint fails
+          // keep unresolved email/profile when overview request fails
         }
-      }
-
-      const activePlan = isActivePlan(resolvedProfile);
-      if (!cancelled) setHasActivePlan(activePlan);
-
-      if (!activePlan) {
-        if (!cancelled) setHasWorkspace(false);
-        if (!cancelled) setRedirectReady(true);
-        return;
       }
 
       let workspaceExists = companyService.getWorkspaceValue() ? true : false;
-      if (resolvedEmail) {
+      if (resolvedEmail && !workspaceExists) {
         try {
           const workspace = await companyService.fetchWorkspaceByEmail(resolvedEmail);
           workspaceExists = workspace ? true : false;
@@ -91,6 +75,47 @@ export default function RedirectIfAuthenticated() {
       }
 
       if (!cancelled) setHasWorkspace(workspaceExists);
+
+      if (!workspaceExists) {
+        if (!cancelled) setHasActivePlan(false);
+        if (!cancelled) setRedirectReady(true);
+        return;
+      }
+
+      if (!resolvedProfile) {
+        try {
+          const overview = await usersOverviewService.fetchOverview(true);
+          if (overview?.profile) {
+            resolvedProfile = overview.profile;
+            resolvedEmail = overview.profile.email ?? resolvedEmail;
+          }
+        } catch {
+          // keep cached profile when overview request fails
+        }
+      }
+
+      if (resolvedProfile && !isActivePlan(resolvedProfile)) {
+        try {
+          const refreshed = await usersOverviewService.fetchOverview(true);
+          if (refreshed?.profile) {
+            resolvedProfile = refreshed.profile;
+            resolvedEmail = refreshed.profile.email ?? resolvedEmail;
+          }
+        } catch {
+          // keep resolved profile when forced refresh fails
+        }
+      }
+
+      if (!resolvedProfile && resolvedEmail) {
+        try {
+          resolvedProfile = await usersService.fetchByEmail(resolvedEmail);
+        } catch {
+          // keep unresolved profile when user endpoint fails
+        }
+      }
+
+      const activePlan = isActivePlan(resolvedProfile);
+      if (!cancelled) setHasActivePlan(activePlan);
       if (!cancelled) setRedirectReady(true);
     };
 
@@ -103,11 +128,11 @@ export default function RedirectIfAuthenticated() {
 
   if (session) {
     if (!redirectReady) return null;
-    if (hasActivePlan === false) {
-      return <Navigate to="/billing/plans" state={{ from: location.pathname }} replace />;
-    }
     if (hasWorkspace === false) {
       return <Navigate to="/company/introduction" state={{ from: location.pathname }} replace />;
+    }
+    if (hasActivePlan === false) {
+      return <Navigate to="/billing/plans" state={{ from: location.pathname }} replace />;
     }
     return <Navigate to="/home" state={{ from: location.pathname }} replace />;
   }

@@ -10,6 +10,7 @@ import {
   type UserOverviewProfile,
   type UserOverviewResponse,
 } from "./overview-api";
+import { isActivePlan } from "./plan-status";
 
 export type UserOverview = {
   profile: UserOverviewProfile | null;
@@ -35,6 +36,37 @@ type RawProfile = UserOverviewProfile & {
   profile_photo_path?: string;
   plan_status?: "ACTIVE-PLAN" | "INACTIVE-PLAN";
 };
+
+const LEGACY_CHECKOUT_FALLBACK_KEYS = new Set(["billing", "company", "dashboard"]);
+
+function toNormalizedModuleKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const key = value.trim().toLowerCase();
+  if (!key) return null;
+  if (key === "workorder") return "work-order";
+  if (key === "service") return "services";
+  return key;
+}
+
+function isLegacyCheckoutFallbackModules(
+  modules: UserOverviewModule[] | null | undefined
+): boolean {
+  const current = Array.isArray(modules) ? modules : [];
+  if (current.length !== LEGACY_CHECKOUT_FALLBACK_KEYS.size) return false;
+
+  const found = new Set<string>();
+  current.forEach((module) => {
+    const uid = toNormalizedModuleKey(module?.uid);
+    const name = toNormalizedModuleKey(module?.name);
+    const resolved = uid ?? name;
+    if (!resolved) return;
+    found.add(resolved);
+  });
+
+  if (found.size !== LEGACY_CHECKOUT_FALLBACK_KEYS.size) return false;
+
+  return [...LEGACY_CHECKOUT_FALLBACK_KEYS].every((key) => found.has(key));
+}
 
 function unwrapOverviewPayload(
   value: UserOverviewResponse | { data?: UserOverviewResponse },
@@ -99,7 +131,10 @@ export class UsersOverviewService {
       }
 
       const cached = parsed?.overview ?? null;
-      if (cached?.modules && cached.modules.length === 0) {
+      if (
+        (cached?.modules && cached.modules.length === 0) ||
+        isLegacyCheckoutFallbackModules(cached?.modules)
+      ) {
         return { overview: null, language: null };
       }
 
@@ -116,6 +151,21 @@ export class UsersOverviewService {
     const currentLanguage = getCurrentAppLanguage();
     if (this.cachedLanguage && this.cachedLanguage !== currentLanguage) {
       this.clear();
+    }
+  }
+
+  private persistOverview(
+    overview: UserOverview,
+    language = getCurrentAppLanguage()
+  ): void {
+    this.cachedLanguage = language;
+    this.subject.next(overview);
+    try {
+      const user = getCurrentSessionEmail();
+      const cache: CachedOverview = { user, language, overview };
+      localStorageProvider.set(OVERVIEW_KEY, JSON.stringify(cache));
+    } catch {
+      // ignore cache errors
     }
   }
 
@@ -142,7 +192,14 @@ export class UsersOverviewService {
 
     if (!force) {
       const existing = this.getOverviewValue();
-      if (existing != null && this.cachedLanguage === currentLanguage) return existing;
+      const modules = Array.isArray(existing?.modules) ? existing.modules : [];
+      const shouldReuseCache =
+        existing != null &&
+        this.cachedLanguage === currentLanguage &&
+        !isLegacyCheckoutFallbackModules(modules) &&
+        (modules.length > 0 || !isActivePlan(existing?.profile));
+
+      if (shouldReuseCache) return existing;
     }
 
     if (this.pending) return this.pending;
@@ -158,15 +215,7 @@ export class UsersOverviewService {
         modules,
       };
 
-      this.cachedLanguage = currentLanguage;
-      this.subject.next(overview);
-      try {
-        const user = getCurrentSessionEmail();
-        const cache: CachedOverview = { user, language: currentLanguage, overview };
-        localStorageProvider.set(OVERVIEW_KEY, JSON.stringify(cache));
-      } catch {
-        // ignore cache errors
-      }
+      this.persistOverview(overview, currentLanguage);
 
       return overview;
     })();
@@ -176,6 +225,44 @@ export class UsersOverviewService {
     } finally {
       this.pending = null;
     }
+  }
+
+  setActivePlanFromCheckout(args: {
+    email?: string | null;
+    name?: string | null;
+    planId?: number | string | null;
+    planTitle?: string | null;
+  }): void {
+    this.ensureLanguageConsistency();
+    const existing = this.getOverviewValue();
+    const planNumber = Number(args.planId);
+    const normalizedPlanId =
+      Number.isFinite(planNumber) && planNumber > 0 ? planNumber : undefined;
+
+    const emailCandidate =
+      (typeof args.email === "string" ? args.email.trim() : "") ||
+      String(existing?.profile?.email ?? "").trim() ||
+      String(getCurrentSessionEmail() ?? "").trim();
+    if (!emailCandidate) return;
+
+    const currentProfile = existing?.profile ?? null;
+    const nextProfile: UserOverviewProfile = {
+      ...(currentProfile ?? {}),
+      email: emailCandidate,
+      planStatus: "ACTIVE-PLAN",
+      ...(normalizedPlanId ? { planId: normalizedPlanId } : {}),
+      ...(typeof args.planTitle === "string" && args.planTitle.trim().length > 0
+        ? { planTitle: args.planTitle.trim() }
+        : {}),
+      ...(typeof args.name === "string" && args.name.trim().length > 0
+        ? { name: args.name.trim() }
+        : {}),
+    };
+
+    const currentModules = Array.isArray(existing?.modules) ? existing?.modules : [];
+    const modules = currentModules;
+
+    this.persistOverview({ profile: nextProfile, modules });
   }
 
   clear(): void {

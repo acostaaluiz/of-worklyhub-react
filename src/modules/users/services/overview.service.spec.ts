@@ -110,6 +110,37 @@ describe("UsersOverviewService", () => {
     });
   });
 
+  it("ignores legacy checkout fallback cache with only billing/company/dashboard modules", () => {
+    mockedStorage.get.mockImplementation((key: string) => {
+      if (key === "users.overview") {
+        return JSON.stringify({
+          user: "owner@worklyhub.com",
+          language: "pt-BR",
+          overview: {
+            profile: {
+              email: "owner@worklyhub.com",
+              planStatus: "ACTIVE-PLAN",
+              planId: 3,
+            },
+            modules: [
+              { uid: "billing", name: "Billing" },
+              { uid: "company", name: "Company" },
+              { uid: "dashboard", name: "Dashboard" },
+            ],
+          },
+        });
+      }
+      if (key === "auth.session") {
+        return JSON.stringify({ email: "owner@worklyhub.com" });
+      }
+      return null;
+    });
+
+    const service = new UsersOverviewService();
+
+    expect(service.getOverviewValue()).toBeNull();
+  });
+
   it("ignores cached overview when cached modules are empty", () => {
     mockedStorage.get.mockImplementation((key: string) => {
       if (key === "users.overview") {
@@ -221,6 +252,63 @@ describe("UsersOverviewService", () => {
       },
       modules: [],
     });
+  });
+
+  it("does not inject placeholder modules when setting active plan from checkout", () => {
+    mockedStorage.get.mockImplementation((key: string) => {
+      if (key === "auth.session") {
+        return JSON.stringify({ email: "owner@worklyhub.com" });
+      }
+      return null;
+    });
+    const service = new UsersOverviewService();
+
+    service.setActivePlanFromCheckout({
+      email: "owner@worklyhub.com",
+      name: "Owner",
+      planId: 3,
+      planTitle: "Premium",
+    });
+
+    expect(service.getOverviewValue()).toEqual({
+      profile: {
+        email: "owner@worklyhub.com",
+        name: "Owner",
+        planId: 3,
+        planTitle: "Premium",
+        planStatus: "ACTIVE-PLAN",
+      },
+      modules: [],
+    });
+  });
+
+  it("forces API refresh when cached active plan has empty modules", async () => {
+    mockedStorage.get.mockImplementation((key: string) => {
+      if (key === "auth.session") {
+        return JSON.stringify({ email: "owner@worklyhub.com" });
+      }
+      return null;
+    });
+    apiMock.getOverview.mockResolvedValueOnce({
+      profile: {
+        email: "owner@worklyhub.com",
+        planStatus: "ACTIVE-PLAN",
+        planId: 3,
+      },
+      modules: [{ uid: "growth", name: "Growth" }],
+    });
+    const service = new UsersOverviewService();
+
+    service.setActivePlanFromCheckout({
+      email: "owner@worklyhub.com",
+      planId: 3,
+      planTitle: "Premium",
+    });
+
+    const overview = await service.fetchOverview();
+
+    expect(apiMock.getOverview).toHaveBeenCalledTimes(1);
+    expect(overview?.modules).toEqual([{ uid: "growth", name: "Growth" }]);
   });
 
   it("reuses pending request when fetchOverview is called concurrently", async () => {

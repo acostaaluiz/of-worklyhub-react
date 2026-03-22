@@ -1,4 +1,5 @@
 import styled, { css } from "styled-components";
+import { Link } from "react-router-dom";
 
 type LandingVariant = "default" | "soft-accent";
 
@@ -81,7 +82,7 @@ export const LandingGrid = styled.div<{ $columns?: number }>`
   }
 `;
 
-export const LandingCard = styled.button<{ $disabled?: boolean; $variant?: LandingVariant }>`
+const landingCardBaseStyles = css<{ $disabled?: boolean; $variant?: LandingVariant }>`
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -100,22 +101,38 @@ export const LandingCard = styled.button<{ $disabled?: boolean; $variant?: Landi
       ? "linear-gradient(140deg, color-mix(in srgb, var(--color-surface-2) 72%, transparent), var(--color-surface))"
       : "var(--color-surface)"};
   color: var(--color-text);
-  appearance: none;
+  text-decoration: none;
   cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   opacity: ${({ $disabled }) => ($disabled ? 0.6 : 1)};
   box-shadow: ${({ $variant }) => ($variant === "soft-accent" ? "var(--shadow-sm)" : "none")};
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 
-  &:hover {
-    transform: ${({ $disabled, $variant }) =>
-      $disabled ? "none" : $variant === "soft-accent" ? "translateY(-2px)" : "translateY(-1px)"};
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: ${({ $disabled, $variant }) =>
+        $disabled ? "none" : $variant === "soft-accent" ? "translateY(-2px)" : "translateY(-1px)"};
+      box-shadow: ${({ $disabled, $variant }) =>
+        $disabled ? "none" : $variant === "soft-accent" ? "var(--shadow-md)" : "var(--shadow-sm)"};
+      border-color: ${({ $disabled, $variant }) =>
+        $disabled
+          ? "var(--color-divider)"
+          : $variant === "soft-accent"
+            ? "color-mix(in srgb, var(--color-primary) 52%, var(--color-border))"
+            : "var(--color-primary)"};
+    }
+  }
+
+  &:active {
+    transform: none;
     box-shadow: ${({ $disabled, $variant }) =>
-      $disabled ? "none" : $variant === "soft-accent" ? "var(--shadow-md)" : "var(--shadow-sm)"};
+      $disabled ? "none" : $variant === "soft-accent" ? "var(--shadow-sm)" : "none"};
     border-color: ${({ $disabled, $variant }) =>
       $disabled
         ? "var(--color-divider)"
         : $variant === "soft-accent"
-          ? "color-mix(in srgb, var(--color-primary) 52%, var(--color-border))"
+          ? "color-mix(in srgb, var(--color-primary) 42%, var(--color-border))"
           : "var(--color-primary)"};
   }
 
@@ -123,6 +140,16 @@ export const LandingCard = styled.button<{ $disabled?: boolean; $variant?: Landi
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
+`;
+
+export const LandingCard = styled.button<{ $disabled?: boolean; $variant?: LandingVariant }>`
+  font: inherit;
+  appearance: none;
+  ${landingCardBaseStyles}
+`;
+
+export const LandingCardLink = styled(Link)<{ $disabled?: boolean; $variant?: LandingVariant }>`
+  ${landingCardBaseStyles}
 `;
 
 export const CardIcon = styled.div<{ $disabled?: boolean; $variant?: LandingVariant }>`

@@ -220,7 +220,7 @@ export class PlanSelector extends BaseComponent<
     const selectedId = this.props.recommendedPlanId ?? this.state.selectedPlanId;
 
     return (
-      <div>
+      <div data-cy="billing-plan-selector">
         <HeaderRow>
           <div>
             <Typography.Title level={3} style={{ margin: 0 }}>
@@ -237,6 +237,7 @@ export class PlanSelector extends BaseComponent<
                 { label: appI18n.t("billing.planSelector.interval.monthly"), value: "monthly" },
                 { label: appI18n.t("billing.planSelector.interval.yearly"), value: "yearly" },
               ]}
+              data-cy="billing-plan-interval-segmented"
             />
             {interval === "yearly" ? (
               <PlanMeta>{appI18n.t("billing.planSelector.discountLabel")}</PlanMeta>
@@ -252,7 +253,7 @@ export class PlanSelector extends BaseComponent<
             const isSelected = plan.id === selectedId;
 
             return (
-              <PlanCard key={plan.id} className="surface" $highlight={!!isSelected}>
+              <PlanCard key={plan.id} className="surface" $highlight={!!isSelected} data-cy={`billing-plan-card-${plan.id}`}>
                 <CardTop>
                   {isSelected ? (
                     <RecommendedBadge>
@@ -288,7 +289,13 @@ export class PlanSelector extends BaseComponent<
 
                 <CardFooter>
                   <Space direction="vertical" size={10} style={{ width: "100%" }}>
-                    <Button type={isSelected ? "primary" : "default"} size="large" block onClick={() => this.handleSelectPlan(plan.id)}>
+                    <Button
+                      type={isSelected ? "primary" : "default"}
+                      size="large"
+                      block
+                      onClick={() => this.handleSelectPlan(plan.id)}
+                      data-cy={`billing-plan-select-${plan.id}`}
+                    >
                       {plan.cta}
                     </Button>
 

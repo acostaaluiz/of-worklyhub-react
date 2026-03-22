@@ -15,7 +15,7 @@ export function PlanSelectionTemplate({ plans, onSelectPlan, recommendedPlanId }
     <BaseTemplate
       content={
         <>
-          <TemplateShell>
+          <TemplateShell data-cy="billing-plan-selection-page">
             <PlanSelector plans={plans} onSelectPlan={onSelectPlan} recommendedPlanId={recommendedPlanId} />
           </TemplateShell>
         </>

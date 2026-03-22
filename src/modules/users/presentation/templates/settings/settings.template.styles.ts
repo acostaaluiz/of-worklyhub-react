@@ -325,3 +325,90 @@ export const AppearanceTabContent = styled.div`
   gap: 8px;
   min-height: 0;
 `;
+
+export const PresetPaletteGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+`;
+
+export const PresetPaletteButton = styled.button<{ $selected?: boolean }>`
+  width: 100%;
+  border: 1px solid
+    ${({ $selected }) =>
+      $selected
+        ? "color-mix(in srgb, var(--color-primary) 65%, var(--color-border))"
+        : "var(--color-border)"};
+  border-radius: var(--radius-sm);
+  background: ${({ $selected }) =>
+    $selected
+      ? "color-mix(in srgb, var(--color-primary) 10%, var(--color-surface))"
+      : "color-mix(in srgb, var(--color-surface-2) 72%, transparent)"};
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease;
+  box-shadow: ${({ $selected }) => ($selected ? "var(--shadow-sm)" : "none")};
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--color-primary) 48%, var(--color-border));
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-primary) 70%, transparent);
+    outline-offset: 2px;
+  }
+`;
+
+export const PresetPaletteSwatches = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+`;
+
+export const PresetPaletteSwatch = styled.span<{ $color: string }>`
+  display: block;
+  width: 100%;
+  min-height: 18px;
+  background: ${({ $color }) => $color};
+`;
+
+export const PresetPaletteMeta = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+`;
+
+export const PresetPaletteTitle = styled.span`
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+`;
+
+export const PresetPaletteBadge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+`;

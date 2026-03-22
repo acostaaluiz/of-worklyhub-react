@@ -23,7 +23,7 @@ export function CheckoutTemplate() {
     <BaseTemplate
       content={
         <>
-          <Shell className="surface">
+          <Shell className="surface" data-cy="billing-checkout-page">
             <HeaderRow>
               <HeaderText>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

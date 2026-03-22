@@ -30,10 +30,23 @@ export type ClientTimelineItem = {
   referenceId?: string | null;
 };
 
+export type Client360PaginationMeta = {
+  limit: number;
+  offset: number;
+  total: number;
+  hasMore: boolean;
+  nextOffset: number | null;
+};
+
+export type Client360Pagination = {
+  profiles: Client360PaginationMeta;
+  timeline: Client360PaginationMeta;
+};
+
 export type Client360Bundle = {
   generatedAt: string;
   source: Client360Source;
   profiles: ClientProfile[];
   timeline: ClientTimelineItem[];
+  pagination?: Client360Pagination;
 };
-

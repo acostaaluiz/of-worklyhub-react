@@ -14,6 +14,10 @@ const EMPTY_BUNDLE: Client360Bundle = {
   source: "aggregated",
   profiles: [],
   timeline: [],
+  pagination: {
+    profiles: { limit: 20, offset: 0, total: 0, hasMore: false, nextOffset: null },
+    timeline: { limit: 20, offset: 0, total: 0, hasMore: false, nextOffset: null },
+  },
 };
 
 function resolveWorkspaceIdFromValue(value: DataValue): string | undefined {
@@ -36,6 +40,10 @@ function Customer360PageContent() {
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [selectedClientId, setSelectedClientId] = React.useState<string | null>(null);
+  const [profilesPage, setProfilesPage] = React.useState(1);
+  const [profilesPageSize, setProfilesPageSize] = React.useState(20);
+  const [timelinePage, setTimelinePage] = React.useState(1);
+  const [timelinePageSize, setTimelinePageSize] = React.useState(20);
 
   React.useEffect(() => {
     const sub = companyService.getWorkspace$().subscribe((ws) => {
@@ -51,6 +59,12 @@ function Customer360PageContent() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
+  React.useEffect(() => {
+    setProfilesPage(1);
+    setTimelinePage(1);
+    setSelectedClientId(null);
+  }, [workspaceId, search]);
+
   const loadBundle = React.useCallback(async () => {
     if (!workspaceId) {
       setBundle(EMPTY_BUNDLE);
@@ -63,6 +77,11 @@ function Customer360PageContent() {
       const response = await clients360Service.fetchBundle({
         workspaceId,
         search,
+        profilesLimit: profilesPageSize,
+        profilesOffset: (profilesPage - 1) * profilesPageSize,
+        timelineLimit: timelinePageSize,
+        timelineOffset: (timelinePage - 1) * timelinePageSize,
+        selectedClientId: selectedClientId ?? undefined,
       });
       setBundle(response);
       setSelectedClientId((prev) => {
@@ -74,7 +93,15 @@ function Customer360PageContent() {
     } finally {
       setLoading(false);
     }
-  }, [workspaceId, search]);
+  }, [
+    workspaceId,
+    search,
+    profilesPage,
+    profilesPageSize,
+    timelinePage,
+    timelinePageSize,
+    selectedClientId,
+  ]);
 
   React.useEffect(() => {
     void loadBundle();
@@ -87,7 +114,20 @@ function Customer360PageContent() {
       loading={loading}
       selectedClientId={selectedClientId}
       onSearchChange={setSearchInput}
-      onSelectClient={setSelectedClientId}
+      onSelectClient={(clientId) => {
+        setSelectedClientId(clientId);
+        setTimelinePage(1);
+      }}
+      onProfilesPageChange={(page, pageSize) => {
+        setProfilesPage(page);
+        setProfilesPageSize(pageSize);
+        setTimelinePage(1);
+        setSelectedClientId(null);
+      }}
+      onTimelinePageChange={(page, pageSize) => {
+        setTimelinePage(page);
+        setTimelinePageSize(pageSize);
+      }}
       onRefresh={() => void loadBundle()}
     />
   );

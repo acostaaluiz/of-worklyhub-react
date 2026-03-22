@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 
 import {
@@ -11,6 +10,7 @@ import {
   LandingDescription,
   LandingGrid,
   LandingCard,
+  LandingCardLink,
   CardIcon,
   CardContent,
   CardTitle,
@@ -46,8 +46,6 @@ export function ModuleLanding({
   columns = 1,
   variant = "soft-accent",
 }: ModuleLandingProps) {
-  const navigate = useNavigate();
-
   return (
     <LandingShell $variant={variant}>
       <LandingHeader>
@@ -66,19 +64,10 @@ export function ModuleLanding({
 
       <LandingGrid $columns={columns}>
         {items.map((item) => {
-          const isDisabled = item.disabled || !item.to;
-
-          return (
-            <LandingCard
-              key={item.id}
-              type="button"
-              $disabled={isDisabled}
-              $variant={variant}
-              aria-disabled={isDisabled}
-              onClick={() => {
-                if (!isDisabled && item.to) navigate(item.to);
-              }}
-            >
+          const destination = item.to;
+          const isDisabled = item.disabled || !destination;
+          const cardContent = (
+            <>
               <CardIcon $disabled={isDisabled} $variant={variant}>
                 {item.icon}
               </CardIcon>
@@ -94,7 +83,33 @@ export function ModuleLanding({
               <CardAction $disabled={isDisabled} $variant={variant}>
                 <ChevronRight size={16} />
               </CardAction>
-            </LandingCard>
+            </>
+          );
+
+          if (isDisabled || !destination) {
+            return (
+              <LandingCard
+                key={item.id}
+                type="button"
+                disabled
+                $disabled
+                $variant={variant}
+                aria-disabled
+              >
+                {cardContent}
+              </LandingCard>
+            );
+          }
+
+          return (
+            <LandingCardLink
+              key={item.id}
+              to={destination}
+              $disabled={false}
+              $variant={variant}
+            >
+              {cardContent}
+            </LandingCardLink>
           );
         })}
       </LandingGrid>

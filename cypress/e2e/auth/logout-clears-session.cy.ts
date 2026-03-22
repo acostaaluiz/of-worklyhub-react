@@ -68,6 +68,26 @@ describe("Logout flow", () => {
             name: "Cypress Logout Workspace",
           })
         );
+        win.localStorage.setItem("of-language-preference", "pt-BR");
+        win.localStorage.setItem("of-theme-preference", "dark");
+        win.localStorage.setItem(
+          "of-theme-custom-colors:uid:uid-cypress-logout",
+          JSON.stringify({
+            dark: { primary: "#123456" },
+          }),
+        );
+        win.localStorage.setItem(
+          `schedule.workspace-settings.${seed.workspaceId}`,
+          JSON.stringify({
+            settings: {
+              defaultDurationMinutes: 30,
+              defaultDayPart: "morning",
+            },
+            updatedAt: new Date().toISOString(),
+          }),
+        );
+        win.sessionStorage.setItem("billing.selectedPlanId", "premium");
+        win.sessionStorage.setItem("billing.selectedPlanInterval", "monthly");
       },
     });
 
@@ -75,15 +95,30 @@ describe("Logout flow", () => {
     cy.location("pathname", { timeout: 40000 }).should("eq", "/home");
 
     cy.get(".user-avatar").click({ force: true });
-    cy.contains(".ant-dropdown .ant-dropdown-menu-item", "Sign out").click({
+    cy.contains(".ant-dropdown .ant-dropdown-menu-item", /sign out|sair/i).click({
       force: true,
     });
 
     cy.location("pathname", { timeout: 40000 }).should("eq", "/login");
     cy.window().then((win) => {
       expect(win.localStorage.getItem("auth.session")).to.eq(null);
+      expect(win.localStorage.getItem("auth.idToken")).to.eq(null);
       expect(win.localStorage.getItem("company.workspace")).to.eq(null);
       expect(win.localStorage.getItem("users.overview")).to.eq(null);
+      expect(win.localStorage.getItem("of-language-preference")).to.eq(null);
+      expect(win.localStorage.getItem("of-theme-preference")).to.eq(null);
+      expect(
+        win.localStorage.getItem("of-theme-custom-colors:uid:uid-cypress-logout"),
+      ).to.eq(null);
+      expect(
+        win.localStorage.getItem(`schedule.workspace-settings.${seed.workspaceId}`),
+      ).to.eq(null);
+      expect(win.localStorage.length).to.eq(0);
+      expect(win.sessionStorage.getItem("billing.selectedPlanId")).to.eq(null);
+      expect(win.sessionStorage.getItem("billing.selectedPlanInterval")).to.eq(
+        null,
+      );
+      expect(win.sessionStorage.length).to.eq(0);
     });
   });
 });

@@ -49,6 +49,7 @@
 - `pnpm test:e2e` (sobe `vite --port 4173 --strictPort` e executa o Cypress)
 - `pnpm test:e2e:smoke` (sobe o app e executa apenas o smoke de redirect para `/home`)
 - `pnpm test:e2e:security` (sobe o app e executa os cenarios E2E de seguranca)
+- `pnpm test:e2e:onboarding-all-plans` (registro -> company setup -> planos -> checkout -> home para starter/standard/premium com mocks)
 - `pnpm test:e2e:premium-real`
 - `pnpm test:e2e:starter-real`
 - `pnpm test:e2e:standard-real`

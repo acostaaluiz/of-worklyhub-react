@@ -1,346 +1,15 @@
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: "$CI_COMMIT_BRANCH"
-    - if: "$CI_COMMIT_TAG"
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - when: never
 
 stages:
-  - validate
-  - test
-  - security
-  - build
-  - package
   - deploy
-
-variables:
-  GIT_DEPTH: "0"
-  NODE_VERSION: "20.19.4"
-  PNPM_VERSION: "10.26.2"
-  PNPM_STORE_PATH: ".pnpm-store"
-  SECURITY_SEVERITY_THRESHOLD: "HIGH,CRITICAL"
 
 default:
   interruptible: true
-
-.node-job:
-  image: node:${NODE_VERSION}-bookworm-slim
-  cache:
-    key:
-      files:
-        - pnpm-lock.yaml
-    paths:
-      - .pnpm-store/
-    policy: pull-push
-  before_script:
-    - corepack enable
-    - corepack prepare pnpm@${PNPM_VERSION} --activate
-    - pnpm config set store-dir ${PNPM_STORE_PATH}
-    - pnpm install --frozen-lockfile
-
-.security-gate-rules:
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: "$CI_COMMIT_TAG"
-
-commitlint:
-  stage: validate
-  extends: .node-job
-  script:
-    - |
-      if [ -n "${CI_MERGE_REQUEST_DIFF_BASE_SHA:-}" ]; then
-        FROM_SHA="${CI_MERGE_REQUEST_DIFF_BASE_SHA}"
-      else
-        FROM_SHA="${CI_COMMIT_BEFORE_SHA}"
-      fi
-      if [ -z "${FROM_SHA:-}" ] || [ "${FROM_SHA}" = "0000000000000000000000000000000000000000" ]; then
-        FROM_SHA="$(git rev-list --max-parents=0 HEAD | tail -n 1)"
-      fi
-      pnpm exec commitlint --from "${FROM_SHA}" --to "${CI_COMMIT_SHA}" --verbose
-
-lint:
-  stage: validate
-  extends: .node-job
-  script:
-    - pnpm lint
-
-depcruise:
-  stage: validate
-  extends: .node-job
-  script:
-    - pnpm depcruise
-
-terraform_validate:
-  stage: validate
-  image:
-    name: hashicorp/terraform:1.11.3
-    entrypoint: [""]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - infra/**/*
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      changes:
-        - infra/**/*
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      changes:
-        - infra/**/*
-    - when: never
-  script:
-    - terraform -chdir=infra fmt -check -recursive
-    - terraform -chdir=infra/environments/develop init -backend=false
-    - terraform -chdir=infra/environments/develop validate
-    - terraform -chdir=infra/environments/master init -backend=false
-    - terraform -chdir=infra/environments/master validate
-
-unit_tests:
-  stage: test
-  extends: .node-job
-  script:
-    - pnpm test -- --ci
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - coverage/
-
-e2e_smoke:
-  stage: test
-  image: cypress/included:14.5.4
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: "$CI_COMMIT_TAG"
-    - when: never
-  cache:
-    key:
-      files:
-        - pnpm-lock.yaml
-    paths:
-      - .pnpm-store/
-    policy: pull-push
-  before_script:
-    - corepack enable
-    - corepack prepare pnpm@${PNPM_VERSION} --activate
-    - pnpm config set store-dir ${PNPM_STORE_PATH}
-    - pnpm install --frozen-lockfile
-  script:
-    - pnpm test:e2e:smoke
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - cypress/screenshots/
-      - cypress/videos/
-
-e2e_manual:
-  stage: test
-  image: cypress/included:14.5.4
-  allow_failure: true
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-      when: manual
-    - if: '$CI_COMMIT_BRANCH == "master"'
-      when: manual
-    - when: never
-  cache:
-    key:
-      files:
-        - pnpm-lock.yaml
-    paths:
-      - .pnpm-store/
-    policy: pull-push
-  before_script:
-    - corepack enable
-    - corepack prepare pnpm@${PNPM_VERSION} --activate
-    - pnpm config set store-dir ${PNPM_STORE_PATH}
-    - pnpm install --frozen-lockfile
-  script:
-    - pnpm test:e2e
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - cypress/screenshots/
-      - cypress/videos/
-
-dependency_scan:
-  stage: security
-  extends:
-    - .node-job
-    - .security-gate-rules
-  script:
-    - |
-      set +e
-      pnpm audit --audit-level=high --json > pnpm-audit-report.json
-      AUDIT_EXIT_CODE=$?
-      cat pnpm-audit-report.json
-      exit ${AUDIT_EXIT_CODE}
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - pnpm-audit-report.json
-
-sast_scan:
-  stage: security
-  extends:
-    - .security-gate-rules
-  image:
-    name: returntocorp/semgrep:1.118.0
-    entrypoint: [""]
-  script:
-    - semgrep --version
-    - semgrep scan --config p/owasp-top-ten --config p/typescript --config p/javascript --exclude node_modules --exclude dist --metrics=off --error --json --output semgrep-report.json
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - semgrep-report.json
-
-secret_scan:
-  stage: security
-  extends:
-    - .security-gate-rules
-  image:
-    name: zricethezav/gitleaks:v8.24.2
-    entrypoint: [""]
-  script:
-    - gitleaks version
-    - gitleaks detect --source . --no-banner --redact --exit-code 1 --report-format sarif --report-path gitleaks-report.sarif
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - gitleaks-report.sarif
-
-container_image_build_for_scan:
-  stage: security
-  extends:
-    - .security-gate-rules
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  script:
-    - |
-      BUILD_ARGS=""
-      for key in VITE_API_BASE_URL VITE_CURRENCY_LOCALE VITE_CURRENCY_CODE VITE_CURRENCY_PRECISION; do
-        value="$(printenv "${key}" || true)"
-        if [ -n "${value}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} --build-arg ${key}=${value}"
-        fi
-      done
-      /kaniko/executor \
-        --context "${CI_PROJECT_DIR}" \
-        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
-        --no-push \
-        --snapshot-mode=redo \
-        --tarPath "${CI_PROJECT_DIR}/app-image.tar" \
-        ${BUILD_ARGS}
-  artifacts:
-    when: always
-    expire_in: 1 day
-    paths:
-      - app-image.tar
-
-container_scan:
-  stage: build
-  extends:
-    - .security-gate-rules
-  image:
-    name: aquasec/trivy:0.63.0
-    entrypoint: [""]
-  needs:
-    - job: container_image_build_for_scan
-      artifacts: true
-  script:
-    - trivy --version
-    - trivy image --input app-image.tar --scanners vuln --ignore-unfixed --no-progress --severity "${SECURITY_SEVERITY_THRESHOLD}" --exit-code 1 --format sarif --output trivy-container-report.sarif
-  artifacts:
-    when: always
-    expire_in: 7 days
-    paths:
-      - trivy-container-report.sarif
-
-build_app:
-  stage: build
-  extends: .node-job
-  script:
-    - pnpm build
-  artifacts:
-    expire_in: 7 days
-    paths:
-      - dist/
-
-docker_build_verify:
-  stage: package
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-  script:
-    - |
-      BUILD_ARGS=""
-      for key in VITE_API_BASE_URL VITE_CURRENCY_LOCALE VITE_CURRENCY_CODE VITE_CURRENCY_PRECISION; do
-        value="$(printenv "${key}" || true)"
-        if [ -n "${value}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} --build-arg ${key}=${value}"
-        fi
-      done
-      /kaniko/executor \
-        --context "${CI_PROJECT_DIR}" \
-        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
-        --no-push \
-        --snapshot-mode=redo \
-        ${BUILD_ARGS}
-
-docker_publish:
-  stage: package
-  image:
-    name: gcr.io/kaniko-project/executor:v1.23.2-debug
-    entrypoint: [""]
-  rules:
-    - if: "$CI_COMMIT_TAG"
-    - if: '$CI_COMMIT_BRANCH == "develop"'
-    - if: '$CI_COMMIT_BRANCH == "master"'
-  script:
-    - |
-      cat > /kaniko/.docker/config.json <<EOF
-      {"auths":{"${CI_REGISTRY}":{"username":"${CI_REGISTRY_USER}","password":"${CI_REGISTRY_PASSWORD}"}}}
-      EOF
-    - |
-      BUILD_ARGS=""
-      for key in VITE_API_BASE_URL VITE_CURRENCY_LOCALE VITE_CURRENCY_CODE VITE_CURRENCY_PRECISION; do
-        value="$(printenv "${key}" || true)"
-        if [ -n "${value}" ]; then
-          BUILD_ARGS="${BUILD_ARGS} --build-arg ${key}=${value}"
-        fi
-      done
-
-      DEST_ARGS="--destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
-      if [ -n "${CI_COMMIT_BRANCH:-}" ]; then
-        DEST_ARGS="${DEST_ARGS} --destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
-      fi
-      if [ "${CI_COMMIT_BRANCH:-}" = "master" ]; then
-        DEST_ARGS="${DEST_ARGS} --destination ${CI_REGISTRY_IMAGE}:latest"
-      fi
-      if [ -n "${CI_COMMIT_TAG:-}" ]; then
-        DEST_ARGS="${DEST_ARGS} --destination ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
-      fi
-
-      /kaniko/executor \
-        --context "${CI_PROJECT_DIR}" \
-        --dockerfile "${CI_PROJECT_DIR}/Dockerfile" \
-        --snapshot-mode=redo \
-        --cache=true \
-        --cache-repo "${CI_REGISTRY_IMAGE}/cache" \
-        ${BUILD_ARGS} \
-        ${DEST_ARGS}
 
 .gcp-deploy-template:
   stage: deploy
@@ -362,6 +31,12 @@ docker_publish:
       export VITE_CURRENCY_LOCALE="${VITE_CURRENCY_LOCALE:-en-US}"
       export VITE_CURRENCY_CODE="${VITE_CURRENCY_CODE:-USD}"
       export VITE_CURRENCY_PRECISION="${VITE_CURRENCY_PRECISION:-2}"
+      export VITE_FIREBASE_API_KEY="${VITE_FIREBASE_API_KEY:-}"
+      export VITE_FIREBASE_AUTH_DOMAIN="${VITE_FIREBASE_AUTH_DOMAIN:-worklyhub-9735f.firebaseapp.com}"
+      export VITE_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID:-worklyhub-9735f}"
+      export VITE_FIREBASE_STORAGE_BUCKET="${VITE_FIREBASE_STORAGE_BUCKET:-worklyhub-9735f.firebasestorage.app}"
+      export VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID:-421430807448}"
+      export VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID:-1:421430807448:web:ccb6d1f098ca558d61f9ed}"
 
       if [ -f "${GCP_SERVICE_ACCOUNT_KEY}" ]; then
         export GCP_KEY_FILE="${GCP_SERVICE_ACCOUNT_KEY}"
@@ -381,14 +56,15 @@ docker_publish:
       gcloud builds submit "${CI_PROJECT_DIR}" \
         --project "${GCP_PROJECT_ID}" \
         --config "${CI_PROJECT_DIR}/infra/cloudbuild/cloudbuild.frontend.yaml" \
-        --substitutions "_IMAGE_URI=${IMAGE_URI},_VITE_API_BASE_URL=${VITE_API_BASE_URL},_VITE_CURRENCY_LOCALE=${VITE_CURRENCY_LOCALE},_VITE_CURRENCY_CODE=${VITE_CURRENCY_CODE},_VITE_CURRENCY_PRECISION=${VITE_CURRENCY_PRECISION}"
+        --substitutions "_IMAGE_URI=${IMAGE_URI},_VITE_API_BASE_URL=${VITE_API_BASE_URL},_VITE_CURRENCY_LOCALE=${VITE_CURRENCY_LOCALE},_VITE_CURRENCY_CODE=${VITE_CURRENCY_CODE},_VITE_CURRENCY_PRECISION=${VITE_CURRENCY_PRECISION},_VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY},_VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN},_VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID},_VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET},_VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID},_VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}"
     - |
       gcloud run deploy "${GCP_CLOUD_RUN_SERVICE}" \
         --project "${GCP_PROJECT_ID}" \
         --region "${GCP_REGION}" \
         --image "${IMAGE_URI}" \
         --platform managed \
-        --allow-unauthenticated
+        --allow-unauthenticated \
+        --quiet
     - |
       SERVICE_URL="$(gcloud run services describe "${GCP_CLOUD_RUN_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
       printf 'SERVICE_URL=%s\nIMAGE_URI=%s\n' "${SERVICE_URL}" "${IMAGE_URI}" > deploy.env
@@ -408,6 +84,7 @@ docker_publish:
 gcp_deploy_develop:
   extends: .gcp-deploy-template
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
     - if: '$CI_COMMIT_BRANCH == "develop"'
   variables:
     TARGET_ENV_NAME: development
@@ -420,6 +97,12 @@ gcp_deploy_develop:
     VITE_CURRENCY_LOCALE: $VITE_CURRENCY_LOCALE_DEVELOP
     VITE_CURRENCY_CODE: $VITE_CURRENCY_CODE_DEVELOP
     VITE_CURRENCY_PRECISION: $VITE_CURRENCY_PRECISION_DEVELOP
+    VITE_FIREBASE_API_KEY: $VITE_FIREBASE_API_KEY_DEVELOP
+    VITE_FIREBASE_AUTH_DOMAIN: $VITE_FIREBASE_AUTH_DOMAIN_DEVELOP
+    VITE_FIREBASE_PROJECT_ID: $VITE_FIREBASE_PROJECT_ID_DEVELOP
+    VITE_FIREBASE_STORAGE_BUCKET: $VITE_FIREBASE_STORAGE_BUCKET_DEVELOP
+    VITE_FIREBASE_MESSAGING_SENDER_ID: $VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOP
+    VITE_FIREBASE_APP_ID: $VITE_FIREBASE_APP_ID_DEVELOP
   environment:
     name: development
     deployment_tier: development
@@ -428,6 +111,7 @@ gcp_deploy_develop:
 gcp_deploy_master:
   extends: .gcp-deploy-template
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
     - if: '$CI_COMMIT_BRANCH == "master"'
   variables:
     TARGET_ENV_NAME: production
@@ -440,6 +124,12 @@ gcp_deploy_master:
     VITE_CURRENCY_LOCALE: $VITE_CURRENCY_LOCALE_MASTER
     VITE_CURRENCY_CODE: $VITE_CURRENCY_CODE_MASTER
     VITE_CURRENCY_PRECISION: $VITE_CURRENCY_PRECISION_MASTER
+    VITE_FIREBASE_API_KEY: $VITE_FIREBASE_API_KEY_MASTER
+    VITE_FIREBASE_AUTH_DOMAIN: $VITE_FIREBASE_AUTH_DOMAIN_MASTER
+    VITE_FIREBASE_PROJECT_ID: $VITE_FIREBASE_PROJECT_ID_MASTER
+    VITE_FIREBASE_STORAGE_BUCKET: $VITE_FIREBASE_STORAGE_BUCKET_MASTER
+    VITE_FIREBASE_MESSAGING_SENDER_ID: $VITE_FIREBASE_MESSAGING_SENDER_ID_MASTER
+    VITE_FIREBASE_APP_ID: $VITE_FIREBASE_APP_ID_MASTER
   environment:
     name: production
     deployment_tier: production

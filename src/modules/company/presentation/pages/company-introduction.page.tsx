@@ -13,6 +13,8 @@ import { loadingService } from "@shared/ui/services/loading.service";
 import { companyService } from "@modules/company/services/company.service";
 import type { WorkspaceCreatePayload } from "@modules/company/services/companies-api";
 import { usersAuthService } from "@modules/users/services/auth.service";
+import { usersOverviewService } from "@modules/users/services/overview.service";
+import { isActivePlan } from "@modules/users/services/plan-status";
 import { usersService } from "@modules/users/services/user.service";
 import type { CompanyIntroductionValues } from "../steps/company-introduction.types";
 import { CompanyIntroductionTemplate } from "../templates/company-introduction/company-introduction.template";
@@ -90,11 +92,41 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
     responseModal: undefined,
   };
 
+  private resolveSessionEmail(): string | undefined {
+    const session = usersAuthService.getSessionValue();
+    const fromSession = session?.email;
+    if (typeof fromSession === "string" && fromSession.trim().length > 0) return fromSession.trim();
+
+    const claims =
+      session?.claims && typeof session.claims === "object" && !Array.isArray(session.claims)
+        ? (session.claims as DataMap)
+        : undefined;
+    const fromClaims = claims?.email;
+    if (typeof fromClaims === "string" && fromClaims.trim().length > 0) return fromClaims.trim();
+
+    return undefined;
+  }
+
+  private async resolvePostSetupRoute(): Promise<string> {
+    try {
+      const overview = await usersOverviewService.fetchOverview(true);
+      if (isActivePlan(overview?.profile)) return "/home";
+    } catch {
+      // fallback to local profile when overview is unavailable
+    }
+
+    const localProfile = usersService.getProfileValue();
+    if (isActivePlan(localProfile)) return "/home";
+
+    return "/billing/plans";
+  }
+
   protected override async onInit(): Promise<void> {
     try {
       const workspace = companyService.getWorkspaceValue();
       if (workspace) {
-        navigateTo("/home");
+        const nextRoute = await this.resolvePostSetupRoute();
+        navigateTo(nextRoute);
         return;
       }
     } catch {
@@ -206,9 +238,14 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
     this.setSafeState({ responseModal: undefined });
   };
 
-  protected confirmResponse = () => {
+  protected confirmResponse = async () => {
     this.setSafeState({ responseModal: undefined });
-    navigateTo("/home");
+    const sessionEmail = this.resolveSessionEmail();
+    if (sessionEmail) {
+      await companyService.fetchWorkspaceByEmail(sessionEmail).catch(() => {});
+    }
+    const nextRoute = await this.resolvePostSetupRoute();
+    navigateTo(nextRoute);
   };
 
   protected override renderPage(): React.ReactNode {

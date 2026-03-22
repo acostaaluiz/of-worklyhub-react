@@ -37,7 +37,15 @@ export function ConfirmationModal({
   onConfirm,
 }: Props) {
   return (
-    <Modal open={open} onCancel={onClose} footer={null} centered destroyOnHidden width={520}>
+    <Modal
+      open={open}
+      onCancel={onClose}
+      footer={null}
+      centered
+      destroyOnHidden
+      width={520}
+      data-cy="confirmation-modal"
+    >
       <ModalRoot>
         <ModalContent>
           <HeadRow>
@@ -55,11 +63,17 @@ export function ConfirmationModal({
 
           <FooterRow>
             <Buttons>
-              <Button size="large" className="secondary" onClick={onClose}>
+              <Button size="large" className="secondary" onClick={onClose} data-cy="confirmation-modal-cancel-button">
                 {cancelLabel}
               </Button>
 
-              <Button size="large" type="primary" className="primary" onClick={() => onConfirm?.()}>
+              <Button
+                size="large"
+                type="primary"
+                className="primary"
+                onClick={() => onConfirm?.()}
+                data-cy="confirmation-modal-confirm-button"
+              >
                 {confirmLabel}
               </Button>
             </Buttons>

@@ -1,6 +1,6 @@
 import React from "react";
 import { Input, Table } from "antd";
-import type { ColumnsType, ColumnType } from "antd/es/table";
+import type { ColumnsType, ColumnType, TableProps } from "antd/es/table";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { BaseState } from "@shared/base/interfaces/base-state.interface";
@@ -13,6 +13,8 @@ type SmartTableProps<T extends object> = BaseProps & {
   searchFields?: Array<keyof T | string>;
   topLeft?: React.ReactNode;
   topRight?: React.ReactNode;
+  pagination?: TableProps<T>["pagination"];
+  tableScroll?: TableProps<T>["scroll"];
 };
 
 type SmartTableState<T extends object> = BaseState & {
@@ -90,6 +92,20 @@ export class SmartTable<T extends object> extends BaseComponent<SmartTableProps<
       return col;
     });
 
+    const pagination: TableProps<T>["pagination"] =
+      this.props.pagination === undefined
+        ? { pageSize, size: isCompactViewport ? ("small" as const) : undefined }
+        : this.props.pagination;
+
+    const tableScroll = this.props.tableScroll
+      ? {
+          ...(isCompactViewport ? { x: "max-content" } : {}),
+          ...this.props.tableScroll,
+        }
+      : isCompactViewport
+        ? { x: "max-content" }
+        : undefined;
+
     return (
       <div>
         <div style={{ marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
@@ -109,9 +125,9 @@ export class SmartTable<T extends object> extends BaseComponent<SmartTableProps<
           rowKey={rowKey ?? "id"}
           columns={mappedColumns}
           dataSource={this.state.filtered.length ? this.state.filtered : dataSource}
-          pagination={{ pageSize, size: isCompactViewport ? "small" : undefined }}
+          pagination={pagination}
           size={isCompactViewport ? "small" : "middle"}
-          scroll={isCompactViewport ? { x: "max-content" } : undefined}
+          scroll={tableScroll}
         />
       </div>
     );

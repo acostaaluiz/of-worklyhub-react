@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Empty, Input, Space, Tag, Timeline, Typography } from "antd";
+import { Button, Empty, Input, Pagination, Space, Tag, Timeline, Typography } from "antd";
 import { RefreshCw, Search, Users } from "lucide-react";
 import { BaseTemplate } from "@shared/base/base.template";
 import type {
@@ -10,6 +10,7 @@ import { formatMoneyFromCents } from "@core/utils/mask";
 import { formatAppDateTime } from "@core/utils/date-time";
 import {
   CardHeader,
+  CardFooter,
   CardShell,
   CardSubtitle,
   CardTitle,
@@ -40,6 +41,8 @@ type Props = {
   selectedClientId?: string | null;
   onSearchChange: (value: string) => void;
   onSelectClient: (clientId: string) => void;
+  onProfilesPageChange: (page: number, pageSize: number) => void;
+  onTimelinePageChange: (page: number, pageSize: number) => void;
   onRefresh: () => void;
 };
 
@@ -62,6 +65,8 @@ export function Customer360Template({
   selectedClientId,
   onSearchChange,
   onSelectClient,
+  onProfilesPageChange,
+  onTimelinePageChange,
   onRefresh,
 }: Props) {
   const selectedProfile = React.useMemo(
@@ -76,6 +81,17 @@ export function Customer360Template({
         : bundle.timeline,
     [bundle.timeline, selectedClientId]
   );
+
+  const profilesMeta = bundle.pagination?.profiles;
+  const timelineMeta = bundle.pagination?.timeline;
+  const totalClients = profilesMeta?.total ?? bundle.profiles.length;
+  const totalTimelineEvents = timelineMeta?.total ?? bundle.timeline.length;
+  const profilesCurrentPage =
+    profilesMeta && profilesMeta.limit > 0 ? Math.floor(profilesMeta.offset / profilesMeta.limit) + 1 : 1;
+  const timelineCurrentPage =
+    timelineMeta && timelineMeta.limit > 0 ? Math.floor(timelineMeta.offset / timelineMeta.limit) + 1 : 1;
+  const profilesPageSize = profilesMeta?.limit ?? 20;
+  const timelinePageSize = timelineMeta?.limit ?? 20;
 
   return (
     <BaseTemplate
@@ -109,8 +125,8 @@ export function Customer360Template({
               </HeroTitleWrap>
 
               <HeroStats>
-                <Tag>{bundle.profiles.length} clients</Tag>
-                <Tag>{bundle.timeline.length} timeline events</Tag>
+                <Tag>{totalClients} clients</Tag>
+                <Tag>{totalTimelineEvents} timeline events</Tag>
                 <Tag>{bundle.source === "backend" ? "backend" : "aggregated"}</Tag>
               </HeroStats>
             </HeroTop>
@@ -165,6 +181,18 @@ export function Customer360Template({
                   </Space>
                 )}
               </ProfilesScrollBody>
+              <CardFooter>
+                <Pagination
+                  size="small"
+                  current={profilesCurrentPage}
+                  pageSize={profilesPageSize}
+                  total={totalClients}
+                  showSizeChanger
+                  pageSizeOptions={[10, 20, 50, 100]}
+                  onChange={onProfilesPageChange}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} of ${total}`}
+                />
+              </CardFooter>
             </CardShell>
 
             <CardShell>
@@ -212,6 +240,18 @@ export function Customer360Template({
                   />
                 )}
               </ScrollBody>
+              <CardFooter>
+                <Pagination
+                  size="small"
+                  current={timelineCurrentPage}
+                  pageSize={timelinePageSize}
+                  total={selectedClientId ? totalTimelineEvents : visibleTimeline.length}
+                  showSizeChanger
+                  pageSizeOptions={[10, 20, 50, 100]}
+                  onChange={onTimelinePageChange}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} of ${total}`}
+                />
+              </CardFooter>
             </CardShell>
           </ContentGrid>
         </Customer360Root>

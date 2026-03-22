@@ -123,9 +123,16 @@ Este projeto usa variaveis `VITE_*`. Crie um arquivo `.env.local` ou ajuste os a
 Exemplo minimo:
 
 ```text
+VITE_API_BASE_URL=http://localhost:3000/api/v1
 VITE_CURRENCY_LOCALE=en-US
 VITE_CURRENCY_CODE=USD
 VITE_CURRENCY_PRECISION=2
+VITE_FIREBASE_API_KEY=your-firebase-api-key
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
 ```
 
 ## Configuracao do Backend

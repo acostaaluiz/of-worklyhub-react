@@ -1,4 +1,5 @@
 import { Card, Row } from "antd";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 
 export const ServicesRow = styled(Row)`
@@ -19,16 +20,33 @@ export const ServiceCard = styled(Card)<{ $disabled?: boolean }>`
     box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
     border-color var(--motion-duration-fast) var(--motion-ease-standard);
   will-change: box-shadow, border-color;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 
   .ant-card-body {
     padding: var(--space-3);
   }
 
-  &:hover {
-    box-shadow: ${({ $disabled }) => ($disabled ? "none" : "var(--shadow-md)")};
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      box-shadow: ${({ $disabled }) => ($disabled ? "none" : "var(--shadow-md)")};
+      border-color: ${({ $disabled }) =>
+        $disabled ? "var(--color-border)" : "var(--color-primary)"};
+    }
+  }
+
+  &:active {
+    box-shadow: ${({ $disabled }) => ($disabled ? "none" : "var(--shadow-sm)")};
     border-color: ${({ $disabled }) =>
       $disabled ? "var(--color-border)" : "var(--color-primary)"};
   }
+`;
+
+export const ServiceCardLink = styled(Link)`
+  width: 100%;
+  display: flex;
+  text-decoration: none;
+  color: inherit;
 `;
 
 export const ServiceContent = styled.div`

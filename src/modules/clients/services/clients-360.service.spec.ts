@@ -123,7 +123,21 @@ describe("Clients360Service", () => {
     expect(bundle.source).toBe("backend");
     expect(bundle.profiles).toHaveLength(1);
     expect(bundle.timeline).toHaveLength(1);
-    expect(clientsApiMock.getBundle).toHaveBeenCalledWith("ws-1", undefined);
+    expect(clientsApiMock.getBundle).toHaveBeenCalledWith("ws-1", {
+      search: undefined,
+      profilesLimit: 20,
+      profilesOffset: 0,
+      timelineLimit: 20,
+      timelineOffset: 0,
+      clientId: undefined,
+    });
+    expect(bundle.pagination?.profiles).toMatchObject({
+      limit: 20,
+      offset: 0,
+      total: 1,
+      hasMore: false,
+      nextOffset: null,
+    });
   });
 
   it("falls back to aggregated snapshot and links schedule, work-order and finance data", async () => {
@@ -264,5 +278,48 @@ describe("Clients360Service", () => {
 
     await expect(first).resolves.toMatchObject({ source: "backend" });
     await expect(second).resolves.toMatchObject({ source: "backend" });
+  });
+
+  it("applies local pagination when backend payload has no pagination metadata", async () => {
+    clientsApiMock.getBundle.mockResolvedValueOnce({
+      generatedAt: "2026-03-10T10:30:00.000Z",
+      source: "backend",
+      profiles: [
+        { id: "c-1", displayName: "Ana", workspaceId: "ws-1" },
+        { id: "c-2", displayName: "Bruno", workspaceId: "ws-1" },
+      ],
+      timeline: [
+        { id: "t-1", clientId: "c-1", workspaceId: "ws-1", module: "schedule" },
+        { id: "t-2", clientId: "c-2", workspaceId: "ws-1", module: "finance" },
+        { id: "t-3", clientId: "c-2", workspaceId: "ws-1", module: "work-order" },
+      ],
+    });
+    const service = new Clients360Service();
+
+    const bundle = await service.fetchBundle({
+      workspaceId: "ws-1",
+      profilesLimit: 1,
+      profilesOffset: 1,
+      timelineLimit: 1,
+      timelineOffset: 1,
+      selectedClientId: "c-2",
+    });
+
+    expect(bundle.profiles.map((item) => item.id)).toEqual(["c-2"]);
+    expect(bundle.timeline.map((item) => item.id)).toEqual(["t-3"]);
+    expect(bundle.pagination?.profiles).toMatchObject({
+      limit: 1,
+      offset: 1,
+      total: 2,
+      hasMore: false,
+      nextOffset: null,
+    });
+    expect(bundle.pagination?.timeline).toMatchObject({
+      limit: 1,
+      offset: 1,
+      total: 2,
+      hasMore: false,
+      nextOffset: null,
+    });
   });
 });

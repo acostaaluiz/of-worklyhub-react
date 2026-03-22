@@ -659,10 +659,10 @@
       },
       "appearance": {
         "title": "Appearance",
-        "subtitle": "Switch between light and dark themes and optionally customize key colors.",
+        "subtitle": "Switch between light and dark themes and choose curated color palettes.",
         "tabs": {
           "theme": "Theme",
-          "customColors": "Custom colors"
+          "customColors": "Preset palettes"
         },
         "theme": {
           "alertTitle": "Theme mode",
@@ -681,41 +681,57 @@
           "updateSuccess": "Theme updated to {{mode}}."
         },
         "customColors": {
+          "introTitle": "Preset palettes",
+          "introDescription": "Choose a curated palette to keep contrast and visual consistency across the app.",
+          "selected": "Selected",
+          "applySuccess": "Palette {{palette}} applied.",
           "reset": "Use default palette",
           "resetSuccess": "Custom colors removed. Default palette restored.",
-          "status": "Custom palette: {{state}}",
+          "status": "Current palette: {{state}}",
           "states": {
-            "enabled": "Enabled",
-            "disabled": "Disabled"
+            "default": "Default",
+            "custom": "Custom (legacy)"
           },
-          "options": {
-            "background": {
-              "label": "Background color",
-              "description": "Main app backdrop color."
+          "presets": {
+            "atlas": {
+              "label": "Atlas",
+              "description": "Balanced blues and mint accents for the default WorklyHub feel."
             },
-            "surface": {
-              "label": "Surface color",
-              "description": "Card and panel base color."
+            "sunrise": {
+              "label": "Sunrise",
+              "description": "Warm oranges and magenta accents for energetic surfaces."
             },
-            "surfaceAlt": {
-              "label": "Surface alt color",
-              "description": "Secondary panel color and layered surfaces."
+            "forest": {
+              "label": "Forest",
+              "description": "Greens and teals with calm contrast for long sessions."
             },
-            "primary": {
-              "label": "Primary color",
-              "description": "Main actions, highlights and interactive accents."
+            "berry": {
+              "label": "Berry",
+              "description": "Rose and violet accents with strong readability."
             },
-            "secondary": {
-              "label": "Secondary color",
-              "description": "Secondary accents and supporting highlights."
+            "ocean": {
+              "label": "Ocean",
+              "description": "Deep cyan and royal blue highlights for data-heavy screens."
             },
-            "tertiary": {
-              "label": "Tertiary color",
-              "description": "Complementary accent used in gradients and details."
+            "graphite": {
+              "label": "Graphite",
+              "description": "Neutral slate tones with restrained blue actions."
             },
-            "text": {
-              "label": "Text color",
-              "description": "Main text color for headings and body content."
+            "mango": {
+              "label": "Mango",
+              "description": "Golden and orange accents with high visual warmth."
+            },
+            "lagoon": {
+              "label": "Lagoon",
+              "description": "Fresh aqua palette with bright action contrast."
+            },
+            "plum": {
+              "label": "Plum",
+              "description": "Purple-forward palette with cool supporting accents."
+            },
+            "copper": {
+              "label": "Copper",
+              "description": "Earthy bronze palette with conservative contrast."
             }
           }
         }
