@@ -6,10 +6,34 @@ workflow:
     - when: never
 
 stages:
+  - sync
   - deploy
 
 default:
   interruptible: true
+
+mirror_to_github:
+  stage: sync
+  image:
+    name: alpine/git:2.47.1
+    entrypoint: [""]
+  variables:
+    GIT_STRATEGY: fetch
+    GITHUB_MIRROR_REPOSITORY: acostaaluiz/of-worklyhub-react
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master")'
+  before_script:
+    - |
+      set -euo pipefail
+      : "${GITHUB_MIRROR_TOKEN:?GITHUB_MIRROR_TOKEN is required}"
+      : "${GITHUB_MIRROR_REPOSITORY:?GITHUB_MIRROR_REPOSITORY is required}"
+      git config --global user.name "gitlab-mirror-bot"
+      git config --global user.email "gitlab-mirror-bot@worklyhub.local"
+      git remote add github-mirror "https://x-access-token:${GITHUB_MIRROR_TOKEN}@github.com/${GITHUB_MIRROR_REPOSITORY}.git"
+  script:
+    - |
+      set -euo pipefail
+      git push github-mirror "HEAD:${CI_COMMIT_BRANCH}"
 
 .gcp-deploy-template:
   stage: deploy

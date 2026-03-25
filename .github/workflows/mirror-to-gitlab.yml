@@ -1,0 +1,41 @@
+name: Mirror GitHub to GitLab
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: mirror-to-gitlab-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate required secret
+        env:
+          GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GITLAB_MIRROR_TOKEN}" ]; then
+            echo "Missing secret: GITLAB_MIRROR_TOKEN"
+            exit 1
+          fi
+
+      - name: Push branch to GitLab
+        env:
+          GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          git remote add gitlab-mirror "https://oauth2:${GITLAB_MIRROR_TOKEN}@gitlab.com/acosta.aluiz/of-worklyhub-react.git"
+          git push gitlab-mirror "HEAD:${GITHUB_REF_NAME}"
