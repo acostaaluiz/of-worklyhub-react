@@ -21,7 +21,7 @@ mirror_to_github:
     GIT_STRATEGY: fetch
     GITHUB_MIRROR_REPOSITORY: acostaaluiz/of-worklyhub-react
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master")'
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master") && $GITHUB_MIRROR_TOKEN'
   before_script:
     - |
       set -euo pipefail

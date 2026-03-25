@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   mirror:
+    if: ${{ secrets.GITLAB_MIRROR_TOKEN != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,16 +22,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Validate required secret
-        env:
-          GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ -z "${GITLAB_MIRROR_TOKEN}" ]; then
-            echo "Missing secret: GITLAB_MIRROR_TOKEN"
-            exit 1
-          fi
 
       - name: Push branch to GitLab
         env:
