@@ -93,6 +93,7 @@ function CompanyServicesAdminPageContent(): JSX.Element {
           <SettingsPageHeader
             icon={<BriefcaseBusiness size={22} />}
             title={appI18n.t("company.admin.servicesPage.title")}
+            description={appI18n.t("company.admin.servicesPage.subtitle")}
           />
 
           <div data-cy="company-services-page">

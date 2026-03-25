@@ -243,6 +243,20 @@ export function formatMoneyFromCents(cents: number, options?: MoneyFormatOptions
   return formatMoney(cents / Math.pow(10, precision), options);
 }
 
+export function maskMoneyInput(value?: string | number | null, options?: MoneyFormatOptions): string {
+  if (value == null) return "";
+  const raw = String(value);
+  const digits = raw.replace(/\D+/g, "");
+  if (!digits) return "";
+
+  const cfg = getMaskConfig();
+  const precision = options?.precision ?? cfg.currencyPrecision;
+  const units = Number(digits) / Math.pow(10, precision);
+
+  if (!Number.isFinite(units)) return "";
+  return formatMoney(units, options);
+}
+
 export function parseMoneyToCents(value: string, options?: MoneyFormatOptions): number {
   const cfg = getMaskConfig();
   const precision = options?.precision ?? cfg.currencyPrecision;
@@ -344,5 +358,6 @@ export default {
   formatMoneyCompact,
   formatNumberCompact,
   formatMoneyFromCents,
+  maskMoneyInput,
   getMoneyInput,
 };

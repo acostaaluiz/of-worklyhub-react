@@ -1084,7 +1084,8 @@
         "dash": "-"
       },
       "servicesPage": {
-        "title": "Servicos que voce oferece"
+        "title": "Servicos que voce oferece",
+        "subtitle": "Organize seu catalogo, duracao e precificacao dos servicos."
       },
       "messages": {
         "serviceCreated": "Servico criado.",

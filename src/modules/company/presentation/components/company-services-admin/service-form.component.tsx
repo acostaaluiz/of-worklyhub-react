@@ -10,7 +10,7 @@ import {
   Save,
 } from "lucide-react";
 
-import { centsToMoney, getMoneyInput, moneyToCents } from "@core/utils/mask";
+import { formatMoneyFromCents, maskMoneyInput, parseMoneyToCents } from "@core/utils/mask";
 import { i18n as appI18n } from "@core/i18n";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -39,7 +39,7 @@ type ServiceFormValues = {
   title: string;
   description?: string;
   durationMinutes?: number | string;
-  priceCents?: number;
+  priceCents?: string;
   capacity?: number;
   active?: boolean;
 };
@@ -49,7 +49,6 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
 
   protected override renderView(): React.ReactNode {
     const { initial, onSubmit, submitting } = this.props;
-    const moneyInput = getMoneyInput();
 
     return (
       <Form
@@ -60,7 +59,9 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
           active: true,
           ...initial,
           priceCents:
-            typeof initial?.priceCents === "number" ? centsToMoney(initial.priceCents) : undefined,
+            typeof initial?.priceCents === "number"
+              ? formatMoneyFromCents(initial.priceCents)
+              : undefined,
         }}
         onFinish={(values: ServiceFormValues) => {
           const parsedDuration =
@@ -77,8 +78,8 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
             active: values.active ?? true,
           };
 
-          if (typeof values.priceCents === "number" && Number.isFinite(values.priceCents)) {
-            prepared.priceCents = moneyToCents(values.priceCents);
+          if (typeof values.priceCents === "string" && values.priceCents.trim()) {
+            prepared.priceCents = parseMoneyToCents(values.priceCents);
           }
 
           onSubmit(prepared);
@@ -145,15 +146,12 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
                     text={appI18n.t("company.admin.form.fields.price.label")}
                   />
                 }
+                normalize={(value) => maskMoneyInput(value)}
               >
-                <InputNumber
-                  min={0}
+                <Input
                   style={{ width: "100%" }}
                   size="large"
-                  step={moneyInput.step}
-                  formatter={moneyInput.formatter}
-                  parser={moneyInput.parser}
-                  precision={moneyInput.precision}
+                  inputMode="numeric"
                   data-cy="company-services-price-input"
                 />
               </Form.Item>

@@ -1084,7 +1084,8 @@
         "dash": "-"
       },
       "servicesPage": {
-        "title": "Services you offer"
+        "title": "Services you offer",
+        "subtitle": "Organize your service catalog, duration, and pricing."
       },
       "messages": {
         "serviceCreated": "Service created.",
