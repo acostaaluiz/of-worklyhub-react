@@ -13,17 +13,31 @@ concurrency:
 
 jobs:
   mirror:
-    if: ${{ secrets.GITLAB_MIRROR_TOKEN != '' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
+      - name: Check mirror token
+        id: check_token
+        env:
+          GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GITLAB_MIRROR_TOKEN}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "GITLAB_MIRROR_TOKEN is not set. Skipping mirror."
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: Checkout repository
+        if: steps.check_token.outputs.skip != 'true'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Push branch to GitLab
+        if: steps.check_token.outputs.skip != 'true'
         env:
           GITLAB_MIRROR_TOKEN: ${{ secrets.GITLAB_MIRROR_TOKEN }}
         run: |
