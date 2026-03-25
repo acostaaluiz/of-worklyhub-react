@@ -1,11 +1,15 @@
 import React from "react";
-import { Card, Button, Modal } from "antd";
+import { Button, Modal } from "antd";
+import { BriefcaseBusiness, Edit, Plus, X } from "lucide-react";
+
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import { i18n as appI18n } from "@core/i18n";
+import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
+import { SettingsSurfaceCard } from "@shared/ui/components/settings/settings-surface-card.component";
+
 import ServiceListComponent from "./service-list.component";
 import ServiceFormComponent from "./service-form.component";
-import { ModalOverrides } from "@modules/schedule/presentation/components/schedule-event-modal/schedule-calendar.component.styles";
-import { X } from "lucide-react";
+import { ModalOverrides } from "./service-manager.component.styles";
 
 type Props = {
   services: CompanyServiceModel[];
@@ -19,18 +23,21 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
   const [editing, setEditing] = React.useState<CompanyServiceModel | null>(null);
   const [showForm, setShowForm] = React.useState(false);
 
+  const isEditing = Boolean(editing);
+
   return (
-    <Card bordered={false} loading={loading} style={{ marginTop: 12 }} data-cy="company-services-manager-card">
+    <SettingsSurfaceCard bordered={false} loading={loading} data-cy="company-services-manager-card">
       <ServiceListComponent
         services={services}
-        onEdit={(s) => {
-          setEditing(s);
+        onEdit={(service) => {
+          setEditing(service);
           setShowForm(true);
         }}
         onDeactivate={onDeactivate}
         toolbarRight={
           <Button
             type="primary"
+            icon={<Plus size={16} />}
             onClick={() => {
               setEditing(null);
               setShowForm(true);
@@ -44,31 +51,40 @@ export function ServiceManagerComponent({ services, loading, onCreate, onUpdate,
 
       <ModalOverrides>
         <Modal
-          title={editing ? appI18n.t("company.admin.manager.modal.editTitle") : appI18n.t("company.admin.manager.modal.newTitle")}
+          title={
+            <IconLabel
+              icon={isEditing ? <Edit size={16} /> : <BriefcaseBusiness size={16} />}
+              text={
+                isEditing
+                  ? appI18n.t("company.admin.manager.modal.editTitle")
+                  : appI18n.t("company.admin.manager.modal.newTitle")
+              }
+            />
+          }
           open={showForm}
           onCancel={() => setShowForm(false)}
           footer={null}
           destroyOnClose
           centered
-          width={760}
+          width={880}
           closeIcon={<X size={18} />}
           className="wh-service-modal"
           data-cy="company-services-form-modal"
         >
           <ServiceFormComponent
-          initial={editing ?? undefined}
-          onSubmit={(d) => {
-            if (editing) {
-              onUpdate(editing.id, d);
-            } else {
-              onCreate(d);
-            }
-            setShowForm(false);
-          }}
+            initial={editing ?? undefined}
+            onSubmit={(data) => {
+              if (editing) {
+                onUpdate(editing.id, data);
+              } else {
+                onCreate(data);
+              }
+              setShowForm(false);
+            }}
           />
         </Modal>
       </ModalOverrides>
-    </Card>
+    </SettingsSurfaceCard>
   );
 }
 

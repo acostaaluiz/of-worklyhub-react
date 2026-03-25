@@ -14,6 +14,10 @@ export type SelectCardModalProps = {
   items: SelectCardItem[];
   multiple?: boolean;
   initialSelected?: string[];
+  layout?: "grid" | "list";
+  maxVisibleItems?: number;
+  cardMinHeightPx?: number;
+  width?: number;
   onCancel: () => void;
   onConfirm: (selectedIds: string[]) => void;
 };
@@ -24,6 +28,10 @@ export default function SelectCardModal({
   items,
   multiple = true,
   initialSelected = [],
+  layout = "grid",
+  maxVisibleItems = 6,
+  cardMinHeightPx = 84,
+  width = 720,
   onCancel,
   onConfirm,
 }: SelectCardModalProps) {
@@ -40,6 +48,10 @@ export default function SelectCardModal({
   };
 
   const rendered = useMemo(() => items, [items]);
+  const resolvedVisibleItems = Math.max(1, maxVisibleItems);
+  const resolvedCardMinHeight = Math.max(64, cardMinHeightPx);
+  const listMaxHeight =
+    resolvedVisibleItems * resolvedCardMinHeight + (resolvedVisibleItems - 1) * 12;
 
   return (
     <Modal
@@ -55,9 +67,26 @@ export default function SelectCardModal({
         </div>
       }
       centered
-      width={720}
+      width={width}
     >
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+      <div
+        style={
+          layout === "list"
+            ? {
+                display: "grid",
+                gridTemplateColumns: "1fr",
+                gap: 12,
+                maxHeight: `${listMaxHeight}px`,
+                overflowY: "auto",
+                paddingRight: 4,
+              }
+            : {
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 12,
+              }
+        }
+      >
         {rendered.map((it) => {
           const active = selected.includes(it.id);
           return (
@@ -66,8 +95,8 @@ export default function SelectCardModal({
               role="button"
               onClick={() => toggle(it.id)}
               style={{
-                minWidth: 200,
-                maxWidth: 260,
+                minWidth: layout === "list" ? "100%" : 200,
+                maxWidth: layout === "list" ? "100%" : 260,
                 borderRadius: 8,
                 padding: 12,
                 border: `1px solid ${active ? "var(--color-primary)" : "var(--color-border)"}`,
@@ -75,7 +104,9 @@ export default function SelectCardModal({
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
+                justifyContent: "center",
                 gap: 8,
+                minHeight: resolvedCardMinHeight,
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

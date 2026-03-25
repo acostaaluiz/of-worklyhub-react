@@ -790,6 +790,9 @@ export class ScheduleEventModal extends BaseComponent<ScheduleEventModalProps, S
               title={appI18n.t("legacyInline.schedule.presentation_components_schedule_event_modal_schedule_event_modal_component.k038")}
               items={(this.props.availableServices ?? []).map((s) => ({ id: s.id, title: s.title, subtitle: s.description, right: s.priceCents ? formatMoneyFromCents(s.priceCents ?? 0) : undefined }))}
               multiple={true}
+              layout="list"
+              maxVisibleItems={4}
+              width={640}
               initialSelected={this.state.selectedServiceIds}
               onCancel={() => this.setSafeState({ selectModalOpen: null })}
               onConfirm={(ids) => {

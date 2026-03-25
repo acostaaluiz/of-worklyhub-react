@@ -1,5 +1,6 @@
 import React, { type JSX, useEffect, useState } from "react";
 import { message } from "antd";
+import { BriefcaseBusiness } from "lucide-react";
 
 import { i18n as appI18n } from "@core/i18n";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
@@ -7,7 +8,10 @@ import ServiceManagerComponent from "@modules/company/presentation/components/co
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
 import { BasePage } from "@shared/base/base.page";
 import { BaseTemplate } from "@shared/base/base.template";
+import { SettingsPageHeader } from "@shared/ui/components/settings/settings-page-header.component";
 import { loadingService } from "@shared/ui/services/loading.service";
+
+import { ServicesPageStack } from "./services.page.styles";
 
 function CompanyServicesAdminPageContent(): JSX.Element {
   const [services, setServices] = useState<CompanyServiceModel[]>([]);
@@ -85,22 +89,22 @@ function CompanyServicesAdminPageContent(): JSX.Element {
   return (
     <BaseTemplate
       content={
-        <div style={{ padding: 16 }}>
-          <h2 style={{ margin: 0 }} data-cy="company-services-page-title">
-            {appI18n.t("company.admin.servicesPage.title")}
-          </h2>
-          <div style={{ marginTop: 12 }}>
-            <div data-cy="company-services-page">
-              <ServiceManagerComponent
-                services={services}
-                loading={loading}
-                onCreate={handleCreate}
-                onUpdate={handleUpdate}
-                onDeactivate={handleDeactivate}
-              />
-            </div>
+        <ServicesPageStack>
+          <SettingsPageHeader
+            icon={<BriefcaseBusiness size={22} />}
+            title={appI18n.t("company.admin.servicesPage.title")}
+          />
+
+          <div data-cy="company-services-page">
+            <ServiceManagerComponent
+              services={services}
+              loading={loading}
+              onCreate={handleCreate}
+              onUpdate={handleUpdate}
+              onDeactivate={handleDeactivate}
+            />
           </div>
-        </div>
+        </ServicesPageStack>
       }
     />
   );
