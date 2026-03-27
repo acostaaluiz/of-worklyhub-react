@@ -23,6 +23,7 @@ import {
 } from "antd";
 import {
   AlertOutlined,
+  BarChartOutlined,
   HistoryOutlined,
   ReloadOutlined,
   ShoppingCartOutlined,
@@ -539,7 +540,12 @@ function InventoryHomePageContent(): React.ReactElement {
         <Card
           size="small"
           className="surface"
-          title="Critical stock alerts"
+          title={(
+            <Space size={8}>
+              <WarningOutlined />
+              <span>Critical stock alerts</span>
+            </Space>
+          )}
           style={{ borderRadius: 12, minHeight: 0 }}
         >
           {alerts.length === 0 ? (
@@ -570,7 +576,12 @@ function InventoryHomePageContent(): React.ReactElement {
         <Card
           size="small"
           className="surface"
-          title="Recent stock movements"
+          title={(
+            <Space size={8}>
+              <HistoryOutlined />
+              <span>Recent stock movements</span>
+            </Space>
+          )}
           style={{ borderRadius: 12, minHeight: 0 }}
         >
           {movements.length === 0 ? (
@@ -818,17 +829,32 @@ function InventoryHomePageContent(): React.ReactElement {
             items={[
               {
                 key: "products",
-                label: "Products",
+                label: (
+                  <Space size={8}>
+                    <ShoppingCartOutlined />
+                    <span>Products</span>
+                  </Space>
+                ),
                 children: productsTabContent,
               },
               {
                 key: "indicators",
-                label: "Indicators",
+                label: (
+                  <Space size={8}>
+                    <BarChartOutlined />
+                    <span>Indicators</span>
+                  </Space>
+                ),
                 children: indicatorsTabContent,
               },
               {
                 key: "alerts",
-                label: "Alerts & Suggestions",
+                label: (
+                  <Space size={8}>
+                    <AlertOutlined />
+                    <span>Alerts & Suggestions</span>
+                  </Space>
+                ),
                 children: (
                   <div style={{ height: "100%", minHeight: 0, overflow: "auto", overflowX: "hidden", paddingRight: 4 }}>
                     {alertsTabContent}
@@ -837,7 +863,12 @@ function InventoryHomePageContent(): React.ReactElement {
               },
               {
                 key: "movements",
-                label: "Movement Ledger",
+                label: (
+                  <Space size={8}>
+                    <HistoryOutlined />
+                    <span>Movement Ledger</span>
+                  </Space>
+                ),
                 children: (
                   <div style={{ height: "100%", minHeight: 0, overflow: "auto", overflowX: "hidden", paddingRight: 4 }}>
                     {movementsTabContent}

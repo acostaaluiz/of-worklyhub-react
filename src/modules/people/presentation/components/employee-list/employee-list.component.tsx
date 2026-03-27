@@ -13,9 +13,6 @@ type Props = {
 type PropsExt = Props & { toolbarLeft?: ReactNode; toolbarRight?: ReactNode };
 
 export function EmployeeListComponent({ employees, onEdit, onDeactivate, toolbarLeft, toolbarRight }: PropsExt) {
-  const maxVisibleRows = 6;
-  const estimatedRowHeight = 68;
-
   const cols: ColumnsType<EmployeeModel> = [
     { title: "Name", dataIndex: "firstName", key: "firstName", render: (_: DataMap, r: EmployeeModel) => `${r.firstName} ${r.lastName}` },
     { title: "Email", dataIndex: "email", key: "email" },
@@ -51,8 +48,11 @@ export function EmployeeListComponent({ employees, onEdit, onDeactivate, toolbar
       columns={cols}
       dataSource={employees}
       rowKey="id"
-      pagination={false}
-      tableScroll={{ y: maxVisibleRows * estimatedRowHeight }}
+      pagination={{
+        pageSize: 5,
+        showSizeChanger: false,
+        hideOnSinglePage: true,
+      }}
       searchFields={["firstName", "lastName", "email", "role", "department", "accessProfileUid"]}
       topLeft={toolbarLeft}
       topRight={toolbarRight}

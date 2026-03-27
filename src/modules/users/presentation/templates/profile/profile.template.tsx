@@ -95,6 +95,12 @@ const LabelIcon = styled.span`
   font-size: 14px;
 `;
 
+const TabLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 const ActionButton = styled(Button)`
   height: 34px;
   border-radius: 999px;
@@ -687,7 +693,15 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
         </ProfileHighlights>
 
         <ProfileTabs defaultActiveKey={defaultTab ?? "personal"} data-cy="users-profile-tabs">
-            <TabPane tab={<span data-cy="users-profile-tab-personal">{t("users.profile.tabs.personal")}</span>} key="personal">
+            <TabPane
+              tab={(
+                <TabLabel data-cy="users-profile-tab-personal">
+                  <UserOutlined />
+                  {t("users.profile.tabs.personal")}
+                </TabLabel>
+              )}
+              key="personal"
+            >
               <Form
                 form={personalForm}
                 initialValues={{ ...personal, phone: maskPhone(personal?.phone) }}
@@ -766,7 +780,16 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
               </Form>
             </TabPane>
 
-            <TabPane tab={<span data-cy="users-profile-tab-company">{t("users.profile.tabs.company")}</span>} key="company" forceRender>
+            <TabPane
+              tab={(
+                <TabLabel data-cy="users-profile-tab-company">
+                  <ShopOutlined />
+                  {t("users.profile.tabs.company")}
+                </TabLabel>
+              )}
+              key="company"
+              forceRender
+            >
               <Form
                 form={companyForm}
                 initialValues={company ?? { accountType: "individual" }}
@@ -910,10 +933,23 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
               </Form>
             </TabPane>
 
-            <TabPane tab={<span data-cy="users-profile-tab-ai-tokens">{t("users.profile.tabs.aiTokens")}</span>} key="ai-tokens">
+            <TabPane
+              tab={(
+                <TabLabel data-cy="users-profile-tab-ai-tokens">
+                  <ThunderboltOutlined />
+                  {t("users.profile.tabs.aiTokens")}
+                </TabLabel>
+              )}
+              key="ai-tokens"
+            >
               <AiTokensInnerTabs defaultActiveKey="balance" data-cy="users-profile-ai-tokens-inner-tabs">
                 <TabPane
-                  tab={<span data-cy="users-profile-ai-tokens-subtab-balance">{t("users.profile.aiTokens.balance.title")}</span>}
+                  tab={(
+                    <TabLabel data-cy="users-profile-ai-tokens-subtab-balance">
+                      <RobotOutlined />
+                      {t("users.profile.aiTokens.balance.title")}
+                    </TabLabel>
+                  )}
                   key="balance"
                 >
                   <div
@@ -989,7 +1025,12 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                 </TabPane>
 
                 <TabPane
-                  tab={<span data-cy="users-profile-ai-tokens-subtab-statement">{t("users.profile.aiTokens.statement.title")}</span>}
+                  tab={(
+                    <TabLabel data-cy="users-profile-ai-tokens-subtab-statement">
+                      <HistoryOutlined />
+                      {t("users.profile.aiTokens.statement.title")}
+                    </TabLabel>
+                  )}
                   key="statement"
                 >
                   <div
@@ -1022,7 +1063,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       columns={aiTokenColumns}
                       dataSource={aiTokensLedger ?? []}
                       pagination={{
-                        pageSize: 5,
+                        pageSize: 4,
                         showSizeChanger: false,
                         hideOnSinglePage: true,
                       }}

@@ -1,4 +1,4 @@
-import { Divider, Space, Typography } from "antd";
+import { Divider, Typography } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -17,6 +17,7 @@ import {
   AttributionLink,
   AttributionBrand,
   AttributionLabel,
+  TaglineText,
 } from "./footer.component.styles";
 
 type FooterLinkItem = {
@@ -47,18 +48,11 @@ export function AppFooter() {
       <div className="container">
         <FooterInner>
           <Left>
-            <Space orientation="vertical" size={4}>
-              <Brand onClick={() => handleNavigate("/")}>
-                <Svg src={worklyHubLogoUrl} alt="WorklyHub" size={28} className="brand-logo" />
-                <span>WorklyHub</span>
-              </Brand>
-              <Typography.Text
-                type="secondary"
-                style={{ fontSize: "var(--font-size-sm)" }}
-              >
-                {t("layout.footer.tagline")}
-              </Typography.Text>
-            </Space>
+            <Brand onClick={() => handleNavigate("/")}>
+              <Svg src={worklyHubLogoUrl} alt="WorklyHub" size={28} className="brand-logo" />
+              <span>WorklyHub</span>
+            </Brand>
+            <TaglineText type="secondary">{t("layout.footer.tagline")}</TaglineText>
           </Left>
 
           <Right>

@@ -60,6 +60,8 @@ export const Right = styled.div`
 
 export const LinksRow = styled.div`
   display: flex;
+  align-items: center;
+  min-height: 28px;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
@@ -78,6 +80,12 @@ export const FooterLink = styled.span`
   &:hover {
     color: var(--color-link-hover);
   }
+`;
+
+export const TaglineText = styled(Typography.Text)`
+  display: block;
+  font-size: var(--font-size-sm);
+  line-height: 1;
 `;
 
 export const AttributionRow = styled.div`

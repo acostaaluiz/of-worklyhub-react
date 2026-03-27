@@ -1,6 +1,7 @@
 import React from "react";
 import { i18n as appI18n } from "@core/i18n";
 import { Button, Modal, Tabs, message } from "antd";
+import { TeamOutlined, CalendarOutlined } from "@ant-design/icons";
 import PeopleTemplate from "@modules/people/presentation/templates/people/people.template";
 import EmployeeListComponent from "@modules/people/presentation/components/employee-list/employee-list.component";
 import EmployeeFormComponent from "@modules/people/presentation/components/employee-form/employee-form.component";
@@ -278,8 +279,26 @@ export class PeopleHomePage extends BasePage<{}, State> {
           activeKey={this.state.activeTab}
           onChange={(activeTab) => this.setSafeState({ activeTab: activeTab as "employees" | "capacity" })}
           items={[
-            { key: "employees", label: "Employees", children: employeesContent },
-            { key: "capacity", label: "Capacity & availability", children: capacityContent },
+            {
+              key: "employees",
+              label: (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <TeamOutlined />
+                  <span>Employees</span>
+                </span>
+              ),
+              children: employeesContent,
+            },
+            {
+              key: "capacity",
+              label: (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                  <CalendarOutlined />
+                  <span>Capacity & availability</span>
+                </span>
+              ),
+              children: capacityContent,
+            },
           ]}
         />
 
