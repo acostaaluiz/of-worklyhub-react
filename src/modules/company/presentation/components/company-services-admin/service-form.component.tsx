@@ -22,7 +22,6 @@ import type { CompanyServiceModel } from "@modules/company/interfaces/service.mo
 import {
   ContinueWrap,
   DurationFieldShell,
-  FieldRow,
   FieldRow3,
   FormStack,
   SectionCard,
@@ -88,7 +87,7 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
       >
         <FormStack>
           <SectionCard>
-            <FieldRow>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
               <Form.Item
                 name="title"
                 label={
@@ -118,7 +117,7 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
               >
                 <Input.TextArea rows={4} data-cy="company-services-description-input" />
               </Form.Item>
-            </FieldRow>
+            </div>
           </SectionCard>
 
           <SectionCard>

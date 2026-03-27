@@ -63,7 +63,7 @@ export class SlaTable extends BaseComponent<Props, State> {
           dataSource={rows}
           loading={!!loading}
           pagination={{
-            pageSize: 6,
+            pageSize: 4,
             showSizeChanger: false,
             hideOnSinglePage: true,
           }}

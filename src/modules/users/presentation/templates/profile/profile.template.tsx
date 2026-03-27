@@ -289,6 +289,42 @@ const ProfileTabs = styled(Tabs)`
   }
 `;
 
+const AiTokensInnerTabs = styled(Tabs)`
+  .ant-tabs-nav {
+    margin: 0 0 var(--space-2);
+  }
+
+  .ant-tabs-nav::before {
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  .ant-tabs-tab {
+    margin: 0 var(--space-3) 0 0;
+    padding: 6px 0;
+    background: transparent;
+  }
+
+  .ant-tabs-tab .ant-tabs-tab-btn {
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: var(--color-primary);
+  }
+
+  .ant-tabs-content,
+  .ant-tabs-tabpane {
+    height: auto;
+    min-height: auto;
+  }
+
+  .ant-tabs-tabpane {
+    overflow: visible;
+    padding-right: 0;
+  }
+`;
+
 export type PersonalModel = {
   fullName: string;
   email: string;
@@ -875,113 +911,127 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
             </TabPane>
 
             <TabPane tab={<span data-cy="users-profile-tab-ai-tokens">{t("users.profile.tabs.aiTokens")}</span>} key="ai-tokens">
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div
-                  style={{
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    padding: 12,
-                    background: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
-                        <RobotOutlined />
-                        {t("users.profile.aiTokens.balance.title")}
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
-                        {t("users.profile.aiTokens.balance.subtitle")}
-                      </div>
-                    </div>
-                    <Button onClick={onRefreshAiTokens} loading={isAiTokensLoading}>
-                      {t("users.profile.aiTokens.balance.actions.refresh")}
-                    </Button>
-                  </div>
-
-                  <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
-                    <div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.current")}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.totalBalanceTokens ?? 0}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.monthlyQuota")}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.monthlyAllocationTokens ?? 0}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.topUp")}</div>
-                      <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.topupBalanceTokens ?? 0}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.nextRefill")}</div>
-                      <div style={{ fontSize: 14, fontWeight: 700 }}>
-                        {aiTokensSummary?.nextRefillAt
-                          ? new Date(aiTokensSummary.nextRefillAt).toLocaleString()
-                          : "-"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 10 }}>
-                    <Progress
-                      percent={
-                        aiTokensSummary?.monthlyAllocationTokens
-                          ? Math.min(
-                              100,
-                              Math.round(
-                                ((aiTokensSummary.monthlyBalanceTokens ?? 0) /
-                                  aiTokensSummary.monthlyAllocationTokens) *
-                                  100
-                              )
-                            )
-                          : 0
-                      }
-                      status="active"
-                      size="small"
-                    />
-                    <div style={{ marginTop: 4, fontSize: 12, color: "var(--color-text-muted)" }}>
-                      {t("users.profile.aiTokens.balance.remainingMonthlyQuota", {
-                        count: aiTokensSummary?.monthlyBalanceTokens ?? 0,
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    overflow: "hidden",
-                  }}
+              <AiTokensInnerTabs defaultActiveKey="balance" data-cy="users-profile-ai-tokens-inner-tabs">
+                <TabPane
+                  tab={<span data-cy="users-profile-ai-tokens-subtab-balance">{t("users.profile.aiTokens.balance.title")}</span>}
+                  key="balance"
                 >
                   <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "10px 12px",
-                      borderBottom: "1px solid var(--color-divider)",
-                      background: "color-mix(in srgb, var(--color-surface-2) 72%, transparent)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "var(--radius-md)",
+                      padding: 12,
+                      background: "color-mix(in srgb, var(--color-surface) 92%, transparent)",
                     }}
                   >
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
-                      <HistoryOutlined />
-                      {t("users.profile.aiTokens.statement.title")}
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                          <RobotOutlined />
+                          {t("users.profile.aiTokens.balance.title")}
+                        </div>
+                        <div style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                          {t("users.profile.aiTokens.balance.subtitle")}
+                        </div>
+                      </div>
+                      <Button onClick={onRefreshAiTokens} loading={isAiTokensLoading}>
+                        {t("users.profile.aiTokens.balance.actions.refresh")}
+                      </Button>
                     </div>
-                    <Tag>{t("users.profile.aiTokens.statement.totalRecords", { count: aiTokensTotal ?? 0 })}</Tag>
-                  </div>
 
-                  <Table<AiTokenLedgerEntryModel>
-                    rowKey="id"
-                    loading={isAiTokensLoading}
-                    columns={aiTokenColumns}
-                    dataSource={aiTokensLedger ?? []}
-                    pagination={false}
-                    scroll={{ x: 920, y: 320 }}
-                    locale={{ emptyText: t("users.profile.aiTokens.statement.empty") }}
-                  />
-                </div>
-              </div>
+                    <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.current")}</div>
+                        <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.totalBalanceTokens ?? 0}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.monthlyQuota")}</div>
+                        <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.monthlyAllocationTokens ?? 0}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.topUp")}</div>
+                        <div style={{ fontSize: 20, fontWeight: 800 }}>{aiTokensSummary?.topupBalanceTokens ?? 0}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{t("users.profile.aiTokens.balance.cards.nextRefill")}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700 }}>
+                          {aiTokensSummary?.nextRefillAt
+                            ? new Date(aiTokensSummary.nextRefillAt).toLocaleString()
+                            : "-"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ marginTop: 10 }}>
+                      <Progress
+                        percent={
+                          aiTokensSummary?.monthlyAllocationTokens
+                            ? Math.min(
+                                100,
+                                Math.round(
+                                  ((aiTokensSummary.monthlyBalanceTokens ?? 0) /
+                                    aiTokensSummary.monthlyAllocationTokens) *
+                                    100
+                                )
+                              )
+                            : 0
+                        }
+                        status="active"
+                        size="small"
+                      />
+                      <div style={{ marginTop: 4, fontSize: 12, color: "var(--color-text-muted)" }}>
+                        {t("users.profile.aiTokens.balance.remainingMonthlyQuota", {
+                          count: aiTokensSummary?.monthlyBalanceTokens ?? 0,
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </TabPane>
+
+                <TabPane
+                  tab={<span data-cy="users-profile-ai-tokens-subtab-statement">{t("users.profile.aiTokens.statement.title")}</span>}
+                  key="statement"
+                >
+                  <div
+                    style={{
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "var(--radius-md)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        padding: "10px 12px",
+                        borderBottom: "1px solid var(--color-divider)",
+                        background: "color-mix(in srgb, var(--color-surface-2) 72%, transparent)",
+                      }}
+                    >
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                        <HistoryOutlined />
+                        {t("users.profile.aiTokens.statement.title")}
+                      </div>
+                      <Tag>{t("users.profile.aiTokens.statement.totalRecords", { count: aiTokensTotal ?? 0 })}</Tag>
+                    </div>
+
+                    <Table<AiTokenLedgerEntryModel>
+                      rowKey="id"
+                      loading={isAiTokensLoading}
+                      columns={aiTokenColumns}
+                      dataSource={aiTokensLedger ?? []}
+                      pagination={{
+                        pageSize: 5,
+                        showSizeChanger: false,
+                        hideOnSinglePage: true,
+                      }}
+                      scroll={{ x: 920 }}
+                      locale={{ emptyText: t("users.profile.aiTokens.statement.empty") }}
+                    />
+                  </div>
+                </TabPane>
+              </AiTokensInnerTabs>
             </TabPane>
           </ProfileTabs>
         </MainCard>
