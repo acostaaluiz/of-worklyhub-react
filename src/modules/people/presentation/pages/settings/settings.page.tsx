@@ -5,7 +5,6 @@ import {
   Button,
   Form,
   Input,
-  InputNumber,
   Select,
   Space,
   Switch,
@@ -25,7 +24,7 @@ import {
   Users,
 } from "lucide-react";
 
-import { centsToMoney, getMoneyInput, moneyToCents } from "@core/utils/mask";
+import { getMoneyMaskAdapter } from "@core/utils/mask";
 import { formatAppDateTime } from "@core/utils/date-time";
 import { companyService } from "@modules/company/services/company.service";
 import type {
@@ -40,6 +39,7 @@ import {
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { BasePage } from "@shared/base/base.page";
 import { BaseTemplate } from "@shared/base/base.template";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
 import { SettingsPageHeader } from "@shared/ui/components/settings/settings-page-header.component";
 import type { SettingsSource } from "@shared/ui/components/settings/settings-source.helpers";
@@ -69,11 +69,14 @@ type AccessProfileFormValue = {
 };
 
 type SettingsFormValues = Omit<PeopleWorkspaceSettings, "defaultSalaryCents" | "employeeAccess"> & {
-  defaultSalaryCents?: number | null;
+  defaultSalaryCents?: string | null;
   employeeAccessEnabled?: boolean;
   defaultProfileUid?: string | null;
   accessProfiles?: AccessProfileFormValue[];
 };
+
+const moneyMask = getMoneyMaskAdapter({ fromCents: true });
+type SettingsNormalizationInput = Partial<Omit<SettingsFormValues, "defaultSalaryCents"> & { defaultSalaryCents?: string | number | null }>;
 
 function normalizeOptionalText(value: string | null | undefined): string | null {
   if (typeof value !== "string") return null;
@@ -131,7 +134,7 @@ function normalizeProfiles(values: AccessProfileFormValue[] | undefined): Employ
 }
 
 function normalizeSettings(
-  input?: Partial<SettingsFormValues>
+  input?: SettingsNormalizationInput
 ): PeopleWorkspaceSettings {
   const profiles = normalizeProfiles(input?.accessProfiles);
   const requestedDefault = toSlug(String(input?.defaultProfileUid ?? ""));
@@ -144,11 +147,7 @@ function normalizeSettings(
     defaultRole: normalizeOptionalText(input?.defaultRole),
     defaultDepartment: normalizeOptionalText(input?.defaultDepartment),
     defaultSalaryCents:
-      typeof input?.defaultSalaryCents === "number" &&
-      Number.isFinite(input.defaultSalaryCents) &&
-      input.defaultSalaryCents >= 0
-        ? moneyToCents(input.defaultSalaryCents)
-        : null,
+      moneyMask.parse(input?.defaultSalaryCents) ?? null,
     requireEmail:
       typeof input?.requireEmail === "boolean"
         ? input.requireEmail
@@ -185,7 +184,7 @@ function toFormValues(settings: PeopleWorkspaceSettings): SettingsFormValues {
     defaultDepartment: settings.defaultDepartment ?? undefined,
     defaultSalaryCents:
       typeof settings.defaultSalaryCents === "number"
-        ? centsToMoney(settings.defaultSalaryCents)
+        ? moneyMask.format(settings.defaultSalaryCents)
         : undefined,
     employeeAccessEnabled: settings.employeeAccess.enabled,
     defaultProfileUid: settings.employeeAccess.defaultProfileUid ?? undefined,
@@ -209,9 +208,9 @@ function PeopleSettingsPageContent(): React.ReactElement {
   const [source, setSource] = React.useState<SettingsSource>("defaults");
   const [updatedAt, setUpdatedAt] = React.useState<string | undefined>(undefined);
   const [loading, setLoading] = React.useState(false);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [form] = Form.useForm<SettingsFormValues>();
-  const moneyInput = getMoneyInput();
   const accessProfiles = Form.useWatch("accessProfiles", form) ?? [];
 
   React.useEffect(() => {
@@ -243,6 +242,7 @@ function PeopleSettingsPageContent(): React.ReactElement {
         settings: DEFAULT_PEOPLE_SETTINGS,
         source: "defaults",
       });
+      setInitialLoading(false);
       return;
     }
 
@@ -254,6 +254,7 @@ function PeopleSettingsPageContent(): React.ReactElement {
       message.error("Failed to load people settings.");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, [applySettings, workspaceId]);
 
@@ -289,6 +290,10 @@ function PeopleSettingsPageContent(): React.ReactElement {
     value: profile.uid,
     label: profile.name,
   }));
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={3} sideRows={2} height="100%" />;
+  }
 
   return (
     <BaseTemplate
@@ -356,15 +361,9 @@ function PeopleSettingsPageContent(): React.ReactElement {
                             name="defaultSalaryCents"
                             label="Default salary"
                             style={{ minWidth: 240 }}
+                            normalize={(value) => moneyMask.normalize(value)}
                           >
-                            <InputNumber
-                              style={{ width: "100%" }}
-                              min={0}
-                              step={moneyInput.step}
-                              formatter={moneyInput.formatter}
-                              parser={moneyInput.parser}
-                              precision={moneyInput.precision}
-                            />
+                            <Input style={{ width: "100%" }} inputMode="numeric" />
                           </Form.Item>
                         </Space>
                       </>

@@ -89,6 +89,7 @@ import {
   toDayjsValue,
   toIsoDateTimeValue,
 } from "@core/utils/date-time";
+import { getMoneyMaskAdapter } from "@core/utils/mask";
 import {
   DEFAULT_ATTACHMENT_HOST_SUFFIXES,
   resolveTrustedExternalHosts,
@@ -102,6 +103,7 @@ const priorityValues: WorkOrderPriority[] = ["low", "medium", "high", "urgent"];
 const attachmentAccept =
   "image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx,.zip,.rar";
 const maxAttachmentSizeMb = 25;
+const moneyMaskCents = getMoneyMaskAdapter({ fromCents: true });
 
 type WorkOrderDraft = {
   workspaceId: string;
@@ -1778,13 +1780,15 @@ export function WorkOrderForm({
                           }}
                         >
                           <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k146")} icon={<NumberOutlined />}>
-                            <InputNumber
-                              min={0}
+                            <Input
                               placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k147")}
-                              value={line.unitPriceCents}
-                              onChange={(value) =>
-                                updateServiceLine(idx, { unitPriceCents: value ?? undefined })
+                              value={moneyMaskCents.format(line.unitPriceCents)}
+                              onChange={(event) =>
+                                updateServiceLine(idx, {
+                                  unitPriceCents: moneyMaskCents.parse(event.target.value),
+                                })
                               }
+                              inputMode="numeric"
                               style={{ width: "100%" }}
                               data-cy={`work-order-service-unit-price-input-${idx}`}
                             />
@@ -1914,11 +1918,15 @@ export function WorkOrderForm({
                           />
                         </LabeledField>
                         <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k166")} icon={<NumberOutlined />} style={{ width: 170 }}>
-                          <InputNumber
-                            min={0}
+                          <Input
                             placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k167")}
-                            value={line.unitCostCents}
-                            onChange={(value) => updateInventoryLine(idx, { unitCostCents: value ?? undefined })}
+                            value={moneyMaskCents.format(line.unitCostCents)}
+                            onChange={(event) =>
+                              updateInventoryLine(idx, {
+                                unitCostCents: moneyMaskCents.parse(event.target.value),
+                              })
+                            }
+                            inputMode="numeric"
                             style={{ width: "100%" }}
                             data-cy={`work-order-inventory-unit-cost-input-${idx}`}
                           />

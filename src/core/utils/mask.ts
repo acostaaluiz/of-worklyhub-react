@@ -26,6 +26,8 @@ export type MoneyInputOptions = MoneyFormatOptions & {
   fromCents?: boolean;
 };
 
+type MoneyMaskedValue = string | number | null | undefined;
+
 const DEFAULT_CONFIG: MaskConfig = {
   phoneMask: "(###) ###-####",
   dateFormat: APP_DATE_FORMAT,
@@ -300,6 +302,33 @@ export function getMoneyInput(options?: MoneyInputOptions) {
   };
 }
 
+export function getMoneyMaskAdapter(options?: MoneyInputOptions) {
+  const fromCents = options?.fromCents ?? false;
+
+  return {
+    normalize: (value?: MoneyMaskedValue) => maskMoneyInput(value, options),
+    parse: (value?: MoneyMaskedValue): number | undefined => {
+      if (value == null) return undefined;
+      if (typeof value === "number" && Number.isFinite(value)) {
+        return fromCents ? Math.round(value) : value;
+      }
+
+      const raw = String(value).trim();
+      if (!raw) return undefined;
+
+      return fromCents
+        ? parseMoneyToCents(raw, options)
+        : parseMoney(raw, options);
+    },
+    format: (value?: number | null): string | undefined => {
+      if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+      return fromCents
+        ? formatMoneyFromCents(value, options)
+        : formatMoney(value, options);
+    },
+  };
+}
+
 export function getDateFormat(): string {
   return getMaskConfig().dateFormat;
 }
@@ -359,5 +388,6 @@ export default {
   formatNumberCompact,
   formatMoneyFromCents,
   maskMoneyInput,
+  getMoneyMaskAdapter,
   getMoneyInput,
 };

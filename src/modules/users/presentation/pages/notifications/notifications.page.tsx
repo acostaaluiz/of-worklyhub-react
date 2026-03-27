@@ -52,7 +52,9 @@ export class NotificationsPage extends BasePage<{}, State> {
   };
 
   protected override async onInit(): Promise<void> {
-    await this.loadFirstPage();
+    await this.runAsync(async () => {
+      await this.loadFirstPage();
+    }, { swallowError: true });
   }
 
   private get unreadOnly(): boolean {
@@ -60,18 +62,29 @@ export class NotificationsPage extends BasePage<{}, State> {
   }
 
   private async loadFirstPage(): Promise<void> {
-    const response = await usersNotificationsService.list({
-      limit: 18,
-      offset: 0,
-      unreadOnly: this.unreadOnly,
-    });
+    try {
+      const response = await usersNotificationsService.list({
+        limit: 18,
+        offset: 0,
+        unreadOnly: this.unreadOnly,
+      });
 
-    this.setSafeState({
-      summary: response.summary,
-      notifications: response.items,
-      offset: response.page.nextOffset ?? response.items.length,
-      hasMore: !!response.page.hasMore,
-    });
+      this.setSafeState({
+        summary: response.summary,
+        notifications: response.items,
+        offset: response.page.nextOffset ?? response.items.length,
+        hasMore: !!response.page.hasMore,
+      });
+    } catch (err) {
+      message.error("Failed to load notifications");
+      console.error("notifications.loadFirstPage", err);
+      this.setSafeState({
+        summary: usersNotificationsService.getSummaryValue(),
+        notifications: [],
+        offset: 0,
+        hasMore: false,
+      });
+    }
   }
 
   private async loadMore(): Promise<void> {

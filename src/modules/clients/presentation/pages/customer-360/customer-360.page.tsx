@@ -8,6 +8,7 @@ import {
   clients360Service,
 } from "@modules/clients/services/clients-360.service";
 import Customer360Template from "@modules/clients/presentation/templates/customer-360/customer-360.template";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 
 const EMPTY_BUNDLE: Client360Bundle = {
   generatedAt: new Date().toISOString(),
@@ -37,6 +38,7 @@ function Customer360PageContent() {
   );
   const [bundle, setBundle] = React.useState<Client360Bundle>(EMPTY_BUNDLE);
   const [loading, setLoading] = React.useState(false);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [selectedClientId, setSelectedClientId] = React.useState<string | null>(null);
@@ -69,6 +71,7 @@ function Customer360PageContent() {
     if (!workspaceId) {
       setBundle(EMPTY_BUNDLE);
       setSelectedClientId(null);
+      setInitialLoading(false);
       return;
     }
 
@@ -92,6 +95,7 @@ function Customer360PageContent() {
       message.error("Failed to load Client 360.");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, [
     workspaceId,
@@ -106,6 +110,10 @@ function Customer360PageContent() {
   React.useEffect(() => {
     void loadBundle();
   }, [loadBundle]);
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={3} sideRows={2} height="100%" />;
+  }
 
   return (
     <Customer360Template

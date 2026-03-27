@@ -8,6 +8,7 @@ import ServiceManagerComponent from "@modules/company/presentation/components/co
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
 import { BasePage } from "@shared/base/base.page";
 import { BaseTemplate } from "@shared/base/base.template";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { SettingsPageHeader } from "@shared/ui/components/settings/settings-page-header.component";
 import { loadingService } from "@shared/ui/services/loading.service";
 
@@ -16,6 +17,7 @@ import { ServicesPageStack } from "./services.page.styles";
 function CompanyServicesAdminPageContent(): JSX.Element {
   const [services, setServices] = useState<CompanyServiceModel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -26,6 +28,7 @@ function CompanyServicesAdminPageContent(): JSX.Element {
       // ignore for now
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   };
 
@@ -84,6 +87,10 @@ function CompanyServicesAdminPageContent(): JSX.Element {
       setLoading(false);
       loadingService.hide();
     }
+  }
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={4} sideRows={2} height="100%" />;
   }
 
   return (

@@ -32,6 +32,7 @@ import {
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { BasePage } from "@shared/base/base.page";
 import { BaseTemplate } from "@shared/base/base.template";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
 import { SettingsPageHeader } from "@shared/ui/components/settings/settings-page-header.component";
 import { type SettingsSource } from "@shared/ui/components/settings/settings-source.helpers";
@@ -120,6 +121,7 @@ function InventorySettingsPageContent(): React.ReactElement {
   const [source, setSource] = React.useState<SettingsSource>("defaults");
   const [updatedAt, setUpdatedAt] = React.useState<string | undefined>(undefined);
   const [loading, setLoading] = React.useState(false);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [form] = Form.useForm<InventoryWorkspaceSettings>();
 
@@ -149,6 +151,7 @@ function InventorySettingsPageContent(): React.ReactElement {
       form.setFieldsValue(DEFAULT_SETTINGS);
       setSource("defaults");
       setUpdatedAt(undefined);
+      setInitialLoading(false);
       return;
     }
 
@@ -160,6 +163,7 @@ function InventorySettingsPageContent(): React.ReactElement {
       message.error("Failed to load inventory settings.");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, [applyBundle, form, workspaceId]);
 
@@ -190,6 +194,10 @@ function InventorySettingsPageContent(): React.ReactElement {
   const handleRestoreDefaults = () => {
     form.setFieldsValue(DEFAULT_SETTINGS);
   };
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={3} sideRows={2} height="100%" />;
+  }
 
   return (
     <BaseTemplate

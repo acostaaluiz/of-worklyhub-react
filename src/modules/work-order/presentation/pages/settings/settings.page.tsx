@@ -26,6 +26,7 @@ import {
 import { usersAuthService } from "@modules/users/services/auth.service";
 import { BasePage } from "@shared/base/base.page";
 import { BaseTemplate } from "@shared/base/base.template";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { PageStack } from "@modules/work-order/presentation/templates/work-orders/work-orders.template.styles";
 import { IconLabel } from "@shared/ui/components/settings/icon-label.component";
 import { SettingsPageHeader } from "@shared/ui/components/settings/settings-page-header.component";
@@ -135,6 +136,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
   const [source, setSource] = React.useState<SettingsSource>("defaults");
   const [updatedAt, setUpdatedAt] = React.useState<string | undefined>(undefined);
   const [loading, setLoading] = React.useState(false);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [form] = Form.useForm<WorkOrderWorkspaceSettings>();
   const isDevEnvironment = import.meta.env.MODE !== "production";
@@ -159,6 +161,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
       form.setFieldsValue(DEFAULT_SETTINGS);
       setSource("defaults");
       setUpdatedAt(undefined);
+      setInitialLoading(false);
       return;
     }
 
@@ -170,6 +173,7 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
       message.error(appI18n.t("legacyInline.work_order.presentation_pages_settings_settings_page.k001"));
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, [applyBundle, form, workspaceId]);
 
@@ -200,6 +204,10 @@ function WorkOrderSettingsPageContent(): React.ReactElement {
   const handleResetDefaults = () => {
     form.setFieldsValue(DEFAULT_SETTINGS);
   };
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={3} sideRows={2} height="100%" />;
+  }
 
   return (
     <div data-cy="work-order-settings-page">

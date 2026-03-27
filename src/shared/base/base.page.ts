@@ -3,6 +3,7 @@ import { BaseComponent } from "./base.component";
 import type { BasePageOptions } from "./interfaces/base-page.interface";
 import type { BasePageState } from "./interfaces/base-page.state.interface";
 import type { BaseProps } from "./interfaces/base-props.interface";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 
 export abstract class BasePage<P extends BaseProps = BaseProps, S extends BasePageState = BasePageState> extends BaseComponent<P, S> {
   protected options: BasePageOptions = { requiresAuth: false };
@@ -26,6 +27,10 @@ export abstract class BasePage<P extends BaseProps = BaseProps, S extends BasePa
 
   protected onTitleChanged(_title?: string): void {
     return;
+  }
+
+  protected override renderLoading(): React.ReactNode {
+    return React.createElement(PageSkeleton, { height: "100%" });
   }
 
   protected renderView(): React.ReactNode {

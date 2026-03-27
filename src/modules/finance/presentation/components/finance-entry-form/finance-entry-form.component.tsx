@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Form, Input, InputNumber, Select, Button, DatePicker, message } from "antd";
+import { Form, Input, Select, Button, DatePicker, message } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { getDateFormat, getMaskConfig, getMoneyInput } from "@core/utils/mask";
+import { centsToMoney, getDateFormat, getMaskConfig, getMoneyMaskAdapter } from "@core/utils/mask";
 import { i18n as appI18n } from "@core/i18n";
 import { loadingService } from "@shared/ui/services/loading.service";
 import type {
@@ -14,7 +14,7 @@ import { useFinanceApi } from "@modules/finance/services/finance.service";
 type FinanceEntryFormValues = {
   serviceId?: string;
   type?: string;
-  amount?: number;
+  amount?: string;
   date?: Dayjs | null;
   description?: string;
 };
@@ -29,7 +29,7 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
         const [form] = Form.useForm<FinanceEntryFormValues>();
   const api = useFinanceApi();
   const [types, setTypes] = useState<FinanceEntryType[]>([]);
-  const moneyInput = getMoneyInput();
+  const moneyMask = getMoneyMaskAdapter();
   const dateFormat = getDateFormat();
   const currencyCode = getMaskConfig().currencyCode;
 
@@ -66,7 +66,7 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
       const payload = {
         serviceId: values.serviceId,
         type: values.type,
-        amount: Number(values.amount ?? 0),
+        amount: moneyMask.parse(values.amount) ?? 0,
         date: values.date ? values.date.format("YYYY-MM-DD") : dayjs().format("YYYY-MM-DD"),
         note: values.description,
       };
@@ -86,7 +86,18 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
   }
 
   return (
-    <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ type: undefined, amount: initial?.amountCents ? initial.amountCents / 100 : undefined }}>
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={onFinish}
+      initialValues={{
+        type: undefined,
+        amount:
+          typeof initial?.amountCents === "number"
+            ? moneyMask.format(centsToMoney(initial.amountCents))
+            : undefined,
+      }}
+    >
       <Form.Item name="type" label={appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k003")} rules={[{ required: true }]}>
         <Select
           options={types.map((t) => ({ label: t.name, value: t.id }))}
@@ -94,8 +105,13 @@ export function FinanceEntryForm({ initial, onSaved, workspaceId }: Props) {
         />
       </Form.Item>
 
-      <Form.Item name="amount" label={`${appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k004")} (${currencyCode})`} rules={[{ required: true }]}>
-        <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+      <Form.Item
+        name="amount"
+        label={`${appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k004")} (${currencyCode})`}
+        rules={[{ required: true }]}
+        normalize={(value) => moneyMask.normalize(value)}
+      >
+        <Input style={{ width: "100%" }} inputMode="numeric" />
       </Form.Item>
 
       <Form.Item name="date" label={appI18n.t("legacyInline.finance.presentation_components_finance_entry_form_finance_entry_form_component.k005")}>

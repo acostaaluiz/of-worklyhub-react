@@ -30,6 +30,7 @@ import {
 } from "@ant-design/icons";
 
 import { BasePage } from "@shared/base/base.page";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 import type {
@@ -209,6 +210,7 @@ function InventoryHomePageContent(): React.ReactElement {
   const [suggestions, setSuggestions] = React.useState<InventoryPurchaseSuggestion[]>([]);
   const [windowDays, setWindowDays] = React.useState<MovementWindow>(30);
   const [loading, setLoading] = React.useState(false);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const [productModalOpen, setProductModalOpen] = React.useState(false);
   const [productModalInitial, setProductModalInitial] = React.useState<Partial<ProductModel> | null>(
     null
@@ -226,6 +228,7 @@ function InventoryHomePageContent(): React.ReactElement {
       setMovements([]);
       setAlerts([]);
       setSuggestions([]);
+      setInitialLoading(false);
       return;
     }
 
@@ -248,6 +251,7 @@ function InventoryHomePageContent(): React.ReactElement {
       message.error("Failed to load inventory dashboard.");
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, [workspaceId, windowDays]);
 
@@ -438,6 +442,10 @@ function InventoryHomePageContent(): React.ReactElement {
     },
     [isMobile]
   );
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={4} sideRows={3} height="100%" />;
+  }
 
   const indicatorsTabContent = (
     <div

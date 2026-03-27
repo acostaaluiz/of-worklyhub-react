@@ -7,7 +7,7 @@ import type {
 import { i18n as appI18n } from "@core/i18n";
 import { applicationService } from "@core/application/application.service";
 import { navigateTo } from "@core/navigation/navigation.service";
-import { unmaskPhone } from "@core/utils/mask";
+import { parseMoneyToCents, unmaskPhone } from "@core/utils/mask";
 import { BasePage } from "@shared/base/base.page";
 import { loadingService } from "@shared/ui/services/loading.service";
 import { companyService } from "@modules/company/services/company.service";
@@ -48,8 +48,11 @@ function normalizeWorkspaceServices(values: CompanyIntroductionValues): NonNulla
       const name = trimmedName || fallbackName;
       if (!name) return null;
 
-      const parsedPrice = Number(service?.price);
-      const priceCents = Number.isFinite(parsedPrice) ? Math.max(0, Math.round(parsedPrice * 100)) : undefined;
+      const rawPrice = service?.price;
+      const priceCents =
+        rawPrice != null && String(rawPrice).trim().length > 0
+          ? parseMoneyToCents(String(rawPrice))
+          : undefined;
 
       return {
         name,
@@ -182,7 +185,7 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
           initialValues,
         });
       },
-      { setLoading: false, swallowError: true }
+      { swallowError: true }
     );
   }
 

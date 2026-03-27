@@ -95,7 +95,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
       }
 
       this.setSafeState({ plans: planList, recommendedPlanId });
-    }, { setLoading: false, swallowError: true });
+    }, { swallowError: true });
   }
 
   protected override renderPage(): React.ReactNode {

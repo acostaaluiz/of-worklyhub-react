@@ -10,7 +10,7 @@ import {
   Save,
 } from "lucide-react";
 
-import { formatMoneyFromCents, maskMoneyInput, parseMoneyToCents } from "@core/utils/mask";
+import { getMoneyMaskAdapter } from "@core/utils/mask";
 import { i18n as appI18n } from "@core/i18n";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
@@ -44,6 +44,8 @@ type ServiceFormValues = {
   active?: boolean;
 };
 
+const moneyMask = getMoneyMaskAdapter({ fromCents: true });
+
 export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
   public override state: BaseState = { isLoading: false };
 
@@ -60,7 +62,7 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
           ...initial,
           priceCents:
             typeof initial?.priceCents === "number"
-              ? formatMoneyFromCents(initial.priceCents)
+              ? moneyMask.format(initial.priceCents)
               : undefined,
         }}
         onFinish={(values: ServiceFormValues) => {
@@ -78,9 +80,7 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
             active: values.active ?? true,
           };
 
-          if (typeof values.priceCents === "string" && values.priceCents.trim()) {
-            prepared.priceCents = parseMoneyToCents(values.priceCents);
-          }
+          prepared.priceCents = moneyMask.parse(values.priceCents);
 
           onSubmit(prepared);
         }}
@@ -146,7 +146,7 @@ export class ServiceFormComponent extends BaseComponent<Props, BaseState> {
                     text={appI18n.t("company.admin.form.fields.price.label")}
                   />
                 }
-                normalize={(value) => maskMoneyInput(value)}
+                normalize={(value) => moneyMask.normalize(value)}
               >
                 <Input
                   style={{ width: "100%" }}

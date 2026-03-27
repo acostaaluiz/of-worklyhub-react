@@ -3,11 +3,13 @@ import { Form, Input, InputNumber, Select, Tabs, Typography } from "antd";
 import { ListChecks, Tag } from "lucide-react";
 import type { ApplicationCategoryItem } from "@core/application/application-api";
 import { i18n as appI18n } from "@core/i18n";
+import { getMoneyMaskAdapter } from "@core/utils/mask";
 import type { WizardStep } from "@shared/ui/components/form-step/form-step.component";
 import { FieldIcon } from "@shared/styles/global";
 import { LaunchServicesGrid } from "./launch-services.step.styles";
 
 const TAB_INDICES = [0, 1, 2] as const;
+const moneyMask = getMoneyMaskAdapter();
 
 function hasServiceDetails(service: Record<string, DataValue> | undefined): boolean {
   if (!service) return false;
@@ -79,11 +81,14 @@ function renderServiceFields(index: number, categoryOptions: Array<{ value: stri
           data-cy={`launch-service-duration-input-${index}`}
         />
       </Form.Item>
-      <Form.Item label={appI18n.t("company.steps.launchServices.fields.basePrice.label")} name={["services", index, "price"]}>
-        <InputNumber
+      <Form.Item
+        label={appI18n.t("company.steps.launchServices.fields.basePrice.label")}
+        name={["services", index, "price"]}
+        normalize={(value) => moneyMask.normalize(value)}
+      >
+        <Input
           size="large"
-          min={0}
-          step={1}
+          inputMode="numeric"
           placeholder={appI18n.t("company.steps.launchServices.fields.basePrice.placeholder")}
           style={{ width: "100%" }}
           data-cy={`launch-service-price-input-${index}`}

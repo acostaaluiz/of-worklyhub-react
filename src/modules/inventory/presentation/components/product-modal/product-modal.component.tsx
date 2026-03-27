@@ -2,7 +2,7 @@ import React from "react";
 import { Modal, Typography, message, Form, Input, InputNumber, Button, Select, Switch, Row, Col } from "antd";
 import type { FormInstance } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
-import { centsToMoney, getMoneyInput, moneyToCents } from "@core/utils/mask";
+import { getMoneyMaskAdapter } from "@core/utils/mask";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
@@ -27,8 +27,8 @@ type ProductFormValues = {
   barcode?: string;
   unit?: string;
   categoryId?: string;
-  costCents?: number;
-  priceCents?: number;
+  costCents?: string;
+  priceCents?: string;
   minStock?: number;
   location?: string;
   tags?: string[];
@@ -51,6 +51,8 @@ function toDataMap(value: DataValue | undefined): DataMap | null {
 
 export class ProductModal extends BaseComponent<Props, State> {
   private formRef = React.createRef<FormInstance<ProductFormValues>>();
+  private readonly moneyMask = getMoneyMaskAdapter({ fromCents: true });
+
   constructor(props: Props) {
     super(props);
     this.state = { isLoading: false, error: undefined, submitting: false };
@@ -66,25 +68,15 @@ export class ProductModal extends BaseComponent<Props, State> {
     const { initial, onSaved } = this.props;
     try {
       this.setSafeState({ submitting: true });
+      const { priceCents, costCents, ...rest } = values;
 
       const payload: Omit<ProductModel, "id" | "createdAt"> = {
+        ...rest,
         name: values.name?.trim() ?? "",
-        sku: values.sku,
-        description: values.description,
-        barcode: values.barcode,
         unit: values.unit ?? "un",
-        categoryId: values.categoryId,
-        costCents:
-          typeof values.costCents === "number"
-            ? moneyToCents(values.costCents)
-            : undefined,
-        priceCents:
-          typeof values.priceCents === "number"
-            ? moneyToCents(values.priceCents)
-            : undefined,
+        costCents: this.moneyMask.parse(costCents),
+        priceCents: this.moneyMask.parse(priceCents),
         minStock: typeof values.minStock === "number" ? values.minStock : 0,
-        location: values.location,
-        tags: values.tags,
         active: values.active ?? true,
         stock: typeof values.stock === "number" ? values.stock : 0,
       };
@@ -130,7 +122,6 @@ export class ProductModal extends BaseComponent<Props, State> {
 
   protected renderView(): React.ReactNode {
     const { open, onClose, initial, categories = [] } = this.props;
-    const moneyInput = getMoneyInput();
     const initialValues: ProductFormValues = {
       stock: 0,
       unit: "un",
@@ -138,11 +129,11 @@ export class ProductModal extends BaseComponent<Props, State> {
       ...(initial ?? {}),
       priceCents:
         typeof initial?.priceCents === "number"
-          ? centsToMoney(initial.priceCents)
+          ? this.moneyMask.format(initial.priceCents)
           : undefined,
       costCents:
         typeof initial?.costCents === "number"
-          ? centsToMoney(initial.costCents)
+          ? this.moneyMask.format(initial.costCents)
           : undefined,
     };
 
@@ -182,8 +173,8 @@ export class ProductModal extends BaseComponent<Props, State> {
                     <Input.TextArea rows={4} data-cy="inventory-product-description-input" />
                   </Form.Item>
 
-                  <Form.Item name="priceCents" label="Price">
-                    <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} data-cy="inventory-product-price-input" />
+                  <Form.Item name="priceCents" label="Price" normalize={(value) => this.moneyMask.normalize(value)}>
+                    <Input style={{ width: "100%" }} inputMode="numeric" data-cy="inventory-product-price-input" />
                   </Form.Item>
 
                   <Form.Item name="categoryId" label="Category">
@@ -206,8 +197,8 @@ export class ProductModal extends BaseComponent<Props, State> {
                     <Input data-cy="inventory-product-barcode-input" />
                   </Form.Item>
 
-                  <Form.Item name="costCents" label="Cost">
-                    <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} data-cy="inventory-product-cost-input" />
+                  <Form.Item name="costCents" label="Cost" normalize={(value) => this.moneyMask.normalize(value)}>
+                    <Input style={{ width: "100%" }} inputMode="numeric" data-cy="inventory-product-cost-input" />
                   </Form.Item>
 
                   <Form.Item name="minStock" label="Minimum stock">

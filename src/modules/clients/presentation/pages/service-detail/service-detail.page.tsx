@@ -29,21 +29,21 @@ export class ServiceDetailPage extends BasePage<PageProps, ServiceDetailState> {
     service: undefined,
   };
 
+  protected override async onInit(): Promise<void> {
+    await this.runAsync(async () => {
+      const params = this.props.params;
+      const serviceId = params?.serviceId;
+
+      const items = await getAvailableServices();
+      const service = items.find((item) => item.id === serviceId) ?? items[0];
+      this.setSafeState({ service });
+    }, { swallowError: true });
+  }
+
   protected override renderPage(): React.ReactNode {
     const { service } = this.state;
     if (!service) return null;
     return <ServiceDetailTemplate service={service} onBooked={() => {}} />;
-  }
-
-  async componentDidMount(): Promise<void> {
-    super.componentDidMount?.();
-
-    const params = this.props.params;
-    const serviceId = params?.serviceId;
-
-    const items = await getAvailableServices();
-    const svc = items.find((s) => s.id === serviceId) ?? items[0];
-    this.setState({ service: svc });
   }
 }
 

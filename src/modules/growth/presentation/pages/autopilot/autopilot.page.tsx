@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { i18n as appI18n } from "@core/i18n";
 import { BasePage } from "@shared/base/base.page";
+import PageSkeleton from "@shared/ui/components/page-skeleton/page-skeleton.component";
 import { companyService } from "@modules/company/services/company.service";
 import GrowthAutopilotTemplate from "@modules/growth/presentation/templates/autopilot/autopilot.template";
 import {
@@ -70,6 +71,7 @@ function GrowthAutopilotPageContent(): React.ReactElement {
     normalizeTab(searchParams.get("tab"))
   );
   const [loading, setLoading] = React.useState(false);
+  const [initialLoading, setInitialLoading] = React.useState(true);
   const [dispatching, setDispatching] = React.useState(false);
   const [savingPlaybooks, setSavingPlaybooks] = React.useState(false);
   const [selectedOpportunityIds, setSelectedOpportunityIds] = React.useState<string[]>([]);
@@ -96,6 +98,7 @@ function GrowthAutopilotPageContent(): React.ReactElement {
       setDraftPlaybooks([]);
       setSelectedOpportunityIds([]);
       setDispatchPlaybookId(undefined);
+      setInitialLoading(false);
       return;
     }
 
@@ -121,6 +124,7 @@ function GrowthAutopilotPageContent(): React.ReactElement {
       message.error(t("growth.autopilot.messages.failedLoad"));
     } finally {
       setLoading(false);
+      setInitialLoading(false);
     }
   }, [workspaceId, search, status, t]);
 
@@ -132,6 +136,10 @@ function GrowthAutopilotPageContent(): React.ReactElement {
     const nextTab = normalizeTab(searchParams.get("tab"));
     setActiveTab(nextTab);
   }, [searchParams]);
+
+  if (initialLoading) {
+    return <PageSkeleton mainRows={3} sideRows={2} height="100%" />;
+  }
 
   const handleTabChange = (tab: GrowthTabKey) => {
     setActiveTab(tab);

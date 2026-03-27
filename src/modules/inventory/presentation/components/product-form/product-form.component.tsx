@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Form, Input, InputNumber, Button, Select, Switch } from "antd";
-import { centsToMoney, getMoneyInput, moneyToCents } from "@core/utils/mask";
+import { getMoneyMaskAdapter } from "@core/utils/mask";
 import type { CategoryModel } from "@modules/inventory/interfaces/category.model";
 import type { ProductModel } from "@modules/inventory/interfaces/product.model";
 import { InventoryService } from "@modules/inventory/services/inventory.service";
 
-type ProductFormValues = Omit<ProductModel, "id" | "createdAt">;
+type ProductFormValues = Omit<ProductModel, "id" | "createdAt" | "priceCents" | "costCents"> & {
+  priceCents?: string;
+  costCents?: string;
+};
 
 type Props = {
   initial?: Partial<ProductModel>;
@@ -17,7 +20,7 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
   const [form] = Form.useForm<ProductFormValues>();
   const [categories, setCategories] = useState<CategoryModel[]>([]);
   const service = React.useMemo(() => new InventoryService(), []);
-  const moneyInput = getMoneyInput();
+  const moneyMask = React.useMemo(() => getMoneyMaskAdapter({ fromCents: true }), []);
 
   useEffect(() => {
     let alive = true;
@@ -43,24 +46,19 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         unit: "un",
         active: true,
         ...initial,
-        priceCents: typeof initial?.priceCents === "number" ? centsToMoney(initial.priceCents) : undefined,
-        costCents: typeof initial?.costCents === "number" ? centsToMoney(initial.costCents) : undefined,
+        priceCents: typeof initial?.priceCents === "number" ? moneyMask.format(initial.priceCents) : undefined,
+        costCents: typeof initial?.costCents === "number" ? moneyMask.format(initial.costCents) : undefined,
       }}
       onFinish={(values) => {
+        const { priceCents, costCents, ...rest } = values;
         const prepared: Omit<ProductModel, "id" | "createdAt"> = {
-          ...values,
+          ...rest,
           name: values.name,
           stock: typeof values.stock === "number" ? values.stock : 0,
           unit: values.unit ?? "un",
           active: values.active ?? true,
-          priceCents:
-            typeof values.priceCents === "number" && Number.isFinite(values.priceCents)
-              ? moneyToCents(values.priceCents)
-              : undefined,
-          costCents:
-            typeof values.costCents === "number" && Number.isFinite(values.costCents)
-              ? moneyToCents(values.costCents)
-              : undefined,
+          priceCents: moneyMask.parse(priceCents),
+          costCents: moneyMask.parse(costCents),
         };
         onSubmit(prepared);
       }}
@@ -77,8 +75,8 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         <Input.TextArea rows={3} />
       </Form.Item>
 
-      <Form.Item name="priceCents" label="Price">
-        <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+      <Form.Item name="priceCents" label="Price" normalize={(value) => moneyMask.normalize(value)}>
+        <Input style={{ width: "100%" }} inputMode="numeric" />
       </Form.Item>
 
       <Form.Item name="categoryId" label="Category">
@@ -99,8 +97,8 @@ export function ProductFormComponent({ initial, onSubmit, submitting }: Props) {
         <Input />
       </Form.Item>
 
-      <Form.Item name="costCents" label="Cost">
-        <InputNumber style={{ width: "100%" }} min={0} step={moneyInput.step} formatter={moneyInput.formatter} parser={moneyInput.parser} precision={moneyInput.precision} />
+      <Form.Item name="costCents" label="Cost" normalize={(value) => moneyMask.normalize(value)}>
+        <Input style={{ width: "100%" }} inputMode="numeric" />
       </Form.Item>
 
       <Form.Item name="minStock" label="Minimum stock">

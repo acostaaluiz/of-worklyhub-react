@@ -1,7 +1,7 @@
 import React from "react";
-import { Form, Input, DatePicker, InputNumber, Button, Row, Col, Select } from "antd";
+import { Form, Input, DatePicker, Button, Row, Col, Select } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
-import { centsToMoney, getDateFormat, getMoneyInput, maskPhone, moneyToCents, unmaskPhone } from "@core/utils/mask";
+import { getDateFormat, getMoneyMaskAdapter, maskPhone, unmaskPhone } from "@core/utils/mask";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import type { PeopleWorkspaceSettings } from "@modules/people/interfaces/people-settings.model";
 import {
@@ -34,9 +34,11 @@ type EmployeeFormValues = {
   department?: string;
   accessProfileUid?: string | null;
   hiredAt?: Dayjs | null;
-  salaryCents?: number;
+  salaryCents?: string;
   active?: boolean;
 };
+
+const moneyMask = getMoneyMaskAdapter({ fromCents: true });
 
 type Props = {
   initial?: Partial<EmployeeModel>;
@@ -60,7 +62,7 @@ function getInitialValues(
     : undefined;
   const fallbackSalary = !editing
     ? typeof settings?.defaultSalaryCents === "number"
-      ? centsToMoney(settings.defaultSalaryCents)
+      ? moneyMask.format(settings.defaultSalaryCents)
       : undefined
     : undefined;
 
@@ -73,7 +75,7 @@ function getInitialValues(
     hiredAt: initial?.hiredAt ? dayjs(initial.hiredAt) : undefined,
     salaryCents:
       typeof initial?.salaryCents === "number"
-        ? centsToMoney(initial.salaryCents)
+        ? moneyMask.format(initial.salaryCents)
         : fallbackSalary,
     phone: maskPhone(initial?.phone),
   };
@@ -81,7 +83,6 @@ function getInitialValues(
 
 export function EmployeeFormComponent({ initial, onSubmit, submitting, settings, onCancel }: Props) {
   const [form] = Form.useForm<EmployeeFormValues>();
-  const moneyInput = getMoneyInput();
   const dateFormat = getDateFormat();
 
   React.useEffect(() => {
@@ -116,10 +117,7 @@ export function EmployeeFormComponent({ initial, onSubmit, submitting, settings,
           department: values.department,
           accessProfileUid: values.accessProfileUid ?? undefined,
           hiredAt: values.hiredAt ? values.hiredAt.format("YYYY-MM-DD") : undefined,
-          salaryCents:
-            typeof values.salaryCents === "number" && Number.isFinite(values.salaryCents)
-              ? moneyToCents(values.salaryCents)
-              : undefined,
+          salaryCents: moneyMask.parse(values.salaryCents),
           active: values.active ?? true,
         };
         onSubmit(prepared);
@@ -322,14 +320,11 @@ export function EmployeeFormComponent({ initial, onSubmit, submitting, settings,
                 </FieldLabel>
               }
               rules={salaryRules}
+              normalize={(value) => moneyMask.normalize(value)}
             >
-              <InputNumber
+              <Input
                 style={{ width: "100%" }}
-                min={0}
-                step={moneyInput.step}
-                formatter={moneyInput.formatter}
-                parser={moneyInput.parser}
-                precision={moneyInput.precision}
+                inputMode="numeric"
                 data-cy="people-employee-salary-input"
               />
             </Form.Item>

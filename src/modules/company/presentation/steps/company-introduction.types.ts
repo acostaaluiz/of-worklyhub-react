@@ -3,7 +3,7 @@ export type CompanySetupServiceDraft = {
   category?: string;
   description?: string;
   durationMinutes?: number;
-  price?: number;
+  price?: string | number;
   capacity?: number;
 };
 

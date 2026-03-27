@@ -21,7 +21,11 @@ export function summaryStep(): WizardStep {
           ? v.services.filter((service: { name?: string }) => Boolean(service?.name))
           : [];
 
-        const formatPrice = (value?: number) => {
+        const formatPrice = (value?: string | number) => {
+          if (typeof value === "string") {
+            const normalized = value.trim();
+            return normalized || appI18n.t("company.steps.summary.common.dash");
+          }
           if (typeof value !== "number" || !Number.isFinite(value)) return appI18n.t("company.steps.summary.common.dash");
           return appI18n.t("company.steps.summary.values.price", { value: value.toFixed(2) });
         };
@@ -88,7 +92,7 @@ export function summaryStep(): WizardStep {
           <Typography.Text type="secondary">{appI18n.t("company.steps.summary.emptyServices")}</Typography.Text>
         ) : (
           <ServiceCardsGrid>
-            {services.map((service: { name?: string; category?: string; durationMinutes?: number; price?: number; capacity?: number; description?: string }, index: number) => (
+            {services.map((service: { name?: string; category?: string; durationMinutes?: number; price?: string | number; capacity?: number; description?: string }, index: number) => (
               <SummaryFieldCard key={`${service.name ?? "service"}-${index}`}>
                 <SummaryFieldLabel>{appI18n.t("company.steps.summary.values.service", { index: index + 1 })}</SummaryFieldLabel>
                 <SummaryFieldValue>{valueOrDash(service.name)}</SummaryFieldValue>
