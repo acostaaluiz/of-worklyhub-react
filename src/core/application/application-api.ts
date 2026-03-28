@@ -16,6 +16,30 @@ export type ApplicationPlansResponse = { plans: ApplicationPlanItem[] };
 export type EventCategoryItem = { id: string; code: string; label: string };
 export type EventCategoriesResponse = { categories: EventCategoryItem[] };
 
+export type ApplicationCatalogSearchParams = {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+  includeTotal?: boolean;
+};
+
+export type ApplicationCatalogPagination = {
+  page: number;
+  pageSize: number;
+  hasNext: boolean;
+  total?: number;
+};
+
+export type ApplicationPaginatedCategoriesResponse = {
+  categories: ApplicationCategoryItem[];
+  pagination?: ApplicationCatalogPagination;
+};
+
+export type ApplicationPaginatedIndustriesResponse = {
+  industries: ApplicationIndustryItem[];
+  pagination?: ApplicationCatalogPagination;
+};
+
 export class ApplicationApi extends BaseHttpService {
   constructor(http: HttpClient) {
     super(http, { correlationNamespace: "application-api" });
@@ -31,6 +55,14 @@ export class ApplicationApi extends BaseHttpService {
 
   async getIndustries(): Promise<ApplicationIndustriesResponse> {
     return this.get<ApplicationIndustriesResponse>("/internal/application/industries");
+  }
+
+  async searchCategories(params: ApplicationCatalogSearchParams): Promise<ApplicationPaginatedCategoriesResponse> {
+    return this.get<ApplicationPaginatedCategoriesResponse>("/internal/application/categories", params);
+  }
+
+  async searchIndustries(params: ApplicationCatalogSearchParams): Promise<ApplicationPaginatedIndustriesResponse> {
+    return this.get<ApplicationPaginatedIndustriesResponse>("/internal/application/industries", params);
   }
 
   async getPlans(): Promise<ApplicationPlansResponse> {

@@ -1,5 +1,13 @@
 import { BehaviorSubject } from "rxjs";
-import { ApplicationApi, type ApplicationServiceItem, type ApplicationCategoryItem, type ApplicationIndustryItem } from "./application-api";
+import {
+  ApplicationApi,
+  type ApplicationCatalogSearchParams,
+  type ApplicationCategoryItem,
+  type ApplicationIndustryItem,
+  type ApplicationPaginatedCategoriesResponse,
+  type ApplicationPaginatedIndustriesResponse,
+  type ApplicationServiceItem,
+} from "./application-api";
 import type { ApplicationPlanItem } from "./application-api";
 import { httpClient } from "@core/http/client.instance";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
@@ -168,6 +176,26 @@ export class ApplicationService {
     }
     this.subjectIndustries.next(industries);
     return industries;
+  }
+
+  async searchCategoriesPage(
+    params: ApplicationCatalogSearchParams
+  ): Promise<ApplicationPaginatedCategoriesResponse> {
+    const response = await this.api.searchCategories(params);
+    return {
+      categories: response?.categories ?? [],
+      pagination: response?.pagination,
+    };
+  }
+
+  async searchIndustriesPage(
+    params: ApplicationCatalogSearchParams
+  ): Promise<ApplicationPaginatedIndustriesResponse> {
+    const response = await this.api.searchIndustries(params);
+    return {
+      industries: response?.industries ?? [],
+      pagination: response?.pagination,
+    };
   }
 
   async fetchPlans(): Promise<AppPlans> {

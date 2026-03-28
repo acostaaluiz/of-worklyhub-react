@@ -4,6 +4,7 @@ import { AppstoreOutlined, BankOutlined, FileTextOutlined, HistoryOutlined, Idca
 import styled, { keyframes } from "styled-components";
 import { useTranslation } from "react-i18next";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
+import { applicationService } from "@core/application/application.service";
 import { maskPhone } from "@core/utils/mask";
 import { BaseTemplate } from "@shared/base/base.template";
 import type { AiTokenLedgerEntryModel, AiTokenSummaryModel } from "@modules/users/interfaces/ai-token.model";
@@ -382,6 +383,25 @@ const fallbackIndustryOptionValues = [
   "services",
   "other",
 ] as const;
+const CATALOG_PAGE_SIZE = 25;
+const CATALOG_SCROLL_OFFSET = 24;
+const CATALOG_SEARCH_DEBOUNCE_MS = 300;
+
+type SelectOption = {
+  value: string;
+  label: string;
+};
+
+function mergeUniqueOptions(options: SelectOption[]): SelectOption[] {
+  const seen = new Set<string>();
+  const result: SelectOption[] = [];
+  for (const option of options) {
+    if (seen.has(option.value)) continue;
+    seen.add(option.value);
+    result.push(option);
+  }
+  return result;
+}
 
 const CompanyGrid = styled.div`
   display: grid;
@@ -508,26 +528,128 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
       })),
     [t]
   );
+  const [serviceSearchLoading, setServiceSearchLoading] = React.useState(false);
+  const [industrySearchLoading, setIndustrySearchLoading] = React.useState(false);
+  const [servicePage, setServicePage] = React.useState(1);
+  const [industryPage, setIndustryPage] = React.useState(1);
+  const [serviceHasNext, setServiceHasNext] = React.useState(true);
+  const [industryHasNext, setIndustryHasNext] = React.useState(true);
+  const [serviceOptionsState, setServiceOptionsState] = React.useState<SelectOption[]>(
+    (categories ?? []).map((c) => ({ value: c.uid, label: c.name }))
+  );
+  const [industryOptionsState, setIndustryOptionsState] = React.useState<SelectOption[]>(
+    industries && industries.length > 0
+      ? industries.map((i) => ({ value: i.uid, label: i.name }))
+      : fallbackIndustryOptions
+  );
+  const selectedPrimaryService = Form.useWatch("primaryService", companyForm) as string | undefined;
+  const selectedIndustry = Form.useWatch("industry", companyForm) as string | undefined;
+  const serviceQueryRef = React.useRef("");
+  const industryQueryRef = React.useRef("");
+  const serviceRequestIdRef = React.useRef(0);
+  const industryRequestIdRef = React.useRef(0);
+  const serviceDebounceRef = React.useRef<number | undefined>(undefined);
+  const industryDebounceRef = React.useRef<number | undefined>(undefined);
+
+  React.useEffect(() => {
+    setServiceOptionsState((prev) =>
+      mergeUniqueOptions([...prev, ...(categories ?? []).map((c) => ({ value: c.uid, label: c.name }))])
+    );
+  }, [categories]);
+
+  React.useEffect(() => {
+    setIndustryOptionsState((prev) => {
+      const fromProps = industries && industries.length > 0
+        ? industries.map((i) => ({ value: i.uid, label: i.name }))
+        : fallbackIndustryOptions;
+      return mergeUniqueOptions([...prev, ...fromProps]);
+    });
+  }, [fallbackIndustryOptions, industries]);
+
+  const loadServiceOptionsPage = React.useCallback(
+    async (params: { page: number; q?: string; replace?: boolean }) => {
+      const requestId = ++serviceRequestIdRef.current;
+      setServiceSearchLoading(true);
+      try {
+        const response = await applicationService.searchCategoriesPage({
+          q: params.q,
+          page: params.page,
+          pageSize: CATALOG_PAGE_SIZE,
+        });
+        if (requestId !== serviceRequestIdRef.current) return;
+        const nextOptions = (response.categories ?? []).map((item) => ({ value: item.uid, label: item.name }));
+        setServicePage(params.page);
+        setServiceHasNext(Boolean(response.pagination?.hasNext));
+        setServiceOptionsState((prev) =>
+          params.replace ? mergeUniqueOptions(nextOptions) : mergeUniqueOptions([...prev, ...nextOptions])
+        );
+      } catch {
+        if (requestId !== serviceRequestIdRef.current) return;
+        setServiceHasNext(false);
+      } finally {
+        if (requestId === serviceRequestIdRef.current) {
+          setServiceSearchLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  const loadIndustryOptionsPage = React.useCallback(
+    async (params: { page: number; q?: string; replace?: boolean }) => {
+      const requestId = ++industryRequestIdRef.current;
+      setIndustrySearchLoading(true);
+      try {
+        const response = await applicationService.searchIndustriesPage({
+          q: params.q,
+          page: params.page,
+          pageSize: CATALOG_PAGE_SIZE,
+        });
+        if (requestId !== industryRequestIdRef.current) return;
+        const nextOptions = (response.industries ?? []).map((item) => ({ value: item.uid, label: item.name }));
+        setIndustryPage(params.page);
+        setIndustryHasNext(Boolean(response.pagination?.hasNext));
+        setIndustryOptionsState((prev) =>
+          params.replace ? mergeUniqueOptions(nextOptions) : mergeUniqueOptions([...prev, ...nextOptions])
+        );
+      } catch {
+        if (requestId !== industryRequestIdRef.current) return;
+        setIndustryHasNext(false);
+      } finally {
+        if (requestId === industryRequestIdRef.current) {
+          setIndustrySearchLoading(false);
+        }
+      }
+    },
+    []
+  );
+
+  React.useEffect(() => {
+    loadServiceOptionsPage({ page: 1, replace: true }).catch(() => {});
+    loadIndustryOptionsPage({ page: 1, replace: true }).catch(() => {});
+    return () => {
+      if (serviceDebounceRef.current) window.clearTimeout(serviceDebounceRef.current);
+      if (industryDebounceRef.current) window.clearTimeout(industryDebounceRef.current);
+    };
+  }, [loadIndustryOptionsPage, loadServiceOptionsPage]);
 
   const serviceOptions = React.useMemo(() => {
-    const base = (categories ?? []).map((c) => ({ value: c.uid, label: c.name }));
-    const current = company?.primaryService;
+    const base = mergeUniqueOptions(serviceOptionsState);
+    const current = selectedPrimaryService ?? company?.primaryService;
     if (current && !base.some((opt) => opt.value === current)) {
       return [{ value: current, label: current }, ...base];
     }
     return base;
-  }, [categories, company?.primaryService]);
+  }, [company?.primaryService, selectedPrimaryService, serviceOptionsState]);
 
   const industryOptions = React.useMemo(() => {
-    const base = (industries && industries.length > 0)
-      ? industries.map((i) => ({ value: i.uid, label: i.name }))
-      : fallbackIndustryOptions;
-    const current = company?.industry;
+    const base = mergeUniqueOptions(industryOptionsState);
+    const current = selectedIndustry ?? company?.industry;
     if (current && !base.some((opt) => opt.value === current)) {
       return [{ value: current, label: current }, ...base];
     }
     return base;
-  }, [industries, company?.industry, fallbackIndustryOptions]);
+  }, [company?.industry, industryOptionsState, selectedIndustry]);
 
   const aiTokenColumns = React.useMemo(() => ([
     {
@@ -871,8 +993,32 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     }
                   >
                     <Select
+                      showSearch
+                      filterOption={false}
                       placeholder={t("users.profile.company.fields.primaryService.placeholder")}
                       options={serviceOptions}
+                      loading={serviceSearchLoading}
+                      onSearch={(value) => {
+                        serviceQueryRef.current = value.trim();
+                        if (serviceDebounceRef.current) window.clearTimeout(serviceDebounceRef.current);
+                        serviceDebounceRef.current = window.setTimeout(() => {
+                          loadServiceOptionsPage({
+                            page: 1,
+                            q: serviceQueryRef.current || undefined,
+                            replace: true,
+                          }).catch(() => {});
+                        }, CATALOG_SEARCH_DEBOUNCE_MS);
+                      }}
+                      onPopupScroll={(event) => {
+                        const target = event.target as HTMLDivElement;
+                        const distanceToBottom = target.scrollHeight - (target.scrollTop + target.clientHeight);
+                        if (distanceToBottom > CATALOG_SCROLL_OFFSET) return;
+                        if (serviceSearchLoading || !serviceHasNext) return;
+                        loadServiceOptionsPage({
+                          page: servicePage + 1,
+                          q: serviceQueryRef.current || undefined,
+                        }).catch(() => {});
+                      }}
                       data-cy="users-company-primary-service-select"
                     />
                   </Form.Item>
@@ -887,8 +1033,32 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                     }
                   >
                     <Select
+                      showSearch
+                      filterOption={false}
                       placeholder={t("users.profile.company.fields.industry.placeholder")}
                       options={industryOptions}
+                      loading={industrySearchLoading}
+                      onSearch={(value) => {
+                        industryQueryRef.current = value.trim();
+                        if (industryDebounceRef.current) window.clearTimeout(industryDebounceRef.current);
+                        industryDebounceRef.current = window.setTimeout(() => {
+                          loadIndustryOptionsPage({
+                            page: 1,
+                            q: industryQueryRef.current || undefined,
+                            replace: true,
+                          }).catch(() => {});
+                        }, CATALOG_SEARCH_DEBOUNCE_MS);
+                      }}
+                      onPopupScroll={(event) => {
+                        const target = event.target as HTMLDivElement;
+                        const distanceToBottom = target.scrollHeight - (target.scrollTop + target.clientHeight);
+                        if (distanceToBottom > CATALOG_SCROLL_OFFSET) return;
+                        if (industrySearchLoading || !industryHasNext) return;
+                        loadIndustryOptionsPage({
+                          page: industryPage + 1,
+                          q: industryQueryRef.current || undefined,
+                        }).catch(() => {});
+                      }}
                       data-cy="users-company-industry-select"
                     />
                   </Form.Item>

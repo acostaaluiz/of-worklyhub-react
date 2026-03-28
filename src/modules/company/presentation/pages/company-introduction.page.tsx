@@ -138,10 +138,8 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
 
     await this.runAsync(
       async () => {
-        const [categories, industries] = await Promise.all([
-          applicationService.fetchCategories(),
-          applicationService.fetchIndustries(),
-        ]);
+        const categories = applicationService.getCategoriesValue() ?? [];
+        const industries = applicationService.getIndustriesValue() ?? [];
 
         const session = usersAuthService.getSessionValue();
         const email = session?.email ?? undefined;

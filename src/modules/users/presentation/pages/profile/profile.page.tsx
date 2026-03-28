@@ -228,24 +228,8 @@ export class ProfilePage extends BasePage<{}, State> {
 
   protected override async onInit(): Promise<void> {
     await this.runAsync(async () => {
-      let categories = applicationService.getCategoriesValue() ?? undefined;
-      let industries = applicationService.getIndustriesValue() ?? undefined;
-
-      if (!categories) {
-        try {
-          categories = (await applicationService.fetchCategories()) ?? undefined;
-        } catch {
-          categories = undefined;
-        }
-      }
-
-      if (!industries) {
-        try {
-          industries = (await applicationService.fetchIndustries()) ?? undefined;
-        } catch {
-          industries = undefined;
-        }
-      }
+      const categories = applicationService.getCategoriesValue() ?? undefined;
+      const industries = applicationService.getIndustriesValue() ?? undefined;
 
       this.setSafeState({ categories, industries });
       const session = usersAuthService.getSessionValue();
