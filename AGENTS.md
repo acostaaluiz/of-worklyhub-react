@@ -17,6 +17,10 @@ Como usar
   3. `worklyhub-senior-dev-analyst`
   4. `worklyhub-flow-orchestrator` (fechamento)
 - Consulte o index para descobrir quais arquivos de instrucoes aplicar em cada etapa.
+- Politica de custo/tokens:
+  - Abrir no maximo **1 subagent por tarefa**.
+  - Nao executar subagents em paralelo.
+  - Priorizar execucao local e usar subagent apenas quando for estritamente necessario.
 
 Agents principais
 
