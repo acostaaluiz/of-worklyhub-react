@@ -11,6 +11,7 @@ const PROFILE_KEY = "user.profile";
 export class UsersService {
   private subject = new BehaviorSubject<UserProfile>(this.loadFromStorage());
   private api = new UsersApi(httpClient);
+  private pendingByEmail = new Map<string, Promise<UserProfile>>();
 
   async uploadProfilePhoto(
     file: File,
@@ -91,15 +92,30 @@ export class UsersService {
   }
 
   async fetchByEmail(email: string): Promise<UserProfile> {
-    const profile = await this.api.getByEmail(email);
-    // update subject and persist result so subscribers receive update
-    this.subject.next(profile);
-    try {
-      localStorageProvider.set(PROFILE_KEY, JSON.stringify(profile));
-    } catch {
-      // ignore
-    }
-    return profile;
+    const normalizedEmail = String(email ?? "").trim().toLowerCase();
+    if (!normalizedEmail) return null;
+
+    const inFlight = this.pendingByEmail.get(normalizedEmail);
+    if (inFlight) return inFlight;
+
+    const request = (async (): Promise<UserProfile> => {
+      try {
+        const profile = await this.api.getByEmail(normalizedEmail);
+        // update subject and persist result so subscribers receive update
+        this.subject.next(profile);
+        try {
+          localStorageProvider.set(PROFILE_KEY, JSON.stringify(profile));
+        } catch {
+          // ignore
+        }
+        return profile;
+      } finally {
+        this.pendingByEmail.delete(normalizedEmail);
+      }
+    })();
+
+    this.pendingByEmail.set(normalizedEmail, request);
+    return request;
   }
 
   async setPlan(email: string, planId: number): Promise<void> {
@@ -149,6 +165,7 @@ export class UsersService {
   clear(): void {
     localStorageProvider.remove(PROFILE_KEY);
     this.subject.next(null);
+    this.pendingByEmail.clear();
   }
 }
 

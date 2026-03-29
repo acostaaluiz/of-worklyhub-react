@@ -59,6 +59,23 @@ describe('UsersService', () => {
     );
   });
 
+  it('deduplicates concurrent fetchByEmail calls for the same email', async () => {
+    const deferred = new Promise((resolve) => {
+      setTimeout(() => resolve({ name: 'User', email: 'u@d.com', planId: 1, phone: '123' }), 0);
+    });
+    apiMock.getByEmail.mockReturnValueOnce(deferred);
+
+    const service = new UsersService();
+    const first = service.fetchByEmail('u@d.com');
+    const second = service.fetchByEmail('u@d.com');
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult).toEqual(secondResult);
+    expect(apiMock.getByEmail).toHaveBeenCalledTimes(1);
+    expect(apiMock.getByEmail).toHaveBeenCalledWith('u@d.com');
+  });
+
   it('setPlan updates cached profile when it exists', async () => {
     mockedStorage.get.mockReturnValue(
       JSON.stringify({ name: 'User', email: 'u@d.com', planId: 1 })

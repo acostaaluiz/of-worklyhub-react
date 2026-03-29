@@ -90,6 +90,29 @@ describe("CompanyService", () => {
     await expect(service.fetchWorkspaceByEmail("owner@clinic.com")).resolves.toBeNull();
   });
 
+  it("deduplicates concurrent fetchWorkspaceByEmail calls for the same email", async () => {
+    const deferred = new Promise<{
+      workspace: { id: string; fullName: string; company_profile: Record<string, never> };
+    }>((resolve) => {
+      setTimeout(
+        () => resolve({ workspace: { id: "ws-1", fullName: "Clinic", company_profile: {} } }),
+        0
+      );
+    });
+    apiMock.getWorkspace.mockReturnValueOnce(deferred);
+
+    const service = new CompanyService();
+    const first = service.fetchWorkspaceByEmail("owner@clinic.com");
+    const second = service.fetchWorkspaceByEmail("owner@clinic.com");
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult).toMatchObject({ id: "ws-1" });
+    expect(secondResult).toMatchObject({ id: "ws-1" });
+    expect(apiMock.getWorkspace).toHaveBeenCalledTimes(1);
+    expect(apiMock.getWorkspace).toHaveBeenCalledWith("owner@clinic.com");
+  });
+
   it("updates workspace profile and wraps missing-workspace errors", async () => {
     mockedStorage.get.mockReturnValueOnce(JSON.stringify({ id: "ws-1", company_profile: {} }));
     const serviceWithWorkspace = new CompanyService();

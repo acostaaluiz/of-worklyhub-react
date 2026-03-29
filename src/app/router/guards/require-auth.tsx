@@ -109,7 +109,7 @@ export default function RequireAuth({ children }: Props) {
     const cached = usersOverviewService.getOverviewValue();
 
     let active = true;
-    const shouldForceRefresh = hasActivePlan === false;
+    const shouldForceRefresh = cached ? !isActivePlan(cached.profile) : false;
 
     usersOverviewService
       .fetchOverview(shouldForceRefresh)
@@ -129,7 +129,7 @@ export default function RequireAuth({ children }: Props) {
     return () => {
       active = false;
     };
-  }, [sessionEmail, hasWorkspace, hasActivePlan]);
+  }, [sessionEmail, hasWorkspace]);
 
   if (!session) {
     return <Navigate to="/login" state={{ from: location.pathname }} replace />;

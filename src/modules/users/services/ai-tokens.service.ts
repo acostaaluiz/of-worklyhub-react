@@ -22,6 +22,7 @@ const EMPTY_SUMMARY: AiTokenSummaryModel = {
 export class UsersAiTokensService {
   private readonly api = new UsersAiTokensApi(httpClient);
   private readonly summary$ = new BehaviorSubject<AiTokenSummaryModel>(EMPTY_SUMMARY);
+  private pendingSummary: Promise<AiTokenSummaryModel> | null = null;
 
   getSummary$() {
     return this.summary$.asObservable();
@@ -33,6 +34,7 @@ export class UsersAiTokensService {
 
   reset(): void {
     this.summary$.next(EMPTY_SUMMARY);
+    this.pendingSummary = null;
   }
 
   private publishSummary(summary?: AiTokenSummaryModel | null): void {
@@ -40,13 +42,21 @@ export class UsersAiTokensService {
   }
 
   async fetchSummary(): Promise<AiTokenSummaryModel> {
-    try {
-      const response = await this.api.getSummary();
-      this.publishSummary(response.summary);
-      return response.summary;
-    } catch (err) {
-      throw toAppError(err);
-    }
+    if (this.pendingSummary) return this.pendingSummary;
+
+    this.pendingSummary = (async (): Promise<AiTokenSummaryModel> => {
+      try {
+        const response = await this.api.getSummary();
+        this.publishSummary(response.summary);
+        return response.summary;
+      } catch (err) {
+        throw toAppError(err);
+      } finally {
+        this.pendingSummary = null;
+      }
+    })();
+
+    return this.pendingSummary;
   }
 
   async listLedger(params?: {

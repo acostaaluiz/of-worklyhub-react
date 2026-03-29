@@ -51,10 +51,18 @@ export default function RedirectIfAuthenticated() {
 
       let resolvedProfile = usersOverviewService.getOverviewValue()?.profile ?? null;
       let resolvedEmail = resolveSessionEmail(session as SessionLike) ?? resolvedProfile?.email;
+      let fetchedOverviewPromise: Promise<Awaited<ReturnType<typeof usersOverviewService.fetchOverview>>> | null = null;
+
+      const fetchOverviewOnce = async () => {
+        if (!fetchedOverviewPromise) {
+          fetchedOverviewPromise = usersOverviewService.fetchOverview(true);
+        }
+        return fetchedOverviewPromise;
+      };
 
       if (!resolvedEmail) {
         try {
-          const overview = await usersOverviewService.fetchOverview(true);
+          const overview = await fetchOverviewOnce();
           if (overview?.profile) {
             resolvedProfile = overview.profile;
             resolvedEmail = overview.profile.email ?? resolvedEmail;
@@ -84,7 +92,7 @@ export default function RedirectIfAuthenticated() {
 
       if (!resolvedProfile) {
         try {
-          const overview = await usersOverviewService.fetchOverview(true);
+          const overview = await fetchOverviewOnce();
           if (overview?.profile) {
             resolvedProfile = overview.profile;
             resolvedEmail = overview.profile.email ?? resolvedEmail;
@@ -96,7 +104,7 @@ export default function RedirectIfAuthenticated() {
 
       if (resolvedProfile && !isActivePlan(resolvedProfile)) {
         try {
-          const refreshed = await usersOverviewService.fetchOverview(true);
+          const refreshed = await fetchOverviewOnce();
           if (refreshed?.profile) {
             resolvedProfile = refreshed.profile;
             resolvedEmail = refreshed.profile.email ?? resolvedEmail;

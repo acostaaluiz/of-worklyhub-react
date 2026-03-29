@@ -1,4 +1,4 @@
-import { type PropsWithChildren, useEffect, useState } from "react";
+import { type PropsWithChildren, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import type { MenuProps } from "antd";
 import { LogoutOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
@@ -54,6 +54,7 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   const [unreadNotifications, setUnreadNotifications] = useState<number>(() =>
     usersNotificationsService.getSummaryValue().unreadCount ?? 0
   );
+  const notificationRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
     const sub = companyService.getWorkspace$().subscribe((w) => {
@@ -81,11 +82,15 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
 
     const refresh = async () => {
       if (document.visibilityState === "hidden") return;
+      if (notificationRefreshInFlightRef.current) return;
+      notificationRefreshInFlightRef.current = true;
 
       try {
         await usersNotificationsService.fetchSummary({ workspaceId });
       } catch {
         if (!isMounted) return;
+      } finally {
+        notificationRefreshInFlightRef.current = false;
       }
     };
 

@@ -14,6 +14,7 @@ const WORKSPACE_KEY = "company.workspace";
 export class CompanyService {
   private subject = new BehaviorSubject<Workspace>(this.loadFromStorage());
   private api = new CompaniesApi(httpClient);
+  private pendingWorkspaceByEmail = new Map<string, Promise<Workspace | null>>();
 
   private static MOCK_SERVICES: ServiceModel[] = [
     {
@@ -77,28 +78,42 @@ export class CompanyService {
   clear(): void {
     localStorageProvider.remove(WORKSPACE_KEY);
     this.subject.next(null);
+    this.pendingWorkspaceByEmail.clear();
   }
 
   public async fetchWorkspaceByEmail(email: string): Promise<Workspace | null> {
-    try {
-      const res: WorkspaceGetResponse = await this.api.getWorkspace(email as string);
-      const workspace = res?.workspace ?? null;
-      if (workspace) {
-        try {
-          localStorageProvider.set(WORKSPACE_KEY, JSON.stringify(workspace));
-        } catch {
-          // ignore storage errors
+    const normalizedEmail = String(email ?? "").trim().toLowerCase();
+    if (!normalizedEmail) return null;
+
+    const inFlight = this.pendingWorkspaceByEmail.get(normalizedEmail);
+    if (inFlight) return inFlight;
+
+    const request = (async (): Promise<Workspace | null> => {
+      try {
+        const res: WorkspaceGetResponse = await this.api.getWorkspace(normalizedEmail);
+        const workspace = res?.workspace ?? null;
+        if (workspace) {
+          try {
+            localStorageProvider.set(WORKSPACE_KEY, JSON.stringify(workspace));
+          } catch {
+            // ignore storage errors
+          }
+          this.subject.next(workspace);
+          return workspace;
         }
-        this.subject.next(workspace);
-        return workspace;
+        // no workspace found
+        this.clear();
+        return null;
+      } catch {
+        // on error, treat as no workspace (do not throw to avoid breaking auth flow)
+        return null;
+      } finally {
+        this.pendingWorkspaceByEmail.delete(normalizedEmail);
       }
-      // no workspace found
-      this.clear();
-      return null;
-    } catch {
-      // on error, treat as no workspace (do not throw to avoid breaking auth flow)
-      return null;
-    }
+    })();
+
+    this.pendingWorkspaceByEmail.set(normalizedEmail, request);
+    return request;
   }
 
   async updateWorkspaceProfile(payload: WorkspaceProfileUpdatePayload): Promise<Workspace | null> {

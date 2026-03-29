@@ -107,6 +107,37 @@ describe("UsersNotificationsService", () => {
     });
   });
 
+  it("deduplicates concurrent summary fetches for the same workspace", async () => {
+    const deferred = new Promise<{
+      workspaceId: string;
+      summary: { unreadCount: number; highPriorityUnreadCount: number; totalActive: number };
+    }>((resolve) => {
+      setTimeout(
+        () =>
+          resolve({
+            workspaceId: "ws-1",
+            summary: {
+              unreadCount: 2,
+              highPriorityUnreadCount: 1,
+              totalActive: 6,
+            },
+          }),
+        0
+      );
+    });
+    apiMock.getSummary.mockReturnValueOnce(deferred);
+
+    const service = new UsersNotificationsService();
+    const first = service.fetchSummary({ workspaceId: "ws-1" });
+    const second = service.fetchSummary({ workspaceId: "ws-1" });
+
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    expect(firstResult).toEqual(secondResult);
+    expect(apiMock.getSummary).toHaveBeenCalledTimes(1);
+    expect(apiMock.getSummary).toHaveBeenCalledWith("ws-1");
+  });
+
   it("publishes empty summary when api summary payload is missing", async () => {
     apiMock.getSummary.mockResolvedValueOnce({
       workspaceId: "ws-1",

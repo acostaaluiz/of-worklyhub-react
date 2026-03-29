@@ -26,6 +26,10 @@ function resolveWorkspaceId(explicitWorkspaceId?: string): string | undefined {
 export class UsersNotificationsService {
   private readonly api = new UsersNotificationsApi(httpClient);
   private readonly summary$ = new BehaviorSubject<NotificationSummaryModel>(EMPTY_SUMMARY);
+  private readonly pendingSummaryByWorkspace = new Map<
+    string,
+    Promise<NotificationsSummaryResponseModel>
+  >();
 
   getSummary$() {
     return this.summary$.asObservable();
@@ -37,6 +41,7 @@ export class UsersNotificationsService {
 
   resetSummary(): void {
     this.summary$.next(EMPTY_SUMMARY);
+    this.pendingSummaryByWorkspace.clear();
   }
 
   private publishSummary(summary?: NotificationSummaryModel | null): void {
@@ -44,14 +49,26 @@ export class UsersNotificationsService {
   }
 
   async fetchSummary(opts?: { workspaceId?: string }): Promise<NotificationsSummaryResponseModel> {
-    try {
-      const workspaceId = resolveWorkspaceId(opts?.workspaceId);
-      const response = await this.api.getSummary(workspaceId);
-      this.publishSummary(response.summary);
-      return response;
-    } catch (err) {
-      throw toAppError(err);
-    }
+    const workspaceId = resolveWorkspaceId(opts?.workspaceId);
+    const key = workspaceId ?? "__default__";
+
+    const inFlight = this.pendingSummaryByWorkspace.get(key);
+    if (inFlight) return inFlight;
+
+    const request = (async (): Promise<NotificationsSummaryResponseModel> => {
+      try {
+        const response = await this.api.getSummary(workspaceId);
+        this.publishSummary(response.summary);
+        return response;
+      } catch (err) {
+        throw toAppError(err);
+      } finally {
+        this.pendingSummaryByWorkspace.delete(key);
+      }
+    })();
+
+    this.pendingSummaryByWorkspace.set(key, request);
+    return request;
   }
 
   async list(opts?: {
