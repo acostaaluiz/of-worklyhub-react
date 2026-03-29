@@ -16,6 +16,25 @@ import {
   PrivatePageShell,
 } from "./private-frame.component.styles";
 
+const DEFAULT_NOTIFICATIONS_POLLING_INTERVAL_MS = 90000;
+const MIN_NOTIFICATIONS_POLLING_INTERVAL_MS = 15000;
+
+function resolveNotificationsPollingIntervalMs(): number {
+  const runtimeEnv = (globalThis as { __WORKLYHUB_RUNTIME_ENV__?: Record<string, string | undefined> })
+    .__WORKLYHUB_RUNTIME_ENV__;
+  const raw =
+    runtimeEnv?.VITE_NOTIFICATIONS_POLLING_INTERVAL_MS ??
+    (import.meta.env.VITE_NOTIFICATIONS_POLLING_INTERVAL_MS as string | undefined);
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || parsed < MIN_NOTIFICATIONS_POLLING_INTERVAL_MS) {
+    return DEFAULT_NOTIFICATIONS_POLLING_INTERVAL_MS;
+  }
+
+  return Math.floor(parsed);
+}
+
+const NOTIFICATIONS_POLLING_INTERVAL_MS = resolveNotificationsPollingIntervalMs();
 
 export function PrivateFrameLayout({ children }: PropsWithChildren) {
   const { t } = useTranslation();
@@ -61,6 +80,8 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
     let isMounted = true;
 
     const refresh = async () => {
+      if (document.visibilityState === "hidden") return;
+
       try {
         await usersNotificationsService.fetchSummary({ workspaceId });
       } catch {
@@ -69,11 +90,19 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
     };
 
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 45000);
+    const timer = window.setInterval(() => void refresh(), NOTIFICATIONS_POLLING_INTERVAL_MS);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       isMounted = false;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [hasWorkspace, workspaceId]);
 
