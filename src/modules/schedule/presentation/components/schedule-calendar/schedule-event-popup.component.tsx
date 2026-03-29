@@ -123,6 +123,10 @@ export const ScheduleEventPopup: React.FC<Props> = ({
     event?.raw?.statusColor ||
     "var(--color-surface)";
   const statusColor = event?.raw?.statusColor || undefined;
+  const viewportWidth =
+    typeof window !== "undefined" ? window.innerWidth : 1024;
+  const isMobileViewport = viewportWidth <= 640;
+  const popupWidth = Math.max(220, Math.min(250, viewportWidth - 24));
 
   return (
     <div
@@ -142,7 +146,7 @@ export const ScheduleEventPopup: React.FC<Props> = ({
         style={{
           background: popupBg,
           padding: 16,
-          width: 250,
+          width: popupWidth,
           boxSizing: "border-box",
         }}
       >
@@ -164,7 +168,8 @@ export const ScheduleEventPopup: React.FC<Props> = ({
                   flex: 1,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  whiteSpace: isMobileViewport ? "normal" : "nowrap",
+                  overflowWrap: "anywhere",
                 }}
               >
                 {event.title}

@@ -19,6 +19,10 @@ export const Line = styled.div`
   justify-content: space-between;
   gap: var(--space-3);
 
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
+
   svg {
     color: var(--color-primary);
   }
@@ -37,10 +41,19 @@ export const PriceRow = styled.div`
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
 `;
 
 export const TotalRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
 `;

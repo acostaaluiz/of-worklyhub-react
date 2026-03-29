@@ -55,6 +55,9 @@ export class CompanyServices extends BaseComponent<Props, State> {
   protected override renderView(): React.ReactNode {
     const { services } = this.props;
     if (!services || services.length === 0) return null;
+    const isMobileViewport =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 768px)").matches;
 
     return (
       <div>
@@ -62,12 +65,20 @@ export class CompanyServices extends BaseComponent<Props, State> {
 
         <ServicesGrid>
           <List
-            grid={{ gutter: 12, column: 2 }}
+            grid={{ gutter: 12, column: isMobileViewport ? 1 : 2 }}
             dataSource={services}
             renderItem={(service) => (
               <List.Item>
                 <Card className="surface" bordered={false}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: isMobileViewport ? "flex-start" : "center",
+                      flexWrap: isMobileViewport ? "wrap" : "nowrap",
+                      gap: 8,
+                    }}
+                  >
                     <div>
                       <Typography.Title level={5} style={{ margin: 0 }}>
                         {service.title}
@@ -75,7 +86,7 @@ export class CompanyServices extends BaseComponent<Props, State> {
                       <Typography.Text type="secondary">{service.description}</Typography.Text>
                     </div>
 
-                    <div style={{ textAlign: "right" }}>
+                    <div style={{ textAlign: isMobileViewport ? "left" : "right" }}>
                       <div style={{ fontWeight: 700 }}>
                         {typeof service.priceCents === "number"
                           ? formatMoneyFromCents(service.priceCents)
@@ -98,7 +109,7 @@ export class CompanyServices extends BaseComponent<Props, State> {
         </ServicesGrid>
 
         <Drawer
-          width={720}
+          width={isMobileViewport ? "calc(100vw - 24px)" : 720}
           open={this.state.open}
           onClose={() => this.setState({ open: false })}
           title={appI18n.t("company.profile.services.adjustSelection")}

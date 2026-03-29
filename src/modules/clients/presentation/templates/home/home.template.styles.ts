@@ -14,6 +14,10 @@ export const ClientsHomeShell = styled(BaseTemplate)`
   font-family: "Space Grotesk", var(--font-family-sans);
   overflow: hidden;
 
+  @media (max-width: 768px) {
+    overflow-y: auto;
+  }
+
   > div {
     flex: 1;
     min-height: 0;
@@ -49,6 +53,7 @@ export const TemplateShell = styled.div`
   @media (max-width: 768px) {
     padding: var(--space-3);
     gap: var(--space-3);
+    overflow-y: auto;
   }
 
   @media (max-height: 760px) {

@@ -8,6 +8,10 @@ export const Customer360Root = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  @media (max-width: 768px) {
+    max-height: none;
+  }
 `;
 
 export const HeroCard = styled.section`

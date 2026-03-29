@@ -141,6 +141,9 @@ export class ProductModal extends BaseComponent<Props, State> {
 
   protected renderView(): React.ReactNode {
     const { open, onClose, initial, categories = [] } = this.props;
+    const isMobileViewport =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 768px)").matches;
     const initialValues: ProductFormValues = {
       stock: 0,
       unit: "un",
@@ -163,7 +166,7 @@ export class ProductModal extends BaseComponent<Props, State> {
           onCancel={onClose}
           footer={null}
           centered
-          width={880}
+          width={isMobileViewport ? "calc(100vw - 24px)" : 880}
           closeIcon={<X size={18} />}
           className="wh-product-modal"
           title={

@@ -4,6 +4,10 @@ import { TemplateShell } from "../home/home.template.styles";
 export const ServiceDetailShell = styled(TemplateShell)`
   gap: var(--space-4);
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    overflow-y: auto;
+  }
 `;
 
 export const HeroCover = styled.div<{ $image?: string }>`
@@ -307,6 +311,10 @@ export const PhotoGrid = styled.div`
 
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
   }
 `;
 

@@ -36,6 +36,9 @@ export function WorkOrderStatusesList({ statuses, loading }: Props) {
     ],
     []
   );
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, height: "100%" }}>
@@ -46,7 +49,7 @@ export function WorkOrderStatusesList({ statuses, loading }: Props) {
         loading={loading}
         rowKey={(record) => record.id}
         pagination={{ pageSize: 8, size: "small" }}
-        scroll={{ y: 340 }}
+        scroll={{ y: 340, x: isMobileViewport ? 640 : undefined }}
       />
     </div>
   );

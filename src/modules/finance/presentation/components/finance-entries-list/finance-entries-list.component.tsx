@@ -12,6 +12,9 @@ import {
 
 export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
         const api = useFinanceApi();
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 640px)").matches;
   const [items, setItems] = useState<FinanceEntryListItem[]>([]);
   const [page, setPage] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -72,7 +75,15 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
                 style={{ width: "100%", minHeight: 100, padding: "10px" }}
                 data-cy={`finance-entry-card-${it.id}`}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: isMobileViewport ? "flex-start" : "center",
+                    gap: 12,
+                    flexDirection: isMobileViewport ? "column" : "row",
+                  }}
+                >
                   <div style={{ flex: "1 1 auto", minWidth: 0 }}>
                     <Typography.Text
                       strong
@@ -83,7 +94,13 @@ export function FinanceEntriesList({ workspaceId }: { workspaceId?: string }) {
                     </Typography.Text>
                     <div style={{ color: "var(--muted)", marginTop: 6, fontSize: 13 }}>{formatDate(it.date)}</div>
                   </div>
-                  <div style={{ textAlign: "right", minWidth: 120 }}>
+                  <div
+                    style={{
+                      textAlign: isMobileViewport ? "left" : "right",
+                      minWidth: isMobileViewport ? 0 : 120,
+                      width: isMobileViewport ? "100%" : "auto",
+                    }}
+                  >
                     {(() => {
                       const amountNum = Number(it.amount ?? 0);
                       const context = getEntryContext(it.type);

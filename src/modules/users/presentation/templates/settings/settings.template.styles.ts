@@ -7,6 +7,12 @@ export const SettingsTemplateRoot = styled.div`
   min-height: 0;
   display: flex;
   overflow: hidden;
+
+  @media (max-width: 980px) {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
 `;
 
 export const SettingsShell = styled.div`
@@ -18,6 +24,12 @@ export const SettingsShell = styled.div`
   flex-direction: column;
   gap: var(--space-2);
   overflow: hidden;
+
+  @media (max-width: 980px) {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
 `;
 
 export const HeroCard = styled.div`
@@ -137,6 +149,18 @@ export const TabsFrame = styled.div`
     height: 100%;
     min-height: 0;
   }
+
+  @media (max-width: 980px) {
+    overflow: visible;
+
+    .ant-tabs-content-holder,
+    .ant-tabs-content,
+    .ant-tabs-tabpane {
+      overflow: auto;
+      height: auto;
+      max-height: none;
+    }
+  }
 `;
 
 export const TabPaneBody = styled.div`
@@ -171,6 +195,10 @@ export const Card = styled.div`
 
   .ant-form-item {
     margin-bottom: 8px;
+  }
+
+  @media (max-width: 980px) {
+    overflow: visible;
   }
 `;
 
@@ -272,6 +300,10 @@ export const ModuleToggleRow = styled.div`
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--color-surface-2) 75%, transparent);
+
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+  }
 `;
 
 export const ModuleTitle = styled.div`

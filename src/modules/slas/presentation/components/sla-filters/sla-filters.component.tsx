@@ -57,6 +57,7 @@ export class SlaFilters extends BaseComponent<Props, State> {
               onChange={this.handleRangeChange}
               allowClear={false}
               format={this.dateFormat}
+              style={{ width: "100%" }}
             />
           </FilterField>
         </FiltersGroup>

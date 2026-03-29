@@ -407,7 +407,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             .join(", ")
         : "";
       const bodyHtml = `
-        <div style="background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:var(--shadow-md);border-radius:8px;padding:12px;width:250px;font-family:inherit;overflow:hidden;">
+        <div style="background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:var(--shadow-md);border-radius:8px;padding:12px;width:min(250px,calc(100vw - 24px));font-family:inherit;overflow:hidden;">
           <div style="font-weight:800;margin-bottom:6px;color:var(--color-text);">${escapeHtml(e.title)}</div>
           <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:8px;">${startText} — ${endText}</div>
           <div style="font-size:13px;color:var(--color-text);">${escapeHtml(e.description ?? "")}</div>
@@ -1686,12 +1686,24 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     }
   };
 
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches;
+
   return (
     <>
       <ToastUIGlobalStyles />
       <CalendarShell>
         <ToolbarRow style={{ flexDirection: "column", alignItems: "stretch" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: isMobileViewport ? "stretch" : "center",
+              flexDirection: isMobileViewport ? "column" : "row",
+              gap: 8,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <CalendarIcon size={20} />
               <Typography.Title level={3} style={{ margin: 0 }}>
@@ -1699,13 +1711,20 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
               </Typography.Title>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                width: isMobileViewport ? "100%" : "auto",
+              }}
+            >
               <Input
                 value={search}
                 onChange={(ev) => setSearch(ev.target.value)}
                 placeholder={appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k008")}
                 prefix={<Search size={16} />}
-                style={{ width: 220 }}
+                style={{ width: isMobileViewport ? "100%" : 220 }}
               />
             </div>
           </div>
@@ -1745,14 +1764,30 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
             </MonthHintBanner>
           ) : null}
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: isMobileViewport ? "stretch" : "center",
+              marginTop: 8,
+              flexDirection: isMobileViewport ? "column" : "row",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
               <Button icon={<ChevronRight size={18} />} onClick={handleNext} />
               <Button onClick={handleToday}>{appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k016")}</Button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                width: isMobileViewport ? "100%" : "auto",
+              }}
+            >
               <div
                 style={{
                   borderRadius: "var(--radius-sm)",
@@ -1763,6 +1798,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                   border: shouldShowMonthHint
                     ? "1px solid color-mix(in srgb, var(--color-primary) 45%, var(--color-border))"
                     : "1px solid transparent",
+                  width: isMobileViewport ? "100%" : "auto",
                 }}
               >
                 <Segmented
@@ -1778,6 +1814,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                     { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k018"), value: "week" },
                     { label: appI18n.t("legacyInline.schedule.presentation_components_schedule_calendar_schedule_calendar_component.k019"), value: "day" },
                   ]}
+                  style={{ width: isMobileViewport ? "100%" : "auto" }}
                 />
               </div>
             </div>

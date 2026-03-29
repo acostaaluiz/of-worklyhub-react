@@ -23,6 +23,8 @@ export const HeaderRow = styled.div`
 
   @media (max-width: 768px) {
     align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-3);
   }
 `;
 
@@ -34,6 +36,7 @@ export const ToggleWrap = styled.div`
 
   @media (max-width: 768px) {
     align-items: flex-start;
+    width: 100%;
   }
 
   /* Fix visual do Segmented (Antd) para não “vazar” e manter o highlight correto */
@@ -42,6 +45,10 @@ export const ToggleWrap = styled.div`
     background: var(--color-glass-surface);
     border-radius: 999px;
     padding: 4px;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
   }
 
   .ant-segmented-group {
@@ -116,6 +123,8 @@ export const PlanCard = styled.div<{ $highlight: boolean }>`
 
   @media (max-width: 640px) {
     grid-column: span 4 / span 4;
+    min-height: auto;
+    padding: var(--space-4);
   }
 `;
 
@@ -144,6 +153,10 @@ export const PriceRow = styled.div`
   align-items: baseline;
   gap: var(--space-2);
   margin-top: var(--space-2);
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
 `;
 
 export const FeatureList = styled.ul`

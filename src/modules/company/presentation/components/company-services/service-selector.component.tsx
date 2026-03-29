@@ -52,6 +52,9 @@ export class ServiceSelector extends BaseComponent<Props, State> {
 
   protected override renderView(): React.ReactNode {
     const { services, onCancel, onAdd } = this.props;
+    const isMobileViewport =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 768px)").matches;
 
     return (
       <SelectorShell>
@@ -72,7 +75,7 @@ export class ServiceSelector extends BaseComponent<Props, State> {
                   </div>
                 </div>
 
-                <div style={{ width: 120, textAlign: "right" }}>
+                <div style={{ width: isMobileViewport ? "100%" : 120, textAlign: isMobileViewport ? "left" : "right" }}>
                   <div style={{ fontWeight: 700 }}>
                     {typeof service.priceCents === "number"
                       ? formatMoneyFromCents(service.priceCents)

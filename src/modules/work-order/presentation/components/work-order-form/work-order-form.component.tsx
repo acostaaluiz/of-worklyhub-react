@@ -1520,7 +1520,15 @@ export function WorkOrderForm({
             ),
             children: (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobileViewport
+                      ? "1fr"
+                      : "repeat(2, minmax(0, 1fr))",
+                    gap: 12,
+                  }}
+                >
                   <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k109")} icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
@@ -1543,7 +1551,15 @@ export function WorkOrderForm({
                   </LabeledField>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobileViewport
+                      ? "1fr"
+                      : "repeat(2, minmax(0, 1fr))",
+                    gap: 12,
+                  }}
+                >
                   <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k113")} icon={<CalendarOutlined />}>
                     <DatePicker
                       showTime={{ format: APP_TIME_FORMAT }}
@@ -1567,7 +1583,15 @@ export function WorkOrderForm({
                 </div>
 
                 {isEditing ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isMobileViewport
+                        ? "1fr"
+                        : "repeat(2, minmax(0, 1fr))",
+                      gap: 12,
+                    }}
+                  >
                     <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k117")} icon={<ClockCircleOutlined />}>
                       <InputNumber
                         min={0}
@@ -1620,7 +1644,11 @@ export function WorkOrderForm({
                     align="start"
                     data-cy={`work-order-worker-row-${idx}`}
                   >
-                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k125")} icon={<UserOutlined />} style={{ width: 260 }}>
+                    <LabeledField
+                      label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k125")}
+                      icon={<UserOutlined />}
+                      style={{ width: isMobileViewport ? "100%" : 260 }}
+                    >
                       <Select
                         placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k126")}
                         value={line.userUid || undefined}
@@ -1638,7 +1666,11 @@ export function WorkOrderForm({
                         data-cy={`work-order-worker-select-${idx}`}
                       />
                     </LabeledField>
-                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k127")} icon={<IdcardOutlined />} style={{ width: 170 }}>
+                    <LabeledField
+                      label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k127")}
+                      icon={<IdcardOutlined />}
+                      style={{ width: isMobileViewport ? "100%" : 170 }}
+                    >
                       <Select
                         value={line.assignmentRole}
                         style={{ width: "100%" }}
@@ -1651,7 +1683,11 @@ export function WorkOrderForm({
                         data-cy={`work-order-worker-role-select-${idx}`}
                       />
                     </LabeledField>
-                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k131")} icon={<ClockCircleOutlined />} style={{ width: 150 }}>
+                    <LabeledField
+                      label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k131")}
+                      icon={<ClockCircleOutlined />}
+                      style={{ width: isMobileViewport ? "100%" : 150 }}
+                    >
                       <InputNumber
                         min={0}
                         placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k132")}
@@ -1661,7 +1697,10 @@ export function WorkOrderForm({
                         data-cy={`work-order-worker-minutes-input-${idx}`}
                       />
                     </LabeledField>
-                    <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k133")} style={{ width: 126 }}>
+                    <LabeledField
+                      label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k133")}
+                      style={{ width: isMobileViewport ? "100%" : 126 }}
+                    >
                       <Button
                         danger
                         icon={<DeleteOutlined />}
@@ -1729,7 +1768,15 @@ export function WorkOrderForm({
                         }}
                         data-cy={`work-order-service-line-${idx}`}
                       >
-                        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 90px", gap: 10 }}>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: isMobileViewport
+                              ? "1fr"
+                              : "minmax(0, 1fr) 90px",
+                            gap: 10,
+                          }}
+                        >
                           <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k142")} icon={<ToolOutlined />} style={{ minWidth: 0 }}>
                             <Select
                               placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k143")}
@@ -1774,7 +1821,9 @@ export function WorkOrderForm({
                         <div
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "140px minmax(0, 1fr) 128px",
+                            gridTemplateColumns: isMobileViewport
+                              ? "1fr"
+                              : "140px minmax(0, 1fr) 128px",
                             gap: 10,
                             alignItems: "end",
                           }}
@@ -1855,7 +1904,11 @@ export function WorkOrderForm({
                           align="start"
                           data-cy={`work-order-inventory-line-${idx}`}
                         >
-                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k155")} icon={<InboxOutlined />} style={{ width: 220 }}>
+                        <LabeledField
+                          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k155")}
+                          icon={<InboxOutlined />}
+                          style={{ width: isMobileViewport ? "100%" : 220 }}
+                        >
                           <Select
                             placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k156")}
                             value={line.inventoryItemId || undefined}
@@ -1885,7 +1938,11 @@ export function WorkOrderForm({
                             </div>
                           ) : null}
                         </LabeledField>
-                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k159")} icon={<ScheduleOutlined />} style={{ width: 130 }}>
+                        <LabeledField
+                          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k159")}
+                          icon={<ScheduleOutlined />}
+                          style={{ width: isMobileViewport ? "100%" : 130 }}
+                        >
                           <Select
                             value={line.direction}
                             style={{ width: "100%" }}
@@ -1897,7 +1954,11 @@ export function WorkOrderForm({
                             data-cy={`work-order-inventory-direction-select-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k162")} icon={<NumberOutlined />} style={{ width: 120 }}>
+                        <LabeledField
+                          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k162")}
+                          icon={<NumberOutlined />}
+                          style={{ width: isMobileViewport ? "100%" : 120 }}
+                        >
                           <InputNumber
                             min={0}
                             placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k163")}
@@ -1907,7 +1968,11 @@ export function WorkOrderForm({
                             data-cy={`work-order-inventory-planned-input-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k164")} icon={<NumberOutlined />} style={{ width: 120 }}>
+                        <LabeledField
+                          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k164")}
+                          icon={<NumberOutlined />}
+                          style={{ width: isMobileViewport ? "100%" : 120 }}
+                        >
                           <InputNumber
                             min={0}
                             placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k165")}
@@ -1917,7 +1982,11 @@ export function WorkOrderForm({
                             data-cy={`work-order-inventory-consumed-input-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k166")} icon={<NumberOutlined />} style={{ width: 170 }}>
+                        <LabeledField
+                          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k166")}
+                          icon={<NumberOutlined />}
+                          style={{ width: isMobileViewport ? "100%" : 170 }}
+                        >
                           <Input
                             placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k167")}
                             value={moneyMaskCents.format(line.unitCostCents)}
@@ -1931,7 +2000,10 @@ export function WorkOrderForm({
                             data-cy={`work-order-inventory-unit-cost-input-${idx}`}
                           />
                         </LabeledField>
-                        <LabeledField label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k168")} style={{ width: 126 }}>
+                        <LabeledField
+                          label={appI18n.t("legacyInline.work_order.presentation_components_work_order_form_work_order_form_component.k168")}
+                          style={{ width: isMobileViewport ? "100%" : 126 }}
+                        >
                           <Button
                             danger
                             icon={<DeleteOutlined />}

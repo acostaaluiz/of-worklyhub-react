@@ -750,6 +750,24 @@ export const ToastUIGlobalStyles = createGlobalStyle`
     overflow: hidden !important;
   }
 
+  @media (max-width: 768px) {
+    .toastui-calendar-week-view .toastui-calendar-timegrid,
+    .toastui-calendar-week-view .toastui-calendar-timegrid .toastui-calendar-timegrid-hour-rows {
+      min-height: 760px !important;
+    }
+
+    .tui-react-popup .tui-custom-popup,
+    .tui-custom-popup {
+      width: min(250px, calc(100vw - 24px)) !important;
+      min-width: min(250px, calc(100vw - 24px)) !important;
+    }
+
+    .tui-custom-popup .tui-custom-popup-title {
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+    }
+  }
+
   :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-weekday-event-title,
   :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-weekday-event strong,
   :root[data-theme="dark"] .toastui-calendar-see-more .toastui-calendar-weekday-event span,

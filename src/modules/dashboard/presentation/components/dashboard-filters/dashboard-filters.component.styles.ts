@@ -25,6 +25,10 @@ export const FiltersLeft = styled.div`
   .ant-picker {
     height: 36px;
     border-radius: var(--radius-sm);
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
   }
 `;
 
@@ -37,6 +41,10 @@ export const ViewSegment = styled(Segmented)`
     height: 32px;
     line-height: 32px;
     padding-inline: 12px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
   }
 `;
 
@@ -57,6 +65,16 @@ export const FiltersRight = styled.div`
     height: 32px;
     line-height: 32px;
     padding-inline: 12px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: flex-start;
+
+    .ant-segmented,
+    .ant-btn {
+      width: 100%;
+    }
   }
 
   .ant-btn {

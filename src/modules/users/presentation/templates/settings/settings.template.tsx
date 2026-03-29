@@ -1449,7 +1449,7 @@ export const SettingsTemplate: React.FC<SettingsTemplateProps> = ({
           <Select
             value={appLanguage}
             onChange={(value) => void handleLanguageChange(value as AppLanguage)}
-            style={{ minWidth: 220 }}
+            style={{ minWidth: 0, width: "100%" }}
             data-cy="settings-appearance-language-select"
             options={[
               { value: "en-US", label: t("settings.language.english") },

@@ -348,12 +348,24 @@ export function WorkOrderCalendar({
     }
   }, [tuiEvents]);
 
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches;
+
   return (
     <>
       <ToastUIGlobalStyles />
       <CalendarShell>
         <ToolbarRow style={{ flexDirection: "column", alignItems: "stretch" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: isMobileViewport ? "stretch" : "center",
+              flexDirection: isMobileViewport ? "column" : "row",
+              gap: 8,
+            }}
+          >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <CalendarIcon size={20} />
               <Typography.Title level={3} style={{ margin: 0 }}>
@@ -366,25 +378,48 @@ export function WorkOrderCalendar({
               ) : null}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                width: isMobileViewport ? "100%" : "auto",
+              }}
+            >
               <Input
                 value={search}
                 onChange={(ev) => setSearch(ev.target.value)}
                 placeholder={appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k008")}
                 prefix={<Search size={16} />}
-                style={{ width: 220 }}
+                style={{ width: isMobileViewport ? "100%" : 220 }}
               />
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: isMobileViewport ? "stretch" : "center",
+              marginTop: 8,
+              flexDirection: isMobileViewport ? "column" : "row",
+              gap: 8,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
               <Button icon={<ChevronLeft size={18} />} onClick={handlePrev} />
               <Button icon={<ChevronRight size={18} />} onClick={handleNext} />
               <Button onClick={handleToday}>{appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k009")}</Button>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                width: isMobileViewport ? "100%" : "auto",
+              }}
+            >
               <div
                 style={{
                   borderRadius: "var(--radius-sm)",
@@ -392,6 +427,7 @@ export function WorkOrderCalendar({
                   boxSizing: "border-box",
                   padding: 2,
                   background: "transparent",
+                  width: isMobileViewport ? "100%" : "auto",
                 }}
               >
                 <Segmented
@@ -407,6 +443,7 @@ export function WorkOrderCalendar({
                     { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k011"), value: "week" },
                     { label: appI18n.t("legacyInline.work_order.presentation_components_work_order_calendar_work_order_calendar_component.k012"), value: "day" },
                   ]}
+                  style={{ width: isMobileViewport ? "100%" : "auto" }}
                 />
               </div>
             </div>

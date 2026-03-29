@@ -14,6 +14,10 @@ export const PrivatePageShell = styled.div`
   background-size: cover;
   background-attachment: fixed;
 
+  @media (max-width: 768px) {
+    background-attachment: scroll;
+  }
+
   padding: 0;
 `;
 
@@ -26,8 +30,8 @@ export const ContentShell = styled.main`
   display: flex;
 
   &.viewport-lock {
-    height: calc(100vh - 64px);
-    max-height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
+    max-height: calc(100dvh - 64px);
     padding: var(--space-4) 0;
   }
 
@@ -39,9 +43,16 @@ export const ContentShell = styled.main`
     padding: var(--space-5) 0 var(--space-7);
 
     &.viewport-lock {
+      height: calc(100dvh - 64px);
+      max-height: calc(100dvh - 64px);
+      padding: var(--space-3) 0;
+    }
+  }
+
+  @supports not (height: 100dvh) {
+    &.viewport-lock {
       height: calc(100vh - 64px);
       max-height: calc(100vh - 64px);
-      padding: var(--space-3) 0;
     }
   }
 

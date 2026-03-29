@@ -593,4 +593,22 @@ export const ToastUIGlobalStyles = createGlobalStyle`
     -webkit-box-orient: vertical !important;
     overflow: hidden !important;
   }
+
+  @media (max-width: 768px) {
+    .toastui-calendar-week-view .toastui-calendar-timegrid,
+    .toastui-calendar-week-view .toastui-calendar-timegrid .toastui-calendar-timegrid-hour-rows {
+      min-height: 760px !important;
+    }
+
+    .tui-react-popup .tui-custom-popup,
+    .tui-custom-popup {
+      width: min(250px, calc(100vw - 24px)) !important;
+      min-width: min(250px, calc(100vw - 24px)) !important;
+    }
+
+    .tui-custom-popup .tui-custom-popup-title {
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+    }
+  }
 `;

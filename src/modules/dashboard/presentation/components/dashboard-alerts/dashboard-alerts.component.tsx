@@ -65,7 +65,7 @@ export function DashboardAlerts(props: Props) {
                     }}
                   >
                     <Typography.Text strong>{item.title}</Typography.Text>
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                       <Tag>{sourceLabel[item.source]}</Tag>
                       <Tag color={priorityColor[item.priority]}>{priorityLabel[item.priority]}</Tag>
                       {item.engineUsed ? <Tag>{t("dashboard.alerts.tags.engine", { engine: item.engineUsed.toUpperCase() })}</Tag> : null}

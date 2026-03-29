@@ -36,8 +36,9 @@ export const FilterField = styled.div`
     white-space: nowrap;
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     min-width: 100%;
+    width: 100%;
   }
 `;
 

@@ -31,6 +31,9 @@ type SuggestedServiceItem = CompanyServiceModel & {
 
 export function ServicesFinanceList({ onSelect }: Props) {
         const svc = React.useMemo(() => new FinanceService(), []);
+  const isMobileViewport =
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 768px)").matches;
   const [items, setItems] = useState<SuggestedServiceItem[]>([]);
 
   useEffect(() => {
@@ -42,7 +45,7 @@ export function ServicesFinanceList({ onSelect }: Props) {
 
   return (
     <List
-      grid={{ gutter: 12, column: 2 }}
+      grid={{ gutter: 12, column: isMobileViewport ? 1 : 2 }}
       dataSource={items}
       renderItem={(it) => (
         <List.Item>
@@ -56,7 +59,15 @@ export function ServicesFinanceList({ onSelect }: Props) {
               }}
             >
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: isMobileViewport ? "flex-start" : "center",
+                    flexDirection: isMobileViewport ? "column" : "row",
+                    gap: 8,
+                  }}
+                >
                   <div style={{ flex: "1 1 auto", minWidth: 0 }}>
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, minWidth: 0 }}>
                       <ReceiptText size={14} />
@@ -64,9 +75,10 @@ export function ServicesFinanceList({ onSelect }: Props) {
                         level={5}
                         style={{
                           margin: 0,
-                          whiteSpace: "nowrap",
+                          whiteSpace: isMobileViewport ? "normal" : "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
+                          overflowWrap: "anywhere",
                         }}
                       >
                         {it.title}
@@ -74,7 +86,7 @@ export function ServicesFinanceList({ onSelect }: Props) {
                     </div>
                   </div>
 
-                  <div style={{ marginLeft: 12 }}>
+                  <div style={{ marginLeft: isMobileViewport ? 0 : 12 }}>
                     <Typography.Text
                       type="secondary"
                       style={{
