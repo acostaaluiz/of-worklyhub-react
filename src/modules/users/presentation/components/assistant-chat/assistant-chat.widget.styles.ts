@@ -14,6 +14,7 @@ export const AssistantRoot = styled.div`
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+  pointer-events: none;
 
   @media (max-width: 768px) {
     right: 12px;
@@ -206,6 +207,7 @@ export const AssistantComposer = styled.div`
 `;
 
 export const AssistantFab = styled.button<{ $open: boolean }>`
+  pointer-events: auto;
   width: 58px;
   height: 58px;
   border-radius: 999px;
