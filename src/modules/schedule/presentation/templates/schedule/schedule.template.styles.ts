@@ -24,17 +24,12 @@ export const Shell = styled.div`
 `;
 
 export const SidebarCard = styled.aside`
-  padding: var(--space-5);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-
-  max-height: calc(100vh - 320px);
-  overflow: auto;
+  gap: var(--space-4);
 
   @media (max-width: 1024px) {
-    max-height: none;
-    overflow: visible;
     padding: var(--space-4);
   }
 

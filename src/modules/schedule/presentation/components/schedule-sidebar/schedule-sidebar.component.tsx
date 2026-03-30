@@ -1,27 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
-import { Button, Checkbox } from "antd";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button, Checkbox, Input, Modal, message } from "antd";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
-import { Plus, Tag, CheckSquare } from "lucide-react";
+import { CheckSquare, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 import { i18n as appI18n } from "@core/i18n";
 
 import { useScheduleApi } from "../../../services/schedule.service";
 
 import {
   categoryColorMap,
-  getStatusColor,
   getCategoryColor,
+  getStatusColor,
 } from "../../../constants/colors";
 
 import {
-  SidebarHeaderRow,
-  SidebarTitle,
   Block,
   BlockHeader,
+  CategoryListScroll,
+  CategoryRow,
   List,
   NextBlock,
   NextCard,
-  CategoryRow,
+  SidebarHeaderRow,
+  SidebarTitle,
 } from "./schedule-sidebar.component.styles";
 import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
 import type { ScheduleEvent } from "@modules/schedule/interfaces/schedule-event.model";
@@ -29,22 +30,31 @@ import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
 import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
-import type { NextScheduleItem, ScheduleStatus } from "@modules/schedule/services/schedules-api";
+import type {
+  NextScheduleItem,
+  ScheduleStatus,
+} from "@modules/schedule/services/schedules-api";
 import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
 
 type ScheduleSidebarProps = {
   availableServices?: CompanyServiceModel[];
   availableEmployees?: EmployeeModel[];
   workspaceId?: string | null;
-  onCreate?: (
-    draft: ScheduleEventDraft
-  ) => Promise<void>;
-  categories?:
-    | ScheduleCategory[]
-    | null;
+  onCreate?: (draft: ScheduleEventDraft) => Promise<void>;
+  categories?: ScheduleCategory[] | null;
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
+  onCreateCategory?: (input: {
+    label: string;
+    color?: string | null;
+  }) => Promise<ScheduleCategory>;
+  onUpdateCategory?: (input: {
+    id: string;
+    label: string;
+    color?: string | null;
+  }) => Promise<ScheduleCategory>;
+  onDeleteCategory?: (id: string) => Promise<boolean>;
   nextSchedules?: NextScheduleItem[] | null;
   statuses?: ScheduleStatus[] | null;
   statusCounts?: Record<string, number> | null;
@@ -53,121 +63,297 @@ type ScheduleSidebarProps = {
   settings?: ScheduleWorkspaceSettings;
 };
 
-export function ScheduleSidebar(props: ScheduleSidebarProps) {
-        const api = useScheduleApi();
-  // deterministic color from id to avoid duplicates when no explicit color provided
-  const colorFromId = (id: string, idx: number) => {
-    let h = 0;
-    for (let i = 0; i < id.length; i++) {
-      h = (h << 5) - h + id.charCodeAt(i);
-      h = h & h;
-    }
-    const hue = Math.abs(h) % 360;
-    const sat = 64 + ((idx * 11) % 20); // vary saturation slightly by index
-    const light = 48 + ((idx * 7) % 6);
-    return `hsl(${hue} ${sat}% ${light}%)`;
-  };
+function colorFromId(id: string, idx: number): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0;
+  }
+  const hue = Math.abs(hash) % 360;
+  const sat = 64 + ((idx * 11) % 20);
+  const light = 48 + ((idx * 7) % 6);
+  return `hsl(${hue} ${sat}% ${light}%)`;
+}
 
+function mapCategoriesWithDisplayColor(
+  input: ScheduleCategory[] | null | undefined
+): ScheduleCategory[] {
+  if (!input || input.length <= 0) return [];
+
+  const codeColorMap: Record<string, string> = categoryColorMap;
+  const palette = [
+    "#F59E0B",
+    "#06B6D4",
+    "#A78BFA",
+    "#10B981",
+    "#F97316",
+    "#EF4444",
+    "#0EA5E9",
+    "#7C3AED",
+  ];
+
+  const used = new Set<string>();
+  return input.map((category, idx) => {
+    const code = category.code ?? "";
+
+    let chosen: string | undefined;
+    const explicit = category.color?.toString()?.trim();
+    if (explicit && !explicit.startsWith("var(")) chosen = explicit;
+
+    const mappedByCode = getCategoryColor(code) ?? codeColorMap[code];
+    if (!chosen && mappedByCode && !mappedByCode.startsWith("var(")) {
+      chosen = mappedByCode;
+    }
+
+    if (!chosen) {
+      chosen = palette[idx % palette.length];
+    }
+
+    if (used.has(chosen)) {
+      const available = palette.find((color) => !used.has(color));
+      chosen = available ?? colorFromId(category.id, idx);
+    }
+
+    used.add(chosen);
+    return {
+      ...category,
+      code,
+      color: chosen,
+    };
+  });
+}
+
+function toColorInputValue(value: string | null | undefined): string {
+  if (!value) return "#06B6D4";
+  const normalized = value.trim();
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized)) {
+    return normalized;
+  }
+  return "#06B6D4";
+}
+
+export function ScheduleSidebar(props: ScheduleSidebarProps) {
+  const api = useScheduleApi();
   const [categories, setCategories] = useState<ScheduleCategory[]>([]);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
-
   const [localStatusSelection, setLocalStatusSelection] = useState<
     Record<string, boolean>
   >({});
-
-  const [selectedDate, _setSelectedDate] = useState<Dayjs>(dayjs());
-  // local fallback selection used only when parent does not provide control
+  const [selectedDate] = useState<Dayjs>(dayjs());
   const [localCategorySelection, setLocalCategorySelection] = useState<
     Record<string, boolean>
   >({});
-
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryLabel, setCategoryLabel] = useState("");
+  const [categoryColor, setCategoryColor] = useState("#06B6D4");
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(
+    null
+  );
+  const [savingCategory, setSavingCategory] = useState(false);
+
   const nextSchedules = props.nextSchedules ?? null;
+  const canManageCategories = Boolean(
+    props.onCreateCategory && props.onUpdateCategory && props.onDeleteCategory
+  );
 
   useEffect(() => {
+    let mounted = true;
     (async () => {
-      // prefer categories passed from page (fetched from application service)
-      if (props.categories && Array.isArray(props.categories)) {
-        // map incoming categories to include a display color when missing
-        const codeColorMap: Record<string, string> = categoryColorMap;
-        // explicit palette of contrasting colors to avoid near-duplicates
-        const palette = [
-          "#F59E0B", // amber
-          "#06B6D4", // cyan
-          "#A78BFA", // purple
-          "#10B981", // green
-          "#F97316", // orange
-          "#EF4444", // red
-          "#0EA5E9", // blue
-          "#7C3AED",
-        ];
+      if (!mounted) return;
 
-        const used = new Set<string>();
-        const mapped = props.categories.map((c, idx) => {
-          const code = c.code ?? "";
-          // try to use explicit color only when it's a concrete color (not var(...))
-          let chosen: string | undefined;
-          const explicit = c.color?.toString()?.trim();
-          if (explicit && !explicit.startsWith("var(")) chosen = explicit;
+      try {
+        if (props.categories && Array.isArray(props.categories)) {
+          setCategories(mapCategoriesWithDisplayColor(props.categories));
+          return;
+        }
 
-          // next try code map if it provides a concrete color
-          const mappedByCode = getCategoryColor(code) ?? codeColorMap[code];
-          if (!chosen && mappedByCode && !mappedByCode.startsWith("var("))
-            chosen = mappedByCode;
-
-          // otherwise pick from palette
-          if (!chosen) chosen = palette[idx % palette.length];
-
-          // ensure uniqueness: prefer palette/free generated color if collision
-          if (used.has(chosen)) {
-            // try find unused in palette
-            const found = palette.find((p) => !used.has(p));
-            if (found) chosen = found;
-            else chosen = colorFromId(c.id, idx);
-          }
-
-          used.add(chosen);
-          return { id: c.id, code, label: c.label, color: chosen };
-        });
-        setCategories(mapped);
-      } else {
-        const cats = await api.getCategories();
-        setCategories(cats);
+        const fetched = await api.getCategories(props.workspaceId ?? null);
+        if (!mounted) return;
+        setCategories(mapCategoriesWithDisplayColor(fetched));
+      } catch {
+        if (!mounted) return;
+        setCategories([]);
       }
     })();
-  }, [api, props.categories]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [api, props.categories, props.workspaceId]);
 
   const countsByCategory = useMemo(() => {
-    // if page provided counts, prefer them (ensure keys exist for categories)
     if (props.categoryCounts && Object.keys(props.categoryCounts).length > 0) {
       const out: Record<string, number> = {};
-      for (const c of categories) out[c.id] = props.categoryCounts[c.id] ?? 0;
+      for (const category of categories) {
+        out[category.id] = props.categoryCounts[category.id] ?? 0;
+      }
       return out;
     }
 
     const counts: Record<string, number> = {};
-    for (const c of categories) counts[c.id] = 0;
-    for (const e of events)
-      counts[e.categoryId] = (counts[e.categoryId] ?? 0) + 1;
+    for (const category of categories) {
+      counts[category.id] = 0;
+    }
+    for (const event of events) {
+      if (!event.categoryId) continue;
+      counts[event.categoryId] = (counts[event.categoryId] ?? 0) + 1;
+    }
     return counts;
   }, [categories, events, props.categoryCounts]);
-  const onToggleCategory = (id: string, checked: boolean) => {
-    // toggle category selection
-    if (props.onToggleCategory) {
-      props.onToggleCategory(id, checked);
+
+  const onToggleCategory = useCallback(
+    (id: string, checked: boolean) => {
+      if (props.onToggleCategory) {
+        props.onToggleCategory(id, checked);
+        return;
+      }
+
+      setLocalCategorySelection((prev) => ({ ...prev, [id]: checked }));
+    },
+    [props]
+  );
+
+  const onToggleStatus = useCallback(
+    (id: string, checked: boolean) => {
+      if (props.onToggleStatus) {
+        props.onToggleStatus(id, checked);
+        return;
+      }
+      setLocalStatusSelection((prev) => ({ ...prev, [id]: checked }));
+    },
+    [props]
+  );
+
+  const resetCategoryForm = useCallback(() => {
+    setEditingCategoryId(null);
+    setCategoryLabel("");
+    setCategoryColor("#06B6D4");
+  }, []);
+
+  const openCategoryModal = useCallback(() => {
+    resetCategoryForm();
+    setIsCategoryModalOpen(true);
+  }, [resetCategoryForm]);
+
+  const closeCategoryModal = useCallback(() => {
+    setIsCategoryModalOpen(false);
+    resetCategoryForm();
+  }, [resetCategoryForm]);
+
+  const handleSaveCategory = useCallback(async () => {
+    const normalizedLabel = categoryLabel.trim().replace(/\s+/g, " ");
+    if (!normalizedLabel) {
+      message.warning(
+        appI18n.t(
+          "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k013"
+        )
+      );
       return;
     }
 
-    setLocalCategorySelection((prev) => ({ ...prev, [id]: checked }));
-  };
-
-  const onToggleStatus = (id: string, checked: boolean) => {
-    if (props.onToggleStatus) {
-      props.onToggleStatus(id, checked);
+    if (normalizedLabel.length > 60) {
+      message.warning(
+        appI18n.t(
+          "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k014"
+        )
+      );
       return;
     }
-    setLocalStatusSelection((prev) => ({ ...prev, [id]: checked }));
-  };
+
+    if (!canManageCategories) return;
+    if (!props.onCreateCategory || !props.onUpdateCategory) return;
+
+    setSavingCategory(true);
+    try {
+      if (editingCategoryId) {
+        const updated = await props.onUpdateCategory({
+          id: editingCategoryId,
+          label: normalizedLabel,
+          color: categoryColor,
+        });
+        setCategories((prev) =>
+          mapCategoriesWithDisplayColor(
+            prev.map((category) =>
+              category.id === updated.id ? updated : category
+            )
+          )
+        );
+        message.success(
+          appI18n.t(
+            "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k015"
+          )
+        );
+      } else {
+        const created = await props.onCreateCategory({
+          label: normalizedLabel,
+          color: categoryColor,
+        });
+        setCategories((prev) =>
+          mapCategoriesWithDisplayColor([...(prev ?? []), created])
+        );
+        setLocalCategorySelection((prev) => ({ ...prev, [created.id]: true }));
+        message.success(
+          appI18n.t(
+            "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k016"
+          )
+        );
+      }
+
+      resetCategoryForm();
+    } catch {
+      message.error(
+        appI18n.t(
+          "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k017"
+        )
+      );
+    } finally {
+      setSavingCategory(false);
+    }
+  }, [
+    canManageCategories,
+    categoryColor,
+    categoryLabel,
+    editingCategoryId,
+    props,
+    resetCategoryForm,
+  ]);
+
+  const handleDeleteCategory = useCallback(
+    async (id: string) => {
+      if (!canManageCategories || !props.onDeleteCategory) return;
+      setSavingCategory(true);
+      try {
+        const ok = await props.onDeleteCategory(id);
+        if (!ok) {
+          throw new Error("delete_failed");
+        }
+        setCategories((prev) => prev.filter((category) => category.id !== id));
+        setLocalCategorySelection((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+        if (editingCategoryId === id) {
+          resetCategoryForm();
+        }
+        message.success(
+          appI18n.t(
+            "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k018"
+          )
+        );
+      } catch {
+        message.error(
+          appI18n.t(
+            "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k019"
+          )
+        );
+      } finally {
+        setSavingCategory(false);
+      }
+    },
+    [canManageCategories, editingCategoryId, props, resetCategoryForm]
+  );
 
   const handleCreate = async (payload: ScheduleEventDraft) => {
     if (props.onCreate) {
@@ -196,9 +382,9 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
     const start = selectedDate.startOf("month").format("YYYY-MM-DD");
     const end = selectedDate.endOf("month").format("YYYY-MM-DD");
-    const ev = await api.getEvents({ from: start, to: end });
+    const loadedEvents = await api.getEvents({ from: start, to: end });
 
-    setEvents(ev);
+    setEvents(loadedEvents);
     setIsCreateOpen(false);
   };
 
@@ -206,74 +392,112 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     <div>
       <SidebarHeaderRow>
         <SidebarTitle>
-          <div className="title">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k001")}</div>
-          <div className="subtitle">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k002")}</div>
+          <div className="title">
+            {appI18n.t(
+              "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k001"
+            )}
+          </div>
+          <div className="subtitle">
+            {appI18n.t(
+              "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k002"
+            )}
+          </div>
         </SidebarTitle>
 
         <Button
+          size="small"
           type="primary"
-          icon={<Plus size={16} />}
+          icon={<Plus size={14} />}
           onClick={() => setIsCreateOpen(true)}
         >
-          {appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k003")}
+          {appI18n.t(
+            "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k003"
+          )}
         </Button>
       </SidebarHeaderRow>
 
-      <div style={{ height: 14 }} />
+      <div style={{ height: 8 }} />
 
       <Block>
         <BlockHeader>
-          <div className="label"><Tag size={14} style={{ marginRight: 8 }} />{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k004")}</div>
-          <Button size="small">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k005")}</Button>
+          <div className="label">
+            <Tag size={14} style={{ marginRight: 8 }} />
+            {appI18n.t(
+              "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k004"
+            )}
+          </div>
+          <Button
+            size="small"
+            disabled={!canManageCategories}
+            onClick={openCategoryModal}
+          >
+            {appI18n.t(
+              "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k005"
+            )}
+          </Button>
         </BlockHeader>
 
-        <List>
-          {categories.map((c) => (
-            <CategoryRow key={c.id} $color={c.color ?? "var(--color-surface)"}>
-              <div className="left">
-                <Checkbox
-                  checked={
-                    props.selectedCategoryIds?.[c.id] ??
-                    localCategorySelection[c.id] ??
-                    true
-                  }
-                  onChange={(e) => onToggleCategory(c.id, e.target.checked)}
-                />
-                <span className="dot" />
-                <span className="name">{c.label}</span>
-              </div>
-              <span className="count">{countsByCategory[c.id] ?? 0}</span>
-            </CategoryRow>
-          ))}
-        </List>
+        <CategoryListScroll>
+          <List>
+            {categories.map((category) => (
+              <CategoryRow
+                key={category.id}
+                $color={category.color ?? "var(--color-surface)"}
+              >
+                <div className="left">
+                  <Checkbox
+                    checked={
+                      props.selectedCategoryIds?.[category.id] ??
+                      localCategorySelection[category.id] ??
+                      true
+                    }
+                    onChange={(event) =>
+                      onToggleCategory(category.id, event.target.checked)
+                    }
+                  />
+                  <span className="dot" />
+                  <span className="name">{category.label}</span>
+                </div>
+                <span className="count">{countsByCategory[category.id] ?? 0}</span>
+              </CategoryRow>
+            ))}
+          </List>
+        </CategoryListScroll>
       </Block>
 
-      <div style={{ height: 10 }} />
+      <div style={{ height: 6 }} />
 
       <Block>
         <BlockHeader>
-          <div className="label"><CheckSquare size={14} style={{ marginRight: 8 }} />{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k006")}</div>
+          <div className="label">
+            <CheckSquare size={14} style={{ marginRight: 8 }} />
+            {appI18n.t(
+              "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k006"
+            )}
+          </div>
         </BlockHeader>
 
         <List>
-          {(props.statuses ?? []).map((s, idx) => (
+          {(props.statuses ?? []).map((status, idx) => (
             <CategoryRow
-              key={s.id}
-              $color={getStatusColor(s.code) ?? colorFromId(s.id, idx)}
+              key={status.id}
+              $color={getStatusColor(status.code) ?? colorFromId(status.id, idx)}
             >
               <div className="left">
                 <Checkbox
                   checked={
-                    props.selectedStatusIds?.[s.id] ??
-                    localStatusSelection[s.id] ??
+                    props.selectedStatusIds?.[status.id] ??
+                    localStatusSelection[status.id] ??
                     true
                   }
-                  onChange={(e) => onToggleStatus(s.id, e.target.checked)}
+                  onChange={(event) =>
+                    onToggleStatus(status.id, event.target.checked)
+                  }
                 />
                 <span className="dot" />
-                <span className="name">{s.label}</span>
+                <span className="name">{status.label}</span>
               </div>
-              <span className="count">{props.statusCounts?.[s.id] ?? 0}</span>
+              <span className="count">{props.statusCounts?.[status.id] ?? 0}</span>
             </CategoryRow>
           ))}
         </List>
@@ -282,19 +506,33 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
       {nextSchedules && nextSchedules.length > 0 ? (
         <NextBlock>
           <BlockHeader>
-            <div className="label">{appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k007")}</div>
+            <div className="label">
+              {appI18n.t(
+                "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k007"
+              )}
+            </div>
           </BlockHeader>
           <List>
-            {nextSchedules.map((n) => (
-              <NextCard key={n.id}>
-                <div className="time">{dayjs(n.start).format("HH:mm")}</div>
-                <div className="title">{n.title ?? appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k008")}</div>
+            {nextSchedules.map((nextEvent) => (
+              <NextCard key={nextEvent.id}>
+                <div className="time">{dayjs(nextEvent.start).format("HH:mm")}</div>
+                <div className="title">
+                  {nextEvent.title ??
+                    appI18n.t(
+                      "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k008"
+                    )}
+                </div>
                 <div className="meta">
-                  {n.startsIn ?? `${n.startsInMinutes} ${appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k009")}`}
+                  {nextEvent.startsIn ??
+                    `${nextEvent.startsInMinutes} ${appI18n.t(
+                      "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k009"
+                    )}`}
                 </div>
                 {props.settings?.reminderEnabled ? (
                   <div className="meta">
-                    {`${appI18n.t("legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k010")}: ${dayjs(n.start)
+                    {`${appI18n.t(
+                      "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k010"
+                    )}: ${dayjs(nextEvent.start)
                       .subtract(props.settings.reminderLeadMinutes, "minute")
                       .format("HH:mm")}`}
                   </div>
@@ -308,10 +546,10 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
       <ScheduleEventModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        categories={categories.map((c) => ({
-          id: c.id,
-          label: c.label,
-          color: c.color ?? "var(--color-surface)",
+        categories={categories.map((category) => ({
+          id: category.id,
+          label: category.label,
+          color: category.color ?? "var(--color-surface)",
         }))}
         initialDate={selectedDate.format("YYYY-MM-DD")}
         onConfirm={handleCreate}
@@ -320,6 +558,120 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
         statuses={props.statuses ?? undefined}
         settings={props.settings}
       />
+
+      <Modal
+        title={appI18n.t(
+          "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k011"
+        )}
+        open={isCategoryModalOpen}
+        onCancel={closeCategoryModal}
+        footer={null}
+        destroyOnHidden
+      >
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          data-cy="schedule-categories-modal"
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
+            <Input
+              value={categoryLabel}
+              maxLength={60}
+              onChange={(event) => setCategoryLabel(event.target.value)}
+              placeholder={appI18n.t(
+                "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k012"
+              )}
+            />
+            <input
+              type="color"
+              value={categoryColor}
+              onChange={(event) => setCategoryColor(event.target.value)}
+              aria-label={appI18n.t(
+                "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k020"
+              )}
+              style={{
+                width: 40,
+                height: 32,
+                border: "1px solid var(--color-border)",
+                borderRadius: 8,
+                padding: 0,
+                background: "transparent",
+              }}
+            />
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            {editingCategoryId ? (
+              <Button size="small" onClick={resetCategoryForm}>
+                {appI18n.t(
+                  "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k021"
+                )}
+              </Button>
+            ) : null}
+            <Button
+              size="small"
+              type="primary"
+              loading={savingCategory}
+              onClick={() => void handleSaveCategory()}
+            >
+              {editingCategoryId
+                ? appI18n.t(
+                    "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k022"
+                  )
+                : appI18n.t(
+                    "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k023"
+                  )}
+            </Button>
+          </div>
+
+          <List>
+            {categories.length <= 0 ? (
+              <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
+                {appI18n.t(
+                  "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k024"
+                )}
+              </div>
+            ) : null}
+
+            {categories.map((category) => (
+              <CategoryRow
+                key={`modal-${category.id}`}
+                $color={category.color ?? "var(--color-surface)"}
+              >
+                <div className="left">
+                  <span className="dot" />
+                  <span className="name">{category.label}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <Button
+                    size="small"
+                    type={editingCategoryId === category.id ? "primary" : "default"}
+                    icon={<Pencil size={12} />}
+                    onClick={() => {
+                      setEditingCategoryId(category.id);
+                      setCategoryLabel(category.label);
+                      setCategoryColor(toColorInputValue(category.color));
+                    }}
+                  />
+                  <Button
+                    size="small"
+                    danger
+                    icon={<Trash2 size={12} />}
+                    loading={savingCategory}
+                    onClick={() => void handleDeleteCategory(category.id)}
+                  />
+                </div>
+              </CategoryRow>
+            ))}
+          </List>
+        </div>
+      </Modal>
     </div>
   );
 }

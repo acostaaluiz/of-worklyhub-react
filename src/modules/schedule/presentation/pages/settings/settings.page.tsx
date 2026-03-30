@@ -20,11 +20,11 @@ import {
   Users,
 } from "lucide-react";
 
-import { applicationService } from "@core/application/application.service";
 import { i18n as appI18n } from "@core/i18n";
 import { formatAppDateTime } from "@core/utils/date-time";
 import { companyService } from "@modules/company/services/company.service";
 import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
+import { getScheduleCategoriesForWorkspace } from "@modules/schedule/services/schedule.service";
 import {
   DEFAULT_SCHEDULE_SETTINGS,
   getScheduleSettings,
@@ -173,8 +173,14 @@ function ScheduleSettingsPageContent(): React.ReactElement {
   React.useEffect(() => {
     let mounted = true;
     (async () => {
+      if (!workspaceId) {
+        if (!mounted) return;
+        setCategories([]);
+        return;
+      }
+
       try {
-        const raw = await applicationService.fetchEventCategories();
+        const raw = await getScheduleCategoriesForWorkspace(workspaceId);
         if (!mounted) return;
         const next = (raw ?? [])
           .map((category) => ({
@@ -192,7 +198,7 @@ function ScheduleSettingsPageContent(): React.ReactElement {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [workspaceId]);
 
   const applySettings = React.useCallback(
     (

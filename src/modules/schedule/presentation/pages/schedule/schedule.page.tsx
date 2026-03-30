@@ -8,6 +8,7 @@ import {
   useScheduleApi,
   getNextSchedulesForWorkspace,
   getStatuses,
+  getScheduleCategoriesForWorkspace,
 } from "@modules/schedule/services/schedule.service";
 import { ScheduleTemplate } from "../../templates/schedule/schedule.template";
 import { companyWorkspaceService } from "@modules/company/services/company-workspace.service";
@@ -42,9 +43,6 @@ const employeesPromise = peopleService.listEmployees();
 const statusesPromise = getStatuses().catch(() => []);
 const inventoryPromisesByWs = new Map<string, Promise<InventoryItem[]>>();
 const nextByWs = new Map<string, Promise<NextScheduleItem[]>>();
-const categoriesPromise = import("@core/application/application.service")
-  .then((m) => m.applicationService.fetchEventCategories())
-  .catch(() => null);
 const initialEventsByWorkspace = new Map<string, ScheduleEvent[]>();
 const initialFetchByWorkspace = new Set<string>();
 
@@ -138,10 +136,17 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       const [selectedStatusIds, setSelectedStatusIds] = React.useState<
         Record<string, boolean>
       >({});
+      const [localCategories, setLocalCategories] = React.useState<ScheduleCategory[]>(
+        categories ?? []
+      );
+
+      React.useEffect(() => {
+        setLocalCategories(categories ?? []);
+      }, [categories]);
 
       const categoryCounts = (() => {
         const out: Record<string, number> = {};
-        const cats = (categories ?? []) as { id: string; code?: string }[];
+        const cats = (localCategories ?? []) as { id: string; code?: string }[];
         for (const c of cats) out[c.id] = 0;
 
         for (const e of events) {
@@ -203,16 +208,22 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
 
       // ensure we have an initial selection map (all selected) when categories load
       React.useEffect(() => {
-        if (!categories || (categories && categories.length === 0)) return;
+        if (!localCategories || localCategories.length === 0) return;
         setSelectedCategoryIds((prev) => {
-          // if already initialized with same keys, keep existing
-          const keys = Object.keys(prev);
-          if (keys.length === (categories ?? []).length) return prev;
+          const nextIds = new Set((localCategories ?? []).map((category) => category.id));
+          const prevIds = Object.keys(prev);
+          const hasSameKeys =
+            prevIds.length === nextIds.size &&
+            prevIds.every((id) => nextIds.has(id));
+          if (hasSameKeys) return prev;
+
           const map: Record<string, boolean> = {};
-          for (const c of categories ?? []) map[c.id] = true;
+          for (const c of localCategories ?? []) {
+            map[c.id] = prev[c.id] ?? true;
+          }
           return map;
         });
-      }, [categories?.length]);
+      }, [localCategories]);
 
       // ensure we have an initial selection map (all selected) when statuses load
       React.useEffect(() => {
@@ -305,15 +316,15 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
               try {
                 const evCat = event?.category;
                 let appCatId: string | undefined;
-                if (categories && categories.length > 0) {
+                if (localCategories && localCategories.length > 0) {
                   if (evCat && evCat.code) {
-                    const foundByCode = (categories ?? []).find(
+                    const foundByCode = (localCategories ?? []).find(
                       (c) => c.code === evCat.code
                     );
                     if (foundByCode) appCatId = foundByCode.id;
                   }
                   if (!appCatId && event?.categoryId) {
-                    const foundById = (categories ?? []).find(
+                    const foundById = (localCategories ?? []).find(
                       (c) => c.id === event.categoryId
                     );
                     if (foundById) appCatId = foundById.id;
@@ -336,7 +347,7 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
             return [];
           }
         },
-        [api]
+        [api, localCategories, workspaceId]
       );
 
       // prevent double initial fetch when StrictMode remounts
@@ -397,9 +408,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           categoryId: draft.categoryId,
           // derive categoryCode from application categories when available
           categoryCode:
-            (categories ?? []).find((c) => c.id === draft.categoryId)
+            (localCategories ?? []).find((c) => c.id === draft.categoryId)
               ?.code ??
-            (categories ?? []).find((c) => c.id === draft.categoryId)?.id,
+            (localCategories ?? []).find((c) => c.id === draft.categoryId)?.id,
           description: draft.description,
           durationMinutes: draft.durationMinutes ?? null,
         };
@@ -473,8 +484,72 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         }
       };
 
-      const categoriesReady = Array.isArray(categories) && categories.length > 0;
-      const showSkeleton = initialLoading || !categoriesReady;
+      const showSkeleton = initialLoading;
+
+      const handleCreateCategory = async (input: {
+        label: string;
+        color?: string | null;
+      }): Promise<ScheduleCategory> => {
+        if (!workspaceId) {
+          throw new Error("workspaceId is required");
+        }
+        const created = await api.createCategory({
+          workspaceId,
+          label: input.label,
+          color: input.color ?? null,
+        });
+        setLocalCategories((prev) =>
+          mapCategoriesWithColor([...(prev ?? []), created])
+        );
+        setSelectedCategoryIds((prev) => ({ ...prev, [created.id]: true }));
+        return created;
+      };
+
+      const handleUpdateCategory = async (input: {
+        id: string;
+        label: string;
+        color?: string | null;
+      }): Promise<ScheduleCategory> => {
+        if (!workspaceId) {
+          throw new Error("workspaceId is required");
+        }
+        const updated = await api.updateCategory({
+          id: input.id,
+          workspaceId,
+          label: input.label,
+          color: input.color ?? null,
+        });
+        setLocalCategories((prev) =>
+          mapCategoriesWithColor(
+            (prev ?? []).map((item) => (item.id === updated.id ? updated : item))
+          )
+        );
+        return updated;
+      };
+
+      const handleDeleteCategory = async (id: string): Promise<boolean> => {
+        if (!workspaceId) return false;
+        const ok = await api.deleteCategory(id, workspaceId);
+        if (!ok) return false;
+
+        setLocalCategories((prev) => (prev ?? []).filter((item) => item.id !== id));
+        setSelectedCategoryIds((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+
+        const from = dayjs().startOf("month").format("YYYY-MM-DD");
+        const to = dayjs().endOf("month").format("YYYY-MM-DD");
+        const refreshed = await fetchRange(from, to, {
+          viewMode: "month",
+          includeViewHint: true,
+        });
+        if (Array.isArray(refreshed)) {
+          initialEventsByWorkspace.set(initialFetchKey, refreshed);
+        }
+        return true;
+      };
 
       return showSkeleton ? (
         <PageSkeleton mainRows={2} sideRows={2} height="100%" />
@@ -489,10 +564,13 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
           events={filteredEvents}
           onRangeChange={fetchRange}
           monthViewHint={monthViewHint}
-          categories={categories ?? null}
+          categories={localCategories ?? null}
           categoryCounts={categoryCounts}
           selectedCategoryIds={selectedCategoryIds}
           onToggleCategory={onToggleCategory}
+          onCreateCategory={handleCreateCategory}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
           nextSchedules={nextSchedules ?? null}
           statuses={
             statuses
@@ -545,72 +623,38 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         } catch (err) {
           inventoryItems = [];
         }
-        // also fetch shared application event categories and expose to template via window fallback
+        const catsRaw = await getScheduleCategoriesForWorkspace(workspaceId ?? null);
+        const cats = mapCategoriesWithColor(catsRaw ?? []);
+
         try {
-          const appCatsRaw = await categoriesPromise;
-          const appCats = appCatsRaw
-            ? mapCategoriesWithColor(appCatsRaw)
-            : null;
-          // also fetch statuses for schedule updates
-          try {
-            const sts = await statusesPromise;
-            this.setSafeState({
-              services,
-              employees,
-              inventoryItems,
-              settings: settingsBundle.settings,
-              categories: appCats ?? null,
-              statuses: sts ?? null,
-            });
-          } catch (e) {
-            this.setSafeState({
-              services,
-              employees,
-              inventoryItems,
-              settings: settingsBundle.settings,
-              categories: appCats ?? null,
-            });
-          }
-          try {
-            const nextPromise =
-              nextByWs.get(workspaceId ?? "") ??
-              getNextSchedulesForWorkspace(workspaceId ?? null, 3).catch(() => []);
-            nextByWs.set(workspaceId ?? "", nextPromise);
-            const next = await nextPromise;
-            this.setSafeState({ nextSchedules: next ?? null });
-          } catch (e) {
-            // failed to fetch next schedules
-          }
+          const sts = await statusesPromise;
+          this.setSafeState({
+            services,
+            employees,
+            inventoryItems,
+            settings: settingsBundle.settings,
+            categories: cats ?? null,
+            statuses: sts ?? null,
+          });
+        } catch (err) {
+          this.setSafeState({
+            services,
+            employees,
+            inventoryItems,
+            settings: settingsBundle.settings,
+            categories: cats ?? null,
+          });
+        }
+
+        try {
+          const nextPromise =
+            nextByWs.get(workspaceId ?? "") ??
+            getNextSchedulesForWorkspace(workspaceId ?? null, 3).catch(() => []);
+          nextByWs.set(workspaceId ?? "", nextPromise);
+          const next = await nextPromise;
+          this.setSafeState({ nextSchedules: next ?? null });
         } catch (e) {
-          // appCats import failed
-          // attempt to fetch statuses even when appCats import fails
-          try {
-            const sts = await statusesPromise;
-            this.setSafeState({
-              services,
-              employees,
-              inventoryItems,
-              settings: settingsBundle.settings,
-              statuses: sts ?? null,
-            });
-          } catch (err) {
-            this.setSafeState({
-              services,
-              employees,
-              inventoryItems,
-              settings: settingsBundle.settings,
-            });
-          }
-          try {
-            const nextPromise =
-              nextByWs.get(workspaceId ?? "") ??
-              getNextSchedulesForWorkspace(workspaceId ?? null, 3).catch(() => []);
-            nextByWs.set(workspaceId ?? "", nextPromise);
-            const next = await nextPromise;
-            this.setSafeState({ nextSchedules: next ?? null });
-          } catch (e) {
-            // failed to fetch next schedules
-          }
+          // failed to fetch next schedules
         }
       } catch (err) {
         // init error

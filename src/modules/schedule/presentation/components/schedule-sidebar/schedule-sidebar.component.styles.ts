@@ -14,49 +14,56 @@ export const SidebarHeaderRow = styled.div`
 export const SidebarTitle = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 
   .title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-base);
     font-weight: 700;
     line-height: var(--line-height-tight);
   }
 
   .subtitle {
     color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
   }
 `;
 
 export const Block = styled.section`
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 `;
 
 export const BlockHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
 
   .label {
     font-weight: 700;
+    font-size: var(--font-size-sm);
   }
 `;
 
 export const List = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 6px;
+`;
+
+export const CategoryListScroll = styled.div`
+  max-height: 172px;
+  overflow-y: auto;
+  padding-right: 4px;
 `;
 
 export const CategoryRow = styled.div<{ $color: string }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2);
+  padding: 6px 10px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-glass-surface);
@@ -64,21 +71,21 @@ export const CategoryRow = styled.div<{ $color: string }>`
   .left {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
+    gap: 6px;
     min-width: 0;
   }
 
   .dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 999px;
     background: ${(p) => p.$color};
     /* subtle halo like before */
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.04);
   }
 
   .name {
-    font-size: var(--font-size-sm);
+    font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -119,26 +126,26 @@ export const MiniCalendarWrap = styled.div`
 export const NextBlock = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
+  gap: 6px;
+  margin-top: var(--space-2);
 `;
 
 export const NextCard = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: var(--space-2);
+  gap: 2px;
+  padding: 6px 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
   background: var(--color-glass-surface);
 
   .time {
     font-weight: 700;
-    font-size: var(--font-size-sm);
+    font-size: 13px;
   }
 
   .title {
-    font-size: var(--font-size-sm);
+    font-size: 13px;
     color: var(--color-text);
     white-space: nowrap;
     overflow: hidden;

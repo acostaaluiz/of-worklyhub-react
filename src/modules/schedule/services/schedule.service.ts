@@ -295,12 +295,60 @@ export async function getStatuses(): Promise<ScheduleStatus[]> {
   }
 }
 
+export async function getScheduleCategoriesForWorkspace(
+  workspaceId?: string | null
+): Promise<ScheduleCategory[]> {
+  if (!workspaceId) return categoriesSeed.slice();
+  try {
+    const rows = await schedulesApi.listCategories(workspaceId);
+    return rows ?? [];
+  } catch (err) {
+    // schedulesApi.listCategories failed
+    return categoriesSeed.slice();
+  }
+}
+
 // React hook-based API that integrates with MockStoreProvider
 export function useScheduleApi() {
   const store = useMockStore();
 
-  const getCategories = useCallback(async (): Promise<ScheduleCategory[]> => {
-    return categoriesSeed.slice();
+  const getCategories = useCallback(async (workspaceId?: string | null): Promise<ScheduleCategory[]> => {
+    return getScheduleCategoriesForWorkspace(workspaceId);
+  }, []);
+
+  const createCategory = useCallback(async (args: {
+    workspaceId: string;
+    label: string;
+    color?: string | null;
+  }): Promise<ScheduleCategory> => {
+    return schedulesApi.createCategory({
+      workspaceId: args.workspaceId,
+      label: args.label,
+      color: args.color ?? null,
+    });
+  }, []);
+
+  const updateCategory = useCallback(async (args: {
+    id: string;
+    workspaceId: string;
+    label?: string;
+    color?: string | null;
+  }): Promise<ScheduleCategory> => {
+    return schedulesApi.updateCategory(args.id, {
+      workspaceId: args.workspaceId,
+      label: args.label,
+      color: args.color,
+    });
+  }, []);
+
+  const deleteCategory = useCallback(async (id: string, workspaceId: string): Promise<boolean> => {
+    try {
+      await schedulesApi.deleteCategory(id, workspaceId);
+      return true;
+    } catch (err) {
+      // schedulesApi.deleteCategory failed
+      return false;
+    }
   }, []);
 
   const mapBackendEvents = useCallback(
@@ -732,6 +780,9 @@ export function useScheduleApi() {
       updateEvent,
       getNextSchedules: getNextSchedulesForWorkspace,
       getStatuses,
+      createCategory,
+      updateCategory,
+      deleteCategory,
     }),
     [
       getCategories,
@@ -741,6 +792,9 @@ export function useScheduleApi() {
       createSchedule,
       removeEvent,
       updateEvent,
+      createCategory,
+      updateCategory,
+      deleteCategory,
     ]
   );
 }

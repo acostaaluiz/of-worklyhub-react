@@ -1879,7 +1879,21 @@
         "k007": "Proximos eventos",
         "k008": "Sem titulo",
         "k009": "minutos",
-        "k010": "Lembrete"
+        "k010": "Lembrete",
+        "k011": "Gerenciar categorias",
+        "k012": "Nome da categoria",
+        "k013": "Informe o nome da categoria.",
+        "k014": "O nome deve ter no maximo 60 caracteres.",
+        "k015": "Categoria atualizada.",
+        "k016": "Categoria criada.",
+        "k017": "Falha ao salvar categoria.",
+        "k018": "Categoria removida.",
+        "k019": "Falha ao remover categoria.",
+        "k020": "Cor da categoria",
+        "k021": "Cancelar edicao",
+        "k022": "Salvar alteracoes",
+        "k023": "Adicionar categoria",
+        "k024": "Nenhuma categoria cadastrada."
       },
       "presentation_pages_settings_settings_page": {
         "k001": "Falha ao carregar configuracoes de agenda.",

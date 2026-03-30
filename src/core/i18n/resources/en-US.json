@@ -1879,7 +1879,21 @@
         "k007": "Next events",
         "k008": "Untitled",
         "k009": "minutes",
-        "k010": "Reminder"
+        "k010": "Reminder",
+        "k011": "Manage categories",
+        "k012": "Category label",
+        "k013": "Type a category label.",
+        "k014": "Label must have at most 60 characters.",
+        "k015": "Category updated.",
+        "k016": "Category created.",
+        "k017": "Failed to save category.",
+        "k018": "Category removed.",
+        "k019": "Failed to remove category.",
+        "k020": "Category color",
+        "k021": "Cancel edit",
+        "k022": "Save changes",
+        "k023": "Add category",
+        "k024": "No categories created yet."
       },
       "presentation_pages_settings_settings_page": {
         "k001": "Failed to load schedule settings.",

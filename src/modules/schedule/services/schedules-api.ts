@@ -2,6 +2,7 @@ import { BaseHttpService } from "@core/http/base-http.service";
 import type { HttpClient } from "@core/http/interfaces/http-client.interface";
 import type { HttpQuery } from "@core/http/interfaces/http-client.interface";
 import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
+import type { ScheduleCategory } from "@modules/schedule/interfaces/schedule-category.model";
 
 export type CreateSchedulePayload = {
   start: string; // ISO
@@ -70,6 +71,17 @@ export type ScheduleListResponseWithMeta = {
 
 export type ScheduleStatus = { id: string; code: string; label: string };
 export type ScheduleStatusesResponse = { data: ScheduleStatus[] };
+export type ScheduleCategoriesResponse = { data: ScheduleCategory[] };
+export type CreateScheduleCategoryPayload = {
+  workspaceId: string;
+  label: string;
+  color?: string | null;
+};
+export type UpdateScheduleCategoryPayload = {
+  workspaceId: string;
+  label?: string;
+  color?: string | null;
+};
 
 export type NextScheduleItem = ScheduleServiceItem & {
   startsInMinutes: number;
@@ -170,6 +182,44 @@ export class SchedulesApi extends BaseHttpService {
   async getStatuses(): Promise<ScheduleStatus[]> {
     const res = await this.get<ScheduleStatusesResponse>('/schedule/internal/statuses');
     return res?.data ?? [];
+  }
+
+  async listCategories(workspaceId: string): Promise<ScheduleCategory[]> {
+    const res = await this.get<ScheduleCategoriesResponse>(
+      "/schedule/internal/categories",
+      { workspaceId },
+      { "x-workspace-id": workspaceId }
+    );
+    return res?.data ?? [];
+  }
+
+  async createCategory(
+    payload: CreateScheduleCategoryPayload
+  ): Promise<ScheduleCategory> {
+    const res = await this.post<{ data: ScheduleCategory }, CreateScheduleCategoryPayload>(
+      "/schedule/internal/categories",
+      payload,
+      { "x-workspace-id": payload.workspaceId }
+    );
+    return res.data;
+  }
+
+  async updateCategory(
+    id: string,
+    payload: UpdateScheduleCategoryPayload
+  ): Promise<ScheduleCategory> {
+    const res = await this.patch<{ data: ScheduleCategory }, UpdateScheduleCategoryPayload>(
+      `/schedule/internal/categories/${id}`,
+      payload,
+      { "x-workspace-id": payload.workspaceId }
+    );
+    return res.data;
+  }
+
+  async deleteCategory(id: string, workspaceId: string): Promise<void> {
+    await this.delete<void>(`/schedule/internal/categories/${id}`, {
+      workspaceId,
+    }, { "x-workspace-id": workspaceId });
   }
 
   async getWorkspaceSettings(

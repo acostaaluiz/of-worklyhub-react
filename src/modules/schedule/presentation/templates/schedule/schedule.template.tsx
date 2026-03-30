@@ -48,6 +48,16 @@ type ScheduleTemplateProps = {
   categoryCounts?: Record<string, number> | null;
   selectedCategoryIds?: Record<string, boolean> | null;
   onToggleCategory?: (id: string, checked: boolean) => void;
+  onCreateCategory?: (input: {
+    label: string;
+    color?: string | null;
+  }) => Promise<ScheduleCategory>;
+  onUpdateCategory?: (input: {
+    id: string;
+    label: string;
+    color?: string | null;
+  }) => Promise<ScheduleCategory>;
+  onDeleteCategory?: (id: string) => Promise<boolean>;
   nextSchedules?: NextScheduleItem[] | null;
   statuses?: ScheduleStatus[] | null;
   statusCounts?: Record<string, number> | null;
@@ -107,6 +117,9 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   categoryCounts={props.categoryCounts}
                   selectedCategoryIds={props.selectedCategoryIds}
                   onToggleCategory={props.onToggleCategory}
+                  onCreateCategory={props.onCreateCategory}
+                  onUpdateCategory={props.onUpdateCategory}
+                  onDeleteCategory={props.onDeleteCategory}
                   nextSchedules={props.nextSchedules}
                   statuses={props.statuses}
                   statusCounts={props.statusCounts}
