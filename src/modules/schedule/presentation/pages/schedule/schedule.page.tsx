@@ -87,6 +87,7 @@ type SchedulePageState = BasePageState & {
 type EventCategoryLike = {
   id?: string;
   code?: string;
+  label?: string;
 };
 
 type EventStatusLike = {
@@ -146,7 +147,11 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
 
       const categoryCounts = (() => {
         const out: Record<string, number> = {};
-        const cats = (localCategories ?? []) as { id: string; code?: string }[];
+        const cats = (localCategories ?? []) as {
+          id: string;
+          code?: string;
+          label: string;
+        }[];
         for (const c of cats) out[c.id] = 0;
 
         for (const e of events) {
@@ -162,12 +167,27 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
               const match = cats.find((c) => c.code === evCat.code);
               if (match) cid = match.id;
             }
+            if (!cid) {
+              const evCatLabel = (evCat as DataMap)["label"];
+              if (typeof evCatLabel === "string" && evCatLabel.trim()) {
+                const match = cats.find(
+                  (c) => c.label.trim().toLowerCase() === evCatLabel.trim().toLowerCase()
+                );
+                if (match) cid = match.id;
+              }
+            }
+          }
+
+          if (!cid && event.categoryCode) {
+            const match = cats.find((c) => c.code === event.categoryCode);
+            if (match) cid = match.id;
           }
 
           // fallback: if event provided a categoryId that matches app categories, use it
           if (!cid && event.categoryId) {
             const cidTry = event.categoryId;
-            if (cats.find((c) => c.id === cidTry)) cid = cidTry;
+            const match = cats.find((c) => c.id === cidTry || c.code === cidTry);
+            if (match) cid = match.id;
           }
 
           if (!cid) continue;
@@ -317,17 +337,40 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
                 const evCat = event?.category;
                 let appCatId: string | undefined;
                 if (localCategories && localCategories.length > 0) {
+                  if (evCat && evCat.id) {
+                    const foundById = (localCategories ?? []).find(
+                      (c) => c.id === evCat.id
+                    );
+                    if (foundById) appCatId = foundById.id;
+                  }
                   if (evCat && evCat.code) {
                     const foundByCode = (localCategories ?? []).find(
                       (c) => c.code === evCat.code
                     );
                     if (foundByCode) appCatId = foundByCode.id;
                   }
-                  if (!appCatId && event?.categoryId) {
-                    const foundById = (localCategories ?? []).find(
-                      (c) => c.id === event.categoryId
+                  if (!appCatId) {
+                    const evCatLabel = (evCat as DataMap | undefined)?.["label"];
+                    if (typeof evCatLabel === "string" && evCatLabel.trim()) {
+                      const foundByLabel = (localCategories ?? []).find(
+                        (c) =>
+                          c.label.trim().toLowerCase() ===
+                          evCatLabel.trim().toLowerCase()
+                      );
+                      if (foundByLabel) appCatId = foundByLabel.id;
+                    }
+                  }
+                  if (!appCatId && event?.categoryCode) {
+                    const foundByEventCode = (localCategories ?? []).find(
+                      (c) => c.code === event.categoryCode
                     );
-                    if (foundById) appCatId = foundById.id;
+                    if (foundByEventCode) appCatId = foundByEventCode.id;
+                  }
+                  if (!appCatId && event?.categoryId) {
+                    const foundByIdOrCode = (localCategories ?? []).find(
+                      (c) => c.id === event.categoryId || c.code === event.categoryId
+                    );
+                    if (foundByIdOrCode) appCatId = foundByIdOrCode.id;
                   }
                 }
                 return {

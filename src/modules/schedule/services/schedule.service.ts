@@ -181,6 +181,67 @@ const inMemoryDb = {
   events: [...eventsSeed],
 };
 
+function readStringRecordValue(
+  record: DataMap | null | undefined,
+  keys: string[]
+): string | undefined {
+  if (!record) return undefined;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
+function extractCategoryRecord(source: DataMap): DataMap | null {
+  const nestedRaw = source["category"];
+  const nested =
+    nestedRaw && typeof nestedRaw === "object" ? (nestedRaw as DataMap) : null;
+
+  const id =
+    readStringRecordValue(source, ["categoryId", "category_id"]) ??
+    readStringRecordValue(nested, ["id"]);
+  const code =
+    readStringRecordValue(source, ["categoryCode", "category_code"]) ??
+    readStringRecordValue(nested, ["code"]);
+  const label =
+    readStringRecordValue(source, ["categoryLabel", "category_label"]) ??
+    readStringRecordValue(nested, ["label", "name"]);
+  const color =
+    readStringRecordValue(source, ["categoryColor", "category_color"]) ??
+    readStringRecordValue(nested, ["color"]);
+
+  if (!nested && !id && !code && !label && !color) return null;
+
+  const merged: DataMap = { ...(nested ?? {}) };
+  if (id) merged["id"] = id;
+  if (code) merged["code"] = code;
+  if (label) merged["label"] = label;
+  if (color) merged["color"] = color;
+  return merged;
+}
+
+function extractCategoryId(source: DataMap, category: DataMap | null): string | undefined {
+  return (
+    readStringRecordValue(source, [
+      "categoryId",
+      "category_id",
+      "calendarId",
+      "calendar_id",
+    ]) ??
+    readStringRecordValue(category, ["id", "code"])
+  );
+}
+
+function extractCategoryCode(source: DataMap, category: DataMap | null): string | undefined {
+  return (
+    readStringRecordValue(source, ["categoryCode", "category_code"]) ??
+    readStringRecordValue(category, ["code"])
+  );
+}
+
 export class ScheduleService {
   async getCategories(): Promise<ScheduleCategory[]> {
     return inMemoryDb.categories;
@@ -199,6 +260,9 @@ export class ScheduleService {
         const mapped = (rows ?? []).map((r) => r as DataMap).map((s) => {
           const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
           const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
+          const category = extractCategoryRecord(s);
+          const categoryId = extractCategoryId(s, category);
+          const categoryCode = extractCategoryCode(s, category);
 
           const pad = (n: number) => n.toString().padStart(2, "0");
           let date = "";
@@ -220,13 +284,9 @@ export class ScheduleService {
             date,
             startTime,
             endTime,
-            categoryId:
-              (s["categoryId"] as string) ??
-              ((s["category"] as DataMap | undefined)?.["id"] as string | undefined) ??
-              (s["calendarId"] as string) ??
-              undefined,
-            category: (s["category"] as DataMap | null) ?? null,
-            categoryCode: ((s["category"] as DataMap | undefined)?.["code"] as string | undefined) ?? undefined,
+            categoryId,
+            category,
+            categoryCode,
             description: (s["description"] as string) ?? undefined,
             status: (s["status"] ?? null) as DataMap | null,
             workers: (s["workers"] ?? null) as Array<DataMap> | null,
@@ -356,6 +416,9 @@ export function useScheduleApi() {
       const mapped = rows.map((s) => {
         const startIso = String(s["start"] ?? s["starts_at"] ?? s["startAt"] ?? "");
         const endIso = String(s["end"] ?? s["ends_at"] ?? s["endAt"] ?? "");
+        const category = extractCategoryRecord(s);
+        const categoryId = extractCategoryId(s, category);
+        const categoryCode = extractCategoryCode(s, category);
 
         const pad = (n: number) => n.toString().padStart(2, "0");
         let date = "";
@@ -379,18 +442,9 @@ export function useScheduleApi() {
           date,
           startTime,
           endTime,
-          categoryId:
-            (s["categoryId"] as string) ??
-            ((s["category"] as DataMap | undefined)?.[
-              "id"
-            ] as string | undefined) ??
-            (s["calendarId"] as string) ??
-            undefined,
-          category: (s["category"] as DataMap | null) ?? null,
-          categoryCode:
-            ((s["category"] as DataMap | undefined)?.[
-              "code"
-            ] as string | undefined) ?? undefined,
+          categoryId,
+          category,
+          categoryCode,
           description: (s["description"] as string) ?? undefined,
           status: (s["status"] ?? null) as DataMap | null,
           workers: (s["workers"] ?? null) as Array<

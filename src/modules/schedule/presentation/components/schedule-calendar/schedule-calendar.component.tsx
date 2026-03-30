@@ -347,14 +347,20 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       const category = categories.find((c) => {
         const cid = String(c.id ?? "");
         const ccode = String(c.code ?? "");
+        const clabel = String(c.label ?? "").trim().toLowerCase();
         const eCatId = e.categoryId ? String(e.categoryId) : "";
+        const eCatCode = event.categoryCode ? String(event.categoryCode) : "";
         const eRawCatId = rawCat && rawCat.id ? String(rawCat.id) : "";
         const eRawCatCode = rawCat && rawCat.code ? String(rawCat.code) : "";
+        const eRawCatLabel =
+          rawCat && rawCat.label ? String(rawCat.label).trim().toLowerCase() : "";
         return (
           cid === eCatId ||
           cid === eRawCatId ||
           ccode === eCatId ||
-          ccode === eRawCatCode
+          ccode === eRawCatCode ||
+          ccode === eCatCode ||
+          (clabel.length > 0 && clabel === eRawCatLabel)
         );
       });
       const rawCategoryColor = category?.color ?? themePrimary ?? "#1e70ff";
