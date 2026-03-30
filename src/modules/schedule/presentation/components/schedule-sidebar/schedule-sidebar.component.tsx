@@ -8,11 +8,10 @@ import { i18n as appI18n } from "@core/i18n";
 import { useScheduleApi } from "../../../services/schedule.service";
 
 import {
-  categoryColorMap,
-  getCategoryColor,
   getStatusColorWithOverrides,
   normalizeStatusCode,
 } from "../../../constants/colors";
+import { normalizeCssColor } from "../schedule-calendar/schedule-calendar.factory";
 
 import {
   Block,
@@ -82,45 +81,13 @@ function mapCategoriesWithDisplayColor(
 ): ScheduleCategory[] {
   if (!input || input.length <= 0) return [];
 
-  const codeColorMap: Record<string, string> = categoryColorMap;
-  const palette = [
-    "#F59E0B",
-    "#06B6D4",
-    "#A78BFA",
-    "#10B981",
-    "#F97316",
-    "#EF4444",
-    "#0EA5E9",
-    "#7C3AED",
-  ];
-
-  const used = new Set<string>();
   return input.map((category, idx) => {
-    const code = category.code ?? "";
-
-    let chosen: string | undefined;
-    const explicit = category.color?.toString()?.trim();
-    if (explicit && !explicit.startsWith("var(")) chosen = explicit;
-
-    const mappedByCode = getCategoryColor(code) ?? codeColorMap[code];
-    if (!chosen && mappedByCode && !mappedByCode.startsWith("var(")) {
-      chosen = mappedByCode;
-    }
-
-    if (!chosen) {
-      chosen = palette[idx % palette.length];
-    }
-
-    if (used.has(chosen)) {
-      const available = palette.find((color) => !used.has(color));
-      chosen = available ?? colorFromId(category.id, idx);
-    }
-
-    used.add(chosen);
+    const normalized = normalizeCssColor(category.color);
+    const fallback = colorFromId(category.id, idx);
     return {
       ...category,
-      code,
-      color: chosen,
+      code: category.code ?? "",
+      color: normalized ?? fallback,
     };
   });
 }

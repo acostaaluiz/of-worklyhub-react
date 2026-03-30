@@ -50,25 +50,21 @@ const initialFetchByWorkspace = new Set<string>();
 function mapCategoriesWithColor(
   cats: Array<{ id: string; code?: string; label: string; color?: string | null }>
 ): Array<{ id: string; code?: string; label: string; color?: string }> {
-  const palette = [
-    "#06B6D4", // cyan
-    "#A78BFA", // purple
-    "#10B981", // green
-    "#F59E0B", // amber
-    "#F97316", // orange
-    "#EF4444", // red
-    "#0EA5E9", // blue
-    "#7C3AED", // indigo
-  ];
-  const used = new Set<string>();
+  const colorFromId = (id: string, idx: number): string => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash << 5) - hash + id.charCodeAt(i);
+      hash |= 0;
+    }
+    const hue = Math.abs(hash) % 360;
+    const sat = 64 + ((idx * 11) % 20);
+    const light = 48 + ((idx * 7) % 6);
+    return `hsl(${hue} ${sat}% ${light}%)`;
+  };
+
   return cats.map((c, idx) => {
     const incoming = normalizeCssColor(c.color ?? undefined);
-    let chosen = incoming ?? "";
-    if (!chosen) {
-      const pick = palette[idx % palette.length];
-      chosen = used.has(pick) ? palette.find((p) => !used.has(p)) ?? pick : pick;
-    }
-    used.add(chosen);
+    const chosen = incoming ?? colorFromId(c.id, idx);
     return { ...c, color: chosen };
   });
 }

@@ -23,9 +23,7 @@ import {
 } from "./schedule-calendar.component.styles";
 import {
   getStatusColorWithOverrides,
-  getCategoryColor,
   suitableBorderForContrast,
-  categoryColorMap,
 } from "../../../constants/colors";
 
 import { ScheduleEventModal } from "../schedule-event-modal/schedule-event-modal.component";
@@ -174,6 +172,25 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           .trim()
       : "";
 
+    const normalizeRaw = (value?: string | null): string => String(value ?? "").trim();
+    const normalizeKey = (value?: string | null): string =>
+      normalizeRaw(value).toLowerCase();
+
+    const categoriesById = new Map<string, ScheduleCategory>();
+    const categoriesByIdKey = new Map<string, ScheduleCategory>();
+    const categoriesByCode = new Map<string, ScheduleCategory>();
+    const categoriesByLabel = new Map<string, ScheduleCategory>();
+    categories.forEach((categoryItem) => {
+      const id = normalizeRaw(categoryItem.id);
+      const idKey = normalizeKey(categoryItem.id);
+      const code = normalizeKey(categoryItem.code);
+      const label = normalizeKey(categoryItem.label);
+      if (id) categoriesById.set(id, categoryItem);
+      if (idKey) categoriesByIdKey.set(idKey, categoryItem);
+      if (code) categoriesByCode.set(code, categoryItem);
+      if (label) categoriesByLabel.set(label, categoryItem);
+    });
+
     // use shared status/category colors and contrast helpers
 
     filteredEvents.forEach((e) => {
@@ -189,35 +206,35 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         return;
       }
 
-      // match category by stringified id to avoid mismatches (number vs string)
-      // also try matching by category object or by category code to cover responses
-      // that return codes instead of ids or embed the category object only.
       const rawCat: EventCategoryRef | null = event.category ?? null;
-      const category = categories.find((c) => {
-        const cid = String(c.id ?? "");
-        const ccode = String(c.code ?? "");
-        const clabel = String(c.label ?? "").trim().toLowerCase();
-        const eCatId = e.categoryId ? String(e.categoryId) : "";
-        const eCatCode = event.categoryCode ? String(event.categoryCode) : "";
-        const eRawCatId = rawCat && rawCat.id ? String(rawCat.id) : "";
-        const eRawCatCode = rawCat && rawCat.code ? String(rawCat.code) : "";
-        const eRawCatLabel =
-          rawCat && rawCat.label ? String(rawCat.label).trim().toLowerCase() : "";
-        return (
-          cid === eCatId ||
-          cid === eRawCatId ||
-          ccode === eCatId ||
-          ccode === eRawCatCode ||
-          ccode === eCatCode ||
-          (clabel.length > 0 && clabel === eRawCatLabel)
-        );
-      });
-      const categoryCodeCandidate =
-        rawCat?.code ?? event.categoryCode ?? event.categoryId ?? null;
+      const eventCategoryId = normalizeRaw(e.categoryId);
+      const eventCategoryIdKey = normalizeKey(e.categoryId);
+      const eventCategoryCode = normalizeKey(e.categoryCode);
+      const rawCategoryId = normalizeRaw(rawCat?.id);
+      const rawCategoryIdKey = normalizeKey(rawCat?.id);
+      const rawCategoryCode = normalizeKey(rawCat?.code);
+      const rawCategoryLabel = normalizeKey(rawCat?.label);
+      const eventCategoryLabel = normalizeKey((event as DataMap)["categoryLabel"] as string);
+
+      // Always resolve the category from the sidebar/category list source (workspace categories from backend)
+      // so card colors and sidebar colors are guaranteed to be consistent.
+      const resolvedCategory =
+        categoriesById.get(eventCategoryId) ??
+        categoriesByIdKey.get(eventCategoryIdKey) ??
+        categoriesById.get(rawCategoryId) ??
+        categoriesByIdKey.get(rawCategoryIdKey) ??
+        categoriesByCode.get(eventCategoryCode) ??
+        categoriesByCode.get(rawCategoryCode) ??
+        categoriesByCode.get(eventCategoryIdKey) ??
+        categoriesByLabel.get(rawCategoryLabel) ??
+        categoriesByLabel.get(eventCategoryLabel);
+
+      const resolvedCategoryId = resolvedCategory?.id
+        ? String(resolvedCategory.id)
+        : "";
       const rawCategoryColor =
-        category?.color ??
+        resolvedCategory?.color ??
         rawCat?.color ??
-        getCategoryColor(categoryCodeCandidate) ??
         themePrimary ??
         "#1e70ff";
       const categoryColor =
@@ -229,10 +246,8 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         ? (getStatusColorWithOverrides(
             statusCode,
             propSettings?.statusColorOverrides
-          ) ??
-          themePrimary ??
-          "#7c3aed")
-        : undefined;
+          ) ?? event?.status?.color)
+        : event?.status?.color;
       const statusColor =
         normalizeCssColor(statusColorRaw) ??
         normalizeCssColor(themePrimary) ??
@@ -287,8 +302,14 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
 
       out.push({
         id: e.id,
-        // ensure calendarId is a string so it matches tuiCalendars ids
-        calendarId: String(event.category?.id ?? e.categoryId),
+        calendarId: String(
+          resolvedCategoryId ||
+            eventCategoryId ||
+            rawCategoryId ||
+            rawCategoryCode ||
+            eventCategoryCode ||
+            "default"
+        ),
         title: e.title,
         category: "time",
         start,
@@ -315,7 +336,14 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           inventoryOutputsText,
           _bodyHtml: bodyHtml,
           status: event.status ?? null,
-          category: event.category ?? null,
+          category: resolvedCategory
+            ? {
+                id: String(resolvedCategory.id),
+                code: resolvedCategory.code ?? "",
+                label: resolvedCategory.label,
+                color: resolvedCategory.color ?? undefined,
+              }
+            : event.category ?? null,
           statusColor,
           categoryColor,
         },
@@ -722,39 +750,24 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         const cats = await api.getCategories();
         setCategories(cats);
       } else {
-        // normalize incoming categories to ensure each has a usable, unique color
-        // prefer shared category map so calendar and sidebar share the same palette
-        const codeColorMap: Record<string, string> = categoryColorMap;
-        const palette = [
-          "#F59E0B",
-          "#06B6D4",
-          "#A78BFA",
-          "#10B981",
-          "#F97316",
-          "#EF4444",
-          "#0EA5E9",
-          "#7C3AED",
-        ];
-
-        const used = new Set<string>();
-        const mapped = (props.categories ?? []).map((c, idx) => {
-          const code = c.code ?? "";
-          let chosen =
-            c.color ??
-            getCategoryColor(code) ??
-            codeColorMap[code] ??
-            palette[idx % palette.length];
-          chosen = normalizeCssColor(chosen) ?? palette[idx % palette.length];
-          // if exact color already used, pick first unused palette entry
-          if (used.has(chosen)) {
-            const found = palette.find((p) => !used.has(p));
-            chosen = found ? normalizeCssColor(found) ?? found : palette[idx % palette.length];
+        const colorFromId = (id: string, idx: number): string => {
+          let hash = 0;
+          for (let i = 0; i < id.length; i++) {
+            hash = (hash << 5) - hash + id.charCodeAt(i);
+            hash |= 0;
           }
-          used.add(chosen);
+          const hue = Math.abs(hash) % 360;
+          const sat = 64 + ((idx * 11) % 20);
+          const light = 48 + ((idx * 7) % 6);
+          return `hsl(${hue} ${sat}% ${light}%)`;
+        };
+
+        const mapped = (props.categories ?? []).map((c, idx) => {
+          const chosen =
+            normalizeCssColor(c.color) ?? colorFromId(String(c.id ?? ""), idx);
           return { ...c, color: chosen } as ScheduleCategory;
         });
 
-        // use mapped colors (prefer explicit category color or codeColorMap)
         setCategories(mapped);
         try {
           void 0;

@@ -1,20 +1,3 @@
-// Shared color maps and helpers for schedule module
-export const categoryColorMap: Record<string, string> = {
-  work: "#047857",
-  personal: "#0369A1",
-  schedule: "#6D28D9",
-  gaming: "#B45309",
-};
-
-export const statusColorMap: Record<string, string> = {
-  cancelled: "#DC2626", // red
-  completed: "#6B7280", // neutral gray for completed
-  confirmed: "#06B6D4", // cyan
-  in_progress: "#10B981", // green
-  no_show: "#EA580C", // orange
-  pending: "#F59E0B", // amber
-};
-
 export function normalizeStatusCode(code?: string | null): string | undefined {
   if (!code) return undefined;
   // handle camelCase -> snake_case and normalize separators
@@ -23,12 +6,6 @@ export function normalizeStatusCode(code?: string | null): string | undefined {
     .replace(/[^a-zA-Z0-9_]+/g, "_")
     .toLowerCase();
   return withUnderscore;
-}
-
-export function getStatusColor(code?: string | null): string | undefined {
-  const k = normalizeStatusCode(code);
-  if (!k) return undefined;
-  return statusColorMap[k];
 }
 
 export function getStatusColorWithOverrides(
@@ -43,12 +20,7 @@ export function getStatusColorWithOverrides(
     return overrideColor.trim();
   }
 
-  return getStatusColor(normalizedCode);
-}
-
-export function getCategoryColor(code?: string | null): string | undefined {
-  if (!code) return undefined;
-  return categoryColorMap[String(code)] ?? undefined;
+  return undefined;
 }
 
 // color utilities
@@ -98,11 +70,7 @@ export const suitableBorderForContrast = (foreground?: string | null, background
 };
 
 export default {
-  categoryColorMap,
-  statusColorMap,
-  getStatusColor,
   getStatusColorWithOverrides,
-  getCategoryColor,
   hexToRgb,
   luminance,
   contrastRatio,
