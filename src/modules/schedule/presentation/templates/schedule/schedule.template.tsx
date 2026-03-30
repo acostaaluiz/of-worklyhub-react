@@ -63,6 +63,7 @@ type ScheduleTemplateProps = {
   statusCounts?: Record<string, number> | null;
   selectedStatusIds?: Record<string, boolean> | null;
   onToggleStatus?: (id: string, checked: boolean) => void;
+  onUpdateStatusColors?: (statusColorOverrides: Record<string, string>) => Promise<void>;
   settings?: ScheduleWorkspaceSettings;
 };
 
@@ -125,6 +126,7 @@ export function ScheduleTemplate(props: ScheduleTemplateProps) {
                   statusCounts={props.statusCounts}
                   selectedStatusIds={props.selectedStatusIds}
                   onToggleStatus={props.onToggleStatus}
+                  onUpdateStatusColors={props.onUpdateStatusColors}
                   settings={props.settings}
                 />
               </SidebarCard>

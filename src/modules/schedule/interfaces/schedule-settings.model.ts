@@ -6,6 +6,7 @@ export interface ScheduleWorkspaceSettings {
   defaultDurationMinutes: number;
   defaultDayPart: ScheduleDefaultDayPart;
   defaultCategoryId?: string | null;
+  statusColorOverrides?: Record<string, string>;
   requireDescription: boolean;
   requireService: boolean;
   requireEmployee: boolean;

@@ -31,6 +31,21 @@ export function getStatusColor(code?: string | null): string | undefined {
   return statusColorMap[k];
 }
 
+export function getStatusColorWithOverrides(
+  code?: string | null,
+  overrides?: Record<string, string> | null
+): string | undefined {
+  const normalizedCode = normalizeStatusCode(code);
+  if (!normalizedCode) return undefined;
+
+  const overrideColor = overrides?.[normalizedCode];
+  if (typeof overrideColor === "string" && overrideColor.trim().length > 0) {
+    return overrideColor.trim();
+  }
+
+  return getStatusColor(normalizedCode);
+}
+
 export function getCategoryColor(code?: string | null): string | undefined {
   if (!code) return undefined;
   return categoryColorMap[String(code)] ?? undefined;
@@ -86,6 +101,7 @@ export default {
   categoryColorMap,
   statusColorMap,
   getStatusColor,
+  getStatusColorWithOverrides,
   getCategoryColor,
   hexToRgb,
   luminance,

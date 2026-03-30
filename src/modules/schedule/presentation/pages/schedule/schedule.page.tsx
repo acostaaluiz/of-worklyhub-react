@@ -35,6 +35,7 @@ import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/sch
 import {
   DEFAULT_SCHEDULE_SETTINGS,
   getScheduleSettings,
+  upsertScheduleSettings,
 } from "@modules/schedule/services/schedule-settings.service";
 
 // Simple memoized fetches to avoid duplicate requests on double mount (e.g., StrictMode)
@@ -137,6 +138,9 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       const [selectedStatusIds, setSelectedStatusIds] = React.useState<
         Record<string, boolean>
       >({});
+      const [localSettings, setLocalSettings] = React.useState<ScheduleWorkspaceSettings>(
+        settings
+      );
       const [localCategories, setLocalCategories] = React.useState<ScheduleCategory[]>(
         categories ?? []
       );
@@ -144,6 +148,10 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
       React.useEffect(() => {
         setLocalCategories(categories ?? []);
       }, [categories]);
+
+      React.useEffect(() => {
+        setLocalSettings(settings);
+      }, [settings]);
 
       const categoryCounts = (() => {
         const out: Record<string, number> = {};
@@ -594,6 +602,22 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
         return true;
       };
 
+      const handleUpdateStatusColors = React.useCallback(
+        async (statusColorOverrides: Record<string, string>): Promise<void> => {
+          if (!workspaceId) {
+            throw new Error("workspaceId is required");
+          }
+
+          const updated = await upsertScheduleSettings(
+            workspaceId,
+            { statusColorOverrides },
+            null
+          );
+          setLocalSettings(updated.settings);
+        },
+        [workspaceId]
+      );
+
       return showSkeleton ? (
         <PageSkeleton mainRows={2} sideRows={2} height="100%" />
       ) : (
@@ -624,12 +648,13 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
                 }))
               : null
           }
-          settings={settings}
+          settings={localSettings}
           statusCounts={statusCounts}
           selectedStatusIds={selectedStatusIds}
           onToggleStatus={(id: string, checked: boolean) =>
             setSelectedStatusIds((prev) => ({ ...prev, [id]: checked }))
           }
+          onUpdateStatusColors={handleUpdateStatusColors}
         />
       );
     }

@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight, Search, Calendar as CalendarIcon } from "luc
 import { formatDateTime } from "@core/utils/mask";
 
 import Calendar from "@toast-ui/calendar";
-import type { EventObject } from "@toast-ui/calendar";
 
 import { useScheduleApi } from "../../../services/schedule.service";
 import { loadingService } from "@shared/ui/services/loading.service";
@@ -23,7 +22,7 @@ import {
   ToastUIGlobalStyles,
 } from "./schedule-calendar.component.styles";
 import {
-  getStatusColor,
+  getStatusColorWithOverrides,
   getCategoryColor,
   suitableBorderForContrast,
   categoryColorMap,
@@ -39,172 +38,22 @@ import {
   buildCalendarOptions,
 } from "./schedule-calendar.factory";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
-import type { CompanyServiceModel } from "@modules/company/interfaces/service.model";
-import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
-import type { InventoryItem } from "@modules/inventory/services/inventory-api";
 import { i18n as appI18n } from "@core/i18n";
 import type { InventoryItemLine } from "../../../interfaces/schedule-event.model";
+import type { MonthViewHint } from "@modules/schedule/services/schedules-api";
 import type {
-  MonthViewHint,
-  ScheduleStatus,
-} from "@modules/schedule/services/schedules-api";
-import type { ScheduleWorkspaceSettings } from "@modules/schedule/interfaces/schedule-settings.model";
-
-type ScheduleCalendarProps = {
-  availableServices?: CompanyServiceModel[];
-  availableEmployees?: EmployeeModel[];
-  availableInventoryItems?: InventoryItem[];
-  workspaceId?: string | null;
-  onCreate?: (
-    draft: ScheduleEventDraft
-  ) => Promise<void>;
-  onUpdate?: (args: {
-    id: string;
-    event: Omit<
-      ScheduleEvent,
-      "id"
-    >;
-    serviceIds?: string[];
-    employeeIds?: string[];
-    totalPriceCents?: number;
-    workspaceId?: string | null;
-    inventoryInputs?: InventoryItemLine[];
-    inventoryOutputs?: InventoryItemLine[];
-  }) => Promise<void>;
-  events?: ScheduleEvent[];
-  onRangeChange?: (
-    from: string,
-    to: string,
-    options?: {
-      viewMode?: "month" | "week" | "day";
-      includeViewHint?: boolean;
-    }
-  ) => Promise<ScheduleEvent[] | void>;
-  monthViewHint?: MonthViewHint | null;
-  categories?: ScheduleCategory[] | null;
-  statuses?: ScheduleStatus[] | null;
-  settings?: ScheduleWorkspaceSettings;
-  // internal view mode only; parent no longer controls it
-};
-
-type EventCategoryRef = {
-  id?: string;
-  code?: string;
-  label?: string;
-  color?: string;
-};
-
-type EventStatusRef = {
-  id?: string;
-  code?: string;
-  label?: string;
-  color?: string;
-};
-
-type EventServiceRef = {
-  serviceId?: string;
-  id?: string;
-  priceCents?: number;
-};
-
-type EventWorkerRef = {
-  userUid?: string;
-  id?: string;
-  email?: string;
-  fullName?: string;
-};
-
-type EventInventoryRef = {
-  itemId?: string;
-  id?: string;
-  inventoryItemId?: string;
-  item_id?: string;
-  productId?: string;
-  quantity?: number | string;
-};
-
-type ScheduleEventExtended = ScheduleEvent & {
-  category?: EventCategoryRef | null;
-  status?: EventStatusRef | null;
-  services?: EventServiceRef[] | null;
-  workers?: EventWorkerRef[] | null;
-  inventoryInputs?: EventInventoryRef[] | null;
-  inventoryOutputs?: EventInventoryRef[] | null;
-  durationMinutes?: number | null;
-};
-
-type PopupRawData = {
-  description?: string;
-  date?: string;
-  startTime?: string;
-  endTime?: string;
-  durationMinutes?: number | null;
-  services?: EventServiceRef[] | null;
-  workers?: EventWorkerRef[] | null;
-  inventoryInputs?: EventInventoryRef[] | null;
-  inventoryOutputs?: EventInventoryRef[] | null;
-  inventoryInputsText?: string;
-  inventoryOutputsText?: string;
-  _bodyHtml?: string;
-  status?: EventStatusRef | null;
-  category?: EventCategoryRef | null;
-  statusColor?: string;
-  categoryColor?: string;
-};
-
-type TuiScheduleEvent = EventObject &
-  SchedulePopupEvent & {
-    raw?: PopupRawData;
-    category?: string;
-    body?: string;
-    color?: string;
-    borderColor?: string;
-    dragBackgroundColor?: string;
-    customStyle?: Record<string, string>;
-  };
-
-type PointerEventLike = {
-  clientX?: number;
-  clientY?: number;
-  touches?: Array<{ clientX?: number; clientY?: number }>;
-};
-
-type CalendarClickPayload = {
-  event?: TuiScheduleEvent;
-  domEvent?: PointerEventLike | null;
-  nativeEvent?: PointerEventLike | null;
-};
-
-type SelectDateTimePayload = {
-  start?: Date | string;
-};
-
-type CalendarViewMode = "month" | "week" | "day";
-
-type CalendarInstance = Calendar & {
-  render?: () => void;
-  createEvents?: (events: EventObject[]) => void;
-  createCalendars?: (
-    calendars: Array<{
-      id: string;
-      name: string;
-      backgroundColor?: string;
-      borderColor?: string;
-      color?: string;
-    }>
-  ) => void;
-  clearCalendars?: () => void;
-  setDate?: (date: Date) => void;
-  options?: {
-    calendars?: Array<{
-      id: string;
-      name: string;
-      backgroundColor?: string;
-      borderColor?: string;
-      color?: string;
-    }>;
-  };
-};
+  CalendarClickPayload,
+  CalendarInstance,
+  CalendarViewMode,
+  EventCategoryRef,
+  EventInventoryRef,
+  EventServiceRef,
+  EventWorkerRef,
+  ScheduleCalendarProps,
+  ScheduleEventExtended,
+  SelectDateTimePayload,
+  TuiScheduleEvent,
+} from "./schedule-calendar.component.types";
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
         const api = useScheduleApi();
@@ -363,14 +212,26 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           (clabel.length > 0 && clabel === eRawCatLabel)
         );
       });
-      const rawCategoryColor = category?.color ?? themePrimary ?? "#1e70ff";
+      const categoryCodeCandidate =
+        rawCat?.code ?? event.categoryCode ?? event.categoryId ?? null;
+      const rawCategoryColor =
+        category?.color ??
+        rawCat?.color ??
+        getCategoryColor(categoryCodeCandidate) ??
+        themePrimary ??
+        "#1e70ff";
       const categoryColor =
         normalizeCssColor(rawCategoryColor) ??
         normalizeCssColor(themePrimary) ??
         "#1e70ff";
       const statusCode = event?.status?.code ?? null;
       const statusColorRaw = statusCode
-        ? (getStatusColor(statusCode) ?? themePrimary ?? "#7c3aed")
+        ? (getStatusColorWithOverrides(
+            statusCode,
+            propSettings?.statusColorOverrides
+          ) ??
+          themePrimary ??
+          "#7c3aed")
         : undefined;
       const statusColor =
         normalizeCssColor(statusColorRaw) ??
@@ -602,7 +463,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     }
 
     return out;
-  }, [filteredEvents]);
+  }, [categories, filteredEvents, inventoryNameMap, propSettings?.statusColorOverrides]);
 
   const calendarTheme = useMemo(() => {
     return {

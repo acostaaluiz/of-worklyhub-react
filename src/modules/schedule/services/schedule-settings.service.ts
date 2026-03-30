@@ -15,6 +15,7 @@ export const DEFAULT_SCHEDULE_SETTINGS: ScheduleWorkspaceSettings = {
   defaultDurationMinutes: 30,
   defaultDayPart: "morning",
   defaultCategoryId: null,
+  statusColorOverrides: {},
   requireDescription: false,
   requireService: false,
   requireEmployee: false,
@@ -69,6 +70,40 @@ function normalizeNoShowPolicy(value: unknown): ScheduleNoShowPolicy {
   return DEFAULT_SCHEDULE_SETTINGS.noShowPolicy;
 }
 
+function normalizeStatusCode(value: string): string {
+  return value
+    .trim()
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .replace(/[^a-zA-Z0-9_]+/g, "_")
+    .toLowerCase();
+}
+
+function normalizeHexColor(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  if (!/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized)) {
+    return null;
+  }
+  return normalized.toUpperCase();
+}
+
+function normalizeStatusColorOverrides(
+  value: unknown
+): Record<string, string> {
+  if (!value || typeof value !== "object") return {};
+
+  const source = value as Record<string, unknown>;
+  const out: Record<string, string> = {};
+  for (const [rawKey, rawValue] of Object.entries(source)) {
+    const key = normalizeStatusCode(rawKey);
+    if (!key) continue;
+    const color = normalizeHexColor(rawValue);
+    if (!color) continue;
+    out[key] = color;
+  }
+  return out;
+}
+
 function normalizeSettings(
   value?: Partial<ScheduleWorkspaceSettings> | null
 ): ScheduleWorkspaceSettings {
@@ -89,6 +124,7 @@ function normalizeSettings(
     ),
     defaultDayPart: normalizeDayPart(value?.defaultDayPart),
     defaultCategoryId: normalizeCategoryId(value?.defaultCategoryId),
+    statusColorOverrides: normalizeStatusColorOverrides(value?.statusColorOverrides),
     requireDescription:
       typeof value?.requireDescription === "boolean"
         ? value.requireDescription
@@ -267,4 +303,3 @@ export async function upsertScheduleSettings(
 ): Promise<ScheduleWorkspaceSettingsBundle> {
   return scheduleSettingsService.upsertSettings(workspaceId, settings, updatedBy);
 }
-

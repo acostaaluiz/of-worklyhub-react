@@ -10,7 +10,8 @@ import { useScheduleApi } from "../../../services/schedule.service";
 import {
   categoryColorMap,
   getCategoryColor,
-  getStatusColor,
+  getStatusColorWithOverrides,
+  normalizeStatusCode,
 } from "../../../constants/colors";
 
 import {
@@ -60,6 +61,7 @@ type ScheduleSidebarProps = {
   statusCounts?: Record<string, number> | null;
   selectedStatusIds?: Record<string, boolean> | null;
   onToggleStatus?: (id: string, checked: boolean) => void;
+  onUpdateStatusColors?: (statusColorOverrides: Record<string, string>) => Promise<void>;
   settings?: ScheduleWorkspaceSettings;
 };
 
@@ -127,9 +129,14 @@ function toColorInputValue(value: string | null | undefined): string {
   if (!value) return "#06B6D4";
   const normalized = value.trim();
   if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized)) {
-    return normalized;
+    return normalized.toUpperCase();
   }
   return "#06B6D4";
+}
+
+function toStatusColorKey(code?: string | null): string | null {
+  const normalized = normalizeStatusCode(code);
+  return normalized && normalized.trim().length > 0 ? normalized : null;
 }
 
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
@@ -151,10 +158,16 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     null
   );
   const [savingCategory, setSavingCategory] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusColorDraft, setStatusColorDraft] = useState<Record<string, string>>({});
+  const [savingStatusColors, setSavingStatusColors] = useState(false);
 
   const nextSchedules = props.nextSchedules ?? null;
   const canManageCategories = Boolean(
     props.onCreateCategory && props.onUpdateCategory && props.onDeleteCategory
+  );
+  const canManageStatusColors = Boolean(
+    props.workspaceId && props.onUpdateStatusColors
   );
 
   useEffect(() => {
@@ -224,6 +237,66 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
     },
     [props]
   );
+
+  const resolveStatusColor = useCallback(
+    (status: ScheduleStatus, idx: number): string => {
+      const colorFromSettings = getStatusColorWithOverrides(
+        status.code,
+        props.settings?.statusColorOverrides
+      );
+      return colorFromSettings ?? colorFromId(status.id, idx);
+    },
+    [props.settings?.statusColorOverrides]
+  );
+
+  const openStatusModal = useCallback(() => {
+    const nextDraft: Record<string, string> = {};
+    (props.statuses ?? []).forEach((status, idx) => {
+      const key = toStatusColorKey(status.code);
+      if (!key) return;
+      nextDraft[key] = toColorInputValue(resolveStatusColor(status, idx));
+    });
+    setStatusColorDraft(nextDraft);
+    setIsStatusModalOpen(true);
+  }, [props.statuses, resolveStatusColor]);
+
+  const closeStatusModal = useCallback(() => {
+    setIsStatusModalOpen(false);
+    setStatusColorDraft({});
+  }, []);
+
+  const handleSaveStatusColors = useCallback(async () => {
+    if (!canManageStatusColors || !props.onUpdateStatusColors) return;
+
+    const payload: Record<string, string> = {};
+    (props.statuses ?? []).forEach((status, idx) => {
+      const key = toStatusColorKey(status.code);
+      if (!key) return;
+
+      const fallback = toColorInputValue(resolveStatusColor(status, idx));
+      payload[key] = toColorInputValue(statusColorDraft[key] ?? fallback);
+    });
+
+    setSavingStatusColors(true);
+    try {
+      await props.onUpdateStatusColors(payload);
+      closeStatusModal();
+    } catch {
+      message.error(
+        appI18n.t(
+          "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k017"
+        )
+      );
+    } finally {
+      setSavingStatusColors(false);
+    }
+  }, [
+    canManageStatusColors,
+    closeStatusModal,
+    props,
+    resolveStatusColor,
+    statusColorDraft,
+  ]);
 
   const resetCategoryForm = useCallback(() => {
     setEditingCategoryId(null);
@@ -475,13 +548,22 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
               "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k006"
             )}
           </div>
+          <Button
+            size="small"
+            disabled={!canManageStatusColors}
+            onClick={openStatusModal}
+          >
+            {appI18n.t(
+              "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k005"
+            )}
+          </Button>
         </BlockHeader>
 
         <List>
           {(props.statuses ?? []).map((status, idx) => (
             <CategoryRow
               key={status.id}
-              $color={getStatusColor(status.code) ?? colorFromId(status.id, idx)}
+              $color={resolveStatusColor(status, idx)}
             >
               <div className="left">
                 <Checkbox
@@ -558,6 +640,96 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
         statuses={props.statuses ?? undefined}
         settings={props.settings}
       />
+
+      <Modal
+        title={appI18n.t(
+          "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k006"
+        )}
+        open={isStatusModalOpen}
+        onCancel={closeStatusModal}
+        footer={null}
+        destroyOnHidden
+      >
+        <div
+          style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          data-cy="schedule-status-colors-modal"
+        >
+          <List>
+            {(props.statuses ?? []).length <= 0 ? (
+              <div style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
+                {appI18n.t(
+                  "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k024"
+                )}
+              </div>
+            ) : null}
+
+            {(props.statuses ?? []).map((status, idx) => {
+              const key = toStatusColorKey(status.code);
+              const currentColor = toColorInputValue(
+                key ? statusColorDraft[key] : resolveStatusColor(status, idx)
+              );
+              return (
+                <CategoryRow
+                  key={`status-modal-${status.id}`}
+                  $color={currentColor}
+                >
+                  <div className="left">
+                    <span className="dot" />
+                    <span className="name">{status.label}</span>
+                  </div>
+                  <input
+                    type="color"
+                    value={currentColor}
+                    disabled={!key}
+                    onChange={(event) => {
+                      if (!key) return;
+                      setStatusColorDraft((prev) => ({
+                        ...prev,
+                        [key]: event.target.value.toUpperCase(),
+                      }));
+                    }}
+                    aria-label={`${status.label}-color`}
+                    style={{
+                      width: 40,
+                      height: 32,
+                      border: "1px solid var(--color-border)",
+                      borderRadius: 8,
+                      padding: 0,
+                      background: "transparent",
+                    }}
+                  />
+                </CategoryRow>
+              );
+            })}
+          </List>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <Button size="small" onClick={closeStatusModal}>
+              {appI18n.t(
+                "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k021"
+              )}
+            </Button>
+            <Button
+              size="small"
+              type="primary"
+              loading={savingStatusColors}
+              onClick={() => void handleSaveStatusColors()}
+              disabled={!canManageStatusColors}
+            >
+              {appI18n.t(
+                "legacyInline.schedule.presentation_components_schedule_sidebar_schedule_sidebar_component.k022"
+              )}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         title={appI18n.t(
