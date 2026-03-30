@@ -106,6 +106,12 @@ function toStatusColorKey(code?: string | null): string | null {
   return normalized && normalized.trim().length > 0 ? normalized : null;
 }
 
+function getStatusColorFromRecord(status: ScheduleStatus): string | undefined {
+  const record = status as unknown as DataMap;
+  const raw = record["color"];
+  return typeof raw === "string" ? raw : undefined;
+}
+
 export function ScheduleSidebar(props: ScheduleSidebarProps) {
   const api = useScheduleApi();
   const [categories, setCategories] = useState<ScheduleCategory[]>([]);
@@ -207,11 +213,13 @@ export function ScheduleSidebar(props: ScheduleSidebarProps) {
 
   const resolveStatusColor = useCallback(
     (status: ScheduleStatus, idx: number): string => {
+      void idx;
       const colorFromSettings = getStatusColorWithOverrides(
         status.code,
         props.settings?.statusColorOverrides
       );
-      return colorFromSettings ?? colorFromId(status.id, idx);
+      const colorFromStatus = normalizeCssColor(getStatusColorFromRecord(status));
+      return colorFromSettings ?? colorFromStatus ?? "#94A3B8";
     },
     [props.settings?.statusColorOverrides]
   );

@@ -152,6 +152,23 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     });
   }, [events, search]);
 
+  const statusColorsByCode = useMemo(() => {
+    const map = new Map<string, string>();
+    (props.statuses ?? []).forEach((status) => {
+      const key = String(status.code ?? "")
+        .trim()
+        .toLowerCase();
+      const colorRaw =
+        typeof (status as DataMap)["color"] === "string"
+          ? ((status as DataMap)["color"] as string)
+          : "";
+      const color = normalizeCssColor(colorRaw);
+      if (!key || !color) return;
+      map.set(key, color);
+    });
+    return map;
+  }, [props.statuses]);
+
   const tuiEvents = useMemo<TuiScheduleEvent[]>(() => {
     const out: TuiScheduleEvent[] = [];
     const root =
@@ -242,16 +259,19 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
         normalizeCssColor(themePrimary) ??
         "#1e70ff";
       const statusCode = event?.status?.code ?? null;
+      const normalizedStatusCode = String(statusCode ?? "")
+        .trim()
+        .toLowerCase();
       const statusColorRaw = statusCode
         ? (getStatusColorWithOverrides(
             statusCode,
             propSettings?.statusColorOverrides
-          ) ?? event?.status?.color)
+          ) ??
+          event?.status?.color ??
+          statusColorsByCode.get(normalizedStatusCode))
         : event?.status?.color;
       const statusColor =
-        normalizeCssColor(statusColorRaw) ??
-        normalizeCssColor(themePrimary) ??
-        categoryColor;
+        normalizeCssColor(statusColorRaw) ?? "#94A3B8";
       const textColor = themeOnPrimary || themeText || "#ffffff";
 
       const startText = formatDateTime(start);
@@ -491,7 +511,13 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     }
 
     return out;
-  }, [categories, filteredEvents, inventoryNameMap, propSettings?.statusColorOverrides]);
+  }, [
+    categories,
+    filteredEvents,
+    inventoryNameMap,
+    propSettings?.statusColorOverrides,
+    statusColorsByCode,
+  ]);
 
   const calendarTheme = useMemo(() => {
     return {
@@ -1751,6 +1777,10 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
                 id: String(s.id),
                 code: s.code,
                 label: s.label,
+                color:
+                  typeof (s as DataMap)["color"] === "string"
+                    ? ((s as DataMap)["color"] as string)
+                    : undefined,
               }))
             : undefined
         }

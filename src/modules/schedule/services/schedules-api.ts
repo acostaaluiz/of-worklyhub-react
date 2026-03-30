@@ -69,7 +69,7 @@ export type ScheduleListResponseWithMeta = {
   meta?: ScheduleListMeta;
 };
 
-export type ScheduleStatus = { id: string; code: string; label: string };
+export type ScheduleStatus = { id: string; code: string; label: string; color?: string | null };
 export type ScheduleStatusesResponse = { data: ScheduleStatus[] };
 export type ScheduleCategoriesResponse = { data: ScheduleCategory[] };
 export type CreateScheduleCategoryPayload = {

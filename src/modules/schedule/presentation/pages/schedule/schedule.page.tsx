@@ -641,6 +641,10 @@ export class SchedulePage extends BasePage<BaseProps, SchedulePageState> {
                   id: String(s.id),
                   code: s.code ?? "",
                   label: s.label ?? "",
+                  color:
+                    typeof (s as DataMap)["color"] === "string"
+                      ? ((s as DataMap)["color"] as string)
+                      : undefined,
                 }))
               : null
           }
