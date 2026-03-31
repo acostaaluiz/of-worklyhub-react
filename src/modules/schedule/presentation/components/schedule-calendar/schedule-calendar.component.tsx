@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Input, Segmented, Typography, message } from "antd";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, Search, Calendar as CalendarIcon } from "lucide-react";
-import { formatDateTime } from "@core/utils/mask";
 
 import Calendar from "@toast-ui/calendar";
 
@@ -22,7 +21,6 @@ import {
   ToastUIGlobalStyles,
 } from "./schedule-calendar.component.styles";
 import {
-  getStatusColorWithOverrides,
   suitableBorderForContrast,
 } from "../../../constants/colors";
 
@@ -32,29 +30,26 @@ import ScheduleEventPopup, {
 } from "./schedule-event-popup.component";
 import {
   normalizeCssColor,
-  escapeHtml,
   buildCalendarOptions,
 } from "./schedule-calendar.factory";
 import type { ScheduleEventDraft } from "../schedule-event-modal/schedule-event-modal.form.types";
 import { i18n as appI18n } from "@core/i18n";
-import type { InventoryItemLine } from "../../../interfaces/schedule-event.model";
 import type { MonthViewHint } from "@modules/schedule/services/schedules-api";
 import type {
   CalendarClickPayload,
   CalendarInstance,
   CalendarViewMode,
-  EventCategoryRef,
-  EventInventoryRef,
-  EventServiceRef,
-  EventWorkerRef,
   ScheduleCalendarProps,
-  ScheduleEventExtended,
   SelectDateTimePayload,
   TuiScheduleEvent,
 } from "./schedule-calendar.component.types";
+import {
+  buildScheduleEventDraft,
+  buildTuiEvents,
+} from "./schedule-calendar.event-mapper";
 
 export function ScheduleCalendar(props: ScheduleCalendarProps) {
-        const api = useScheduleApi();
+  const api = useScheduleApi();
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -152,25 +147,7 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     });
   }, [events, search]);
 
-  const statusColorsByCode = useMemo(() => {
-    const map = new Map<string, string>();
-    (props.statuses ?? []).forEach((status) => {
-      const key = String(status.code ?? "")
-        .trim()
-        .toLowerCase();
-      const colorRaw =
-        typeof (status as DataMap)["color"] === "string"
-          ? ((status as DataMap)["color"] as string)
-          : "";
-      const color = normalizeCssColor(colorRaw);
-      if (!key || !color) return;
-      map.set(key, color);
-    });
-    return map;
-  }, [props.statuses]);
-
   const tuiEvents = useMemo<TuiScheduleEvent[]>(() => {
-    const out: TuiScheduleEvent[] = [];
     const root =
       typeof document !== "undefined" ? document.documentElement : null;
     const themeText = root
@@ -189,336 +166,32 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
           .trim()
       : "";
 
-    const normalizeRaw = (value?: string | null): string => String(value ?? "").trim();
-    const normalizeKey = (value?: string | null): string =>
-      normalizeRaw(value).toLowerCase();
-
-    const categoriesById = new Map<string, ScheduleCategory>();
-    const categoriesByIdKey = new Map<string, ScheduleCategory>();
-    const categoriesByCode = new Map<string, ScheduleCategory>();
-    const categoriesByLabel = new Map<string, ScheduleCategory>();
-    categories.forEach((categoryItem) => {
-      const id = normalizeRaw(categoryItem.id);
-      const idKey = normalizeKey(categoryItem.id);
-      const code = normalizeKey(categoryItem.code);
-      const label = normalizeKey(categoryItem.label);
-      if (id) categoriesById.set(id, categoryItem);
-      if (idKey) categoriesByIdKey.set(idKey, categoryItem);
-      if (code) categoriesByCode.set(code, categoryItem);
-      if (label) categoriesByLabel.set(label, categoryItem);
+    const { events: mappedEvents, eventColorMap } = buildTuiEvents({
+      categories,
+      filteredEvents,
+      inventoryNameMap,
+      statuses: props.statuses,
+      statusColorOverrides: propSettings?.statusColorOverrides,
+      themeText,
+      themeOnPrimary,
+      themePrimary,
+      onEditDraft: (draft) => {
+        setModalInitialDraft(draft);
+        setModalInitialDate(draft.date);
+        setModalInitialStartTime(draft.startTime);
+        setIsModalOpen(true);
+      },
     });
 
-    // use shared status/category colors and contrast helpers
-
-    filteredEvents.forEach((e) => {
-      const event = e as ScheduleEventExtended;
-      const start = dayjs(`${e.date}T${e.startTime}`).toDate();
-      const end = dayjs(`${e.date}T${e.endTime}`).toDate();
-
-      if (!start || Number.isNaN(start.getTime())) {
-        return;
-      }
-
-      if (!end || Number.isNaN(end.getTime())) {
-        return;
-      }
-
-      const rawCat: EventCategoryRef | null = event.category ?? null;
-      const eventCategoryId = normalizeRaw(e.categoryId);
-      const eventCategoryIdKey = normalizeKey(e.categoryId);
-      const eventCategoryCode = normalizeKey(e.categoryCode);
-      const rawCategoryId = normalizeRaw(rawCat?.id);
-      const rawCategoryIdKey = normalizeKey(rawCat?.id);
-      const rawCategoryCode = normalizeKey(rawCat?.code);
-      const rawCategoryLabel = normalizeKey(rawCat?.label);
-      const eventCategoryLabel = normalizeKey((event as DataMap)["categoryLabel"] as string);
-
-      // Always resolve the category from the sidebar/category list source (workspace categories from backend)
-      // so card colors and sidebar colors are guaranteed to be consistent.
-      const resolvedCategory =
-        categoriesById.get(eventCategoryId) ??
-        categoriesByIdKey.get(eventCategoryIdKey) ??
-        categoriesById.get(rawCategoryId) ??
-        categoriesByIdKey.get(rawCategoryIdKey) ??
-        categoriesByCode.get(eventCategoryCode) ??
-        categoriesByCode.get(rawCategoryCode) ??
-        categoriesByCode.get(eventCategoryIdKey) ??
-        categoriesByLabel.get(rawCategoryLabel) ??
-        categoriesByLabel.get(eventCategoryLabel);
-
-      const resolvedCategoryId = resolvedCategory?.id
-        ? String(resolvedCategory.id)
-        : "";
-      const rawCategoryColor =
-        resolvedCategory?.color ??
-        rawCat?.color ??
-        themePrimary ??
-        "#1e70ff";
-      const categoryColor =
-        normalizeCssColor(rawCategoryColor) ??
-        normalizeCssColor(themePrimary) ??
-        "#1e70ff";
-      const statusCode = event?.status?.code ?? null;
-      const normalizedStatusCode = String(statusCode ?? "")
-        .trim()
-        .toLowerCase();
-      const statusColorRaw = statusCode
-        ? (getStatusColorWithOverrides(
-            statusCode,
-            propSettings?.statusColorOverrides
-          ) ??
-          event?.status?.color ??
-          statusColorsByCode.get(normalizedStatusCode))
-        : event?.status?.color;
-      const statusColor =
-        normalizeCssColor(statusColorRaw) ?? "#94A3B8";
-      const textColor = themeOnPrimary || themeText || "#ffffff";
-
-      const startText = formatDateTime(start);
-      const endText = dayjs(end).format("HH:mm");
-      const inventoryInputsRaw = event.inventoryInputs ?? null;
-      const inventoryOutputsRaw = event.inventoryOutputs ?? null;
-      const inventoryInputsText = Array.isArray(inventoryInputsRaw)
-        ? inventoryInputsRaw
-            .map((l: EventInventoryRef) => {
-              const iid = l?.itemId ?? l?.id ?? "";
-              if (!iid) return null;
-              const name = inventoryNameMap.get(String(iid)) ?? String(iid);
-              const qty =
-                l?.quantity && Number(l.quantity) !== 1
-                  ? ` x${Number(l.quantity)}`
-                  : "";
-              return `${name}${qty}`;
-            })
-            .filter((line): line is string => Boolean(line))
-            .join(", ")
-        : "";
-      const inventoryOutputsText = Array.isArray(inventoryOutputsRaw)
-        ? inventoryOutputsRaw
-            .map((l: EventInventoryRef) => {
-              const iid = l?.itemId ?? l?.id ?? "";
-              if (!iid) return null;
-              const name = inventoryNameMap.get(String(iid)) ?? String(iid);
-              const qty =
-                l?.quantity && Number(l.quantity) !== 1
-                  ? ` x${Number(l.quantity)}`
-                  : "";
-              return `${name}${qty}`;
-            })
-            .filter((line): line is string => Boolean(line))
-            .join(", ")
-        : "";
-      const bodyHtml = `
-        <div style="background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);box-shadow:var(--shadow-md);border-radius:8px;padding:12px;width:min(250px,calc(100vw - 24px));font-family:inherit;overflow:hidden;">
-          <div style="font-weight:800;margin-bottom:6px;color:var(--color-text);">${escapeHtml(e.title)}</div>
-          <div style="font-size:12px;color:var(--color-text-muted);margin-bottom:8px;">${startText} — ${endText}</div>
-          <div style="font-size:13px;color:var(--color-text);">${escapeHtml(e.description ?? "")}</div>
-        </div>
-      `;
-
-      // prefer category color for the main card; only fallback to status when category color is missing
-      const preferCategory = (c?: string | undefined) =>
-        c && String(c).trim() ? c : undefined;
-
-      out.push({
-        id: e.id,
-        calendarId: String(
-          resolvedCategoryId ||
-            eventCategoryId ||
-            rawCategoryId ||
-            rawCategoryCode ||
-            eventCategoryCode ||
-            "default"
-        ),
-        title: e.title,
-        category: "time",
-        start,
-        end,
-        // visual properties supported by toast-ui Calendar
-        // prefer category color for the event card; fall back to status color only when category color is missing/empty
-        backgroundColor: preferCategory(categoryColor) ?? statusColor,
-        borderColor: preferCategory(categoryColor) ?? statusColor,
-        color: textColor,
-        dragBackgroundColor: preferCategory(categoryColor) ?? statusColor,
-        customStyle: { fontWeight: "700" },
-        // provide a full HTML body (inline styles using app CSS variables)
-        body: bodyHtml,
-        raw: {
-          description: e.description,
-          date: e.date,
-          startTime: e.startTime,
-          endTime: e.endTime,
-          services: event.services ?? null,
-          workers: event.workers ?? null,
-          inventoryInputs: inventoryInputsRaw ?? null,
-          inventoryOutputs: inventoryOutputsRaw ?? null,
-          inventoryInputsText,
-          inventoryOutputsText,
-          _bodyHtml: bodyHtml,
-          status: event.status ?? null,
-          category: resolvedCategory
-            ? {
-                id: String(resolvedCategory.id),
-                code: resolvedCategory.code ?? "",
-                label: resolvedCategory.label,
-                color: resolvedCategory.color ?? undefined,
-              }
-            : event.category ?? null,
-          statusColor,
-          categoryColor,
-        },
-        // helper to open edit modal when popup Edit pressed
-        onEdit: () => {
-          try {
-            const raw = event || {};
-            // resolve categoryId robustly from multiple potential sources so backend always receives it
-            const resolvedCategoryId = (() => {
-              const byEvent = e.categoryId ? String(e.categoryId) : undefined;
-              const byRawId =
-                raw.category && raw.category.id
-                  ? String(raw.category.id)
-                  : undefined;
-              const byRawCode =
-                raw.category && raw.category.code
-                  ? String(raw.category.code)
-                  : undefined;
-              if (byEvent) return byEvent;
-              if (byRawId) return byRawId;
-              // try to match raw.code against known categories
-              if (byRawCode) {
-                const found = categories.find(
-                  (c) =>
-                    String(c.code ?? "") === byRawCode ||
-                    String(c.id ?? "") === byRawCode
-                );
-                if (found) return String(found.id);
-              }
-              // fallback to first available category
-              if (categories && categories.length > 0)
-                return String(categories[0].id);
-              return "";
-            })();
-
-            const draft: ScheduleEventDraft & {
-              id?: string;
-            } = {
-              id: e.id,
-              title: e.title ?? "",
-              description: raw.description ?? undefined,
-              categoryId: resolvedCategoryId,
-              date: e.date,
-              startTime: e.startTime ?? "09:00",
-              endTime: e.endTime ?? "09:30",
-              durationMinutes: event.durationMinutes ?? undefined,
-              serviceIds: Array.isArray(raw.services)
-                ? raw.services
-                    .map((s: EventServiceRef) => s.serviceId ?? s.id ?? null)
-                    .filter((id): id is string => Boolean(id))
-                : undefined,
-              employeeIds: Array.isArray(raw.workers)
-                ? raw.workers
-                    .map((w: EventWorkerRef) => w.userUid ?? w.id ?? null)
-                    .filter((id): id is string => Boolean(id))
-                : undefined,
-              inventoryInputs: Array.isArray(raw.inventoryInputs)
-                ? raw.inventoryInputs
-                    .map((l: EventInventoryRef) => {
-                      const iid =
-                        l?.itemId ??
-                        l?.id ??
-                        l?.inventoryItemId ??
-                        l?.item_id ??
-                        l?.productId;
-                      if (!iid) return null;
-                      const quantity =
-                        typeof l?.quantity === "number"
-                          ? l.quantity
-                          : l?.quantity
-                          ? Number(l.quantity)
-                          : undefined;
-                      const line: InventoryItemLine = {
-                        itemId: String(iid),
-                      };
-                      if (quantity !== undefined) line.quantity = quantity;
-                      return line;
-                    })
-                    .filter(
-                      (line): line is InventoryItemLine => Boolean(line)
-                    )
-                : undefined,
-              inventoryOutputs: Array.isArray(raw.inventoryOutputs)
-                ? raw.inventoryOutputs
-                    .map((l: EventInventoryRef) => {
-                      const iid =
-                        l?.itemId ??
-                        l?.id ??
-                        l?.inventoryItemId ??
-                        l?.item_id ??
-                        l?.productId;
-                      if (!iid) return null;
-                      const quantity =
-                        typeof l?.quantity === "number"
-                          ? l.quantity
-                          : l?.quantity
-                          ? Number(l.quantity)
-                          : undefined;
-                      const line: InventoryItemLine = {
-                        itemId: String(iid),
-                      };
-                      if (quantity !== undefined) line.quantity = quantity;
-                      return line;
-                    })
-                    .filter(
-                      (line): line is InventoryItemLine => Boolean(line)
-                    )
-                : undefined,
-              totalPriceCents: Array.isArray(raw.services)
-                ? raw.services.reduce(
-                    (acc: number, s: EventServiceRef) =>
-                      acc + Number(s.priceCents ?? 0),
-                    0
-                  )
-                : undefined,
-              statusId: (raw.status && raw.status.id) ?? undefined,
-            };
-
-            setModalInitialDraft(draft);
-            setModalInitialDate(draft.date);
-            setModalInitialStartTime(draft.startTime);
-            setIsModalOpen(true);
-          } catch (err) {
-            void err;
-          }
-        },
-      });
-    });
-
-    // build quick lookup map for event -> preferred color (use normalized categoryColor first)
-    try {
-      const map = new Map<string, string>();
-      out.forEach((ev) => {
-        const id = ev.id as string;
-        const rawCategory = (ev as TuiScheduleEvent).raw?.categoryColor;
-        const rawStatus = (ev as TuiScheduleEvent).raw?.statusColor;
-        const bgRaw =
-          (ev as TuiScheduleEvent).backgroundColor || rawCategory || rawStatus || "";
-        const bg = normalizeCssColor(bgRaw);
-        if (id && bg) map.set(id, bg as string);
-      });
-      eventColorMapRef.current = map;
-    } catch (err) {
-      void err;
-    }
-
-    return out;
+    eventColorMapRef.current = eventColorMap;
+    return mappedEvents;
   }, [
     categories,
     filteredEvents,
     inventoryNameMap,
+    props.statuses,
     propSettings?.statusColorOverrides,
-    statusColorsByCode,
   ]);
-
   const calendarTheme = useMemo(() => {
     return {
       common: {
@@ -884,90 +557,40 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
       // won't remove function refs. This opens the edit modal prefilled with the event data.
       try {
         const raw = (ev as TuiScheduleEvent).raw ?? {};
-        const draft: ScheduleEventDraft & {
-          id?: string;
-        } = {
+        const draft = buildScheduleEventDraft({
           id: ev.id,
           title: ev.title ?? "",
           description: raw.description ?? undefined,
           categoryId:
-            (ev as TuiScheduleEvent).calendarId ?? (ev as TuiScheduleEvent).raw?.category?.id ?? "",
+            (ev as TuiScheduleEvent).calendarId ??
+            (ev as TuiScheduleEvent).raw?.category?.id ??
+            "",
+          category: (ev as TuiScheduleEvent).raw?.category ?? null,
           date: raw.date ?? "",
           startTime: raw.startTime ?? "09:00",
           endTime: raw.endTime ?? "09:30",
-          durationMinutes: (raw.durationMinutes as number) ?? undefined,
-          serviceIds: Array.isArray(raw.services)
+          durationMinutes:
+            typeof raw.durationMinutes === "number"
+              ? raw.durationMinutes
+              : undefined,
+          services: Array.isArray(raw.services)
             ? raw.services
-                .map((s: EventServiceRef) => s.serviceId ?? s.id ?? null)
-                .filter((id): id is string => Boolean(id))
             : undefined,
-          employeeIds: Array.isArray(raw.workers)
+          workers: Array.isArray(raw.workers)
             ? raw.workers
-                .map((w: EventWorkerRef) => w.userUid ?? w.id ?? null)
-                .filter((id): id is string => Boolean(id))
             : undefined,
           inventoryInputs: Array.isArray(raw.inventoryInputs)
             ? raw.inventoryInputs
-                .map((l: EventInventoryRef) => {
-                  const iid =
-                    l?.itemId ??
-                    l?.id ??
-                    l?.inventoryItemId ??
-                    l?.item_id ??
-                    l?.productId;
-                  if (!iid) return null;
-                  const quantity =
-                    typeof l?.quantity === "number"
-                      ? l.quantity
-                      : l?.quantity
-                      ? Number(l.quantity)
-                      : undefined;
-                  const line: InventoryItemLine = {
-                    itemId: String(iid),
-                  };
-                  if (quantity !== undefined) line.quantity = quantity;
-                  return line;
-                })
-                .filter(
-                  (line): line is InventoryItemLine => Boolean(line)
-                )
             : undefined,
           inventoryOutputs: Array.isArray(raw.inventoryOutputs)
             ? raw.inventoryOutputs
-                .map((l: EventInventoryRef) => {
-                  const iid =
-                    l?.itemId ??
-                    l?.id ??
-                    l?.inventoryItemId ??
-                    l?.item_id ??
-                    l?.productId;
-                  if (!iid) return null;
-                  const quantity =
-                    typeof l?.quantity === "number"
-                      ? l.quantity
-                      : l?.quantity
-                      ? Number(l.quantity)
-                      : undefined;
-                  const line: InventoryItemLine = {
-                    itemId: String(iid),
-                  };
-                  if (quantity !== undefined) line.quantity = quantity;
-                  return line;
-                })
-                .filter(
-                  (line): line is InventoryItemLine => Boolean(line)
-                )
             : undefined,
-          totalPriceCents: Array.isArray(raw.services)
-            ? raw.services.reduce(
-                (acc: number, s: EventServiceRef) =>
-                  acc + Number(s.priceCents ?? 0),
-                0
-              )
-            : undefined,
-          statusId: (raw.status && raw.status.id) ?? undefined,
-        };
-
+          statusId:
+            raw.status && typeof raw.status.id === "string"
+              ? raw.status.id
+              : undefined,
+          categories,
+        });
         const augmented: SchedulePopupEvent = {
           ...ev,
           onEdit: () => {
@@ -1788,4 +1411,3 @@ export function ScheduleCalendar(props: ScheduleCalendarProps) {
     </>
   );
 }
-
