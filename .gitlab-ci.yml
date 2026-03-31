@@ -6,14 +6,15 @@ workflow:
     - when: never
 
 stages:
-  - sync
+  - quality
+  - build
   - deploy
 
 default:
   interruptible: true
 
 mirror_to_github:
-  stage: sync
+  stage: quality
   image:
     name: alpine/git:2.47.1
     entrypoint: [""]
@@ -22,6 +23,8 @@ mirror_to_github:
     GITHUB_MIRROR_REPOSITORY: acostaaluiz/of-worklyhub-react
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_BRANCH == "master") && $GITHUB_MIRROR_TOKEN'
+      when: manual
+      allow_failure: true
   before_script:
     - |
       set -euo pipefail
@@ -38,8 +41,19 @@ mirror_to_github:
       set -euo pipefail
       git push github-mirror "HEAD:${CI_COMMIT_BRANCH}"
 
-.gcp-deploy-template:
-  stage: deploy
+.frontend-quality-template:
+  stage: quality
+  image:
+    name: node:20-alpine
+    entrypoint: [""]
+  script:
+    - |
+      set -euo pipefail
+      echo "Optional quality stage configured for frontend pipeline."
+      echo "Add lint/test commands here when you want to enforce quality checks."
+
+.gcp-build-template:
+  stage: build
   image:
     name: google/cloud-sdk:slim
     entrypoint: [""]
@@ -51,7 +65,6 @@ mirror_to_github:
       : "${GCP_PROJECT_ID:?GCP_PROJECT_ID is required}"
       : "${GCP_REGION:?GCP_REGION is required}"
       : "${GCP_ARTIFACT_REGISTRY_REPOSITORY:?GCP_ARTIFACT_REGISTRY_REPOSITORY is required}"
-      : "${GCP_CLOUD_RUN_SERVICE:?GCP_CLOUD_RUN_SERVICE is required}"
       : "${GCP_SERVICE_ACCOUNT_KEY:?GCP_SERVICE_ACCOUNT_KEY is required}"
       : "${VITE_API_BASE_URL:?VITE_API_BASE_URL is required}"
 
@@ -80,11 +93,53 @@ mirror_to_github:
       export IMAGE_URI="${IMAGE_REPOSITORY}:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHORT_SHA}"
   script:
     - |
+      set -euo pipefail
       gcloud builds submit "${CI_PROJECT_DIR}" \
         --project "${GCP_PROJECT_ID}" \
         --config "${CI_PROJECT_DIR}/infra/cloudbuild/cloudbuild.frontend.yaml" \
         --substitutions "_IMAGE_URI=${IMAGE_URI},_VITE_API_BASE_URL=${VITE_API_BASE_URL},_VITE_CURRENCY_LOCALE=${VITE_CURRENCY_LOCALE},_VITE_CURRENCY_CODE=${VITE_CURRENCY_CODE},_VITE_CURRENCY_PRECISION=${VITE_CURRENCY_PRECISION},_VITE_FIREBASE_API_KEY=${VITE_FIREBASE_API_KEY},_VITE_FIREBASE_AUTH_DOMAIN=${VITE_FIREBASE_AUTH_DOMAIN},_VITE_FIREBASE_PROJECT_ID=${VITE_FIREBASE_PROJECT_ID},_VITE_FIREBASE_STORAGE_BUCKET=${VITE_FIREBASE_STORAGE_BUCKET},_VITE_FIREBASE_MESSAGING_SENDER_ID=${VITE_FIREBASE_MESSAGING_SENDER_ID},_VITE_FIREBASE_APP_ID=${VITE_FIREBASE_APP_ID}"
+      printf 'IMAGE_URI=%s\n' "${IMAGE_URI}" > build.env
+  after_script:
     - |
+      if [ "${GCP_KEY_FILE:-}" = "${CI_PROJECT_DIR}/gcp-sa-key.json" ] && [ -f "${GCP_KEY_FILE}" ]; then
+        rm -f "${GCP_KEY_FILE}"
+      fi
+  artifacts:
+    when: always
+    expire_in: 7 days
+    reports:
+      dotenv: build.env
+    paths:
+      - build.env
+
+.gcp-deploy-template:
+  stage: deploy
+  image:
+    name: google/cloud-sdk:slim
+    entrypoint: [""]
+  before_script:
+    - |
+      set -euo pipefail
+
+      : "${TARGET_ENV_NAME:?TARGET_ENV_NAME is required}"
+      : "${GCP_PROJECT_ID:?GCP_PROJECT_ID is required}"
+      : "${GCP_REGION:?GCP_REGION is required}"
+      : "${GCP_CLOUD_RUN_SERVICE:?GCP_CLOUD_RUN_SERVICE is required}"
+      : "${GCP_SERVICE_ACCOUNT_KEY:?GCP_SERVICE_ACCOUNT_KEY is required}"
+      : "${IMAGE_URI:?IMAGE_URI is required from build job artifact}"
+
+      if [ -f "${GCP_SERVICE_ACCOUNT_KEY}" ]; then
+        export GCP_KEY_FILE="${GCP_SERVICE_ACCOUNT_KEY}"
+      else
+        export GCP_KEY_FILE="${CI_PROJECT_DIR}/gcp-sa-key.json"
+        printf '%s' "${GCP_SERVICE_ACCOUNT_KEY}" > "${GCP_KEY_FILE}"
+      fi
+
+      gcloud auth activate-service-account --key-file="${GCP_KEY_FILE}"
+      gcloud config set project "${GCP_PROJECT_ID}"
+  script:
+    - |
+      set -euo pipefail
       gcloud run deploy "${GCP_CLOUD_RUN_SERVICE}" \
         --project "${GCP_PROJECT_ID}" \
         --region "${GCP_REGION}" \
@@ -92,7 +147,7 @@ mirror_to_github:
         --platform managed \
         --allow-unauthenticated \
         --quiet
-    - |
+
       SERVICE_URL="$(gcloud run services describe "${GCP_CLOUD_RUN_SERVICE}" --project "${GCP_PROJECT_ID}" --region "${GCP_REGION}" --format='value(status.url)')"
       printf 'SERVICE_URL=%s\nIMAGE_URI=%s\n' "${SERVICE_URL}" "${IMAGE_URI}" > deploy.env
   after_script:
@@ -108,17 +163,30 @@ mirror_to_github:
     paths:
       - deploy.env
 
-gcp_deploy_develop:
-  extends: .gcp-deploy-template
+gcp_quality_develop:
+  extends: .frontend-quality-template
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      when: manual
+      allow_failure: true
     - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual
+      allow_failure: true
+
+gcp_build_develop:
+  extends: .gcp-build-template
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual
+      allow_failure: true
   variables:
     TARGET_ENV_NAME: development
     GCP_PROJECT_ID: $GCP_PROJECT_ID_DEVELOP
     GCP_REGION: $GCP_REGION_DEVELOP
     GCP_ARTIFACT_REGISTRY_REPOSITORY: $GCP_ARTIFACT_REGISTRY_REPOSITORY_DEVELOP
-    GCP_CLOUD_RUN_SERVICE: $GCP_CLOUD_RUN_SERVICE_DEVELOP
     GCP_SERVICE_ACCOUNT_KEY: $GCP_SERVICE_ACCOUNT_KEY_DEVELOP
     VITE_API_BASE_URL: https://worklyhub-orchestrator-dev-4njpekm7ca-rj.a.run.app/api/v1
     VITE_CURRENCY_LOCALE: $VITE_CURRENCY_LOCALE_DEVELOP
@@ -130,22 +198,55 @@ gcp_deploy_develop:
     VITE_FIREBASE_STORAGE_BUCKET: $VITE_FIREBASE_STORAGE_BUCKET_DEVELOP
     VITE_FIREBASE_MESSAGING_SENDER_ID: $VITE_FIREBASE_MESSAGING_SENDER_ID_DEVELOP
     VITE_FIREBASE_APP_ID: $VITE_FIREBASE_APP_ID_DEVELOP
+  resource_group: gcp-development-build
+
+gcp_deploy_develop:
+  extends: .gcp-deploy-template
+  needs:
+    - job: gcp_build_develop
+      artifacts: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+      when: manual
+      allow_failure: true
+  variables:
+    TARGET_ENV_NAME: development
+    GCP_PROJECT_ID: $GCP_PROJECT_ID_DEVELOP
+    GCP_REGION: $GCP_REGION_DEVELOP
+    GCP_CLOUD_RUN_SERVICE: $GCP_CLOUD_RUN_SERVICE_DEVELOP
+    GCP_SERVICE_ACCOUNT_KEY: $GCP_SERVICE_ACCOUNT_KEY_DEVELOP
   environment:
     name: development
     deployment_tier: development
   resource_group: gcp-development
 
-gcp_deploy_master:
-  extends: .gcp-deploy-template
+gcp_quality_master:
+  extends: .frontend-quality-template
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: manual
+      allow_failure: true
     - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+      allow_failure: true
+
+gcp_build_master:
+  extends: .gcp-build-template
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+      allow_failure: true
   variables:
     TARGET_ENV_NAME: production
     GCP_PROJECT_ID: $GCP_PROJECT_ID_MASTER
     GCP_REGION: $GCP_REGION_MASTER
     GCP_ARTIFACT_REGISTRY_REPOSITORY: $GCP_ARTIFACT_REGISTRY_REPOSITORY_MASTER
-    GCP_CLOUD_RUN_SERVICE: $GCP_CLOUD_RUN_SERVICE_MASTER
     GCP_SERVICE_ACCOUNT_KEY: $GCP_SERVICE_ACCOUNT_KEY_MASTER
     VITE_API_BASE_URL: $VITE_API_BASE_URL_MASTER
     VITE_CURRENCY_LOCALE: $VITE_CURRENCY_LOCALE_MASTER
@@ -157,6 +258,26 @@ gcp_deploy_master:
     VITE_FIREBASE_STORAGE_BUCKET: $VITE_FIREBASE_STORAGE_BUCKET_MASTER
     VITE_FIREBASE_MESSAGING_SENDER_ID: $VITE_FIREBASE_MESSAGING_SENDER_ID_MASTER
     VITE_FIREBASE_APP_ID: $VITE_FIREBASE_APP_ID_MASTER
+  resource_group: gcp-production-build
+
+gcp_deploy_master:
+  extends: .gcp-deploy-template
+  needs:
+    - job: gcp_build_master
+      artifacts: true
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual
+      allow_failure: true
+  variables:
+    TARGET_ENV_NAME: production
+    GCP_PROJECT_ID: $GCP_PROJECT_ID_MASTER
+    GCP_REGION: $GCP_REGION_MASTER
+    GCP_CLOUD_RUN_SERVICE: $GCP_CLOUD_RUN_SERVICE_MASTER
+    GCP_SERVICE_ACCOUNT_KEY: $GCP_SERVICE_ACCOUNT_KEY_MASTER
   environment:
     name: production
     deployment_tier: production
