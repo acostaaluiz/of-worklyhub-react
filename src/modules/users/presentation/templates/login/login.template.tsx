@@ -23,11 +23,12 @@ import { LoginForm, type LoginFormCopy } from "../../components/login-form/login
 
 type Props = {
   onSubmit?: (values: { email: string; password: string }) => Promise<void>;
+  onGoogleSignIn?: () => Promise<void>;
   onRegister?: () => void;
   onForgotPassword?: () => void;
 };
 
-export function LoginTemplate({ onSubmit, onRegister, onForgotPassword }: Props) {
+export function LoginTemplate({ onSubmit, onGoogleSignIn, onRegister, onForgotPassword }: Props) {
   const { t } = useTranslation();
   const copy: LoginFormCopy = {
     title: t("users.auth.login.form.title"),
@@ -44,7 +45,6 @@ export function LoginTemplate({ onSubmit, onRegister, onForgotPassword }: Props)
     submit: t("users.auth.login.form.submit"),
     continueWith: t("users.auth.common.continueWith"),
     googleAriaLabel: t("users.auth.common.googleAriaLabel"),
-    facebookAriaLabel: t("users.auth.common.facebookAriaLabel"),
     notMember: t("users.auth.login.form.notMember"),
     registerNow: t("users.auth.login.form.registerNow"),
   };
@@ -96,6 +96,7 @@ export function LoginTemplate({ onSubmit, onRegister, onForgotPassword }: Props)
               >
                 <LoginForm
                   onSubmit={onSubmit}
+                  onGoogleSignIn={onGoogleSignIn}
                   onRegister={onRegister}
                   onForgotPassword={onForgotPassword}
                   copy={copy}

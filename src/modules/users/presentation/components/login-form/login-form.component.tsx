@@ -13,7 +13,6 @@ import {
 } from "../presentation.styles";
 
 import { GoogleIcon } from "@shared/ui/components/icon/brand/google.icon";
-import { FacebookIcon } from "@shared/ui/components/icon/brand/facebook.icon";
 import { ActionsRow, ButtonIcon, FieldIcon, TitleBlock } from "@shared/styles/global";
 
 import { BaseComponent } from "@shared/base/base.component";
@@ -39,13 +38,13 @@ export type LoginFormCopy = {
   submit: string;
   continueWith: string;
   googleAriaLabel: string;
-  facebookAriaLabel: string;
   notMember: string;
   registerNow: string;
 };
 
 type Props = BaseProps & {
   onSubmit?: (values: LoginFormValues) => Promise<void>;
+  onGoogleSignIn?: () => Promise<void>;
   onRegister?: () => void;
   onForgotPassword?: () => void;
   copy: LoginFormCopy;
@@ -164,12 +163,18 @@ export class LoginForm extends BaseComponent<Props> {
               </Divider>
 
               <SocialRow>
-                <SocialButton size="large" aria-label={copy.googleAriaLabel}>
+                <SocialButton
+                  size="large"
+                  aria-label={copy.googleAriaLabel}
+                  data-cy="login-google-button"
+                  onClick={() =>
+                    this.runAsync(async () => {
+                      if (!this.props.onGoogleSignIn) return;
+                      await this.props.onGoogleSignIn();
+                    }, { setLoading: false })
+                  }
+                >
                   <GoogleIcon size={18} />
-                </SocialButton>
-
-                <SocialButton size="large" aria-label={copy.facebookAriaLabel}>
-                   <FacebookIcon size={64} />
                 </SocialButton>
               </SocialRow>
 

@@ -2,6 +2,7 @@
 jest.mock("@core/auth/firebase/firebase-auth.service", () => ({
   firebaseAuthService: {
     signInWithEmail: jest.fn(),
+    signInWithGoogle: jest.fn(),
     sendPasswordReset: jest.fn(),
     signOut: jest.fn(),
   },
@@ -171,6 +172,45 @@ describe("UsersAuthService", () => {
       uid: "uid-1",
       claims: { role: "owner" },
       email: "person@worklyhub.com",
+    });
+    expect(mockedAuthManager.setTokens).toHaveBeenCalledWith(token, null);
+    expect(service.getSessionValue()).toEqual(session);
+  });
+
+  it("signs in with Google, validates token and stores enriched session", async () => {
+    const token = createUnsignedJwt({
+      exp: Math.floor((Date.now() + 60 * 60 * 1000) / 1000),
+    });
+    mockedFirebaseService.signInWithGoogle.mockResolvedValue({
+      token,
+      user: {
+        email: "google@worklyhub.com",
+        displayName: "Google User",
+        photoURL: "https://photo.example/user.png",
+      },
+    } as any);
+    mockedAuthApi.verifyToken.mockResolvedValue({
+      uid: "uid-google-1",
+      claims: { role: "owner", email: "google@worklyhub.com", name: "Google User" },
+    });
+    const service = new UsersAuthService();
+
+    const session = await service.signInWithGoogle();
+
+    expect(mockedFirebaseService.signInWithGoogle).toHaveBeenCalledTimes(1);
+    expect(mockedAuthApi.verifyToken).toHaveBeenCalledWith(token);
+    expect(mockedStorage.set).toHaveBeenCalledWith(
+      "auth.session",
+      expect.any(String),
+    );
+    const storedRaw = mockedStorage.set.mock.calls[0]?.[1];
+    const parsedStored = parseSessionPayload(storedRaw);
+    expect(parsedStored).toMatchObject({
+      uid: "uid-google-1",
+      claims: { role: "owner", email: "google@worklyhub.com", name: "Google User" },
+      email: "google@worklyhub.com",
+      name: "Google User",
+      photoUrl: "https://photo.example/user.png",
     });
     expect(mockedAuthManager.setTokens).toHaveBeenCalledWith(token, null);
     expect(service.getSessionValue()).toEqual(session);

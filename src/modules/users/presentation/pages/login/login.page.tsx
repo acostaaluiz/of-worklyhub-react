@@ -19,6 +19,39 @@ export class LoginPage extends BasePage {
   protected override renderPage(): React.ReactNode {
     const navigate = (path: string) => navigateTo(path);
 
+    const handleAuthError = (err: unknown) => {
+      const errObj = err as DataMap | null;
+      const candidate = errObj?.code ?? errObj?.name ?? null;
+      const code = typeof candidate === "string" ? candidate : null;
+
+      if (code) {
+        if (code.includes("popup-closed-by-user")) {
+          return;
+        }
+        if (code.includes("wrong-password") || code.includes("INVALID_PASSWORD") || code.includes("invalid-password")) {
+          message.error(appI18n.t("users.auth.login.feedback.invalidCredentials"));
+          return;
+        }
+        if (code.includes("user-not-found") || code.includes("no-user")) {
+          message.error(appI18n.t("users.auth.login.feedback.userNotFound"));
+          return;
+        }
+        if (code.includes("too-many-requests")) {
+          message.error(appI18n.t("users.auth.login.feedback.tooManyAttempts"));
+          return;
+        }
+      }
+
+      if (err instanceof AppError) {
+        if (err.statusCode === 401) {
+          message.error(appI18n.t("users.auth.login.feedback.unauthorized"));
+          return;
+        }
+      }
+
+      message.error(appI18n.t("users.auth.login.feedback.genericError"));
+    };
+
     const handleLogin = async (values: LoginValues) => {
       loadingService.show();
       try {
@@ -28,33 +61,26 @@ export class LoginPage extends BasePage {
               await usersAuthService.signIn(values.email, values.password);
               // navigation will be handled by the auth guard (RedirectIfAuthenticated)
             } catch (err) {
-              const errObj = err as DataMap | null;
-              const candidate = errObj?.code ?? errObj?.name ?? null;
-              const code = typeof candidate === "string" ? candidate : null;
+              handleAuthError(err);
+            }
+          },
+          { setLoading: false }
+        );
+      } finally {
+        loadingService.hide();
+      }
+    };
 
-              if (code) {
-                if (code.includes("wrong-password") || code.includes("INVALID_PASSWORD") || code.includes("invalid-password")) {
-                  message.error(appI18n.t("users.auth.login.feedback.invalidCredentials"));
-                  return;
-                }
-                if (code.includes("user-not-found") || code.includes("no-user")) {
-                  message.error(appI18n.t("users.auth.login.feedback.userNotFound"));
-                  return;
-                }
-                if (code.includes("too-many-requests")) {
-                  message.error(appI18n.t("users.auth.login.feedback.tooManyAttempts"));
-                  return;
-                }
-              }
-
-              if (err instanceof AppError) {
-                if (err.statusCode === 401) {
-                  message.error(appI18n.t("users.auth.login.feedback.unauthorized"));
-                  return;
-                }
-              }
-
-              message.error(appI18n.t("users.auth.login.feedback.genericError"));
+    const handleGoogleLogin = async () => {
+      loadingService.show();
+      try {
+        await this.runAsync(
+          async () => {
+            try {
+              await usersAuthService.signInWithGoogle();
+              // navigation will be handled by the auth guard (RedirectIfAuthenticated)
+            } catch (err) {
+              handleAuthError(err);
             }
           },
           { setLoading: false }
@@ -67,6 +93,7 @@ export class LoginPage extends BasePage {
     return (
       <LoginTemplate
         onSubmit={handleLogin}
+        onGoogleSignIn={handleGoogleLogin}
         onRegister={() => navigate("/register")}
         onForgotPassword={() => navigate("/forgot-password")}
       />

@@ -109,6 +109,33 @@ export class UsersAuthService {
     return this.session$.getValue();
   }
 
+  private asNonEmptyString(value: unknown): string | undefined {
+    if (typeof value !== "string") return undefined;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
+  }
+
+  private persistSession(
+    token: string,
+    verified: { uid: string; claims: DataValue },
+    profile?: { email?: string; name?: string; photoUrl?: string }
+  ): UserSession {
+    const session: UserSession = {
+      uid: verified.uid,
+      claims: verified.claims,
+      ...(profile?.email ? { email: profile.email } : {}),
+      ...(profile?.name ? { name: profile.name } : {}),
+      ...(profile?.photoUrl ? { photoUrl: profile.photoUrl } : {}),
+    };
+
+    localStorageProvider.set(SESSION_KEY, serializeSession(session, token));
+    authManager.setTokens(token, null);
+    this.session$.next(session);
+    themeService.refreshForCurrentUser();
+
+    return session;
+  }
+
   async signIn(email: string, password: string): Promise<UserSession> {
     // Authenticate in Firebase (client SDK)
     const { token } = await firebaseAuthService.signInWithEmail(
@@ -120,21 +147,28 @@ export class UsersAuthService {
     const verified = await authApi.verifyToken(token);
 
     // persist minimal session
-    const session: UserSession = {
-      uid: verified.uid,
-      claims: verified.claims,
-      email,
-    };
-    localStorageProvider.set(SESSION_KEY, serializeSession(session, token));
+    return this.persistSession(token, verified, { email });
+  }
 
-    // set tokens for http client
-    authManager.setTokens(token, null);
+  async signInWithGoogle(): Promise<UserSession> {
+    const { token, user } = await firebaseAuthService.signInWithGoogle();
+    const verified = await authApi.verifyToken(token);
 
-    // update subject
-    this.session$.next(session);
-    themeService.refreshForCurrentUser();
+    const email =
+      this.asNonEmptyString(user.email) ??
+      this.asNonEmptyString((verified.claims as DataMap | null)?.email);
+    const name =
+      this.asNonEmptyString(user.displayName) ??
+      this.asNonEmptyString((verified.claims as DataMap | null)?.name);
+    const photoUrl =
+      this.asNonEmptyString(user.photoURL) ??
+      this.asNonEmptyString((verified.claims as DataMap | null)?.picture);
 
-    return session;
+    return this.persistSession(token, verified, {
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+      ...(photoUrl ? { photoUrl } : {}),
+    });
   }
 
   async register(

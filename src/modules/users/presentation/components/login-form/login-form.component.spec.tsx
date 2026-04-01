@@ -19,7 +19,6 @@ describe("LoginForm", () => {
           submit: "Submit",
           continueWith: "Continue with",
           googleAriaLabel: "Google",
-          facebookAriaLabel: "Facebook",
           notMember: "Not member",
           registerNow: "Register",
         }}

@@ -1,7 +1,9 @@
 import type { RefreshResult } from "@core/auth/interfaces/auth-provider.interface";
 import { firebaseAuth } from "./firebase";
 import {
+  GoogleAuthProvider,
   signInWithEmailAndPassword,
+  signInWithPopup,
   sendPasswordResetEmail,
   signOut as firebaseSignOut,
   type UserCredential,
@@ -28,6 +30,19 @@ export class FirebaseAuthService {
       email,
       password,
     );
+    const user = cred.user;
+    const token = await user.getIdToken(false);
+    this.setToken(token);
+    return { token, user };
+  }
+
+  async signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    provider.addScope("email");
+    provider.addScope("profile");
+    provider.setCustomParameters({ prompt: "select_account" });
+
+    const cred: UserCredential = await signInWithPopup(firebaseAuth, provider);
     const user = cred.user;
     const token = await user.getIdToken(false);
     this.setToken(token);

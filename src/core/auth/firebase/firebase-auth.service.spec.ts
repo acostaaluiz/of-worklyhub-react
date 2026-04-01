@@ -8,7 +8,12 @@ jest.mock("./firebase", () => ({
 }));
 
 jest.mock("firebase/auth", () => ({
+  GoogleAuthProvider: jest.fn().mockImplementation(() => ({
+    addScope: jest.fn(),
+    setCustomParameters: jest.fn(),
+  })),
   signInWithEmailAndPassword: jest.fn(),
+  signInWithPopup: jest.fn(),
   sendPasswordResetEmail: jest.fn(),
   signOut: jest.fn(),
 }));
@@ -26,6 +31,7 @@ import { firebaseAuth } from "./firebase";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
 import { createUnsignedJwt } from "@core/auth/session-security";
 import {
+  signInWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
@@ -50,6 +56,7 @@ function setCurrentUser(
 describe("FirebaseAuthService", () => {
   const mockedStorage = jest.mocked(localStorageProvider);
   const mockedSignIn = jest.mocked(signInWithEmailAndPassword);
+  const mockedSignInWithPopup = jest.mocked(signInWithPopup);
   const mockedSignOut = jest.mocked(firebaseSignOut);
   const mockedReset = jest.mocked(sendPasswordResetEmail);
 
@@ -88,6 +95,20 @@ describe("FirebaseAuthService", () => {
     service.setToken("cached-token");
 
     await expect(service.getToken()).resolves.toBe("cached-token");
+  });
+
+  it("signs in with Google popup, reads token and persists it", async () => {
+    const user = createUser("google-token");
+    mockedSignInWithPopup.mockResolvedValue({ user } as any);
+    const service = new FirebaseAuthService();
+
+    const result = await service.signInWithGoogle();
+
+    expect(mockedSignInWithPopup).toHaveBeenCalledTimes(1);
+    expect(user.getIdToken).toHaveBeenCalledWith(false);
+    expect(result.token).toBe("google-token");
+    expect(service.getAccessToken()).toBe("google-token");
+    expect(mockedStorage.set).toHaveBeenCalledWith("auth.idToken", "google-token");
   });
 
   it("refreshes token from current user in getToken", async () => {
