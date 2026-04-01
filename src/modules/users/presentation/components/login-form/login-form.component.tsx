@@ -167,6 +167,15 @@ export class LoginForm extends BaseComponent<Props> {
                   size="large"
                   aria-label={copy.googleAriaLabel}
                   data-cy="login-google-button"
+                  style={{
+                    width: "100%",
+                    maxWidth: 280,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "var(--space-2)",
+                    paddingInline: "var(--space-4)",
+                  }}
                   onClick={() =>
                     this.runAsync(async () => {
                       if (!this.props.onGoogleSignIn) return;
@@ -175,6 +184,7 @@ export class LoginForm extends BaseComponent<Props> {
                   }
                 >
                   <GoogleIcon size={18} />
+                  <span>{copy.googleAriaLabel}</span>
                 </SocialButton>
               </SocialRow>
 
