@@ -26,7 +26,7 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     return {
       name: appI18n.t("billing.planSelector.fallbackPlans.standard.name"),
       cycle: appI18n.t("billing.orderSummary.cycle.yearly"),
-      priceCents: 59900,
+      priceCents: 75000,
       savingsLabel: appI18n.t("billing.orderSummary.savingsLabel"),
       features: [
         appI18n.t("billing.orderSummary.mockFeatures.users"),

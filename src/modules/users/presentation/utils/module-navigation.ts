@@ -25,7 +25,7 @@ export function resolveModulePath(
   }
   if (key.includes("schedule") || key.includes("calendar")) return "/schedule/landing";
   if (key.includes("work-order") || key.includes("work order") || key.includes("workorder")) return "/work-order/landing";
-  if (key.includes("client")) return "/clients/landing";
+  if (key.includes("client")) return undefined;
   if (key.includes("service") || key.includes("services") || key.includes("catalog")) return "/company/landing";
   if (key.includes("inventory") || key.includes("stock")) return "/inventory/landing";
   if (key.includes("people") || key.includes("team") || key.includes("staff")) return "/people/landing";

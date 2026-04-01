@@ -84,8 +84,8 @@ export class PlanSelector extends BaseComponent<
         id: "starter",
         name: appI18n.t("billing.planSelector.fallbackPlans.starter.name"),
         description: appI18n.t("billing.planSelector.fallbackPlans.starter.description"),
-        monthlyPriceCents: 2900,
-        yearlyPriceCents: 29900,
+        monthlyPriceCents: 3500,
+        yearlyPriceCents: 35000,
         currency: "USD",
         cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", {
           planName: appI18n.t("billing.planSelector.fallbackPlans.starter.name"),
@@ -96,8 +96,8 @@ export class PlanSelector extends BaseComponent<
         id: "standard",
         name: appI18n.t("billing.planSelector.fallbackPlans.standard.name"),
         description: appI18n.t("billing.planSelector.fallbackPlans.standard.description"),
-        monthlyPriceCents: 5900,
-        yearlyPriceCents: 59900,
+        monthlyPriceCents: 7500,
+        yearlyPriceCents: 75000,
         currency: "USD",
         highlight: true,
         cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", {
@@ -110,7 +110,7 @@ export class PlanSelector extends BaseComponent<
         name: appI18n.t("billing.planSelector.fallbackPlans.premium.name"),
         description: appI18n.t("billing.planSelector.fallbackPlans.premium.description"),
         monthlyPriceCents: 9900,
-        yearlyPriceCents: 99900,
+        yearlyPriceCents: 99000,
         currency: "USD",
         cta: appI18n.t("billing.planSelector.cta.choosePlanNamed", {
           planName: appI18n.t("billing.planSelector.fallbackPlans.premium.name"),

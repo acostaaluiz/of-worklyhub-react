@@ -94,6 +94,19 @@ function normalizeProfile(
   };
 }
 
+function sanitizeOverviewModules(
+  modules: UserOverviewModule[] | null | undefined
+): UserOverviewModule[] {
+  if (!Array.isArray(modules)) return [];
+
+  return modules.filter((module) => {
+    const uid = toNormalizedModuleKey(module?.uid);
+    const name = toNormalizedModuleKey(module?.name);
+    const key = uid ?? name ?? "";
+    return key !== "clients" && key !== "client";
+  });
+}
+
 function getCurrentSessionEmail(): string | null {
   const raw = localStorageProvider.get(SESSION_KEY);
   const session = parseSessionIdentity(raw);
@@ -131,15 +144,21 @@ export class UsersOverviewService {
       }
 
       const cached = parsed?.overview ?? null;
+      const sanitized = cached
+        ? {
+            ...cached,
+            modules: sanitizeOverviewModules(cached.modules),
+          }
+        : null;
       if (
-        (cached?.modules && cached.modules.length === 0) ||
-        isLegacyCheckoutFallbackModules(cached?.modules)
+        (sanitized?.modules && sanitized.modules.length === 0) ||
+        isLegacyCheckoutFallbackModules(sanitized?.modules)
       ) {
         return { overview: null, language: null };
       }
 
       return {
-        overview: cached,
+        overview: sanitized,
         language: parsed.language,
       };
     } catch {
@@ -209,7 +228,7 @@ export class UsersOverviewService {
       const payload = unwrapOverviewPayload(res);
       const profileRaw = (payload?.profile ?? null) as RawProfile | null;
       const normalizedProfile = normalizeProfile(profileRaw);
-      const modules = Array.isArray(payload?.modules) ? payload?.modules : [];
+      const modules = sanitizeOverviewModules(payload?.modules);
       const overview: UserOverview = {
         profile: normalizedProfile,
         modules,
@@ -259,7 +278,7 @@ export class UsersOverviewService {
         : {}),
     };
 
-    const currentModules = Array.isArray(existing?.modules) ? existing?.modules : [];
+    const currentModules = sanitizeOverviewModules(existing?.modules);
     const modules = currentModules;
 
     this.persistOverview({ profile: nextProfile, modules });

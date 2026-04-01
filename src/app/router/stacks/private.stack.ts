@@ -5,7 +5,6 @@ import { billingStackRoutes } from "@modules/billing/presentation/stacks/billing
 import { scheduleStackRoutes } from "@modules/schedule/presentation/stacks/schedule.stack";
 import { dashboardStackRoutes } from "@modules/dashboard/presentation/stack/dashboard.stack";
 import { financeStackRoutes } from "@modules/finance/presentation/stacks/finance.stack";
-import clientsStackRoutes from "@modules/clients/presentation/stacks/clients.stack";
 import { inventoryStackRoutes } from "@modules/inventory/presentation/stacks/inventory.stack";
 import { peopleStackRoutes } from "@modules/people/presentation/stacks/people.stack";
 import { workOrderStackRoutes } from "@modules/work-order/presentation/stacks/work-order.stack";
@@ -18,7 +17,6 @@ export const privateStackRoutes: RouteObject[] = [
   ...scheduleStackRoutes,
   ...dashboardStackRoutes,
   ...financeStackRoutes,
-  ...clientsStackRoutes,
   ...inventoryStackRoutes,
   ...peopleStackRoutes,
   ...workOrderStackRoutes,

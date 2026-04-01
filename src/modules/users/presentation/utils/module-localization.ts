@@ -42,7 +42,7 @@ export function resolveModuleCatalogKey(
   const key = normalizeText(`${service.uid ?? ""} ${service.name ?? ""} ${service.description ?? ""}`);
 
   if (to === "/billing/landing" || key.includes("billing") || key.includes("plan") || key.includes("faturamento") || key.includes("assinatura") || key.includes("cobranca")) return "billing";
-  if (to === "/clients/landing" || key.includes("client") || key.includes("cliente")) return "clients";
+  if (to === "/clients/landing") return "clients";
   if (to === "/dashboard/landing" || key.includes("dashboard") || key.includes("indicador") || key.includes("kpi")) return "dashboard";
   if (to === "/finance/landing" || key.includes("finance") || key.includes("payment") || key.includes("financial") || key.includes("financeiro") || key.includes("pagamento")) return "finance";
   if (

@@ -114,11 +114,13 @@ function resolveTutorialsCatalog(language: string): ModuleTutorial[] {
   const localizedCatalog =
     normalizedLanguage === "pt-BR" ? tutorialsCatalogPtBR : tutorialsCatalogEnUS;
 
-  return localizedCatalog.map((module) => ({
-    ...module,
-    route: MODULE_META[module.id].route,
-    icon: MODULE_META[module.id].icon,
-  }));
+  return localizedCatalog
+    .filter((module) => module.id !== "clients")
+    .map((module) => ({
+      ...module,
+      route: MODULE_META[module.id].route,
+      icon: MODULE_META[module.id].icon,
+    }));
 }
 
 function ensureSlideIndex(index: number, slidesTotal: number): number {
