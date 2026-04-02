@@ -28,16 +28,24 @@ export const SocialButton = styled(BasePrimaryButton)`
 `;
 
 export const SocialWideButton = styled(SocialButton)`
-  width: 100%;
-  max-width: 280px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 44px;
-  height: auto !important;
-  padding: 10px var(--space-4) !important;
-  line-height: 1.2 !important;
+  &.ant-btn,
+  &.ant-btn-lg {
+    width: 100%;
+    max-width: 280px;
+    min-height: 46px;
+    height: 46px !important;
+    padding: 0 var(--space-4) !important;
+    border-radius: var(--radius-sm);
+  }
+
+  > span {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    line-height: 1.2;
+  }
 `;
 
 export const BottomRow = styled.div`
