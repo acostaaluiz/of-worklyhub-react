@@ -13,6 +13,7 @@ jest.mock("@core/storage/local-storage.provider", () => ({
 import { CompaniesApi } from "./companies-api";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
 import { CompanyService } from "./company.service";
+import { AppError } from "@core/errors/app-error";
 
 type CompaniesApiMock = {
   createWorkspace: jest.Mock;
@@ -83,11 +84,23 @@ describe("CompanyService", () => {
     expect(mockedStorage.remove).toHaveBeenCalledWith("company.workspace");
   });
 
-  it("returns null on fetchWorkspaceByEmail errors (auth-flow safe)", async () => {
-    apiMock.getWorkspace.mockRejectedValueOnce(new Error("workspace-failure"));
+  it("returns null on expected onboarding/auth errors during fetchWorkspaceByEmail", async () => {
+    apiMock.getWorkspace.mockRejectedValueOnce(
+      new AppError({ kind: "NotFound", message: "workspace_not_found", statusCode: 404 })
+    );
     const service = new CompanyService();
 
     await expect(service.fetchWorkspaceByEmail("owner@clinic.com")).resolves.toBeNull();
+    expect(mockedStorage.remove).toHaveBeenCalledWith("company.workspace");
+  });
+
+  it("throws unexpected workspace fetch errors", async () => {
+    apiMock.getWorkspace.mockRejectedValueOnce(new Error("workspace-failure"));
+    const service = new CompanyService();
+
+    await expect(service.fetchWorkspaceByEmail("owner@clinic.com")).rejects.toMatchObject({
+      message: "workspace-failure",
+    });
   });
 
   it("deduplicates concurrent fetchWorkspaceByEmail calls for the same email", async () => {

@@ -104,9 +104,17 @@ export class CompanyService {
         // no workspace found
         this.clear();
         return null;
-      } catch {
-        // on error, treat as no workspace (do not throw to avoid breaking auth flow)
-        return null;
+      } catch (error) {
+        const appError = toAppError(error);
+        const status = appError.statusCode ?? 0;
+
+        if (status === 400 || status === 401 || status === 403 || status === 404) {
+          // Expected onboarding/auth states should not break navigation flows.
+          this.clear();
+          return null;
+        }
+
+        throw appError;
       } finally {
         this.pendingWorkspaceByEmail.delete(normalizedEmail);
       }
