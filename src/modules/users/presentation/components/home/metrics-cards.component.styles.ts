@@ -30,6 +30,7 @@ const metricSurfaceStyles = css`
 
 export const MetricCard = styled.article`
   ${metricSurfaceStyles}
+  width: 100%;
   height: 100%;
   min-height: 100px;
   padding: 10px;

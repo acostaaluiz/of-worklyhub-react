@@ -7,6 +7,9 @@ const GrowthLandingPage = lazy(
 const GrowthAutopilotPage = lazy(
   () => import("@modules/growth/presentation/pages/autopilot/autopilot.page")
 );
+const Clients360Page = lazy(
+  () => import("@modules/clients/presentation/pages/customer-360/customer-360.page")
+);
 
 export const growthStackRoutes: RouteObject[] = [
   {
@@ -28,6 +31,15 @@ export const growthStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <GrowthAutopilotPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "growth.clients-360",
+        path: "clients-360",
+        element: (
+          <React.Suspense fallback={null}>
+            <Clients360Page />
           </React.Suspense>
         ),
       },

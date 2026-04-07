@@ -23,6 +23,28 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const DEFAULT_WINDOW_DAYS = 30;
 const DEFAULT_LIMIT = 20;
+const GROWTH_BACKEND_FLAG_KEY = "VITE_GROWTH_BACKEND_ENABLED";
+
+type RuntimeEnv = Record<string, unknown> & {
+  VITE_GROWTH_BACKEND_ENABLED?: unknown;
+};
+
+function readGrowthBackendFlag(): string | null {
+  const runtimeValue = (globalThis as { __WORKLYHUB_RUNTIME_ENV__?: RuntimeEnv })
+    .__WORKLYHUB_RUNTIME_ENV__?.[GROWTH_BACKEND_FLAG_KEY];
+  if (typeof runtimeValue === "string") return runtimeValue.trim();
+
+  const viteValue = import.meta.env?.[GROWTH_BACKEND_FLAG_KEY as keyof ImportMetaEnv];
+  if (typeof viteValue === "string") return viteValue.trim();
+
+  return null;
+}
+
+function isGrowthBackendEnabled(): boolean {
+  const normalized = readGrowthBackendFlag()?.toLowerCase();
+  if (!normalized) return false;
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
+}
 
 const BASE_FALLBACK_PLAYBOOKS: Omit<GrowthPlaybook, "workspaceId">[] = [
   {
@@ -359,6 +381,7 @@ function computeSummaryFromOpportunities(
 
 export class GrowthService {
   private readonly api = new GrowthApi(httpClient);
+  private readonly backendEnabled = isGrowthBackendEnabled();
 
   private readonly inFlightDashboard = new Map<string, Promise<GrowthDashboardBundle>>();
 
@@ -470,6 +493,18 @@ export class GrowthService {
     if (inFlight) return inFlight;
 
     const request = (async () => {
+      if (!this.backendEnabled) {
+        return this.buildFallbackBundle(workspaceId, {
+          workspaceId,
+          search,
+          status: normalizedStatus ?? "all",
+          from,
+          to,
+          limit,
+          offset,
+        });
+      }
+
       try {
         const [opportunitiesResponse, playbooksResponse, summaryResponse] = await Promise.all([
           this.api.listOpportunities({
@@ -548,6 +583,11 @@ export class GrowthService {
       playbooks: normalized,
     };
 
+    if (!this.backendEnabled) {
+      this.fallbackPlaybooksByWorkspace.set(normalizedWorkspaceId, normalized);
+      return normalized;
+    }
+
     try {
       const response = await this.api.upsertPlaybooks(payload);
       const rows = response.playbooks ?? response.items ?? [];
@@ -585,6 +625,15 @@ export class GrowthService {
       throw toAppError("Select at least one opportunity to dispatch.", {
         kind: "Validation",
       });
+    }
+
+    if (!this.backendEnabled) {
+      this.setStatusOverrides(normalizedWorkspaceId, normalizedIds, "sent");
+      return {
+        workspaceId: normalizedWorkspaceId,
+        dispatchedCount: normalizedIds.length,
+        source: "fallback",
+      };
     }
 
     try {
