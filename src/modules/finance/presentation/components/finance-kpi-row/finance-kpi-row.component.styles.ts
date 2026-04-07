@@ -28,6 +28,38 @@ export const KpiTop = styled.div`
   min-width: 0;
 `;
 
+export const KpiLead = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+`;
+
+export const KpiIconBadge = styled.div<{ $kind: string }>`
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  background:
+    radial-gradient(circle at 25% 25%, rgba(0, 214, 160, 0.14), transparent 52%),
+    color-mix(in srgb, var(--color-surface-2) 84%, transparent);
+  color: var(--color-text);
+
+  ${({ $kind }) =>
+    $kind === "expenses"
+      ? `
+    background:
+      radial-gradient(circle at 25% 25%, rgba(255, 92, 105, 0.2), transparent 52%),
+      color-mix(in srgb, var(--color-surface-2) 84%, transparent);
+    color: #ff8f98;
+  `
+      : ""}
+`;
+
 export const KpiValue = styled.div`
   font-size: 28px;
   font-weight: 900;

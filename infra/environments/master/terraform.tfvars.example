@@ -12,5 +12,6 @@ cpu                = "1"
 memory             = "512Mi"
 
 runtime_env_vars = {
-  ENVIRONMENT = "production"
+  ENVIRONMENT                      = "production"
+  VITE_BILLING_DEV_BYPASS_GATEWAY = "0"
 }

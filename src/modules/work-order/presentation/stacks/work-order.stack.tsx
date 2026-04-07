@@ -1,7 +1,8 @@
 import React, { lazy } from "react";
 import type { RouteObject } from "react-router-dom";
+import { lazyWithRetry } from "@core/navigation/lazy-with-retry";
 
-const WorkOrderLandingPage = lazy(
+const WorkOrderLandingPage = lazyWithRetry(
   () => import("@modules/work-order/presentation/pages/landing/landing.page")
 );
 const WorkOrdersPage = lazy(

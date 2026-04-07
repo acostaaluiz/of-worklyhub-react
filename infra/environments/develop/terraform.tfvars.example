@@ -1,8 +1,9 @@
 project_id              = "worklyhub"
-region                  = "us-central1"
+region                  = "southamerica-east1"
 google_credentials_file = "C:/replace/with/your/terraform-sa.json"
 
 artifact_registry_repository_id = "worklyhub-frontend-dev"
+artifact_registry_location      = "us-central1"
 cloud_run_service_name          = "worklyhub-frontend-dev"
 runtime_service_account_id      = "worklyhub-fe-dev-run"
 
@@ -12,5 +13,6 @@ cpu                = "1"
 memory             = "512Mi"
 
 runtime_env_vars = {
-  ENVIRONMENT = "development"
+  ENVIRONMENT                      = "development"
+  VITE_BILLING_DEV_BYPASS_GATEWAY = "1"
 }

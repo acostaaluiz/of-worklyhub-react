@@ -5,6 +5,7 @@ import styled, { keyframes } from "styled-components";
 import { useTranslation } from "react-i18next";
 import type { ApplicationCategoryItem, ApplicationIndustryItem } from "@core/application/application-api";
 import { applicationService } from "@core/application/application.service";
+import { navigateTo } from "@core/navigation/navigation.service";
 import { maskPhone } from "@core/utils/mask";
 import { BaseTemplate } from "@shared/base/base.template";
 import type { AiTokenLedgerEntryModel, AiTokenSummaryModel } from "@modules/users/interfaces/ai-token.model";
@@ -1140,9 +1141,17 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                           {t("users.profile.aiTokens.balance.subtitle")}
                         </div>
                       </div>
-                      <Button onClick={onRefreshAiTokens} loading={isAiTokensLoading}>
-                        {t("users.profile.aiTokens.balance.actions.refresh")}
-                      </Button>
+                      <div style={{ display: "inline-flex", gap: 8, flexWrap: "wrap" }}>
+                        <Button
+                          onClick={() => navigateTo("/billing/ai-tokens")}
+                          data-cy="users-profile-ai-tokens-buy-more-button"
+                        >
+                          {t("users.profile.aiTokens.balance.actions.buyMore")}
+                        </Button>
+                        <Button onClick={onRefreshAiTokens} loading={isAiTokensLoading}>
+                          {t("users.profile.aiTokens.balance.actions.refresh")}
+                        </Button>
+                      </div>
                     </div>
 
                     <div style={{ marginTop: 12, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 8 }}>
@@ -1233,7 +1242,7 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
                       columns={aiTokenColumns}
                       dataSource={aiTokensLedger ?? []}
                       pagination={{
-                        pageSize: 4,
+                        pageSize: 2,
                         showSizeChanger: false,
                         hideOnSinglePage: true,
                       }}
@@ -1253,4 +1262,5 @@ export const ProfileTemplate: React.FC<ProfileTemplateProps> = ({
 };
 
 export default ProfileTemplate;
+
 

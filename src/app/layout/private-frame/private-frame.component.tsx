@@ -16,8 +16,8 @@ import {
   PrivatePageShell,
 } from "./private-frame.component.styles";
 
-const DEFAULT_NOTIFICATIONS_POLLING_INTERVAL_MS = 90000;
-const MIN_NOTIFICATIONS_POLLING_INTERVAL_MS = 15000;
+const DEFAULT_NOTIFICATIONS_POLLING_INTERVAL_MS = 900000;
+const MIN_NOTIFICATIONS_POLLING_INTERVAL_MS = 900000;
 
 function resolveNotificationsPollingIntervalMs(): number {
   const runtimeEnv = (globalThis as { __WORKLYHUB_RUNTIME_ENV__?: Record<string, string | undefined> })
@@ -54,6 +54,7 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   const [unreadNotifications, setUnreadNotifications] = useState<number>(() =>
     usersNotificationsService.getSummaryValue().unreadCount ?? 0
   );
+  const [userSession, setUserSession] = useState(() => usersAuthService.getSessionValue());
   const notificationRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
@@ -69,6 +70,11 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
     const sub = usersNotificationsService
       .getSummary$()
       .subscribe((summary) => setUnreadNotifications(summary.unreadCount ?? 0));
+    return () => sub.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const sub = usersAuthService.getSession$().subscribe((session) => setUserSession(session));
     return () => sub.unsubscribe();
   }, []);
 
@@ -124,10 +130,8 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
   };
 
   const menuItems: MenuProps["items"] = [
-    // Show Company setup only when user does NOT have a workspace yet
-    ...(hasWorkspace ? [] : [{ key: "/company/introduction", label: t("layout.header.menu.companySetup") }]),
+    { key: "/company/introduction", label: t("layout.header.menu.companySetup") },
     { key: "/billing/landing", label: t("layout.header.menu.billing") },
-    { key: "/users", label: t("layout.header.menu.users") },
   ];
 
   const userMenuItems: MenuProps["items"] = [
@@ -155,6 +159,9 @@ export function PrivateFrameLayout({ children }: PropsWithChildren) {
         onNotificationsClick={handleNotifications}
         unreadNotifications={unreadNotifications}
         selectedPath={location.pathname}
+        userDisplayName={userSession?.name}
+        userEmail={userSession?.email}
+        userPhotoUrl={userSession?.photoUrl}
       />
 
       <ContentShell>

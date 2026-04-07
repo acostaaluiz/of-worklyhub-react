@@ -20,11 +20,13 @@ import type { CompanyIntroductionValues } from "../steps/company-introduction.ty
 import { CompanyIntroductionTemplate } from "../templates/company-introduction/company-introduction.template";
 
 type ResponseModalState = { open: boolean; title: string; description?: string } | undefined;
+type SetupMode = "create" | "edit";
 
 type CompanyIntroductionState = {
   initialized: boolean;
   isLoading: boolean;
   error?: DataValue;
+  setupMode: SetupMode;
   categories?: ApplicationCategoryItem[];
   industries?: ApplicationIndustryItem[];
   initialValues?: CompanyIntroductionValues;
@@ -79,6 +81,20 @@ function normalizeWorkspaceServices(values: CompanyIntroductionValues): NonNulla
   ];
 }
 
+function asRecord(value: DataValue | null | undefined): DataMap | null {
+  if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) return null;
+  return value;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionState> {
   protected override options = {
     title: `${appI18n.t("company.pageTitles.introduction")} | WorklyHub`,
@@ -89,6 +105,7 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
     isLoading: false,
     initialized: false,
     error: undefined,
+    setupMode: "create",
     categories: undefined,
     industries: undefined,
     initialValues: undefined,
@@ -124,22 +141,107 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
     return "/billing/plans";
   }
 
-  protected override async onInit(): Promise<void> {
-    try {
-      const workspace = companyService.getWorkspaceValue();
-      if (workspace) {
-        const nextRoute = await this.resolvePostSetupRoute();
-        navigateTo(nextRoute);
-        return;
-      }
-    } catch {
-      // ignore
-    }
+  private resolveSetupMode(workspace: DataValue | null | undefined): SetupMode {
+    return asRecord(workspace) ? "edit" : "create";
+  }
 
+  private resolveInitialValues(params: {
+    workspace?: DataMap | null;
+    fullName?: string;
+    email?: string;
+  }): CompanyIntroductionValues {
+    const workspace = params.workspace ?? null;
+    const profile = asRecord(workspace?.company_profile as DataValue) ?? asRecord(workspace?.companyProfile as DataValue);
+    const firstService = Array.isArray(workspace?.services) ? asRecord((workspace?.services as DataValue[])[0]) : null;
+
+    const companyName =
+      asString(workspace?.tradeName) ??
+      asString(workspace?.trade_name) ??
+      asString(profile?.trade_name) ??
+      asString(profile?.tradeName) ??
+      asString(workspace?.name) ??
+      "";
+
+    const legalName =
+      asString(profile?.legal_name) ??
+      asString(profile?.legalName) ??
+      asString(workspace?.legalName) ??
+      "";
+
+    const employees =
+      asNumber(workspace?.employeesCount) ??
+      asNumber(profile?.employees_count) ??
+      asNumber(profile?.employeesCount);
+
+    const primaryService =
+      asString(workspace?.primaryService) ??
+      asString(profile?.primary_service) ??
+      asString(profile?.primaryService) ??
+      asString(firstService?.name) ??
+      "";
+
+    const primaryServiceCategory =
+      asString(workspace?.primaryServiceCategory) ??
+      asString(firstService?.category) ??
+      "";
+
+    const accountTypeRaw =
+      asString(workspace?.accountType) ??
+      asString(workspace?.workspace_type) ??
+      asString(profile?.accountType);
+
+    const accountType: "individual" | "company" =
+      accountTypeRaw === "company" || companyName || legalName ? "company" : "individual";
+
+    const firstServiceDraft =
+      primaryService || primaryServiceCategory
+        ? {
+            name: primaryService || undefined,
+            category: primaryServiceCategory || undefined,
+          }
+        : {};
+
+    const resolvedFullName =
+      params.fullName ??
+      asString(workspace?.fullName) ??
+      asString(workspace?.name) ??
+      "";
+
+    const resolvedEmail =
+      params.email ??
+      asString(workspace?.email) ??
+      "";
+
+    return {
+      fullName: resolvedFullName,
+      email: resolvedEmail,
+      phone: asString(workspace?.phone) ?? undefined,
+      accountType,
+      companyName,
+      legalName,
+      employees,
+      primaryService,
+      primaryServiceCategory,
+      industry:
+        asString(workspace?.industry) ??
+        asString(profile?.industry) ??
+        "",
+      description:
+        asString(workspace?.description) ??
+        asString(profile?.description) ??
+        "",
+      services: [firstServiceDraft, {}, {}],
+    };
+  }
+
+  protected override async onInit(): Promise<void> {
     await this.runAsync(
       async () => {
         const categories = applicationService.getCategoriesValue() ?? [];
         const industries = applicationService.getIndustriesValue() ?? [];
+
+        const workspace = asRecord(companyService.getWorkspaceValue() as DataValue);
+        const setupMode = this.resolveSetupMode(workspace);
 
         const session = usersAuthService.getSessionValue();
         const email = session?.email ?? undefined;
@@ -162,22 +264,14 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
           }
         }
 
-        const initialValues: CompanyIntroductionValues = {
-          fullName: fullName ?? "",
-          email: email ?? "",
-          phone: undefined,
-          accountType: "individual",
-          companyName: "",
-          legalName: "",
-          employees: undefined,
-          primaryService: "",
-          primaryServiceCategory: "",
-          industry: "",
-          description: "",
-          services: [{}, {}, {}],
-        };
+        const initialValues = this.resolveInitialValues({
+          workspace,
+          fullName,
+          email,
+        });
 
         this.setSafeState({
+          setupMode,
           categories: categories ?? [],
           industries: industries ?? [],
           initialValues,
@@ -190,25 +284,39 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
   protected handleFinish = async (values: CompanyIntroductionValues) => {
     loadingService.show();
     try {
+      const isEditMode = this.state.setupMode === "edit";
       const session = usersAuthService.getSessionValue();
-      const creatorUid = session?.uid ?? "";
 
-      const payload: WorkspaceCreatePayload = {
-        creatorUid,
-        accountType: values.accountType ?? "individual",
-        fullName: values.fullName ?? "",
-        email: values.email ?? "",
-        phone: values.phone ? unmaskPhone(values.phone) : undefined,
-        tradeName: values.companyName ?? undefined,
-        legalName: values.legalName ?? undefined,
-        employeesCount: toPositiveInteger(values.employees),
-        industry: values.industry ?? undefined,
-        primaryService: values.primaryService ?? undefined,
-        description: values.description ?? undefined,
-        services: normalizeWorkspaceServices(values),
-      };
+      if (isEditMode && companyService.getWorkspaceValue()) {
+        await companyService.updateWorkspaceProfile({
+          accountType: values.accountType ?? "individual",
+          legalName: values.legalName ?? undefined,
+          tradeName: values.companyName ?? undefined,
+          employeesCount: toPositiveInteger(values.employees),
+          industry: values.industry ?? undefined,
+          primaryService: values.primaryService ?? undefined,
+          description: values.description ?? undefined,
+        });
+      } else {
+        const creatorUid = session?.uid ?? "";
 
-      await companyService.createWorkspace(payload);
+        const payload: WorkspaceCreatePayload = {
+          creatorUid,
+          accountType: values.accountType ?? "individual",
+          fullName: values.fullName ?? "",
+          email: values.email ?? "",
+          phone: values.phone ? unmaskPhone(values.phone) : undefined,
+          tradeName: values.companyName ?? undefined,
+          legalName: values.legalName ?? undefined,
+          employeesCount: toPositiveInteger(values.employees),
+          industry: values.industry ?? undefined,
+          primaryService: values.primaryService ?? undefined,
+          description: values.description ?? undefined,
+          services: normalizeWorkspaceServices(values),
+        };
+
+        await companyService.createWorkspace(payload);
+      }
 
       try {
         const email = session?.email;
@@ -223,13 +331,28 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
       this.setSafeState({
         responseModal: {
           open: true,
-          title: appI18n.t("company.introduction.response.setupComplete.title"),
-          description: appI18n.t("company.introduction.response.setupComplete.description"),
+          title: appI18n.t(
+            isEditMode
+              ? "company.introduction.response.updateComplete.title"
+              : "company.introduction.response.setupComplete.title"
+          ),
+          description: appI18n.t(
+            isEditMode
+              ? "company.introduction.response.updateComplete.description"
+              : "company.introduction.response.setupComplete.description"
+          ),
         },
       });
     } catch (error) {
-      console.error("create workspace failed", error);
-      message.error(appI18n.t("company.introduction.messages.createWorkspaceFailed"));
+      const isEditMode = this.state.setupMode === "edit";
+      console.error(isEditMode ? "update workspace failed" : "create workspace failed", error);
+      message.error(
+        appI18n.t(
+          isEditMode
+            ? "company.introduction.messages.updateWorkspaceFailed"
+            : "company.introduction.messages.createWorkspaceFailed"
+        )
+      );
     } finally {
       loadingService.hide();
     }
@@ -255,6 +378,7 @@ export class CompanyIntroductionPage extends BasePage<{}, CompanyIntroductionSta
     return (
       <CompanyIntroductionTemplate
         onFinish={this.handleFinish}
+        mode={this.state.setupMode}
         categories={this.state.categories}
         industries={this.state.industries}
         initialValues={this.state.initialValues}

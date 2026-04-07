@@ -1,5 +1,6 @@
 import { Skeleton } from "antd";
 import { useCallback, useMemo } from "react";
+import { DollarSign, Percent, ReceiptText, TrendingUp } from "lucide-react";
 import { formatMoneyCompact, formatNumberCompact } from "@core/utils/mask";
 import { i18n as appI18n } from "@core/i18n";
 import type { FinanceKpiModel } from "../../../interfaces/finance-kpi.model";
@@ -10,6 +11,8 @@ import {
 import {
   KpiCard,
   KpiGrid,
+  KpiIconBadge,
+  KpiLead,
   KpiMeta,
   KpiTop,
   KpiValue,
@@ -41,6 +44,13 @@ const kpiContextMap: Record<FinanceKpiModel["id"], FinanceValueContext> = {
   expenses: "expense",
   profit: "neutral",
   margin: "neutral",
+};
+
+const resolveKpiIcon = (id: FinanceKpiModel["id"]) => {
+  if (id === "revenue") return <DollarSign size={16} />;
+  if (id === "expenses") return <ReceiptText size={16} />;
+  if (id === "profit") return <TrendingUp size={16} />;
+  return <Percent size={16} />;
 };
 
 export function FinanceKpiRow({ kpis, loading }: Props) {
@@ -86,12 +96,15 @@ export function FinanceKpiRow({ kpis, loading }: Props) {
 
                 return (
                   <>
-                    <KpiMeta>
-                      <div className="label">{resolveKpiLabel(k)}</div>
-                      <div className="delta" style={{ color: deltaColor }}>
-                        {deltaText ?? "\u00A0"}
-                      </div>
-                    </KpiMeta>
+                    <KpiLead>
+                      <KpiIconBadge $kind={k.id}>{resolveKpiIcon(k.id)}</KpiIconBadge>
+                      <KpiMeta>
+                        <div className="label">{resolveKpiLabel(k)}</div>
+                        <div className="delta" style={{ color: deltaColor }}>
+                          {deltaText ?? "\u00A0"}
+                        </div>
+                      </KpiMeta>
+                    </KpiLead>
                     <KpiValue style={{ color: valueColor }}>
                       {formatKpiValue(k)}
                     </KpiValue>

@@ -9,7 +9,12 @@ import {
   type PaymentConfig,
   type CheckoutRequest,
   type CheckoutResponse,
+  type EmployeeAddonCheckoutRequest,
+  type EmployeeAddonCheckoutResponse,
+  type AiTokenTopupCheckoutRequest,
+  type AiTokenTopupCheckoutResponse,
   type PaymentGateway,
+  type WorkspaceEmployeeCapacity,
 } from "./billing-api";
 
 type PlansState = { plans: BillingPlan[]; payment: PaymentConfig } | null;
@@ -116,6 +121,103 @@ export class BillingService {
       };
 
       return await this.api.createCheckout(body, headers);
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async fetchWorkspaceEmployeeCapacity(
+    workspaceId?: string
+  ): Promise<WorkspaceEmployeeCapacity> {
+    try {
+      const resolvedWorkspaceId = workspaceId ?? this.resolveWorkspaceId();
+      if (!resolvedWorkspaceId) {
+        throw new Error("workspace_id_required");
+      }
+      const headers = this.buildIdentityHeaders();
+      const res = await this.api.getWorkspaceEmployeeCapacity(
+        resolvedWorkspaceId,
+        headers
+      );
+      if (!res?.data) {
+        throw new Error("workspace_employee_capacity_not_found");
+      }
+      return res.data;
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async createEmployeeAddonCheckout(
+    payload: EmployeeAddonCheckoutRequest & { workspaceId?: string }
+  ): Promise<EmployeeAddonCheckoutResponse> {
+    try {
+      const resolvedWorkspaceId = payload.workspaceId ?? this.resolveWorkspaceId();
+      if (!resolvedWorkspaceId) {
+        throw new Error("workspace_id_required");
+      }
+
+      const headers = this.buildIdentityHeaders();
+      const body: EmployeeAddonCheckoutRequest = {
+        additionalEmployees: payload.additionalEmployees,
+        billingCycle: payload.billingCycle ?? "monthly",
+        gateway:
+          payload.gateway ??
+          this.getPlansValue()?.payment?.gateway ??
+          this.resolveGatewayFlag() ??
+          "mercadopago",
+        payer: payload.payer,
+        paymentMethod: payload.paymentMethod ?? "hosted",
+        cardToken: payload.cardToken,
+        installments: payload.installments,
+        successUrl: payload.successUrl,
+        failureUrl: payload.failureUrl,
+        pendingUrl: payload.pendingUrl,
+        metadata: payload.metadata,
+      };
+
+      return await this.api.createEmployeeAddonCheckout(
+        resolvedWorkspaceId,
+        body,
+        headers
+      );
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async createAiTokenTopupCheckout(
+    payload: AiTokenTopupCheckoutRequest & { workspaceId?: string }
+  ): Promise<AiTokenTopupCheckoutResponse> {
+    try {
+      const resolvedWorkspaceId = payload.workspaceId ?? this.resolveWorkspaceId();
+      if (!resolvedWorkspaceId) {
+        throw new Error("workspace_id_required");
+      }
+
+      const headers = this.buildIdentityHeaders();
+      const body: AiTokenTopupCheckoutRequest = {
+        packageId: String(payload.packageId),
+        gateway:
+          payload.gateway ??
+          this.getPlansValue()?.payment?.gateway ??
+          this.resolveGatewayFlag() ??
+          "mercadopago",
+        payer: payload.payer,
+        paymentMethod: payload.paymentMethod ?? "hosted",
+        cardToken: payload.cardToken,
+        installments: payload.installments,
+        successUrl: payload.successUrl,
+        failureUrl: payload.failureUrl,
+        pendingUrl: payload.pendingUrl,
+        metadata: payload.metadata,
+      };
+
+      return await this.api.createAiTokenTopupCheckout(
+        resolvedWorkspaceId,
+        body,
+        headers
+      );
     } catch (err) {
       throw toAppError(err);
     }

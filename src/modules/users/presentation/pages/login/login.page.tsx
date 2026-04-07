@@ -59,7 +59,7 @@ export class LoginPage extends BasePage {
           async () => {
             try {
               await usersAuthService.signIn(values.email, values.password);
-              // navigation will be handled by the auth guard (RedirectIfAuthenticated)
+              navigateTo("/home", { replace: true });
             } catch (err) {
               handleAuthError(err);
             }
@@ -78,7 +78,7 @@ export class LoginPage extends BasePage {
           async () => {
             try {
               await usersAuthService.signInWithGoogle();
-              // navigation will be handled by the auth guard (RedirectIfAuthenticated)
+              navigateTo("/home", { replace: true });
             } catch (err) {
               handleAuthError(err);
             }

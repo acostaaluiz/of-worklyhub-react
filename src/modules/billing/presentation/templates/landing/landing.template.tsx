@@ -5,6 +5,7 @@ import {
   ModuleLanding,
   type ModuleLandingItem,
 } from "@shared/ui/components/module-landing/module-landing.component";
+import { Users } from "lucide-react";
 
 export function BillingLandingTemplate() {
   const { t } = useTranslation();
@@ -24,6 +25,14 @@ export function BillingLandingTemplate() {
       to: "/billing/checkout",
       icon: <CreditCard size={18} />,
       meta: t("billing.landing.items.checkout.meta"),
+    },
+    {
+      id: "employees",
+      title: t("billing.landing.items.employees.title"),
+      description: t("billing.landing.items.employees.description"),
+      to: "/billing/employees",
+      icon: <Users size={18} />,
+      meta: t("billing.landing.items.employees.meta"),
     },
   ];
 

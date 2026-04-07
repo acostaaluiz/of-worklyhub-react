@@ -59,17 +59,14 @@ export default function RequireAuth({ children }: Props) {
     let active = true;
 
     const resolveWorkspace = async () => {
-      if (!sessionEmail) return;
-      if (!active) return;
-      setIsWorkspaceResolved(false);
-
-      const cachedWorkspace = companyService.getWorkspaceValue();
-      if (cachedWorkspace != null) {
+      if (!sessionEmail) {
         if (!active) return;
-        setHasWorkspace(true);
+        setHasWorkspace(false);
         setIsWorkspaceResolved(true);
         return;
       }
+      if (!active) return;
+      setIsWorkspaceResolved(false);
 
       try {
         const workspace = await companyService.fetchWorkspaceByEmail(sessionEmail);
@@ -77,7 +74,7 @@ export default function RequireAuth({ children }: Props) {
         setHasWorkspace(Boolean(workspace));
       } catch {
         if (!active) return;
-        setHasWorkspace(companyService.getWorkspaceValue() != null);
+        setHasWorkspace(false);
       } finally {
         if (active) {
           setIsWorkspaceResolved(true);

@@ -72,14 +72,16 @@ export default function RedirectIfAuthenticated() {
         }
       }
 
-      let workspaceExists = companyService.getWorkspaceValue() ? true : false;
-      if (resolvedEmail && !workspaceExists) {
+      let workspaceExists = false;
+      if (resolvedEmail) {
         try {
           const workspace = await companyService.fetchWorkspaceByEmail(resolvedEmail);
           workspaceExists = workspace ? true : false;
         } catch {
-          workspaceExists = companyService.getWorkspaceValue() ? true : false;
+          workspaceExists = false;
         }
+      } else {
+        workspaceExists = companyService.getWorkspaceValue() ? true : false;
       }
 
       if (!cancelled) setHasWorkspace(workspaceExists);

@@ -232,7 +232,21 @@
       "overdueWorkOrders": "Ordens de servico em atraso",
       "inventoryAlerts": "Alertas de estoque",
       "unreadNotifications": "Notificacoes nao lidas",
-      "highPrioritySuffix": " ({{count}} alta prioridade)"
+      "highPrioritySuffix": " ({{count}} alta prioridade)",
+      "flipHint": "Passe ou vire",
+      "flipCardAriaLabel": "Virar card do indicador {{label}}",
+      "overdueWorkOrdersDetailLabel": "Risco de ordem de servico",
+      "overdueWorkOrdersDetail": "{{count}} ordem(ns) de servico estao vencidas e precisam de revisao.",
+      "overdueWorkOrdersFooterRisk": "Revise prazos e reabra ou reagende os itens vencidos.",
+      "overdueWorkOrdersFooterClear": "Nenhuma ordem de servico vencida no momento.",
+      "inventoryAlertsDetailLabel": "Monitoramento de estoque",
+      "inventoryAlertsDetail": "{{count}} alerta(s) de estoque exigem atencao.",
+      "inventoryAlertsFooterRisk": "Verifique regras de reposicao e limites de estoque minimo.",
+      "inventoryAlertsFooterClear": "O estoque esta tranquilo e sem alertas pendentes.",
+      "unreadNotificationsDetailLabel": "Resumo da caixa de entrada",
+      "unreadNotificationsDetail": "{{unread}} notificacao(oes) nao lida(s), incluindo {{highPriority}} de alta prioridade.",
+      "unreadNotificationsFooterPriority": "{{count}} item(ns) de alta prioridade devem ser vistos primeiro.",
+      "unreadNotificationsFooterCalm": "Nenhuma notificacao de alta prioridade no momento."
     }
   },
   "users": {
@@ -435,6 +449,7 @@
           "title": "Saldo de tokens IA",
           "subtitle": "Acompanhe franquia mensal, recargas e consumo por recurso.",
           "actions": {
+            "buyMore": "Comprar mais tokens",
             "refresh": "Atualizar"
           },
           "cards": {
@@ -797,6 +812,20 @@
       "landing": "Visao geral de pessoas",
       "settings": "Configuracoes de pessoas"
     },
+    "actions": {
+      "newEmployee": "Novo colaborador"
+    },
+    "messages": {
+      "workerLimitReached": "Limite do workspace atingido ({{currentWorkers}}/{{totalLimit}}). Aumente a capacidade no Billing para adicionar mais colaboradores.",
+      "workerLimitReachedRedirect": "Limite de colaboradores atingido para este workspace. Conclua o checkout do adicional para adicionar mais membros."
+    },
+    "capacity": {
+      "limitAlertTitle": "Capacidade de colaboradores atingida ({{used}}/{{total}} slots ativos)",
+      "limitAlertDescription": "Seu plano atual inclui {{base}} slot(s) base e {{extra}} slot(s) adicionais. Compre mais slots para continuar adicionando colaboradores.",
+      "actions": {
+        "buyMoreSlots": "Comprar mais slots"
+      }
+    },
     "landing": {
       "title": "Pessoas",
       "description": "Convide, gerencie e organize sua equipe.",
@@ -848,18 +877,25 @@
     },
     "introduction": {
       "messages": {
-        "createWorkspaceFailed": "Falha ao criar workspace."
+        "createWorkspaceFailed": "Falha ao criar workspace.",
+        "updateWorkspaceFailed": "Falha ao atualizar workspace."
       },
       "response": {
         "setupComplete": {
           "title": "Setup concluido",
           "description": "Setup inicial finalizado. Voce sera redirecionado para Home."
+        },
+        "updateComplete": {
+          "title": "Setup atualizado",
+          "description": "Alteracoes do setup da empresa salvas com sucesso."
         }
       },
       "template": {
         "header": {
           "title": "Setup da empresa",
-          "subtitle": "Configure a base do seu workspace em alguns passos guiados."
+          "subtitle": "Configure a base do seu workspace em alguns passos guiados.",
+          "editTitle": "Setup da empresa",
+          "editSubtitle": "Atualize a base do workspace e mantenha os dados da empresa em dia."
         },
         "highlights": {
           "identity": {
@@ -877,7 +913,9 @@
         },
         "wizard": {
           "title": "Setup",
-          "subtitle": "Complete estes passos para publicar a base do workspace."
+          "subtitle": "Complete estes passos para publicar a base do workspace.",
+          "editTitle": "Editar setup",
+          "editSubtitle": "Revise e atualize os dados do workspace."
         }
       }
     },
@@ -1309,7 +1347,9 @@
     "pageTitles": {
       "landing": "Visao geral de billing",
       "plans": "Planos",
-      "checkout": "Checkout"
+      "checkout": "Checkout",
+      "employeeCapacity": "Capacidade de colaboradores",
+      "aiTokenTopup": "Tokens de IA"
     },
     "landing": {
       "title": "Billing",
@@ -1323,6 +1363,11 @@
           "title": "Checkout",
           "description": "Finalize a selecao do plano e o pagamento.",
           "meta": "Apos selecionar um plano"
+        },
+        "employees": {
+          "title": "Capacidade de colaboradores",
+          "description": "Compre capacidade extra de colaboradores para este workspace.",
+          "meta": "Add-on por plano"
         }
       }
     },
@@ -1410,21 +1455,32 @@
       },
       "messages": {
         "selectPlan": "Selecione um plano antes de finalizar o pagamento.",
+        "selectEmployeeAddon": "Selecione um add-on de colaboradores antes de finalizar o pagamento.",
+        "selectAiTokenTopup": "Selecione um pacote de tokens de IA antes de finalizar o pagamento.",
         "providerNotConfigured": "Provedor de pagamento nao configurado. Tente novamente mais tarde.",
         "invalidRedirectUrl": "URL de redirecionamento de pagamento invalida. Contate o suporte.",
         "redirecting": "Redirecionando para o provedor de pagamento...",
         "paymentApproved": "Pagamento aprovado!",
+        "employeeAddonApproved": "Add-on de colaboradores aprovado!",
+        "aiTokenTopupApproved": "Pacote de tokens de IA aprovado!",
         "paymentPending": "Pagamento pendente de confirmacao. Avisaremos assim que for aprovado.",
         "checkoutCreated": "Checkout criado.",
         "failedCreateCheckout": "Falha ao criar checkout."
       },
       "form": {
         "title": "Detalhes do checkout",
+        "employeeAddonTitle": "Checkout de add-on de colaboradores",
+        "aiTokenTopupTitle": "Checkout de tokens de IA",
         "subtitle": "O pagamento e finalizado na pagina do gateway selecionado. Nenhum campo de cartao e tratado aqui.",
+        "employeeAddonSubtitle": "Revise os colaboradores extras selecionados e finalize o pagamento com seguranca.",
+        "aiTokenTopupSubtitle": "Revise o pacote de tokens selecionado e finalize o pagamento com seguranca.",
         "gatewayMessage": "Gateway: {{gateway}}",
         "gatewayDescription": "Voce sera redirecionado para um checkout hospedado seguro para concluir o pagamento.",
+        "gatewayInfoLabel": "Info de gateway e redirecionamento",
         "temporarilyUnavailable": "Pagamento temporariamente indisponivel",
         "credentialsMissing": "As credenciais do gateway ainda nao estao configuradas.",
+        "devBypassEnabledTitle": "Bypass DEV habilitado",
+        "devBypassEnabledDescription": "As credenciais do gateway estao em bypass no DEV. Este checkout sera aprovado automaticamente conforme configuracao de bypass no backend.",
         "hostedTag": "Checkout hospedado",
         "contact": "Contato",
         "fullName": "Nome completo",
@@ -1437,6 +1493,8 @@
         "companyOptional": "Empresa (opcional)",
         "companyPlaceholder": "Nome da empresa",
         "changePlan": "Alterar plano",
+        "changeEmployeeAddon": "Alterar add-on de colaboradores",
+        "changeAiTokenTopup": "Alterar pacote de tokens",
         "continueGateway": "Continuar para gateway"
       }
     },
@@ -1445,22 +1503,92 @@
       "subtitle": "Revise seu plano antes de confirmar.",
       "cycle": {
         "monthly": "Mensal",
-        "yearly": "Anual"
+        "yearly": "Anual",
+        "oneTime": "Pontual"
       },
       "per": {
         "month": "mes",
-        "year": "ano"
+        "year": "ano",
+        "oneTime": "unico"
       },
       "savingsLabel": "Economize 15%",
       "total": "Total",
       "taxes": "Impostos podem ser aplicados dependendo da sua regiao.",
       "changePlan": "Alterar plano",
+      "changeEmployeeAddon": "Alterar add-on de colaboradores",
+      "changeAiTokenTopup": "Alterar pacote de tokens",
+      "employeeAddonTitle": "Add-on de capacidade de colaboradores",
+      "employeeAddonMeta": "{{quantity}} colaborador(es) adicional(is) por {{unitPrice}} cada no plano {{planName}}.",
+      "aiTokenTopupTitle": "Recarga de tokens de IA",
+      "aiTokenTopupMeta": "Pacote de {{tokens}} tokens.",
+      "employeeAddonFeatures": {
+        "extraSeats": "{{count}} nova(s) vaga(s) de colaborador",
+        "currentTotal": "Capacidade atual do workspace: {{count}} colaborador(es)",
+        "afterCheckout": "Capacidade apos checkout: {{count}} colaborador(es)"
+      },
+      "aiTokenTopupFeatures": {
+        "tokens": "{{count}} tokens de IA",
+        "topupBalance": "Credito no saldo de recarga",
+        "availableNow": "Disponivel imediatamente apos aprovacao"
+      },
       "mockFeatures": {
         "users": "Ate 5 usuarios",
         "clients": "Ate 500 clientes",
         "schedules": "Agendamentos ilimitados",
         "reports": "Relatorios basicos",
         "support": "Suporte prioritario"
+      }
+    },
+    "employeeCapacity": {
+      "title": "Capacidade de colaboradores",
+      "subtitle": "Seu plano inclui um limite base de colaboradores. Adicione vagas extras conforme sua equipe cresce.",
+      "planInfo": "Plano atual: {{plan}}",
+      "capacityInfo": "Base: {{base}} | Add-ons extras: {{extra}} | Total: {{total}} | Em uso: {{used}} | Restante: {{remaining}}",
+      "cards": {
+        "base": "Limite base",
+        "extra": "Vagas extras",
+        "used": "Em uso",
+        "available": "Disponivel"
+      },
+      "selector": {
+        "title": "Adicionar mais colaboradores",
+        "quantity": "Quantidade",
+        "pricingTitle": "Preco unitario: {{unitPrice}}",
+        "pricingDescription": "Voce esta adicionando {{quantity}} colaborador(es), total de {{totalPrice}} em {{interval}}. Nova capacidade apos checkout: {{totalEmployees}} colaborador(es). Cobranca anual multiplica o valor mensal por {{yearlyMultiplier}}.",
+        "interval": {
+          "monthly": "Mensal",
+          "yearly": "Anual"
+        }
+      },
+      "actions": {
+        "back": "Voltar para planos",
+        "continue": "Continuar para checkout"
+      },
+      "messages": {
+        "loadError": "Nao foi possivel carregar a capacidade de colaboradores."
+      }
+    },
+    "aiTokenTopup": {
+      "title": "Comprar mais tokens de IA",
+      "subtitle": "Escolha um pacote e continue para o checkout.",
+      "info": {
+        "title": "Recarga de tokens",
+        "description": "Os pacotes sao cobrados uma unica vez e adicionados ao saldo atual de tokens de IA."
+      },
+      "package": {
+        "tokens": "{{count}} tokens",
+        "pricePerToken": "{{value}} por token"
+      },
+      "summary": {
+        "title": "Pacote selecionado: {{tokens}} tokens",
+        "description": "Total no checkout: {{price}}."
+      },
+      "actions": {
+        "back": "Voltar para aba de IA",
+        "continue": "Continuar para checkout"
+      },
+      "messages": {
+        "selectPackage": "Selecione um pacote de tokens de IA."
       }
     },
     "paymentMethods": {

@@ -1,0 +1,89 @@
+﻿apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 551.0.0
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/maxScale: '20'
+    run.googleapis.com/operation-id: dd26a0fa-4669-4add-a5e3-6fb42bc236a1
+    run.googleapis.com/urls: '["https://worklyhub-frontend-dev-845474343259.southamerica-east1.run.app","https://worklyhub-frontend-dev-4njpekm7ca-rj.a.run.app"]'
+    serving.knative.dev/creator: acosta.aluiz@gmail.com
+    serving.knative.dev/lastModifier: acosta.aluiz@gmail.com
+  creationTimestamp: '2026-04-04T13:30:13.487610Z'
+  generation: 7
+  labels:
+    app: worklyhub-frontend
+    cloud.googleapis.com/location: southamerica-east1
+    environment: development
+    goog-terraform-provisioned: 'true'
+    managed_by: terraform
+    run.googleapis.com/satisfiesPzs: 'true'
+    stage: development
+    workload: frontend
+  name: worklyhub-frontend-dev
+  namespace: '845474343259'
+  resourceVersion: AAZOv26YUPw
+  selfLink: /apis/serving.knative.dev/v1/namespaces/845474343259/services/worklyhub-frontend-dev
+  uid: 1ed8f7aa-cc71-43c7-aff4-18478e8770a8
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '2'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 551.0.0
+        run.googleapis.com/cpu-throttling: 'false'
+        run.googleapis.com/sessionAffinity: 'false'
+      labels:
+        client.knative.dev/nonce: fxlbwpunua
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: ENVIRONMENT
+          value: development
+        - name: VITE_BILLING_DEV_BYPASS_GATEWAY
+          value: '1'
+        image: us-central1-docker.pkg.dev/worklyhub/worklyhub-frontend-dev/of-worklyhub-react:south-checkout-ui-20260404-131604
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: '1'
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: worklyhub-fe-dev-run@worklyhub.iam.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100
+status:
+  address:
+    url: https://worklyhub-frontend-dev-4njpekm7ca-rj.a.run.app
+  conditions:
+  - lastTransitionTime: '2026-04-06T00:06:01.459964Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2026-04-06T00:05:56.866004Z'
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2026-04-06T00:06:01.415435Z'
+    status: 'True'
+    type: RoutesReady
+  latestCreatedRevisionName: worklyhub-frontend-dev-00007-tm8
+  latestReadyRevisionName: worklyhub-frontend-dev-00007-tm8
+  observedGeneration: 7
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: worklyhub-frontend-dev-00007-tm8
+  url: https://worklyhub-frontend-dev-4njpekm7ca-rj.a.run.app

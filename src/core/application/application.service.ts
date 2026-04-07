@@ -23,7 +23,7 @@ export type AppPlans = ApplicationPlanItem[] | null;
 const APP_SERVICES_KEY = "application.services";
 const APP_CATEGORIES_KEY = "application.categories";
 const APP_INDUSTRIES_KEY = "application.industries";
-const APP_PLANS_KEY = "application.plans";
+const APP_PLANS_KEY = "application.plans.v2";
 const APP_EVENT_CATEGORIES_KEY = "application.eventCategories";
 
 export class ApplicationService {

@@ -29,6 +29,7 @@ import {
 
 type Props = {
   onFinish?: (values: CompanyIntroductionValues) => Promise<void> | void;
+  mode?: "create" | "edit";
   categories?: ApplicationCategoryItem[];
   industries?: ApplicationIndustryItem[];
   initialValues?: CompanyIntroductionValues;
@@ -46,7 +47,14 @@ type Props = {
     | undefined;
 };
 
-export function CompanyIntroductionTemplate({ onFinish, categories, industries, initialValues: initialValuesProp, responseModal }: Props): ReactElement {
+export function CompanyIntroductionTemplate({
+  onFinish,
+  mode = "create",
+  categories,
+  industries,
+  initialValues: initialValuesProp,
+  responseModal,
+}: Props): ReactElement {
   const { t } = useTranslation();
 
   const steps = [
@@ -79,15 +87,29 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
     services: initialValuesProp?.services ?? defaultValues.services,
   };
 
+  const isEditMode = mode === "edit";
+  const headerTitle = isEditMode
+    ? t("company.introduction.template.header.editTitle")
+    : t("company.introduction.template.header.title");
+  const headerSubtitle = isEditMode
+    ? t("company.introduction.template.header.editSubtitle")
+    : t("company.introduction.template.header.subtitle");
+  const wizardTitle = isEditMode
+    ? t("company.introduction.template.wizard.editTitle")
+    : t("company.introduction.template.wizard.title");
+  const wizardSubtitle = isEditMode
+    ? t("company.introduction.template.wizard.editSubtitle")
+    : t("company.introduction.template.wizard.subtitle");
+
   return (
     <BaseTemplate
       content={
         <>
           <TemplateShell>
             <HeaderRow>
-              <TemplateTitle>{t("company.introduction.template.header.title")}</TemplateTitle>
+              <TemplateTitle>{headerTitle}</TemplateTitle>
               <TemplateSubtitle>
-                {t("company.introduction.template.header.subtitle")}
+                {headerSubtitle}
               </TemplateSubtitle>
 
               <HeaderHighlights>
@@ -125,8 +147,8 @@ export function CompanyIntroductionTemplate({ onFinish, categories, industries, 
 
             <div className="wizard-wrap" data-cy="company-setup-wizard">
               <FormStepWizard<CompanyIntroductionValues>
-                title={t("company.introduction.template.wizard.title")}
-                subtitle={t("company.introduction.template.wizard.subtitle")}
+                title={wizardTitle}
+                subtitle={wizardSubtitle}
                 steps={steps}
                 initialValues={initialValues}
                 onFinish={onFinish ?? (() => {})}

@@ -11,7 +11,6 @@ import {
   Popconfirm,
   Select,
   Space,
-  Statistic,
   Table,
   Tabs,
   Tag,
@@ -40,6 +39,16 @@ import type {
   WorkforceCapacitySnapshot,
 } from "@modules/people/interfaces/workforce-capacity.model";
 import { getWeekStartDate } from "@modules/people/services/workforce-capacity.service";
+import {
+  IndicatorCardsGrid,
+  IndicatorMetricCard,
+  IndicatorMetricContent,
+  IndicatorMetricHint,
+  IndicatorMetricIcon,
+  IndicatorMetricLabel,
+  IndicatorMetricMeta,
+  IndicatorMetricValue,
+} from "./employee-capacity.component.styles";
 
 type Props = {
   employees: EmployeeModel[];
@@ -354,6 +363,22 @@ export function EmployeeCapacityComponent({
   const averageProductiveHours = summary && summary.employeeCount > 0
     ? summary.totalProductiveMinutes / summary.employeeCount / 60
     : 0;
+  const conflictRateHint =
+    summary && summary.conflictSlots > 0
+      ? `There are ${summary.conflictSlots} conflict slot(s) this week.`
+      : "No conflicts detected in the selected week.";
+  const productiveHoursHint =
+    summary && summary.employeeCount > 0
+      ? `${summary.employeeCount} collaborator(s) in the current capacity snapshot.`
+      : "No collaborators available in this snapshot.";
+  const overallocatedHint =
+    summary && summary.conflictSlots > 0
+      ? "Review availability before adding more blocks."
+      : "Capacity is balanced for the selected period.";
+  const plannedWorkloadHint =
+    summary && summary.totalPlannedMinutes > 0
+      ? `Schedule + WO workload totals ${formatHours(summary.totalPlannedMinutes)}.`
+      : "No workload planned for the selected week.";
 
   const weekStartDate = dayjs(weekStart);
   const weekEndDate = dayjs(snapshot?.weekEnd ?? weekStart).format("YYYY-MM-DD");
@@ -371,42 +396,67 @@ export function EmployeeCapacityComponent({
         <Card size="small">
           <Space direction="vertical" size={10} style={{ width: "100%" }}>
             {summary ? (
-              <Space wrap size={12}>
-                <Card size="small" style={{ minWidth: 190 }}>
-                  <Statistic
-                    title="Conflict rate"
-                    value={summary.conflictRatePercent}
-                    precision={1}
-                    suffix="%"
-                    prefix={<ExclamationCircleOutlined />}
-                  />
-                </Card>
-                <Card size="small" style={{ minWidth: 220 }}>
-                  <Statistic
-                    title="Avg productive hours"
-                    value={averageProductiveHours}
-                    precision={1}
-                    suffix="h/employee"
-                    prefix={<ClockCircleOutlined />}
-                  />
-                </Card>
-                <Card size="small" style={{ minWidth: 190 }}>
-                  <Statistic
-                    title="Overallocated slots"
-                    value={summary.conflictSlots}
-                    suffix="days"
-                    prefix={<CalendarOutlined />}
-                  />
-                </Card>
-                <Card size="small" style={{ minWidth: 210 }}>
-                  <Statistic
-                    title="Planned workload"
-                    value={toHours(summary.totalPlannedMinutes)}
-                    precision={1}
-                    suffix="h"
-                  />
-                </Card>
-              </Space>
+              <IndicatorCardsGrid>
+                <IndicatorMetricCard className="surface">
+                  <IndicatorMetricContent>
+                    <IndicatorMetricIcon>
+                      <ExclamationCircleOutlined style={{ fontSize: 18 }} />
+                    </IndicatorMetricIcon>
+                    <IndicatorMetricMeta>
+                      <IndicatorMetricLabel>Conflict rate</IndicatorMetricLabel>
+                      <IndicatorMetricValue>{summary.conflictRatePercent.toFixed(1)}%</IndicatorMetricValue>
+                      <IndicatorMetricHint $tone={summary.conflictSlots > 0 ? "warning" : "success"}>
+                        {conflictRateHint}
+                      </IndicatorMetricHint>
+                    </IndicatorMetricMeta>
+                  </IndicatorMetricContent>
+                </IndicatorMetricCard>
+
+                <IndicatorMetricCard className="surface">
+                  <IndicatorMetricContent>
+                    <IndicatorMetricIcon>
+                      <ClockCircleOutlined style={{ fontSize: 18 }} />
+                    </IndicatorMetricIcon>
+                    <IndicatorMetricMeta>
+                      <IndicatorMetricLabel>Avg productive hours</IndicatorMetricLabel>
+                      <IndicatorMetricValue>{averageProductiveHours.toFixed(1)}h/employee</IndicatorMetricValue>
+                      <IndicatorMetricHint>
+                        {productiveHoursHint}
+                      </IndicatorMetricHint>
+                    </IndicatorMetricMeta>
+                  </IndicatorMetricContent>
+                </IndicatorMetricCard>
+
+                <IndicatorMetricCard className="surface">
+                  <IndicatorMetricContent>
+                    <IndicatorMetricIcon>
+                      <CalendarOutlined style={{ fontSize: 18 }} />
+                    </IndicatorMetricIcon>
+                    <IndicatorMetricMeta>
+                      <IndicatorMetricLabel>Overallocated slots</IndicatorMetricLabel>
+                      <IndicatorMetricValue>{summary.conflictSlots}</IndicatorMetricValue>
+                      <IndicatorMetricHint $tone={summary.conflictSlots > 0 ? "warning" : "success"}>
+                        {overallocatedHint}
+                      </IndicatorMetricHint>
+                    </IndicatorMetricMeta>
+                  </IndicatorMetricContent>
+                </IndicatorMetricCard>
+
+                <IndicatorMetricCard className="surface">
+                  <IndicatorMetricContent>
+                    <IndicatorMetricIcon>
+                      <TeamOutlined style={{ fontSize: 18 }} />
+                    </IndicatorMetricIcon>
+                    <IndicatorMetricMeta>
+                      <IndicatorMetricLabel>Planned workload</IndicatorMetricLabel>
+                      <IndicatorMetricValue>{toHours(summary.totalPlannedMinutes).toFixed(1)}h</IndicatorMetricValue>
+                      <IndicatorMetricHint>
+                        {plannedWorkloadHint}
+                      </IndicatorMetricHint>
+                    </IndicatorMetricMeta>
+                  </IndicatorMetricContent>
+                </IndicatorMetricCard>
+              </IndicatorCardsGrid>
             ) : null}
 
             {summary && summary.conflictSlots > 0 ? (

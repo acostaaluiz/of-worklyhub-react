@@ -24,6 +24,26 @@ function toQueryString(query?: Record<string, string | number | boolean | null |
   return qs ? `?${qs}` : "";
 }
 
+function toCanonicalQueryString(
+  query?: Record<string, string | number | boolean | null | undefined>
+): string {
+  if (!query) return "";
+  const pairs = Object.entries(query)
+    .filter(([, value]) => value !== null && value !== undefined)
+    .map(([key, value]) => [key, String(value)] as const)
+    .sort(([keyA, valueA], [keyB, valueB]) => {
+      if (keyA === keyB) return valueA.localeCompare(valueB);
+      return keyA.localeCompare(keyB);
+    });
+
+  if (pairs.length <= 0) return "";
+
+  const params = new URLSearchParams();
+  pairs.forEach(([key, value]) => params.append(key, value));
+  const qs = params.toString();
+  return qs ? `?${qs}` : "";
+}
+
 function ensureCorrelationId(existing?: string): string {
   if (existing) return existing;
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
@@ -104,6 +124,21 @@ function resolveRequestLanguage(headers: Record<string, string>): string {
     : getCurrentAppLanguage();
 }
 
+function toCanonicalHeadersKey(headers?: Record<string, string>): string {
+  if (!headers) return "";
+
+  const entries = Object.entries(headers)
+    .map(([key, value]) => [key.toLowerCase(), String(value)] as const)
+    .filter(([key]) => key !== "x-correlation-id")
+    .sort(([keyA, valueA], [keyB, valueB]) => {
+      if (keyA === keyB) return valueA.localeCompare(valueB);
+      return keyA.localeCompare(keyB);
+    });
+
+  if (entries.length <= 0) return "";
+  return entries.map(([key, value]) => `${key}:${value}`).join("|");
+}
+
 export interface AxiosHttpClientOptions {
   baseUrl: string;
   defaultTimeoutMs?: number;
@@ -123,6 +158,12 @@ export class AxiosHttpClient implements HttpClient {
   private readonly getAuthToken?: () => string | null;
   private readonly authProvider?: AuthProvider;
   private readonly retryOptions?: NonNullable<AxiosHttpClientOptions["retryOptions"]>;
+  private readonly inFlightGetRequests = new Map<string, Promise<HttpResponse<unknown>>>();
+  private readonly recentGetResponses = new Map<
+    string,
+    { timestamp: number; response: HttpResponse<unknown> }
+  >();
+  private readonly getDedupeTtlMs = 1000;
 
   constructor(options: AxiosHttpClientOptions) {
     this.logger = options.logger;
@@ -192,83 +233,168 @@ export class AxiosHttpClient implements HttpClient {
     );
   }
 
+  private buildGetDedupeKey<TBody = DataValue>(
+    config: HttpRequestConfig<TBody>
+  ): string | null {
+    if (config.method !== "GET") return null;
+    if (config.signal) return null;
+    if (config.body !== undefined && config.body !== null) return null;
+
+    const query = toCanonicalQueryString(config.query);
+    const headers = toCanonicalHeadersKey(config.headers);
+    const language = getCurrentAppLanguage();
+    const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.() ?? "";
+
+    return [
+      "GET",
+      config.url,
+      query,
+      headers,
+      language,
+      token,
+    ].join("::");
+  }
+
+  private getRecentGetResponse(key: string): HttpResponse<unknown> | null {
+    const cached = this.recentGetResponses.get(key);
+    if (!cached) return null;
+    if (Date.now() - cached.timestamp > this.getDedupeTtlMs) {
+      this.recentGetResponses.delete(key);
+      return null;
+    }
+    return cached.response;
+  }
+
+  private setRecentGetResponse(key: string, response: HttpResponse<unknown>): void {
+    this.recentGetResponses.set(key, { timestamp: Date.now(), response });
+  }
+
+  private evictStaleRecentGetResponses(): void {
+    const now = Date.now();
+    this.recentGetResponses.forEach((value, key) => {
+      if (now - value.timestamp > this.getDedupeTtlMs) {
+        this.recentGetResponses.delete(key);
+      }
+    });
+  }
+
   async request<TData, TBody = DataValue>(
     config: HttpRequestConfig<TBody>
   ): Promise<HttpResponse<TData>> {
-    const correlationId = ensureCorrelationId(config.correlationId);
-    const url = `${config.url}${toQueryString(config.query)}`;
-    const maxAttempts = (this.retryOptions?.retries ?? 0) + 1;
-    let attempt = 0;
-    let lastError: Error | null = null;
+    const dedupeKey = this.buildGetDedupeKey(config);
+    if (dedupeKey) {
+      this.evictStaleRecentGetResponses();
 
-    while (attempt < maxAttempts) {
-      attempt += 1;
-      try {
-        const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.();
+      const recent = this.getRecentGetResponse(dedupeKey);
+      if (recent) {
+        return recent as HttpResponse<TData>;
+      }
 
-        if (!IS_PRODUCTION) {
-          this.logger?.debug?.("HTTP sending", { correlationId, url, method: config.method, token: !!token });
-        }
-
-        const res = await this.axios.request<TData>({
-          url,
-          method: config.method,
-          data: config.body,
-          headers: { ...(config.headers ?? {}), "x-correlation-id": correlationId, ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-          signal: config.signal,
-          timeout: config.timeoutMs ?? this.defaultTimeoutMs,
-        });
-
-        const headers: Record<string, string> = {};
-        Object.entries(res.headers ?? {}).forEach(([k, v]) => {
-          if (typeof v === "string") headers[k] = v;
-        });
-
-        return {
-          data: res.data,
-          status: res.status,
-          headers,
-          correlationId,
-        };
-      } catch (err) {
-        const caughtError =
-          err instanceof Error ? err : new Error(String(err));
-        lastError = caughtError;
-
-        // If unauthorized and authProvider can refresh, try refresh once
-        if (caughtError instanceof AppError && caughtError.statusCode === 401 && this.authProvider?.refresh) {
-          try {
-            const newToken = await this.authProvider.refresh();
-            if (newToken) {
-              // token updated in provider; retry immediately
-              continue;
-            } else {
-              this.authProvider.signOut?.();
-              return Promise.reject(caughtError);
-            }
-          } catch (_refreshErr) {
-            this.authProvider.signOut?.();
-            return Promise.reject(caughtError);
-          }
-        }
-
-        const status =
-          caughtError instanceof AppError ? caughtError.statusCode : undefined;
-        const isNetworkError = isNetworkLikeError(caughtError);
-
-        const retryOn = this.retryOptions?.retryOn ?? ((s?: number) => (s ? s >= 500 || s === 429 : isNetworkError));
-
-        const shouldRetry = attempt < maxAttempts && retryOn(status);
-        if (shouldRetry) {
-          const backoff = Math.pow(2, attempt) * 100;
-          await new Promise((r) => setTimeout(r, backoff));
-          continue;
-        }
-
-        return Promise.reject(caughtError);
+      const inFlight = this.inFlightGetRequests.get(dedupeKey);
+      if (inFlight) {
+        return inFlight as Promise<HttpResponse<TData>>;
       }
     }
 
-    return Promise.reject(lastError ?? new Error("HTTP request failed"));
+    const executeRequest = async (): Promise<HttpResponse<TData>> => {
+      const correlationId = ensureCorrelationId(config.correlationId);
+      const url = `${config.url}${toQueryString(config.query)}`;
+      const maxAttempts = (this.retryOptions?.retries ?? 0) + 1;
+      let attempt = 0;
+      let lastError: Error | null = null;
+
+      while (attempt < maxAttempts) {
+        attempt += 1;
+        try {
+          const token = this.authProvider?.getAccessToken?.() ?? this.getAuthToken?.();
+
+          if (!IS_PRODUCTION) {
+            this.logger?.debug?.("HTTP sending", { correlationId, url, method: config.method, token: !!token });
+          }
+
+          const res = await this.axios.request<TData>({
+            url,
+            method: config.method,
+            data: config.body,
+            headers: {
+              ...(config.headers ?? {}),
+              "x-correlation-id": correlationId,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            signal: config.signal,
+            timeout: config.timeoutMs ?? this.defaultTimeoutMs,
+          });
+
+          const headers: Record<string, string> = {};
+          Object.entries(res.headers ?? {}).forEach(([k, v]) => {
+            if (typeof v === "string") headers[k] = v;
+          });
+
+          return {
+            data: res.data,
+            status: res.status,
+            headers,
+            correlationId,
+          };
+        } catch (err) {
+          const caughtError =
+            err instanceof Error ? err : new Error(String(err));
+          lastError = caughtError;
+
+          if (caughtError instanceof AppError && caughtError.statusCode === 401 && this.authProvider?.refresh) {
+            try {
+              const newToken = await this.authProvider.refresh();
+              if (newToken) {
+                continue;
+              }
+              this.authProvider.signOut?.();
+              return Promise.reject(caughtError);
+            } catch (_refreshErr) {
+              this.authProvider.signOut?.();
+              return Promise.reject(caughtError);
+            }
+          }
+
+          const status =
+            caughtError instanceof AppError ? caughtError.statusCode : undefined;
+          const isNetworkError = isNetworkLikeError(caughtError);
+
+          const retryOn =
+            this.retryOptions?.retryOn ??
+            ((s?: number) => (s ? s >= 500 || s === 429 : isNetworkError));
+
+          const shouldRetry = attempt < maxAttempts && retryOn(status);
+          if (shouldRetry) {
+            const backoff = Math.pow(2, attempt) * 100;
+            await new Promise((r) => setTimeout(r, backoff));
+            continue;
+          }
+
+          return Promise.reject(caughtError);
+        }
+      }
+
+      return Promise.reject(lastError ?? new Error("HTTP request failed"));
+    };
+
+    if (!dedupeKey) {
+      return executeRequest();
+    }
+
+    const requestPromise = executeRequest()
+      .then((response) => {
+        this.setRecentGetResponse(dedupeKey, response as HttpResponse<unknown>);
+        return response;
+      })
+      .finally(() => {
+        this.inFlightGetRequests.delete(dedupeKey);
+      });
+
+    this.inFlightGetRequests.set(
+      dedupeKey,
+      requestPromise as Promise<HttpResponse<unknown>>
+    );
+
+    return requestPromise;
   }
 }

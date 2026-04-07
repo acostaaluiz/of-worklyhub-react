@@ -12,6 +12,18 @@ const BillingLandingPage = lazy(
 const CheckoutPage = lazy(
   () => import("@modules/billing/presentation/pages/checkout/checkout.page")
 );
+const EmployeeCapacityPage = lazy(
+  () =>
+    import(
+      "@modules/billing/presentation/pages/employee-capacity/employee-capacity.page"
+    )
+);
+const AiTokenPackagesPage = lazy(
+  () =>
+    import(
+      "@modules/billing/presentation/pages/ai-token-packages/ai-token-packages.page"
+    )
+);
 
 export const billingStackRoutes: RouteObject[] = [
   {
@@ -42,6 +54,24 @@ export const billingStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <CheckoutPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "billing.employeeCapacity",
+        path: "employees",
+        element: (
+          <React.Suspense fallback={null}>
+            <EmployeeCapacityPage />
+          </React.Suspense>
+        ),
+      },
+      {
+        id: "billing.aiTokenPackages",
+        path: "ai-tokens",
+        element: (
+          <React.Suspense fallback={null}>
+            <AiTokenPackagesPage />
           </React.Suspense>
         ),
       },

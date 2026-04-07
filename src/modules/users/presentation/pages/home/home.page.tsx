@@ -24,6 +24,38 @@ import {
   resolveModuleCatalogKey,
 } from "@modules/users/presentation/utils/module-localization";
 
+const DEFAULT_HOME_SUMMARY_POLLING_INTERVAL_MS = 900000;
+const MIN_HOME_SUMMARY_POLLING_INTERVAL_MS = 900000;
+
+type HomeMetrics = {
+  appointmentsToday: number;
+  revenueThisMonthCents?: number | null;
+  nextAppointment?: { title?: string; date?: string; time?: string };
+  overdueWorkOrders?: number;
+  inventoryAlerts?: number;
+  unreadNotifications?: number;
+  highPriorityUnreadNotifications?: number;
+};
+
+type RuntimeEnv = { __WORKLYHUB_RUNTIME_ENV__?: Record<string, string | undefined> };
+
+function resolveHomeSummaryPollingIntervalMs(): number {
+  const runtimeEnv = (globalThis as RuntimeEnv).__WORKLYHUB_RUNTIME_ENV__;
+  const raw =
+    runtimeEnv?.VITE_HOME_SUMMARY_POLLING_INTERVAL_MS ??
+    (import.meta.env.VITE_HOME_SUMMARY_POLLING_INTERVAL_MS as string | undefined);
+  const parsed = Number(raw);
+
+  if (!Number.isFinite(parsed) || parsed < MIN_HOME_SUMMARY_POLLING_INTERVAL_MS) {
+    return DEFAULT_HOME_SUMMARY_POLLING_INTERVAL_MS;
+  }
+
+  return Math.floor(parsed);
+}
+
+const HOME_SUMMARY_POLLING_INTERVAL_MS = resolveHomeSummaryPollingIntervalMs();
+const HOME_METRICS_CACHE = new Map<string, { fetchedAt: number; metrics: HomeMetrics }>();
+
 function toDataMap(value: DataValue | null | undefined): DataMap | null {
   if (!value || typeof value !== "object" || Array.isArray(value) || value instanceof Date) {
     return null;
@@ -44,20 +76,15 @@ export class UsersHomePage extends BasePage<
     name?: string;
     modules?: UserOverviewModule[] | null;
     planTitle?: string | null;
-    metrics?: {
-      appointmentsToday: number;
-      revenueThisMonthCents?: number | null;
-      nextAppointment?: { title?: string; date?: string; time?: string };
-      overdueWorkOrders?: number;
-      inventoryAlerts?: number;
-      unreadNotifications?: number;
-      highPriorityUnreadNotifications?: number;
-    };
+    metrics?: HomeMetrics;
   }
 > {
   protected override options = { title: `${appI18n.t("home.pageTitles.home")} | WorklyHub`, requiresAuth: true };
 
   private profileSub?: Subscription;
+  private metricsPollingTimer: number | null = null;
+  private metricsInFlight = false;
+  private visibilityChangeHandler: (() => void) | null = null;
 
   public state = {
     isLoading: true,
@@ -69,8 +96,54 @@ export class UsersHomePage extends BasePage<
     metrics: undefined,
   };
 
-  private async computeAndSetMetrics(): Promise<void> {
+  private resolveCurrentWorkspaceId(): string | undefined {
+    const ws = companyService.getWorkspaceValue();
+    const workspace = toDataMap(ws);
+    return toStringValue(workspace?.workspaceId) ?? toStringValue(workspace?.id);
+  }
+
+  private getMetricsCacheKey(workspaceId?: string): string {
+    return workspaceId && workspaceId.trim().length > 0 ? workspaceId : "__default__";
+  }
+
+  private setupMetricsPolling(): void {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
+    if (this.metricsPollingTimer != null) {
+      window.clearInterval(this.metricsPollingTimer);
+      this.metricsPollingTimer = null;
+    }
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
+
+    const refresh = async () => {
+      if (document.visibilityState === "hidden") return;
+      if (this.metricsInFlight) return;
+      this.metricsInFlight = true;
+      try {
+        await this.computeAndSetMetrics();
+      } finally {
+        this.metricsInFlight = false;
+      }
+    };
+
+    this.metricsPollingTimer = window.setInterval(
+      () => void refresh(),
+      HOME_SUMMARY_POLLING_INTERVAL_MS
+    );
+    this.visibilityChangeHandler = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", this.visibilityChangeHandler);
+  }
+
+  private async computeAndSetMetrics(opts?: { force?: boolean }): Promise<void> {
     try {
+      const force = opts?.force === true;
       const schedule = new ScheduleService();
       const finance = new FinanceService();
       const now = new Date();
@@ -81,10 +154,16 @@ export class UsersHomePage extends BasePage<
       week.setDate(now.getDate() + 7);
       const weekStr = `${week.getFullYear()}-${pad(week.getMonth() + 1)}-${pad(week.getDate())}`;
 
-      const ws = companyService.getWorkspaceValue();
-      const workspace = toDataMap(ws);
-      const workspaceId =
-        toStringValue(workspace?.workspaceId) ?? toStringValue(workspace?.id);
+      const workspaceId = this.resolveCurrentWorkspaceId();
+      const cacheKey = this.getMetricsCacheKey(workspaceId);
+
+      if (!force) {
+        const cached = HOME_METRICS_CACHE.get(cacheKey);
+        if (cached && Date.now() - cached.fetchedAt < HOME_SUMMARY_POLLING_INTERVAL_MS) {
+          this.setSafeState({ metrics: cached.metrics });
+          return;
+        }
+      }
 
       const eventsToday = await schedule.getEvents({ from: todayStr, to: todayStr, workspaceId });
       const eventsWeek = await schedule.getEvents({ from: todayStr, to: weekStr, workspaceId });
@@ -142,16 +221,20 @@ export class UsersHomePage extends BasePage<
           ? notificationsSummaryResult.value.summary.highPriorityUnreadCount
           : 0;
 
+      const metrics: HomeMetrics = {
+        appointmentsToday,
+        revenueThisMonthCents,
+        nextAppointment,
+        overdueWorkOrders,
+        inventoryAlerts,
+        unreadNotifications,
+        highPriorityUnreadNotifications,
+      };
+
+      HOME_METRICS_CACHE.set(cacheKey, { fetchedAt: Date.now(), metrics });
+
       this.setSafeState({
-        metrics: {
-          appointmentsToday,
-          revenueThisMonthCents,
-          nextAppointment,
-          overdueWorkOrders,
-          inventoryAlerts,
-          unreadNotifications,
-          highPriorityUnreadNotifications,
-        },
+        metrics,
       });
     } catch (e) {
       console.debug("metrics fetch failed", e);
@@ -165,6 +248,7 @@ export class UsersHomePage extends BasePage<
     this.profileSub = usersService.getProfile$().subscribe((p) => {
       this.setSafeState({ name: p?.name });
     });
+    this.setupMetricsPolling();
 
     const existingOverview = usersOverviewService.getOverviewValue();
     if (existingOverview?.modules != null && existingOverview.modules.length > 0) {
@@ -175,7 +259,7 @@ export class UsersHomePage extends BasePage<
       });
       await this.runAsync(async () => {
         try {
-          await this.computeAndSetMetrics();
+          await this.computeAndSetMetrics({ force: true });
         } catch (e) {
           console.debug("metrics fetch failed", e);
         }
@@ -193,7 +277,7 @@ export class UsersHomePage extends BasePage<
         });
 
         try {
-          await this.computeAndSetMetrics();
+          await this.computeAndSetMetrics({ force: true });
         } catch (e) {
           console.debug("metrics fetch failed", e);
         }
@@ -215,6 +299,14 @@ export class UsersHomePage extends BasePage<
   override componentWillUnmount(): void {
     super.componentWillUnmount();
     this.profileSub?.unsubscribe();
+    if (this.metricsPollingTimer != null && typeof window !== "undefined") {
+      window.clearInterval(this.metricsPollingTimer);
+      this.metricsPollingTimer = null;
+    }
+    if (this.visibilityChangeHandler && typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", this.visibilityChangeHandler);
+      this.visibilityChangeHandler = null;
+    }
   }
 
   protected override renderPage(): React.ReactNode {
@@ -257,9 +349,24 @@ export class UsersHomePage extends BasePage<
     });
 
     const preferred = [
-      { id: "schedule", route: "/schedule/landing", keywords: ["schedule", "calendar", "agenda", "agendamento"], fallbackIcon: <Calendar /> },
-      { id: "inventory", route: "/inventory/landing", keywords: ["inventory", "stock", "estoque", "insumo"], fallbackIcon: <Box /> },
-      { id: "finance", route: "/finance/landing", keywords: ["finance", "payment", "financeiro", "pagamento"], fallbackIcon: <DollarSign /> },
+      {
+        id: "work-order",
+        route: "/work-order/landing",
+        keywords: ["work-order", "work order", "os", "ordem", "service order"],
+        fallbackIcon: <Briefcase />,
+      },
+      {
+        id: "inventory",
+        route: "/inventory/landing",
+        keywords: ["inventory", "stock", "estoque", "insumo"],
+        fallbackIcon: <Box />,
+      },
+      {
+        id: "growth",
+        route: "/growth/landing",
+        keywords: ["growth", "autopilot", "retention", "reactivation"],
+        fallbackIcon: <Sparkles />,
+      },
     ];
 
     const selected: { id: string; title: string; subtitle?: string; icon?: ReactNode }[] = [];

@@ -36,6 +36,12 @@ import {
   Right,
   SearchWrap,
   MobileMenuButton,
+  UserMenuDivider,
+  UserMenuIdentity,
+  UserMenuIdentityEmail,
+  UserMenuIdentityMeta,
+  UserMenuIdentityName,
+  UserMenuOverlay,
 } from "./header.component.styles";
 
 // menu items are provided by parent via props
@@ -49,6 +55,9 @@ type Props = BaseProps & {
   selectedPath?: string;
   menuItems?: MenuProps["items"];
   userMenuItems?: MenuProps["items"];
+  userDisplayName?: string;
+  userEmail?: string;
+  userPhotoUrl?: string;
 };
 
 type State = BaseState & {
@@ -163,6 +172,22 @@ export class AppHeader extends BaseComponent<Props, State> {
     this.setSafeState({ mobileMenuOpen: false });
   };
 
+  private resolveUserInitials(name?: string, email?: string): string {
+    const fromName = String(name ?? "")
+      .trim()
+      .split(/\s+/)
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+
+    if (fromName) return fromName;
+
+    const localPart = String(email ?? "").split("@")[0] ?? "";
+    return localPart.slice(0, 2).toUpperCase() || "U";
+  }
+
   protected override renderView(): React.ReactNode {
     const { selectedPath, menuItems } = this.props;
     const unreadCount = Math.max(0, Number(this.props.unreadNotifications ?? 0));
@@ -189,7 +214,14 @@ export class AppHeader extends BaseComponent<Props, State> {
     const userMenu: MenuProps = {
       items: this.props.userMenuItems,
       onClick: handleMenuClick,
+      className: "header-user-menu",
     };
+
+    const displayName =
+      String(this.props.userDisplayName ?? "").trim() ||
+      appI18n.t("layout.header.userMenu.profile");
+    const displayEmail = String(this.props.userEmail ?? "").trim();
+    const avatarInitials = this.resolveUserInitials(this.props.userDisplayName, this.props.userEmail);
 
     const handleNavigateAndClose = (path: string) => {
       this.props.onNavigate?.(path);
@@ -293,9 +325,35 @@ export class AppHeader extends BaseComponent<Props, State> {
                   trigger={["click"]}
                   getPopupContainer={() => document.body}
                   styles={{ root: { zIndex: 2000 } }}
+                  dropdownRender={(menuNode) => (
+                    <UserMenuOverlay>
+                      <UserMenuIdentity>
+                        <Avatar
+                          size={34}
+                          src={this.props.userPhotoUrl}
+                          className="identity-avatar"
+                        >
+                          {avatarInitials}
+                        </Avatar>
+                        <UserMenuIdentityMeta>
+                          <UserMenuIdentityName>{displayName}</UserMenuIdentityName>
+                          {displayEmail ? (
+                            <UserMenuIdentityEmail>{displayEmail}</UserMenuIdentityEmail>
+                          ) : null}
+                        </UserMenuIdentityMeta>
+                      </UserMenuIdentity>
+                      <UserMenuDivider />
+                      {menuNode}
+                    </UserMenuOverlay>
+                  )}
                 >
-                  <Avatar shape="circle" className="user-avatar">
-                    U
+                  <Avatar
+                    shape="circle"
+                    className="user-avatar"
+                    src={this.props.userPhotoUrl}
+                    aria-label={displayName}
+                  >
+                    {avatarInitials}
                   </Avatar>
                 </Dropdown>
               </Space>

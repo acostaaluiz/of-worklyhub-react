@@ -1,7 +1,12 @@
 import React from "react";
 import { i18n as appI18n } from "@core/i18n";
-import { Button, Modal, Tabs, message } from "antd";
-import { TeamOutlined, CalendarOutlined } from "@ant-design/icons";
+import { Alert, Button, Modal, Space, Tabs, Typography, message } from "antd";
+import {
+  TeamOutlined,
+  CalendarOutlined,
+  ShoppingCartOutlined,
+  UserAddOutlined,
+} from "@ant-design/icons";
 import PeopleTemplate from "@modules/people/presentation/templates/people/people.template";
 import EmployeeListComponent from "@modules/people/presentation/components/employee-list/employee-list.component";
 import EmployeeFormComponent from "@modules/people/presentation/components/employee-form/employee-form.component";
@@ -22,11 +27,20 @@ import { loadingService } from "@shared/ui/services/loading.service";
 import type { EmployeeModel } from "@modules/people/interfaces/employee.model";
 import { BasePage } from "@shared/base/base.page";
 import type { BasePageState } from "@shared/base/interfaces/base-page.state.interface";
+import { AppError } from "@core/errors/app-error";
 import type { PeopleWorkspaceSettings } from "@modules/people/interfaces/people-settings.model";
 import {
   DEFAULT_PEOPLE_SETTINGS,
   getPeopleSettings,
 } from "@modules/people/services/people-settings.service";
+import { billingService } from "@modules/billing/services/billing.service";
+import type { WorkspaceEmployeeCapacity } from "@modules/billing/services/billing-api";
+import { navigateTo } from "@core/navigation/navigation.service";
+import {
+  clearAiTokenTopupSelection,
+  setBillingCheckoutKind,
+  setEmployeeAddonSelection,
+} from "@modules/billing/services/billing-checkout-session";
 import { X } from "lucide-react";
 
 type State = {
@@ -37,6 +51,7 @@ type State = {
   capacityWeekStart: string;
   capacitySnapshot: WorkforceCapacitySnapshot | null;
   capacityLoading: boolean;
+  employeeCapacity: WorkspaceEmployeeCapacity | null;
   settings: PeopleWorkspaceSettings;
 } & BasePageState;
 
@@ -59,6 +74,7 @@ export class PeopleHomePage extends BasePage<{}, State> {
     capacityWeekStart: getWeekStartDate(),
     capacitySnapshot: null,
     capacityLoading: false,
+    employeeCapacity: null,
     settings: DEFAULT_PEOPLE_SETTINGS,
   } as State;
 
@@ -74,6 +90,7 @@ export class PeopleHomePage extends BasePage<{}, State> {
               source: "defaults" as const,
             };
         const res = await this.service.listEmployees();
+        const employeeCapacity = await this.loadEmployeeCapacity();
         const capacitySnapshot = await this.loadCapacitySnapshot(
           res,
           this.state.capacityWeekStart
@@ -81,6 +98,7 @@ export class PeopleHomePage extends BasePage<{}, State> {
         this.setSafeState({
           employees: res,
           capacitySnapshot,
+          employeeCapacity,
           settings: settingsBundle.settings,
           activeTab: settingsBundle.settings.defaultLandingTab,
         });
@@ -90,7 +108,50 @@ export class PeopleHomePage extends BasePage<{}, State> {
     });
   }
 
-  private handleOpenCreate = () => this.setSafeState({ editing: null, showForm: true });
+  private async loadEmployeeCapacity(): Promise<WorkspaceEmployeeCapacity | null> {
+    try {
+      return await billingService.fetchWorkspaceEmployeeCapacity();
+    } catch {
+      return null;
+    }
+  }
+
+  private isEmployeeLimitReached(capacity?: WorkspaceEmployeeCapacity | null): boolean {
+    const snapshot = capacity ?? this.state.employeeCapacity;
+    if (!snapshot) return false;
+    return Number(snapshot.limits.remainingEmployees ?? 0) <= 0;
+  }
+
+  private navigateToEmployeeAddonCheckout(quantity = 1): void {
+    const capacity = this.state.employeeCapacity;
+
+    if (!capacity) {
+      navigateTo("/billing/employees");
+      return;
+    }
+
+    setBillingCheckoutKind("employee_addon");
+    clearAiTokenTopupSelection();
+    setEmployeeAddonSelection({
+      quantity,
+      interval: "monthly",
+      planName: capacity.plan.name,
+      currency: capacity.plan.currency,
+      unitPriceCents: capacity.pricing.addonUnitPriceCents.monthly,
+      baseEmployees: capacity.limits.baseEmployees,
+      addonEmployees: capacity.limits.addonEmployees,
+      activeEmployees: capacity.limits.activeEmployees,
+      totalEmployees: capacity.limits.totalEmployees,
+    });
+
+    try {
+      sessionStorage.removeItem("billing.selectedPlanId");
+    } catch {
+      // no-op
+    }
+
+    navigateTo("/billing/checkout");
+  }
 
   private handleOpenEdit = (e: EmployeeModel) => this.setSafeState({ editing: e, showForm: true });
 
@@ -183,6 +244,47 @@ export class PeopleHomePage extends BasePage<{}, State> {
     }
   };
 
+  private getWorkerLimitMessage(error: unknown): string | null {
+    if (!(error instanceof AppError)) return null;
+    const details = (error.details ?? null) as DataMap | null;
+    if (!details || typeof details !== "object") return null;
+
+    const errorPayload =
+      details.error && typeof details.error === "object"
+        ? (details.error as DataMap)
+        : null;
+    const code =
+      typeof errorPayload?.code === "string"
+        ? errorPayload.code
+        : typeof details.error === "string"
+        ? details.error
+        : undefined;
+
+      if (code !== "WORKSPACE_WORKER_LIMIT_REACHED") return null;
+
+    const payload =
+      errorPayload?.details && typeof errorPayload.details === "object"
+        ? (errorPayload.details as DataMap)
+        : null;
+
+    return appI18n.t("people.messages.workerLimitReached", {
+      totalLimit: Number(payload?.totalLimit ?? 0),
+      currentWorkers: Number(payload?.currentWorkers ?? 0),
+      addonWorkers: Number(payload?.addonWorkers ?? 0),
+      planId: Number(payload?.planId ?? 0),
+    });
+  }
+
+  private handleOpenCreate = () => {
+    if (this.isEmployeeLimitReached()) {
+      message.warning(appI18n.t("people.messages.workerLimitReachedRedirect"));
+      this.navigateToEmployeeAddonCheckout(1);
+      return;
+    }
+
+    this.setSafeState({ editing: null, showForm: true });
+  };
+
   private handleCreate = async (data: Omit<EmployeeModel, "id" | "createdAt">) => {
     loadingService.show();
     try {
@@ -195,11 +297,19 @@ export class PeopleHomePage extends BasePage<{}, State> {
           created as EmployeeModel,
           ...(this.state.employees ?? []).filter((employee) => employee.id !== (created as EmployeeModel).id),
         ];
+        const employeeCapacity = await this.loadEmployeeCapacity();
         this.setSafeState({ showForm: false, employees: nextEmployees });
+        this.setSafeState({ employeeCapacity });
         await this.refreshCapacitySnapshot(undefined, nextEmployees);
         message.success("Employee created");
       }
     } catch (err) {
+      const workerLimitMessage = this.getWorkerLimitMessage(err);
+      if (workerLimitMessage) {
+        message.warning(workerLimitMessage);
+        this.navigateToEmployeeAddonCheckout(1);
+        return;
+      }
       message.error("Failed to create employee");
     } finally {
       loadingService.hide();
@@ -216,6 +326,8 @@ export class PeopleHomePage extends BasePage<{}, State> {
       if (updated) {
         const nextEmployees = (this.state.employees ?? []).map((e) => (e.id === (updated as EmployeeModel).id ? (updated as EmployeeModel) : e));
         this.setSafeState({ editing: null, employees: nextEmployees });
+        const employeeCapacity = await this.loadEmployeeCapacity();
+        this.setSafeState({ employeeCapacity });
         await this.refreshCapacitySnapshot(undefined, nextEmployees);
         message.success("Employee updated");
       }
@@ -236,6 +348,8 @@ export class PeopleHomePage extends BasePage<{}, State> {
             await this.service.deactivateEmployee(e.id);
             const nextEmployees = (this.state.employees ?? []).map((it) => (it.id === e.id ? { ...it, active: false } : it));
             this.setSafeState({ employees: nextEmployees });
+            const employeeCapacity = await this.loadEmployeeCapacity();
+            this.setSafeState({ employeeCapacity });
             await this.refreshCapacitySnapshot(undefined, nextEmployees);
             message.success("Employee deactivated");
           }, { setLoading: false });
@@ -249,12 +363,65 @@ export class PeopleHomePage extends BasePage<{}, State> {
   };
 
   protected override renderPage(): React.ReactNode {
+    const employeeCapacity = this.state.employeeCapacity;
+    const limitReached = this.isEmployeeLimitReached(employeeCapacity);
+
     const employeesContent = (
       <EmployeeListComponent
         employees={this.state.employees ?? []}
         onEdit={this.handleOpenEdit}
         onDeactivate={this.handleDeactivate}
-        toolbarRight={<Button type="primary" onClick={this.handleOpenCreate} style={{ marginRight: 8 }} data-cy="people-new-employee-button">New employee</Button>}
+        toolbarLeft={
+          limitReached && employeeCapacity ? (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ maxWidth: 780 }}
+              message={appI18n.t("people.capacity.limitAlertTitle", {
+                used: employeeCapacity.limits.activeEmployees,
+                total: employeeCapacity.limits.totalEmployees,
+              })}
+              description={
+                <Space direction="vertical" size={6}>
+                  <Typography.Text type="secondary">
+                    {appI18n.t("people.capacity.limitAlertDescription", {
+                      base: employeeCapacity.limits.baseEmployees,
+                      extra: employeeCapacity.limits.addonEmployees,
+                    })}
+                  </Typography.Text>
+                  <Button
+                    size="small"
+                    type="primary"
+                    icon={<ShoppingCartOutlined />}
+                    onClick={() => this.navigateToEmployeeAddonCheckout(1)}
+                    data-cy="people-capacity-buy-slots-alert-button"
+                  >
+                    {appI18n.t("people.capacity.actions.buyMoreSlots")}
+                  </Button>
+                </Space>
+              }
+            />
+          ) : null
+        }
+        toolbarRight={
+          <Space size={8} style={{ marginRight: 8 }}>
+            <Button
+              icon={<ShoppingCartOutlined />}
+              onClick={() => navigateTo("/billing/employees")}
+              data-cy="people-buy-slots-button"
+            >
+              {appI18n.t("people.capacity.actions.buyMoreSlots")}
+            </Button>
+            <Button
+              type="primary"
+              icon={<UserAddOutlined />}
+              onClick={this.handleOpenCreate}
+              data-cy="people-new-employee-button"
+            >
+              {appI18n.t("people.actions.newEmployee")}
+            </Button>
+          </Space>
+        }
       />
     );
 

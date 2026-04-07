@@ -120,6 +120,8 @@ export class UsersAuthService {
     verified: { uid: string; claims: DataValue },
     profile?: { email?: string; name?: string; photoUrl?: string }
   ): UserSession {
+    this.resetSessionScopedCaches();
+
     const session: UserSession = {
       uid: verified.uid,
       claims: verified.claims,
@@ -134,6 +136,34 @@ export class UsersAuthService {
     themeService.refreshForCurrentUser();
 
     return session;
+  }
+
+  private resetSessionScopedCaches(): void {
+    try {
+      usersService.clear();
+    } catch {
+      // ignore
+    }
+    try {
+      companyService.clear();
+    } catch {
+      // ignore
+    }
+    try {
+      applicationService.clear();
+    } catch {
+      // ignore
+    }
+    try {
+      usersOverviewService.clear();
+    } catch {
+      // ignore
+    }
+    try {
+      usersAiTokensService.reset();
+    } catch {
+      // ignore
+    }
   }
 
   async signIn(email: string, password: string): Promise<UserSession> {

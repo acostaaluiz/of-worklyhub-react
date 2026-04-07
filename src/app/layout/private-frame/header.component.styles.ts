@@ -287,3 +287,68 @@ export const MobileMenuButton = styled.button`
     box-shadow: var(--shadow-sm);
   }
 `;
+
+export const UserMenuOverlay = styled.div`
+  min-width: 240px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  background:
+    radial-gradient(
+      120% 120% at 8% 10%,
+      color-mix(in srgb, var(--color-primary) 11%, transparent),
+      transparent 42%
+    ),
+    radial-gradient(
+      120% 120% at 90% 90%,
+      color-mix(in srgb, var(--color-secondary) 10%, transparent),
+      transparent 48%
+    ),
+    linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--color-surface-2) 76%, transparent),
+      var(--color-surface)
+    );
+  box-shadow: var(--shadow-md);
+`;
+
+export const UserMenuIdentity = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 8px;
+
+  .identity-avatar {
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  }
+`;
+
+export const UserMenuIdentityMeta = styled.div`
+  min-width: 0;
+`;
+
+export const UserMenuIdentityName = styled.div`
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const UserMenuIdentityEmail = styled.div`
+  margin-top: 1px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const UserMenuDivider = styled.div`
+  height: 1px;
+  margin: 0 2px 6px;
+  background: var(--color-divider);
+`;

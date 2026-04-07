@@ -118,6 +118,7 @@ function WorkOrdersPageContent(): React.ReactElement {
   const [initialLoading, setInitialLoading] = React.useState(true);
   const requestRef = React.useRef(0);
   const ordersRef = React.useRef<WorkOrder[]>([]);
+  const filtersRef = React.useRef<Filters>({});
 
   const currentUserUid = usersAuthService.getSessionValue()?.uid ?? null;
   const currentUserName = usersOverviewService.getProfileValue()?.name ?? undefined;
@@ -125,6 +126,10 @@ function WorkOrdersPageContent(): React.ReactElement {
   React.useEffect(() => {
     ordersRef.current = orders;
   }, [orders]);
+
+  React.useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
 
   React.useEffect(() => {
     const sub = companyService.getWorkspace$().subscribe((ws) => {
@@ -225,7 +230,7 @@ function WorkOrdersPageContent(): React.ReactElement {
       }
 
       const mode = params?.mode ?? "replace";
-      const nextFilters = params?.override ?? filters;
+      const nextFilters = params?.override ?? filtersRef.current;
       const nextOffset = params?.offset ?? 0;
       const requestId = ++requestRef.current;
 
@@ -270,7 +275,7 @@ function WorkOrdersPageContent(): React.ReactElement {
         else setListLoading(false);
       }
     },
-    [workspaceId, filters]
+    [workspaceId]
   );
 
   const fetchMoreOrders = React.useCallback(() => {

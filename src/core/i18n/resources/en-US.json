@@ -232,7 +232,21 @@
       "overdueWorkOrders": "Overdue work orders",
       "inventoryAlerts": "Inventory alerts",
       "unreadNotifications": "Unread notifications",
-      "highPrioritySuffix": " ({{count}} high priority)"
+      "highPrioritySuffix": " ({{count}} high priority)",
+      "flipHint": "Hover or flip",
+      "flipCardAriaLabel": "Flip indicator card for {{label}}",
+      "overdueWorkOrdersDetailLabel": "Work order risk",
+      "overdueWorkOrdersDetail": "{{count}} work order(s) are past due and need review.",
+      "overdueWorkOrdersFooterRisk": "Review due dates and close or reschedule overdue items.",
+      "overdueWorkOrdersFooterClear": "No overdue work orders detected right now.",
+      "inventoryAlertsDetailLabel": "Stock watch",
+      "inventoryAlertsDetail": "{{count}} inventory alert(s) need attention.",
+      "inventoryAlertsFooterRisk": "Check replenishment rules and low-stock thresholds.",
+      "inventoryAlertsFooterClear": "Inventory is quiet and no alerts are pending.",
+      "unreadNotificationsDetailLabel": "Inbox summary",
+      "unreadNotificationsDetail": "{{unread}} unread notification(s), including {{highPriority}} high priority.",
+      "unreadNotificationsFooterPriority": "{{count}} high priority item(s) should be reviewed first.",
+      "unreadNotificationsFooterCalm": "No high priority notifications at the moment."
     }
   },
   "users": {
@@ -435,6 +449,7 @@
           "title": "AI token balance",
           "subtitle": "Track monthly quota, top-ups, and feature usage.",
           "actions": {
+            "buyMore": "Buy more tokens",
             "refresh": "Refresh"
           },
           "cards": {
@@ -797,6 +812,20 @@
       "landing": "People overview",
       "settings": "People settings"
     },
+    "actions": {
+      "newEmployee": "New employee"
+    },
+    "messages": {
+      "workerLimitReached": "Workspace limit reached ({{currentWorkers}}/{{totalLimit}}). Upgrade capacity in Billing to add more employees.",
+      "workerLimitReachedRedirect": "Employee limit reached for this workspace. Complete the add-on checkout to add more team members."
+    },
+    "capacity": {
+      "limitAlertTitle": "Employee capacity reached ({{used}}/{{total}} active slots)",
+      "limitAlertDescription": "Your current plan includes {{base}} base slot(s) plus {{extra}} add-on slot(s). Buy more slots to keep adding employees.",
+      "actions": {
+        "buyMoreSlots": "Buy more slots"
+      }
+    },
     "landing": {
       "title": "People",
       "description": "Invite, manage, and organize your team.",
@@ -848,18 +877,25 @@
     },
     "introduction": {
       "messages": {
-        "createWorkspaceFailed": "Failed to create workspace."
+        "createWorkspaceFailed": "Failed to create workspace.",
+        "updateWorkspaceFailed": "Failed to update workspace."
       },
       "response": {
         "setupComplete": {
           "title": "Setup complete",
           "description": "Initial setup finished. You will be redirected to Home."
+        },
+        "updateComplete": {
+          "title": "Setup updated",
+          "description": "Company setup changes saved successfully."
         }
       },
       "template": {
         "header": {
           "title": "Company setup",
-          "subtitle": "Configure your workspace foundation in a few guided steps."
+          "subtitle": "Configure your workspace foundation in a few guided steps.",
+          "editTitle": "Company setup",
+          "editSubtitle": "Update your workspace baseline and keep company information current."
         },
         "highlights": {
           "identity": {
@@ -877,7 +913,9 @@
         },
         "wizard": {
           "title": "Setup",
-          "subtitle": "Complete these steps to publish your workspace baseline."
+          "subtitle": "Complete these steps to publish your workspace baseline.",
+          "editTitle": "Edit setup",
+          "editSubtitle": "Review and update workspace details."
         }
       }
     },
@@ -1309,7 +1347,9 @@
     "pageTitles": {
       "landing": "Billing overview",
       "plans": "Plans",
-      "checkout": "Checkout"
+      "checkout": "Checkout",
+      "employeeCapacity": "Employee capacity",
+      "aiTokenTopup": "AI tokens"
     },
     "landing": {
       "title": "Billing",
@@ -1323,6 +1363,11 @@
           "title": "Checkout",
           "description": "Finalize plan selection and payment.",
           "meta": "After selecting a plan"
+        },
+        "employees": {
+          "title": "Employee capacity",
+          "description": "Purchase extra employee capacity for this workspace.",
+          "meta": "Plan-based add-on"
         }
       }
     },
@@ -1410,21 +1455,32 @@
       },
       "messages": {
         "selectPlan": "Select a plan before finishing payment.",
+        "selectEmployeeAddon": "Select an employee add-on before finishing payment.",
+        "selectAiTokenTopup": "Select an AI token package before finishing payment.",
         "providerNotConfigured": "Payment provider is not configured. Please try again later.",
         "invalidRedirectUrl": "Invalid payment redirect URL. Please contact support.",
         "redirecting": "Redirecting to the payment provider...",
         "paymentApproved": "Payment approved!",
+        "employeeAddonApproved": "Employee add-on approved!",
+        "aiTokenTopupApproved": "AI token package approved!",
         "paymentPending": "Payment pending confirmation. We will notify you once it is approved.",
         "checkoutCreated": "Checkout created.",
         "failedCreateCheckout": "Failed to create checkout."
       },
       "form": {
         "title": "Checkout details",
+        "employeeAddonTitle": "Employee add-on checkout",
+        "aiTokenTopupTitle": "AI token checkout",
         "subtitle": "Payment is completed on the selected gateway page. No card fields are handled here.",
+        "employeeAddonSubtitle": "Review the selected extra employees and finish payment securely.",
+        "aiTokenTopupSubtitle": "Review the selected token package and finish payment securely.",
         "gatewayMessage": "Gateway: {{gateway}}",
         "gatewayDescription": "You will be redirected to a secure hosted checkout to finish payment.",
+        "gatewayInfoLabel": "Gateway and redirect info",
         "temporarilyUnavailable": "Payment temporarily unavailable",
         "credentialsMissing": "Gateway credentials are not configured yet.",
+        "devBypassEnabledTitle": "DEV bypass enabled",
+        "devBypassEnabledDescription": "Gateway credentials are bypassed in DEV. This checkout will be auto-approved based on backend bypass configuration.",
         "hostedTag": "Hosted checkout",
         "contact": "Contact",
         "fullName": "Full name",
@@ -1437,6 +1493,8 @@
         "companyOptional": "Company (optional)",
         "companyPlaceholder": "Company name",
         "changePlan": "Change plan",
+        "changeEmployeeAddon": "Change employee add-on",
+        "changeAiTokenTopup": "Change token package",
         "continueGateway": "Continue to gateway"
       }
     },
@@ -1445,22 +1503,92 @@
       "subtitle": "Review your plan before confirming.",
       "cycle": {
         "monthly": "Monthly",
-        "yearly": "Yearly"
+        "yearly": "Yearly",
+        "oneTime": "One-time"
       },
       "per": {
         "month": "month",
-        "year": "year"
+        "year": "year",
+        "oneTime": "one-time"
       },
       "savingsLabel": "Save 15%",
       "total": "Total",
       "taxes": "Taxes may apply depending on your region.",
       "changePlan": "Change plan",
+      "changeEmployeeAddon": "Change employee add-on",
+      "changeAiTokenTopup": "Change token package",
+      "employeeAddonTitle": "Employee capacity add-on",
+      "employeeAddonMeta": "{{quantity}} additional employee(s) at {{unitPrice}} each on {{planName}}.",
+      "aiTokenTopupTitle": "AI token top-up",
+      "aiTokenTopupMeta": "{{tokens}} tokens package.",
+      "employeeAddonFeatures": {
+        "extraSeats": "{{count}} new employee seat(s)",
+        "currentTotal": "Current workspace capacity: {{count}} employee(s)",
+        "afterCheckout": "Capacity after checkout: {{count}} employee(s)"
+      },
+      "aiTokenTopupFeatures": {
+        "tokens": "{{count}} AI tokens",
+        "topupBalance": "Credited in top-up balance",
+        "availableNow": "Available immediately after approval"
+      },
       "mockFeatures": {
         "users": "Up to 5 users",
         "clients": "Up to 500 clients",
         "schedules": "Unlimited schedules",
         "reports": "Basic reports",
         "support": "Priority support"
+      }
+    },
+    "employeeCapacity": {
+      "title": "Employee capacity",
+      "subtitle": "Your plan includes a base employee limit. Add extra seats as your team grows.",
+      "planInfo": "Current plan: {{plan}}",
+      "capacityInfo": "Base: {{base}} | Extra add-ons: {{extra}} | Total: {{total}} | In use: {{used}} | Remaining: {{remaining}}",
+      "cards": {
+        "base": "Base limit",
+        "extra": "Extra seats",
+        "used": "In use",
+        "available": "Available"
+      },
+      "selector": {
+        "title": "Add more employees",
+        "quantity": "Quantity",
+        "pricingTitle": "Unit price: {{unitPrice}}",
+        "pricingDescription": "You are adding {{quantity}} employee(s), total {{totalPrice}} on {{interval}}. New capacity after checkout: {{totalEmployees}} employee(s). Yearly billing multiplies monthly amount by {{yearlyMultiplier}}.",
+        "interval": {
+          "monthly": "Monthly",
+          "yearly": "Yearly"
+        }
+      },
+      "actions": {
+        "back": "Back to plans",
+        "continue": "Continue to checkout"
+      },
+      "messages": {
+        "loadError": "Unable to load employee capacity."
+      }
+    },
+    "aiTokenTopup": {
+      "title": "Buy more AI tokens",
+      "subtitle": "Choose a package and continue to checkout.",
+      "info": {
+        "title": "Token top-up",
+        "description": "Top-up packages are charged once and added to your current AI token balance."
+      },
+      "package": {
+        "tokens": "{{count}} tokens",
+        "pricePerToken": "{{value}} per token"
+      },
+      "summary": {
+        "title": "Selected package: {{tokens}} tokens",
+        "description": "Total at checkout: {{price}}."
+      },
+      "actions": {
+        "back": "Back to AI tab",
+        "continue": "Continue to checkout"
+      },
+      "messages": {
+        "selectPackage": "Select an AI token package."
       }
     },
     "paymentMethods": {

@@ -9,6 +9,11 @@ import { message } from "antd";
 import { navigateTo } from "@core/navigation/navigation.service";
 import { billingService } from "@modules/billing/services/billing.service";
 import type { BillingPlan } from "@modules/billing/services/billing-api";
+import {
+  clearAiTokenTopupSelection,
+  clearEmployeeAddonSelection,
+  setBillingCheckoutKind,
+} from "@modules/billing/services/billing-checkout-session";
 
 export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
   protected override options = {
@@ -140,6 +145,9 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
 
     // persist selected plan for checkout page to read
     try {
+      setBillingCheckoutKind("plan_subscription");
+      clearEmployeeAddonSelection();
+      clearAiTokenTopupSelection();
       sessionStorage.setItem("billing.selectedPlanId", String(planId));
       // also ensure interval is present (in case selection step failed to set it)
       const maybeInterval = sessionStorage.getItem("billing.selectedPlanInterval");
