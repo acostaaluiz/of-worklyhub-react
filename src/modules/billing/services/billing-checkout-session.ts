@@ -11,6 +11,8 @@ export type EmployeeAddonSelection = {
   planName: string;
   currency: string;
   unitPriceCents: number;
+  unitPriceCentsMonthly?: number;
+  unitPriceCentsYearly?: number;
   baseEmployees: number;
   addonEmployees: number;
   activeEmployees: number;
@@ -91,7 +93,33 @@ export function getEmployeeAddonSelection(): EmployeeAddonSelection | null {
       parsed.interval === "yearly" ? "yearly" : "monthly";
     const planName = String(parsed.planName ?? "").trim();
     const currency = String(parsed.currency ?? "USD").trim() || "USD";
-    const unitPriceCents = asPositiveInt(parsed.unitPriceCents, 0);
+    const parsedMonthly = asPositiveInt(parsed.unitPriceCentsMonthly, 0);
+    const parsedYearly = asPositiveInt(parsed.unitPriceCentsYearly, 0);
+    const parsedLegacy = asPositiveInt(parsed.unitPriceCents, 0);
+    const fallbackMonthly =
+      parsedMonthly > 0
+        ? parsedMonthly
+        : parsedYearly > 0
+          ? Math.max(1, Math.round(parsedYearly / 12))
+          : parsedLegacy > 0 && interval === "monthly"
+            ? parsedLegacy
+            : parsedLegacy > 0
+              ? Math.max(1, Math.round(parsedLegacy / 12))
+              : 0;
+    const fallbackYearly =
+      parsedYearly > 0
+        ? parsedYearly
+        : parsedMonthly > 0
+          ? parsedMonthly * 12
+          : parsedLegacy > 0 && interval === "yearly"
+            ? parsedLegacy
+            : parsedLegacy > 0
+              ? parsedLegacy * 12
+              : 0;
+    const unitPriceCents =
+      interval === "yearly"
+        ? (parsedYearly || (parsedLegacy > 0 && interval === "yearly" ? parsedLegacy : fallbackYearly))
+        : (parsedMonthly || (parsedLegacy > 0 && interval === "monthly" ? parsedLegacy : fallbackMonthly));
     const baseEmployees = Math.max(0, Math.trunc(Number(parsed.baseEmployees ?? 0)));
     const addonEmployees = Math.max(0, Math.trunc(Number(parsed.addonEmployees ?? 0)));
     const activeEmployees = Math.max(0, Math.trunc(Number(parsed.activeEmployees ?? 0)));
@@ -108,6 +136,8 @@ export function getEmployeeAddonSelection(): EmployeeAddonSelection | null {
       planName,
       currency,
       unitPriceCents,
+      unitPriceCentsMonthly: fallbackMonthly > 0 ? fallbackMonthly : undefined,
+      unitPriceCentsYearly: fallbackYearly > 0 ? fallbackYearly : undefined,
       baseEmployees,
       addonEmployees,
       activeEmployees,

@@ -155,19 +155,6 @@ describe("CompanyService", () => {
     });
   });
 
-  it("returns mocked company profile payload for local development", async () => {
-    const service = new CompanyService();
-
-    const profile = await service.getCompanyProfile("company-1");
-
-    expect(profile).toMatchObject({
-      id: "company-1",
-      name: "Barbearia JJ",
-    });
-    expect(profile.services).toBeDefined();
-    expect(profile.services?.length ?? 0).toBeGreaterThan(0);
-  });
-
   it("uploads workspace wallpaper and updates cached workspace", async () => {
     mockedStorage.get.mockReturnValueOnce(
       JSON.stringify({ id: "ws-1", company_profile: { trade_name: "Clinic" } })

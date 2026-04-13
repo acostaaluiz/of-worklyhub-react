@@ -138,6 +138,8 @@ export class PeopleHomePage extends BasePage<{}, State> {
       planName: capacity.plan.name,
       currency: capacity.plan.currency,
       unitPriceCents: capacity.pricing.addonUnitPriceCents.monthly,
+      unitPriceCentsMonthly: capacity.pricing.addonUnitPriceCents.monthly,
+      unitPriceCentsYearly: capacity.pricing.addonUnitPriceCents.yearly,
       baseEmployees: capacity.limits.baseEmployees,
       addonEmployees: capacity.limits.addonEmployees,
       activeEmployees: capacity.limits.activeEmployees,

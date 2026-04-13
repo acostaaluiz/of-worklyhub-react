@@ -2,8 +2,6 @@ import { BehaviorSubject } from "rxjs";
 import { CompaniesApi, type WorkspaceCreatePayload, type WorkspaceCreateResponse, type WorkspaceGetResponse, type WorkspaceProfileUpdatePayload, type WorkspaceProfileUpdateResponse } from "./companies-api";
 import { httpClient } from "@core/http/client.instance";
 import { localStorageProvider } from "@core/storage/local-storage.provider";
-import type { CompanyProfileModel } from "@modules/company/interfaces/company.model";
-import type { ServiceModel } from "@modules/clients/interfaces/service.model";
 import type { WorkspaceModel } from "./companies-api";
 import { toAppError } from "@core/errors/to-app-error";
 
@@ -15,36 +13,6 @@ export class CompanyService {
   private subject = new BehaviorSubject<Workspace>(this.loadFromStorage());
   private api = new CompaniesApi(httpClient);
   private pendingWorkspaceByEmail = new Map<string, Promise<Workspace | null>>();
-
-  private static MOCK_SERVICES: ServiceModel[] = [
-    {
-      id: "s1",
-      title: "Corte simples",
-      description: "Corte rápido e prático",
-      providerId: "prov-02",
-      providerName: "Barbearia JJ",
-      priceCents: 5000,
-      priceFormatted: "R$ 50,00",
-    },
-    {
-      id: "s2",
-      title: "Corte degradê",
-      description: "Acabamento degradê profissional",
-      providerId: "prov-02",
-      providerName: "Barbearia JJ",
-      priceCents: 6000,
-      priceFormatted: "R$ 60,00",
-    },
-    {
-      id: "s3",
-      title: "Corte + barba",
-      description: "Pacote corte e barba",
-      providerId: "prov-02",
-      providerName: "Barbearia JJ",
-      priceCents: 7500,
-      priceFormatted: "R$ 75,00",
-    },
-  ];
 
   private loadFromStorage(): Workspace {
     try {
@@ -147,24 +115,6 @@ export class CompanyService {
       throw toAppError(err);
     }
   }
-
-  // mock helper kept in service for local development
-  public async getCompanyProfile(companyId: string): Promise<CompanyProfileModel> {
-    await new Promise((r) => setTimeout(r, 80));
-
-    return {
-      id: companyId,
-      name: "Barbearia JJ",
-      description: "Espaço exclusivo para homens com serviços de corte e barba.",
-      address: "Avenida Perimetral Sul, 606, Vila Rica",
-      imageUrl: "https://picsum.photos/seed/companyjj/1200/600",
-      phone: "(66) 98425-7218",
-      rating: 4.94,
-      reviewsCount: 197,
-      services: CompanyService.MOCK_SERVICES,
-    } as CompanyProfileModel;
-  }
-
   async uploadWorkspaceWallpaper(file: File, onProgress?: (percent: number) => void): Promise<string> {
     // request signature from backend
     // CompaniesApi.requestWallpaperSignature returns { url, path, maxSize }
@@ -221,3 +171,4 @@ export class CompanyService {
 export const companyService = new CompanyService();
 
 export default companyService;
+

@@ -1,5 +1,5 @@
 import React from "react";
-import { Divider, Space, Typography, Button } from "antd";
+import { Divider, Space, Typography, Button, Segmented } from "antd";
 import { Check } from "lucide-react";
 import { i18n as appI18n } from "@core/i18n";
 import { BaseComponent } from "@shared/base/base.component";
@@ -12,6 +12,7 @@ import {
   getBillingCheckoutKind,
   getEmployeeAddonSelection,
   onBillingCheckoutSessionChange,
+  setEmployeeAddonSelection,
   type AiTokenTopupSelection,
   type BillingCheckoutKind,
   type EmployeeAddonSelection,
@@ -110,6 +111,27 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     super.componentWillUnmount();
   }
 
+  private handleEmployeeAddonIntervalChange(interval: BillingCycle): void {
+    const current = getEmployeeAddonSelection() ?? this.state.employeeAddonSelection;
+    if (!current) return;
+
+    const nextUnitPriceCents =
+      interval === "yearly"
+        ? current.unitPriceCentsYearly ?? current.unitPriceCents * 12
+        : current.unitPriceCentsMonthly ?? Math.max(1, Math.round(current.unitPriceCents / 12));
+
+    const nextSelection: EmployeeAddonSelection = {
+      ...current,
+      interval,
+      unitPriceCents: nextUnitPriceCents,
+    };
+
+    setEmployeeAddonSelection(nextSelection);
+    this.setSafeState({
+      employeeAddonSelection: nextSelection,
+    });
+  }
+
   protected override renderView(): React.ReactNode {
     const mockPlan = this.getMockPlan();
 
@@ -128,9 +150,6 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     const addonTotalCents = employeeAddonSelection
       ? employeeAddonSelection.unitPriceCents * employeeAddonSelection.quantity
       : 0;
-    const addonCycleLabel = employeeAddonSelection?.interval === "yearly"
-      ? appI18n.t("billing.orderSummary.cycle.yearly")
-      : appI18n.t("billing.orderSummary.cycle.monthly");
     const aiTokenTotalCents = aiTokenTopupSelection?.priceCents ?? 0;
 
     return (
@@ -156,17 +175,35 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
                   ? displayPlan.name
                   : mockPlan.name}
               </Typography.Text>
-              <Badge>
-                {isEmployeeAddonCheckout
-                  ? addonCycleLabel
-                  : isAiTokenTopupCheckout
+              {isEmployeeAddonCheckout ? (
+                <Segmented
+                  size="small"
+                  value={employeeAddonSelection?.interval ?? "monthly"}
+                  onChange={(value) =>
+                    this.handleEmployeeAddonIntervalChange(value as BillingCycle)
+                  }
+                  options={[
+                    {
+                      label: appI18n.t("billing.orderSummary.cycle.monthly"),
+                      value: "monthly",
+                    },
+                    {
+                      label: appI18n.t("billing.orderSummary.cycle.yearly"),
+                      value: "yearly",
+                    },
+                  ]}
+                />
+              ) : (
+                <Badge>
+                  {isAiTokenTopupCheckout
                     ? appI18n.t("billing.orderSummary.cycle.oneTime")
-                  : displayPlan
-                  ? (interval === "yearly"
-                    ? appI18n.t("billing.orderSummary.cycle.yearly")
-                    : appI18n.t("billing.orderSummary.cycle.monthly"))
-                  : mockPlan.cycle}
-              </Badge>
+                    : displayPlan
+                    ? (interval === "yearly"
+                      ? appI18n.t("billing.orderSummary.cycle.yearly")
+                      : appI18n.t("billing.orderSummary.cycle.monthly"))
+                    : mockPlan.cycle}
+                </Badge>
+              )}
             </Line>
 
             <PriceRow>

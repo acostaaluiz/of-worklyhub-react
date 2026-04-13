@@ -93,6 +93,8 @@ export class EmployeeCapacityPage extends BasePage<{}, State> {
       planName: capacity.plan.name,
       currency: capacity.plan.currency,
       unitPriceCents,
+      unitPriceCentsMonthly: capacity.pricing.addonUnitPriceCents.monthly,
+      unitPriceCentsYearly: capacity.pricing.addonUnitPriceCents.yearly,
       baseEmployees: capacity.limits.baseEmployees,
       addonEmployees: capacity.limits.addonEmployees,
       activeEmployees: capacity.limits.activeEmployees,

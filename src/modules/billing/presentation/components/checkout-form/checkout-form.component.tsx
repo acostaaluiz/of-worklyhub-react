@@ -5,7 +5,6 @@ import {
   Form,
   Input,
   InputNumber,
-  Segmented,
   Space,
   Tag,
   Tooltip,
@@ -180,6 +179,8 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
       planName: capacity.plan.name,
       currency: capacity.plan.currency,
       unitPriceCents: this.getEmployeeAddonUnitPriceCents(capacity, interval),
+      unitPriceCentsMonthly: capacity.pricing.addonUnitPriceCents.monthly,
+      unitPriceCentsYearly: capacity.pricing.addonUnitPriceCents.yearly,
       baseEmployees: capacity.limits.baseEmployees,
       addonEmployees: capacity.limits.addonEmployees,
       activeEmployees: capacity.limits.activeEmployees,
@@ -706,30 +707,6 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
                     {appI18n.t("billing.employeeCapacity.selector.title")}
                   </Typography.Text>
                 </SectionTitle>
-
-                <Segmented
-                  block
-                  value={employeeAddonSelection.interval}
-                  onChange={(value) =>
-                    this.syncEmployeeAddonSelection({
-                      interval: value as BillingCycle,
-                    })
-                  }
-                  options={[
-                    {
-                      label: appI18n.t(
-                        "billing.employeeCapacity.selector.interval.monthly"
-                      ),
-                      value: "monthly",
-                    },
-                    {
-                      label: appI18n.t(
-                        "billing.employeeCapacity.selector.interval.yearly"
-                      ),
-                      value: "yearly",
-                    },
-                  ]}
-                />
 
                 <Row style={{ alignItems: "center", gap: 12 }}>
                   <Typography.Text>

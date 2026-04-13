@@ -10,10 +10,6 @@ const CompanyIntroductionPage = lazy(
 const CompanyLandingPage = lazy(
   () => import("@modules/company/presentation/pages/landing/landing.page")
 );
-
-const CompanyProfilePage = lazy(
-  () => import("@modules/company/presentation/pages/profile/profile.page")
-);
 const CompanyServicesAdminPage = lazy(() => import('@modules/company/presentation/pages/services/services.page'));
 const SlaByEmployeePage = lazy(
   () => import("@modules/slas/presentation/pages/sla-by-employee/sla-by-employee.page")
@@ -39,15 +35,6 @@ export const companyStackRoutes: RouteObject[] = [
         element: (
           <React.Suspense fallback={null}>
             <CompanyIntroductionPage />
-          </React.Suspense>
-        ),
-      },
-      {
-        id: "company.profile",
-        path: "profile/:id",
-        element: (
-          <React.Suspense fallback={null}>
-            <CompanyProfilePage />
           </React.Suspense>
         ),
       },
