@@ -15,6 +15,9 @@ import {
   type AiTokenTopupCheckoutResponse,
   type PaymentGateway,
   type WorkspaceEmployeeCapacity,
+  type WorkspaceEmployeeAddonContract,
+  type WorkspaceEmployeeAddonContractStatus,
+  type CancelWorkspaceEmployeeAddonContractResponse,
 } from "./billing-api";
 
 type PlansState = { plans: BillingPlan[]; payment: PaymentConfig } | null;
@@ -181,6 +184,59 @@ export class BillingService {
         body,
         headers
       );
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async fetchWorkspaceEmployeeAddonContracts(input?: {
+    workspaceId?: string;
+    status?: WorkspaceEmployeeAddonContractStatus | "all";
+  }): Promise<WorkspaceEmployeeAddonContract[]> {
+    try {
+      const resolvedWorkspaceId = input?.workspaceId ?? this.resolveWorkspaceId();
+      if (!resolvedWorkspaceId) {
+        throw new Error("workspace_id_required");
+      }
+
+      const headers = this.buildIdentityHeaders();
+      const res = await this.api.getWorkspaceEmployeeAddonContracts(
+        resolvedWorkspaceId,
+        input?.status ? { status: input.status } : undefined,
+        headers
+      );
+      return res?.data?.contracts ?? [];
+    } catch (err) {
+      throw toAppError(err);
+    }
+  }
+
+  async cancelWorkspaceEmployeeAddonContract(input: {
+    contractId: string;
+    workspaceId?: string;
+    reason?: string;
+  }): Promise<CancelWorkspaceEmployeeAddonContractResponse["data"]> {
+    try {
+      const resolvedWorkspaceId = input.workspaceId ?? this.resolveWorkspaceId();
+      if (!resolvedWorkspaceId) {
+        throw new Error("workspace_id_required");
+      }
+      const contractId = String(input.contractId ?? "").trim();
+      if (!contractId) {
+        throw new Error("workspace_addon_contract_id_required");
+      }
+
+      const headers = this.buildIdentityHeaders();
+      const res = await this.api.cancelWorkspaceEmployeeAddonContract(
+        resolvedWorkspaceId,
+        contractId,
+        input.reason ? { reason: input.reason } : undefined,
+        headers
+      );
+      if (!res?.data) {
+        throw new Error("workspace_addon_contract_cancel_failed");
+      }
+      return res.data;
     } catch (err) {
       throw toAppError(err);
     }

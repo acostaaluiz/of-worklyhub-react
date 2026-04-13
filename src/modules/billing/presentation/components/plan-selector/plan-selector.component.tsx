@@ -1,11 +1,12 @@
 import React from "react";
-import { Button, Segmented, Space, Typography } from "antd";
+import { Button, Space, Typography } from "antd";
 import { Check, Sparkles } from "lucide-react";
 import { i18n as appI18n } from "@core/i18n";
 import { formatMoney } from "@core/utils/currency";
 import { BaseComponent } from "@shared/base/base.component";
 import type { BaseProps } from "@shared/base/interfaces/base-props.interface";
 import type { BillingPlan } from "@modules/billing/services/billing-api";
+import BillingCycleToggle from "../billing-cycle-toggle/billing-cycle-toggle.component";
 
 import {
   HeaderRow,
@@ -230,14 +231,12 @@ export class PlanSelector extends BaseComponent<
           </div>
 
           <ToggleWrap>
-            <Segmented
+            <BillingCycleToggle
               value={interval}
               onChange={(v) => this.setState({ interval: v as BillingInterval })}
-              options={[
-                { label: appI18n.t("billing.planSelector.interval.monthly"), value: "monthly" },
-                { label: appI18n.t("billing.planSelector.interval.yearly"), value: "yearly" },
-              ]}
-              data-cy="billing-plan-interval-segmented"
+              monthlyLabel={appI18n.t("billing.planSelector.interval.monthly")}
+              yearlyLabel={appI18n.t("billing.planSelector.interval.yearly")}
+              dataCyPrefix="billing-plan-interval-toggle"
             />
             {interval === "yearly" ? (
               <PlanMeta>{appI18n.t("billing.planSelector.discountLabel")}</PlanMeta>

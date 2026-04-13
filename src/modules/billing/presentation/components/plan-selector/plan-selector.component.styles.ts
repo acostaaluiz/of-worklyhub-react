@@ -38,42 +38,6 @@ export const ToggleWrap = styled.div`
     align-items: flex-start;
     width: 100%;
   }
-
-  /* Fix visual do Segmented (Antd) para não “vazar” e manter o highlight correto */
-  .ant-segmented {
-    border: 1px solid var(--color-border);
-    background: var(--color-glass-surface);
-    border-radius: 999px;
-    padding: 4px;
-
-    @media (max-width: 768px) {
-      width: 100%;
-    }
-  }
-
-  .ant-segmented-group {
-    gap: 4px;
-  }
-
-  .ant-segmented-item {
-    border-radius: 999px;
-    color: var(--color-text-muted);
-    transition: color 120ms ease;
-  }
-
-  .ant-segmented-item:hover {
-    color: var(--color-text);
-  }
-
-  .ant-segmented-thumb {
-    background: var(--color-surface);
-    border-radius: 999px;
-    box-shadow: var(--shadow-sm);
-  }
-
-  .ant-segmented-item-selected {
-    color: var(--color-text);
-  }
 `;
 
 export const PlanMeta = styled.div`

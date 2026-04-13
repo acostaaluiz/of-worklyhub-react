@@ -12,7 +12,9 @@ import type { BillingPlan } from "@modules/billing/services/billing-api";
 import {
   clearAiTokenTopupSelection,
   clearEmployeeAddonSelection,
+  getSelectedPlanInterval,
   setBillingCheckoutKind,
+  setSelectedPlanInterval,
 } from "@modules/billing/services/billing-checkout-session";
 
 export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLoading: boolean; error?: DataValue; plans?: BillingPlan[]; confirmOpen?: boolean; pendingPlanId?: string; pendingPlanName?: string; recommendedPlanId?: string }> {
@@ -124,11 +126,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
   private handleSelectPlan = (planId: string, interval?: "monthly" | "yearly") => {
     const plan = this.state.plans?.find((p) => String(p.id) === planId);
     const name = plan?.name ?? planId;
-    try {
-      sessionStorage.setItem("billing.selectedPlanInterval", interval ?? "monthly");
-    } catch {
-      // ignore
-    }
+    setSelectedPlanInterval(interval ?? "monthly");
     this.setSafeState({ confirmOpen: true, pendingPlanId: planId, pendingPlanName: name });
   };
 
@@ -150,14 +148,7 @@ export class PlanSelectionPage extends BasePage<{}, { initialized: boolean; isLo
       clearAiTokenTopupSelection();
       sessionStorage.setItem("billing.selectedPlanId", String(planId));
       // also ensure interval is present (in case selection step failed to set it)
-      const maybeInterval = sessionStorage.getItem("billing.selectedPlanInterval");
-      if (!maybeInterval) {
-        try {
-          sessionStorage.setItem("billing.selectedPlanInterval", "monthly");
-        } catch {
-          // ignore
-        }
-      }
+      setSelectedPlanInterval(getSelectedPlanInterval());
     } catch {
       // ignore
     }

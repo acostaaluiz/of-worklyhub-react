@@ -85,6 +85,43 @@ export type WorkspaceEmployeeCapacityResponse = {
   data: WorkspaceEmployeeCapacity;
 };
 
+export type WorkspaceEmployeeAddonContractStatus = "active" | "cancelled";
+
+export type WorkspaceEmployeeAddonContract = {
+  id: string;
+  workspaceId: string;
+  paymentId?: string | null;
+  additionalEmployees: number;
+  billingCycle: BillingCycle;
+  unitPriceCents: number;
+  amountCents: number;
+  currency: string;
+  status: WorkspaceEmployeeAddonContractStatus;
+  metadata?: DataMap;
+  createdBy?: string | null;
+  cancelledBy?: string | null;
+  cancelReason?: string | null;
+  cancelledAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WorkspaceEmployeeAddonContractsResponse = {
+  data: {
+    workspaceId: string;
+    contracts: WorkspaceEmployeeAddonContract[];
+  };
+};
+
+export type CancelWorkspaceEmployeeAddonContractResponse = {
+  data: {
+    workspaceId: string;
+    contractId: string;
+    addonEmployees: number;
+    cancelledAt?: string | null;
+  };
+};
+
 export type EmployeeAddonCheckoutRequest = {
   additionalEmployees: number;
   billingCycle?: BillingCycle;
@@ -187,6 +224,31 @@ export class BillingApi extends BaseHttpService {
     return this.post<EmployeeAddonCheckoutResponse, EmployeeAddonCheckoutRequest>(
       `/billing/workspaces/${workspaceId}/employee-capacity/checkout`,
       body,
+      headers
+    );
+  }
+
+  async getWorkspaceEmployeeAddonContracts(
+    workspaceId: string,
+    query?: { status?: WorkspaceEmployeeAddonContractStatus | "all" },
+    headers?: Record<string, string>
+  ): Promise<WorkspaceEmployeeAddonContractsResponse> {
+    return this.get<WorkspaceEmployeeAddonContractsResponse>(
+      `/billing/workspaces/${workspaceId}/employee-capacity/contracts`,
+      query,
+      headers
+    );
+  }
+
+  async cancelWorkspaceEmployeeAddonContract(
+    workspaceId: string,
+    contractId: string,
+    query?: { reason?: string },
+    headers?: Record<string, string>
+  ): Promise<CancelWorkspaceEmployeeAddonContractResponse> {
+    return this.delete<CancelWorkspaceEmployeeAddonContractResponse>(
+      `/billing/workspaces/${workspaceId}/employee-capacity/contracts/${contractId}`,
+      query,
       headers
     );
   }

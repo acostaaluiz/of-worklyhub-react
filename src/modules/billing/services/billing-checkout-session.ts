@@ -29,6 +29,7 @@ export type AiTokenTopupSelection = {
 const CHECKOUT_KIND_KEY = "billing.checkoutKind";
 const EMPLOYEE_ADDON_KEY = "billing.employeeAddonSelection";
 const AI_TOKEN_TOPUP_KEY = "billing.aiTokenTopupSelection";
+const PLAN_INTERVAL_KEY = "billing.selectedPlanInterval";
 const CHECKOUT_SESSION_UPDATED_EVENT = "worklyhub:billing-checkout-session-updated";
 
 function asPositiveInt(value: unknown, fallback: number): number {
@@ -60,6 +61,27 @@ export function setBillingCheckoutKind(kind: BillingCheckoutKind): void {
     notifyCheckoutSessionUpdated();
   } catch {
     // no-op
+  }
+}
+
+export function setSelectedPlanInterval(interval: BillingCycle): void {
+  try {
+    sessionStorage.setItem(
+      PLAN_INTERVAL_KEY,
+      interval === "yearly" ? "yearly" : "monthly"
+    );
+    notifyCheckoutSessionUpdated();
+  } catch {
+    // no-op
+  }
+}
+
+export function getSelectedPlanInterval(): BillingCycle {
+  try {
+    const raw = sessionStorage.getItem(PLAN_INTERVAL_KEY);
+    return raw === "yearly" ? "yearly" : "monthly";
+  } catch {
+    return "monthly";
   }
 }
 

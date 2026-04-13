@@ -1,5 +1,5 @@
 import React from "react";
-import { Divider, Space, Typography, Button, Segmented } from "antd";
+import { Divider, Space, Typography, Button } from "antd";
 import { Check } from "lucide-react";
 import { i18n as appI18n } from "@core/i18n";
 import { BaseComponent } from "@shared/base/base.component";
@@ -8,15 +8,18 @@ import { billingService } from "@modules/billing/services/billing.service";
 import type { BillingPlan, BillingCycle } from "@modules/billing/services/billing-api";
 import { navigateTo } from "@core/navigation/navigation.service";
 import {
+  getSelectedPlanInterval,
   getAiTokenTopupSelection,
   getBillingCheckoutKind,
   getEmployeeAddonSelection,
   onBillingCheckoutSessionChange,
+  setSelectedPlanInterval,
   setEmployeeAddonSelection,
   type AiTokenTopupSelection,
   type BillingCheckoutKind,
   type EmployeeAddonSelection,
 } from "@modules/billing/services/billing-checkout-session";
+import BillingCycleToggle from "../billing-cycle-toggle/billing-cycle-toggle.component";
 
 import {
   SummaryCard,
@@ -67,14 +70,19 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
   }
 
   componentDidMount(): void {
+    super.componentDidMount();
+
     this.unsubscribeCheckoutSessionChange = onBillingCheckoutSessionChange(() => {
+      const checkoutKind = getBillingCheckoutKind();
+      const employeeAddonSelection = getEmployeeAddonSelection();
       const interval =
-        (sessionStorage.getItem("billing.selectedPlanInterval") as BillingCycle) ??
-        this.state.interval;
+        checkoutKind === "employee_addon"
+          ? employeeAddonSelection?.interval ?? "monthly"
+          : (getSelectedPlanInterval() ?? this.state.interval);
 
       this.setSafeState({
-        checkoutKind: getBillingCheckoutKind(),
-        employeeAddonSelection: getEmployeeAddonSelection(),
+        checkoutKind,
+        employeeAddonSelection,
         aiTokenTopupSelection: getAiTokenTopupSelection(),
         interval,
       });
@@ -83,10 +91,14 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     this.runAsync(async () => {
       try {
         const selected = sessionStorage.getItem("billing.selectedPlanId");
-        const interval = (sessionStorage.getItem("billing.selectedPlanInterval") as "monthly" | "yearly") ?? undefined;
+        const sessionInterval = getSelectedPlanInterval();
         const checkoutKind = getBillingCheckoutKind();
         const employeeAddonSelection = getEmployeeAddonSelection();
         const aiTokenTopupSelection = getAiTokenTopupSelection();
+        const interval =
+          checkoutKind === "employee_addon"
+            ? employeeAddonSelection?.interval ?? "monthly"
+            : sessionInterval;
 
         const plansState = (await billingService.fetchPlans()) ?? null;
         const plans = plansState?.plans ?? [];
@@ -111,25 +123,62 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
     super.componentWillUnmount();
   }
 
+  private resolveEmployeeAddonUnitPrices(current: EmployeeAddonSelection): {
+    monthly: number;
+    yearly: number;
+  } {
+    const monthlyFromSelection = Math.max(
+      0,
+      Math.trunc(Number(current.unitPriceCentsMonthly ?? 0))
+    );
+    const yearlyFromSelection = Math.max(
+      0,
+      Math.trunc(Number(current.unitPriceCentsYearly ?? 0))
+    );
+    const currentUnit = Math.max(0, Math.trunc(Number(current.unitPriceCents ?? 0)));
+
+    if (monthlyFromSelection > 0 && yearlyFromSelection > 0) {
+      return { monthly: monthlyFromSelection, yearly: yearlyFromSelection };
+    }
+
+    if (current.interval === "yearly") {
+      const yearly = yearlyFromSelection > 0 ? yearlyFromSelection : currentUnit;
+      const monthly =
+        monthlyFromSelection > 0
+          ? monthlyFromSelection
+          : Math.max(1, Math.round(yearly / 12));
+      return { monthly, yearly };
+    }
+
+    const monthly = monthlyFromSelection > 0 ? monthlyFromSelection : currentUnit;
+    const yearly =
+      yearlyFromSelection > 0 ? yearlyFromSelection : Math.max(monthly, monthly * 12);
+    return { monthly, yearly };
+  }
+
   private handleEmployeeAddonIntervalChange(interval: BillingCycle): void {
     const current = getEmployeeAddonSelection() ?? this.state.employeeAddonSelection;
     if (!current) return;
 
-    const nextUnitPriceCents =
-      interval === "yearly"
-        ? current.unitPriceCentsYearly ?? current.unitPriceCents * 12
-        : current.unitPriceCentsMonthly ?? Math.max(1, Math.round(current.unitPriceCents / 12));
-
+    const prices = this.resolveEmployeeAddonUnitPrices(current);
     const nextSelection: EmployeeAddonSelection = {
       ...current,
       interval,
-      unitPriceCents: nextUnitPriceCents,
+      unitPriceCents: interval === "yearly" ? prices.yearly : prices.monthly,
+      unitPriceCentsMonthly: prices.monthly,
+      unitPriceCentsYearly: prices.yearly,
     };
 
     setEmployeeAddonSelection(nextSelection);
     this.setSafeState({
       employeeAddonSelection: nextSelection,
+      interval: nextSelection.interval,
     });
+  }
+
+  private handlePlanIntervalChange(interval: BillingCycle): void {
+    setSelectedPlanInterval(interval);
+    this.setSafeState({ interval });
   }
 
   protected override renderView(): React.ReactNode {
@@ -137,7 +186,7 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
 
     // prefer freshest values from sessionStorage (selection just happened)
     const selectedId = sessionStorage.getItem("billing.selectedPlanId");
-    const sessionInterval = (sessionStorage.getItem("billing.selectedPlanInterval") as "monthly" | "yearly") ?? undefined;
+    const sessionInterval = getSelectedPlanInterval();
     const checkoutKind = getBillingCheckoutKind();
     const employeeAddonSelection = getEmployeeAddonSelection() ?? this.state.employeeAddonSelection;
     const aiTokenTopupSelection = getAiTokenTopupSelection() ?? this.state.aiTokenTopupSelection;
@@ -175,34 +224,31 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
                   ? displayPlan.name
                   : mockPlan.name}
               </Typography.Text>
-              {isEmployeeAddonCheckout ? (
-                <Segmented
-                  size="small"
-                  value={employeeAddonSelection?.interval ?? "monthly"}
-                  onChange={(value) =>
-                    this.handleEmployeeAddonIntervalChange(value as BillingCycle)
-                  }
-                  options={[
-                    {
-                      label: appI18n.t("billing.orderSummary.cycle.monthly"),
-                      value: "monthly",
-                    },
-                    {
-                      label: appI18n.t("billing.orderSummary.cycle.yearly"),
-                      value: "yearly",
-                    },
-                  ]}
-                />
-              ) : (
+              {isAiTokenTopupCheckout ? (
                 <Badge>
-                  {isAiTokenTopupCheckout
-                    ? appI18n.t("billing.orderSummary.cycle.oneTime")
-                    : displayPlan
-                    ? (interval === "yearly"
-                      ? appI18n.t("billing.orderSummary.cycle.yearly")
-                      : appI18n.t("billing.orderSummary.cycle.monthly"))
-                    : mockPlan.cycle}
+                  {appI18n.t("billing.orderSummary.cycle.oneTime")}
                 </Badge>
+              ) : (
+                <BillingCycleToggle
+                  compact
+                  value={
+                    isEmployeeAddonCheckout
+                      ? employeeAddonSelection?.interval ?? "monthly"
+                      : (interval ?? "monthly")
+                  }
+                  onChange={(value) =>
+                    isEmployeeAddonCheckout
+                      ? this.handleEmployeeAddonIntervalChange(value)
+                      : this.handlePlanIntervalChange(value)
+                  }
+                  monthlyLabel={appI18n.t("billing.orderSummary.cycle.monthly")}
+                  yearlyLabel={appI18n.t("billing.orderSummary.cycle.yearly")}
+                  dataCyPrefix={
+                    isEmployeeAddonCheckout
+                      ? "billing-summary-employee-interval-toggle"
+                      : "billing-summary-plan-interval-toggle"
+                  }
+                />
               )}
             </Line>
 
@@ -216,22 +262,28 @@ export class OrderSummary extends BaseComponent<{}, OrderSummaryState> {
                     ? formatMoney(aiTokenTotalCents, {
                         currency: aiTokenTopupSelection?.currency ?? "USD",
                       })
-                  : displayPlan
-                  ? formatMoney(interval === "yearly" ? displayPlan.priceCents.yearly : displayPlan.priceCents.monthly, { currency: displayPlan.currency })
-                  : formatMoney(mockPlan.priceCents)}
+                    : displayPlan
+                    ? formatMoney(
+                        interval === "yearly"
+                          ? displayPlan.priceCents.yearly
+                          : displayPlan.priceCents.monthly,
+                        { currency: displayPlan.currency }
+                      )
+                    : formatMoney(mockPlan.priceCents)}
               </Typography.Title>
               <Typography.Text type="secondary">
-                / {isEmployeeAddonCheckout
-                  ? (employeeAddonSelection?.interval === "yearly"
+                /{" "}
+                {isEmployeeAddonCheckout
+                  ? employeeAddonSelection?.interval === "yearly"
                     ? appI18n.t("billing.orderSummary.per.year")
-                    : appI18n.t("billing.orderSummary.per.month"))
+                    : appI18n.t("billing.orderSummary.per.month")
                   : isAiTokenTopupCheckout
                     ? appI18n.t("billing.orderSummary.per.oneTime")
-                  : displayPlan
-                  ? (interval === "yearly"
-                    ? appI18n.t("billing.orderSummary.per.year")
-                    : appI18n.t("billing.orderSummary.per.month"))
-                  : appI18n.t("billing.orderSummary.per.year")}
+                    : displayPlan
+                    ? interval === "yearly"
+                      ? appI18n.t("billing.orderSummary.per.year")
+                      : appI18n.t("billing.orderSummary.per.month")
+                    : appI18n.t("billing.orderSummary.per.year")}
               </Typography.Text>
             </PriceRow>
 

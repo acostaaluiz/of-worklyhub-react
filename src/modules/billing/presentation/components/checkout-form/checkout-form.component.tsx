@@ -166,6 +166,10 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
       : capacity.pricing.addonUnitPriceCents.monthly;
   }
 
+  private getCurrentEmployeeAddonSelection(): EmployeeAddonSelection | null {
+    return getEmployeeAddonSelection() ?? this.state.employeeAddonSelection;
+  }
+
   private buildEmployeeAddonSelection(
     capacity: WorkspaceEmployeeCapacity,
     quantity: number,
@@ -446,6 +450,14 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
         return;
       }
       if (isEmployeeAddonCheckout && !this.state.employeeAddonSelection) {
+        const currentSelection = this.getCurrentEmployeeAddonSelection();
+        if (!currentSelection) {
+          message.error(appI18n.t("billing.checkout.messages.selectEmployeeAddon"));
+          return;
+        }
+      }
+      const selectedEmployeeAddon = this.getCurrentEmployeeAddonSelection();
+      if (isEmployeeAddonCheckout && !selectedEmployeeAddon) {
         message.error(appI18n.t("billing.checkout.messages.selectEmployeeAddon"));
         return;
       }
@@ -470,10 +482,9 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
         const response: { data?: DataMap } =
           isEmployeeAddonCheckout
             ? ((await billingService.createEmployeeAddonCheckout({
-                additionalEmployees:
-                  this.state.employeeAddonSelection?.quantity ?? 1,
+                additionalEmployees: selectedEmployeeAddon?.quantity ?? 1,
                 billingCycle:
-                  (this.state.employeeAddonSelection?.interval ??
+                  (selectedEmployeeAddon?.interval ??
                     this.state.interval ??
                     "monthly") as BillingCycle,
                 gateway: this.state.gateway,
@@ -614,7 +625,7 @@ export class CheckoutForm extends BaseComponent<{}, CheckoutState> {
     const isEmployeeAddonCheckout = this.state.checkoutKind === "employee_addon";
     const isAiTokenTopupCheckout = this.state.checkoutKind === "ai_token_topup";
     const paymentReady = paymentConfigured || allowGatewayBypassInDev;
-    const employeeAddonSelection = this.state.employeeAddonSelection;
+    const employeeAddonSelection = this.getCurrentEmployeeAddonSelection();
     const employeeCapacity = this.state.employeeCapacity;
     const employeeAddonTotalPriceCents = employeeAddonSelection
       ? employeeAddonSelection.quantity * employeeAddonSelection.unitPriceCents

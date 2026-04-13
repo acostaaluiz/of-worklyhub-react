@@ -5,9 +5,12 @@ import {
   Button,
   Form,
   Input,
+  Popconfirm,
   Select,
   Space,
   Switch,
+  Table,
+  Tag,
   Tabs,
   Typography,
   message,
@@ -26,6 +29,12 @@ import {
 
 import { getMoneyMaskAdapter } from "@core/utils/mask";
 import { formatAppDateTime } from "@core/utils/date-time";
+import { formatMoney } from "@core/utils/currency";
+import type {
+  WorkspaceEmployeeAddonContract,
+  WorkspaceEmployeeCapacity,
+} from "@modules/billing/services/billing-api";
+import { billingService } from "@modules/billing/services/billing.service";
 import { companyService } from "@modules/company/services/company.service";
 import type {
   EmployeeAccessProfile,
@@ -210,6 +219,10 @@ function PeopleSettingsPageContent(): React.ReactElement {
   const [loading, setLoading] = React.useState(false);
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [contractsLoading, setContractsLoading] = React.useState(false);
+  const [removingContractId, setRemovingContractId] = React.useState<string | null>(null);
+  const [employeeCapacity, setEmployeeCapacity] = React.useState<WorkspaceEmployeeCapacity | null>(null);
+  const [employeeAddonContracts, setEmployeeAddonContracts] = React.useState<WorkspaceEmployeeAddonContract[]>([]);
   const [form] = Form.useForm<SettingsFormValues>();
   const accessProfiles = Form.useWatch("accessProfiles", form) ?? [];
 
@@ -258,9 +271,38 @@ function PeopleSettingsPageContent(): React.ReactElement {
     }
   }, [applySettings, workspaceId]);
 
+  const loadEmployeeAddonContracts = React.useCallback(async () => {
+    if (!workspaceId) {
+      setEmployeeCapacity(null);
+      setEmployeeAddonContracts([]);
+      return;
+    }
+
+    setContractsLoading(true);
+    try {
+      const [capacity, contracts] = await Promise.all([
+        billingService.fetchWorkspaceEmployeeCapacity(workspaceId),
+        billingService.fetchWorkspaceEmployeeAddonContracts({
+          workspaceId,
+          status: "all",
+        }),
+      ]);
+      setEmployeeCapacity(capacity);
+      setEmployeeAddonContracts(contracts);
+    } catch {
+      message.error("Failed to load employee slot contracts.");
+    } finally {
+      setContractsLoading(false);
+    }
+  }, [workspaceId]);
+
   React.useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
+
+  React.useEffect(() => {
+    void loadEmployeeAddonContracts();
+  }, [loadEmployeeAddonContracts]);
 
   const handleRestoreDefaults = () => {
     form.setFieldsValue(toFormValues(DEFAULT_PEOPLE_SETTINGS));
@@ -286,10 +328,123 @@ function PeopleSettingsPageContent(): React.ReactElement {
     }
   };
 
+  const handleRemoveEmployeeAddonContract = async (contractId: string) => {
+    if (!workspaceId) {
+      message.error("Workspace is required.");
+      return;
+    }
+
+    setRemovingContractId(contractId);
+    try {
+      await billingService.cancelWorkspaceEmployeeAddonContract({
+        workspaceId,
+        contractId,
+      });
+      message.success("Employee slot contract removed.");
+      await loadEmployeeAddonContracts();
+    } catch (err) {
+      const parsedMessage =
+        err instanceof Error ? err.message : "Failed to remove employee slot contract.";
+      if (parsedMessage.toLowerCase().includes("active_employees_exceed_capacity")) {
+        message.warning(
+          "Cannot remove this contract while active employees exceed the remaining capacity."
+        );
+      } else {
+        message.error(parsedMessage || "Failed to remove employee slot contract.");
+      }
+    } finally {
+      setRemovingContractId(null);
+    }
+  };
+
   const defaultProfileOptions = normalizeProfiles(accessProfiles).map((profile) => ({
     value: profile.uid,
     label: profile.name,
   }));
+
+  const contractsTableData = employeeAddonContracts.map((contract) => ({
+    key: contract.id,
+    ...contract,
+  }));
+
+  const contractColumns = [
+    {
+      title: "Created at",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (value: string) => formatAppDateTime(value, "--"),
+      width: 180,
+    },
+    {
+      title: "Cycle",
+      dataIndex: "billingCycle",
+      key: "billingCycle",
+      render: (value: "monthly" | "yearly") =>
+        value === "yearly" ? "Yearly" : "Monthly",
+      width: 120,
+    },
+    {
+      title: "Employees",
+      dataIndex: "additionalEmployees",
+      key: "additionalEmployees",
+      width: 120,
+    },
+    {
+      title: "Unit price",
+      dataIndex: "unitPriceCents",
+      key: "unitPriceCents",
+      render: (_value: number, record: WorkspaceEmployeeAddonContract) =>
+        formatMoney(record.unitPriceCents, { currency: record.currency }),
+      width: 160,
+    },
+    {
+      title: "Total",
+      dataIndex: "amountCents",
+      key: "amountCents",
+      render: (_value: number, record: WorkspaceEmployeeAddonContract) =>
+        formatMoney(record.amountCents, { currency: record.currency }),
+      width: 160,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (value: WorkspaceEmployeeAddonContract["status"]) => (
+        <Tag color={value === "active" ? "green" : "default"}>
+          {value === "active" ? "Active" : "Cancelled"}
+        </Tag>
+      ),
+      width: 120,
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 140,
+      render: (_value: unknown, record: WorkspaceEmployeeAddonContract) => {
+        const disabled = record.status !== "active";
+        return (
+          <Popconfirm
+            title="Remove employee add-on?"
+            description="This will reduce extra employee slots for this workspace."
+            okText="Remove"
+            okButtonProps={{ danger: true }}
+            cancelText="Keep"
+            onConfirm={() => handleRemoveEmployeeAddonContract(record.id)}
+            disabled={disabled}
+          >
+            <Button
+              danger
+              size="small"
+              loading={removingContractId === record.id}
+              disabled={disabled || removingContractId !== null}
+            >
+              Remove
+            </Button>
+          </Popconfirm>
+        );
+      },
+    },
+  ];
 
   if (initialLoading) {
     return <PageSkeleton mainRows={3} sideRows={2} height="100%" />;
@@ -565,6 +720,85 @@ function PeopleSettingsPageContent(): React.ReactElement {
                           )}
                         </Form.List>
                       </>
+                    ),
+                  },
+                  {
+                    key: "employeeContracts",
+                    label: <IconLabel icon={<CircleDollarSign size={14} />} text="Billing capacity" />,
+                    children: (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        <Space
+                          align="center"
+                          style={{ width: "100%", justifyContent: "space-between" }}
+                        >
+                          <Typography.Title level={5} style={{ margin: 0 }}>
+                            Employee slot contracts
+                          </Typography.Title>
+                          <Button
+                            size="small"
+                            loading={contractsLoading}
+                            onClick={() => void loadEmployeeAddonContracts()}
+                            icon={<RotateCcw size={14} />}
+                          >
+                            Refresh
+                          </Button>
+                        </Space>
+
+                        <Typography.Text type="secondary">
+                          Manage purchased employee slot add-ons. Removing a contract decreases
+                          workspace capacity.
+                        </Typography.Text>
+
+                        {employeeCapacity ? (
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                              gap: 10,
+                            }}
+                          >
+                            <Tag>
+                              Base slots: {employeeCapacity.limits.baseEmployees}
+                            </Tag>
+                            <Tag color="blue">
+                              Add-on slots: {employeeCapacity.limits.addonEmployees}
+                            </Tag>
+                            <Tag color="purple">
+                              Total capacity: {employeeCapacity.limits.totalEmployees}
+                            </Tag>
+                            <Tag color="gold">
+                              Active employees: {employeeCapacity.limits.activeEmployees}
+                            </Tag>
+                            <Tag color="green">
+                              Remaining: {employeeCapacity.limits.remainingEmployees}
+                            </Tag>
+                          </div>
+                        ) : null}
+
+                        {employeeCapacity &&
+                        employeeCapacity.limits.activeEmployees >
+                          employeeCapacity.limits.totalEmployees ? (
+                          <Alert
+                            type="warning"
+                            showIcon
+                            message="Active employees exceed current capacity."
+                            description="Remove active employees before cancelling additional slot contracts."
+                          />
+                        ) : null}
+
+                        <Table
+                          size="small"
+                          rowKey="id"
+                          columns={contractColumns}
+                          dataSource={contractsTableData}
+                          loading={contractsLoading}
+                          pagination={{ pageSize: 5, hideOnSinglePage: true }}
+                          locale={{
+                            emptyText:
+                              "No employee add-on contracts found for this workspace.",
+                          }}
+                        />
+                      </div>
                     ),
                   },
                 ]}
